@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* ============================================================
+   WALLBEDKING – Design Tokens
+   Tailwind v4: theme variables defined in CSS via @theme
+   ============================================================ */
+
+@theme {
+  /* ── Brand Colours ─────────────────────────────────────── */
+  --color-wbk-green:     #A3A48C;
+  --color-wbk-gold:      #D2AA7C;
+  --color-wbk-lightgrey: #E4E0DE;
+  --color-wbk-brown:     #A5988E;
+  --color-wbk-black:     #090A0A;
+  --color-wbk-white:     #FFFFFF;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-new-york: "NewYork", Georgia, serif;
+  --font-poppins:  "Poppins", system-ui, sans-serif;
+
+  /* ── Spacing scale extension ─────────────────────────────── */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+}
+
+/* ============================================================
+   FONT FACE – NewYork (self-hosted, everyone sees it)
+   ============================================================ */
+@font-face {
+  font-family: "NewYork";
+  src: url("/fonts/NewYork.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-poppins);
+    color: var(--color-wbk-black);
+    background-color: var(--color-wbk-white);
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-new-york);
+    font-weight: normal;
+    letter-spacing: -0.02em;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
