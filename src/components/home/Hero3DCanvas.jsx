@@ -152,8 +152,6 @@ function CameraUpdater({
   return null;
 }
 
-
-
 export function Hero3DCanvas({ scrollProgress = 0 }) {
   // ── Camera Base Configuration ──
   const cameraConfig = useControls("📷 Camera & Base Framing", {
@@ -192,7 +190,7 @@ export function Hero3DCanvas({ scrollProgress = 0 }) {
     targetY: { value: 2.2, min: -10, max: 10, step: 0.1, label: "Target Y" },
     targetZ: { value: 1.3, min: -10, max: 10, step: 0.1, label: "Target Z" },
 
-    fov: { value: 42, min: 10, max: 120, step: 1, label: "FOV" },
+    fov: { value: 32, min: 10, max: 120, step: 1, label: "FOV" },
     enableOrbitMouse: { value: false, label: "Enable Drag Orbit (Dev)" },
   });
 
@@ -220,7 +218,7 @@ export function Hero3DCanvas({ scrollProgress = 0 }) {
       label: "Scroll Shift Forward/Back (+Z)",
     },
     shiftYaw: {
-      value: 8.0,
+      value: 11.5,
       min: -45,
       max: 45,
       step: 0.5,
@@ -260,13 +258,36 @@ export function Hero3DCanvas({ scrollProgress = 0 }) {
     bloomIntensity: { value: 0.95, min: 0, max: 3, step: 0.05 },
     contrast: { value: 0.0, min: -0.5, max: 0.5, step: 0.01 },
 
-
     // Animated Sunbeam Light Particles
     enableSparkles: { value: true, label: "Enable Light Particles" },
-    sparkleCount: { value: 120, min: 10, max: 300, step: 10, label: "Particle Count" },
-    sparkleSize: { value: 4.5, min: 1, max: 15, step: 0.5, label: "Particle Size" },
-    sparkleSpeed: { value: 0.4, min: 0.1, max: 5, step: 0.1, label: "Particle Speed" },
-    sparkleOpacity: { value: 0.20, min: 0.1, max: 1, step: 0.05, label: "Particle Opacity" },
+    sparkleCount: {
+      value: 120,
+      min: 10,
+      max: 300,
+      step: 10,
+      label: "Particle Count",
+    },
+    sparkleSize: {
+      value: 4.5,
+      min: 1,
+      max: 15,
+      step: 0.5,
+      label: "Particle Size",
+    },
+    sparkleSpeed: {
+      value: 0.4,
+      min: 0.1,
+      max: 5,
+      step: 0.1,
+      label: "Particle Speed",
+    },
+    sparkleOpacity: {
+      value: 0.2,
+      min: 0.1,
+      max: 1,
+      step: 0.05,
+      label: "Particle Opacity",
+    },
   });
 
   // ── Model Transform ──
@@ -317,6 +338,7 @@ scrollShift={{
       <Leva
         titleBar={{ title: "Cinematic Studio Controls" }}
         collapsed={false}
+        hidden
       />
 
       <div
@@ -324,7 +346,12 @@ scrollShift={{
       >
         <Canvas
           shadows={{ type: THREE.PCFShadowMap }}
-          camera={{ position: cameraPos, fov: cameraConfig.fov, near: 0.1, far: 25.0 }}
+          camera={{
+            position: cameraPos,
+            fov: cameraConfig.fov,
+            near: 0.1,
+            far: 25.0,
+          }}
           gl={{
             antialias: true,
             alpha: true,
