@@ -12,8 +12,7 @@ const variants = {
     "bg-wbk-black text-wbk-white hover:bg-wbk-green border border-wbk-black hover:border-wbk-green",
   secondary:
     "bg-transparent text-wbk-black border border-wbk-black hover:bg-wbk-black hover:text-wbk-white",
-  gold:
-    "bg-wbk-gold text-wbk-black hover:bg-wbk-brown hover:text-wbk-white border border-wbk-gold hover:border-wbk-brown",
+  gold: "bg-wbk-gold text-wbk-black hover:bg-wbk-brown hover:text-wbk-white border border-wbk-gold hover:border-wbk-brown",
   ghost:
     "bg-transparent text-wbk-black hover:text-wbk-green border border-transparent hover:border-wbk-green",
   white:
@@ -27,7 +26,7 @@ const sizes = {
 };
 
 const baseStyles =
-  "inline-flex items-center justify-center font-poppins font-medium uppercase transition-all duration-200 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wbk-gold focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center font-poppins font-medium uppercase transition-all duration-200 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wbk-gold focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-full";
 
 export function Button({
   as,

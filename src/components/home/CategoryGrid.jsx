@@ -8,7 +8,8 @@ export function CategoryGrid() {
     {
       title: "Classic beds",
       link: "/products/classic-beds",
-      gridClass: "col-span-6 md:col-span-3 border-b md:border-r border-wbk-lightgrey/40",
+      gridClass:
+        "col-span-6 md:col-span-3 border-b md:border-r border-wbk-lightgrey/40",
     },
     {
       title: "Studio Beds",
@@ -19,12 +20,14 @@ export function CategoryGrid() {
     {
       title: "Sofas",
       link: "/products/sofas",
-      gridClass: "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
+      gridClass:
+        "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
     },
     {
       title: "Integrated Beds",
       link: "/products/integrated-beds",
-      gridClass: "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
+      gridClass:
+        "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
     },
     {
       title: "Other extras",
@@ -35,7 +38,7 @@ export function CategoryGrid() {
 
   return (
     <section className="w-full bg-wbk-white">
-      <div className="grid grid-cols-6 w-full">
+      <div className="grid grid-cols-6 gap-1 w-full">
         {categories.map((cat, idx) => (
           <Link
             key={idx}
@@ -50,12 +53,11 @@ export function CategoryGrid() {
             />
 
             {/* Subtle warm brown gradient starting from top-left */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#E4E0DE] via-[#E4E0DE]/90 to-[#A5988E]/20 mix-blend-multiply opacity-85 z-10 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F4F2F0]/95 via-[#F4F2F0]/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F4F2F0]/75 to-transparent z-10 pointer-events-none" />
 
             {/* Text Overlay */}
             <div className="relative z-20 h-full w-full p-10 md:p-12 flex flex-col justify-start items-start">
-              <h3 className="font-new-york text-3xl md:text-4xl text-wbk-black leading-tight tracking-wide transition-colors duration-300 group-hover:text-wbk-gold">
+              <h3 className="font-new-york text-3xl md:text-4xl text-wbk-black leading-tight tracking-wide transition-colors duration-300">
                 {cat.title}
               </h3>
             </div>

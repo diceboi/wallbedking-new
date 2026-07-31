@@ -1,5 +1,7 @@
 import { HeroSection } from "@/components/home/HeroSection";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
+import { ProductSlider } from "@/components/home/ProductSlider";
+import { NewProductSection } from "@/components/home/NewProductSection";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -27,10 +29,12 @@ export default function HomePage() {
                 What we are up to
               </h2>
             </div>
-            <div className="space-y-6 text-wbk-brown text-base leading-relaxed">
+            <div className="space-y-6 text-wbk-black text-base leading-relaxed">
               <p>
-                At WallBedKing, we design versatile, space-saving furniture tailored for modern living.
-                Our modular murphy bed systems seamlessly blend elegant aesthetics with precision-engineered mechanism.
+                At WallBedKing, we design versatile, space-saving furniture
+                tailored for modern living. Our modular murphy bed systems
+                seamlessly blend elegant aesthetics with precision-engineered
+                mechanism.
               </p>
               <div>
                 <Button as="link" href="/about" variant="secondary" size="md">
@@ -44,6 +48,12 @@ export default function HomePage() {
         {/* Category Selection Grid */}
         <CategoryGrid />
 
+        {/* Popular Products Slider */}
+        <ProductSlider />
+
+        {/* New Product Interactive Showcase */}
+        <NewProductSection />
+
         {/* Design System Preview */}
         <section className="py-20">
           <Container className="space-y-12">
@@ -52,25 +62,28 @@ export default function HomePage() {
                 Design System Preview
               </h2>
               <p className="mt-2 text-sm text-wbk-brown">
-                Colours, typography and buttons – all reusable via Tailwind tokens.
+                Colours, typography and buttons – all reusable via Tailwind
+                tokens.
               </p>
             </div>
 
             {/* Colour swatches */}
             <div className="flex flex-wrap gap-4 justify-center">
               {[
-                { name: "wbk-green",     hex: "#A3A48C" },
-                { name: "wbk-gold",      hex: "#D2AA7C" },
+                { name: "wbk-green", hex: "#A3A48C" },
+                { name: "wbk-gold", hex: "#D2AA7C" },
                 { name: "wbk-lightgrey", hex: "#E4E0DE" },
-                { name: "wbk-brown",     hex: "#A5988E" },
-                { name: "wbk-black",     hex: "#090A0A" },
+                { name: "wbk-brown", hex: "#A5988E" },
+                { name: "wbk-black", hex: "#090A0A" },
               ].map((c) => (
                 <div key={c.name} className="flex flex-col items-center gap-2">
                   <div
                     className="h-16 w-28 rounded-lg border border-wbk-lightgrey shadow-sm"
                     style={{ backgroundColor: c.hex }}
                   />
-                  <span className="text-[10px] font-mono text-wbk-brown">{c.name}</span>
+                  <span className="text-[10px] font-mono text-wbk-brown">
+                    {c.name}
+                  </span>
                 </div>
               ))}
             </div>
@@ -81,7 +94,9 @@ export default function HomePage() {
               <Button variant="secondary">Secondary</Button>
               <Button variant="gold">Gold</Button>
               <Button variant="ghost">Ghost</Button>
-              <Button variant="white" className="border-wbk-lightgrey">White</Button>
+              <Button variant="white" className="border-wbk-lightgrey">
+                White
+              </Button>
             </div>
 
             {/* Font specimen */}
