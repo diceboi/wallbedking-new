@@ -2,6 +2,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { ProductSlider } from "@/components/home/ProductSlider";
 import { NewProductSection } from "@/components/home/NewProductSection";
+import { ReviewsSlider } from "@/components/home/ReviewsSlider";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -53,6 +54,9 @@ export default function HomePage() {
 
         {/* New Product Interactive Showcase */}
         <NewProductSection />
+
+        {/* Customer Reviews Section */}
+        <ReviewsSlider />
 
         {/* Design System Preview */}
         <section className="py-20">

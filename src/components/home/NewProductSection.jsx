@@ -248,7 +248,7 @@ export function NewProductSection() {
         <Button
           variant="primary"
           size="lg"
-          className="shadow-lg bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black"
+          className="bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black"
         >
           Start configurator
         </Button>

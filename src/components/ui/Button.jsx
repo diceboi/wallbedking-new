@@ -16,13 +16,13 @@ const variants = {
   ghost:
     "bg-transparent text-wbk-black hover:text-wbk-green border border-transparent hover:border-wbk-green",
   white:
-    "bg-wbk-white text-wbk-black hover:bg-wbk-lightgrey border border-wbk-white hover:border-wbk-lightgrey",
+    "bg-wbk-white text-wbk-black hover:bg-wbk-lightgrey border border-wbk-white hover:border-swbk-lightgrey",
 };
 
 const sizes = {
-  sm: "px-4 py-2 text-xs tracking-widest",
-  md: "px-6 py-3 text-xs tracking-widest",
-  lg: "px-8 py-4 text-sm tracking-widest",
+  sm: "px-1 py-1 text-xs tracking-normal md:px-4 lg:px-4 lg:py-2",
+  md: "px-2 py-2 text-xs tracking-normal md:px-6 lg:px-6 lg:py-3",
+  lg: "px-6 py-3 text-sm tracking-widest md:px-8 lg:px-8 lg:py-4",
 };
 
 const baseStyles =

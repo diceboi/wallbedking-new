@@ -72,7 +72,7 @@ export function HeroSection() {
           <h1 className="font-new-york text-5xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white">
             Modular Murphy Beds
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-wbk-black leading-relaxed">
+          <p className="mt-2 text-sm sm:text-base text-wbk-white leading-relaxed">
             Space-saving, handcrafted wall beds engineered for seamless everyday
             living.
           </p>
@@ -82,7 +82,7 @@ export function HeroSection() {
               href="/products/beds"
               variant="primary"
               size="lg"
-              className="shadow-md"
+              className=""
             >
               Shop Collection
             </Button>
@@ -91,7 +91,7 @@ export function HeroSection() {
               href="/about"
               variant="secondary"
               size="lg"
-              className="bg-wbk-white/80 backdrop-blur-md"
+              className="bg-wbk-white/80 backdrop-blur-md border-0"
             >
               Explore Models
             </Button>
