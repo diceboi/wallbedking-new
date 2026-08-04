@@ -23,30 +23,32 @@ const NAV_ITEMS = [
   {
     label: "Products",
     dropdown: {
-      featuredImage: {
-        src: "/images/nav-featured-beds.jpg",
-        alt: "Murphy Beds",
-        label: "Murphy Beds",
-        href: "/products/beds",
-      },
-      columns: [
+      isImageGrid: true,
+      items: [
         {
-          label: "Beds",
-          items: [
-            { label: "Murphy Beds", href: "/products/beds" },
-            { label: "Sofas", href: "/products/sofas" },
-            { label: "Mattresses", href: "/products/mattresses" },
-          ],
+          label: "Murphy Beds",
+          href: "/products/beds",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
         },
         {
-          label: "More",
-          items: [
-            { label: "Cabinets", href: "/products/cabinets" },
-            { label: "Spare Parts", href: "/products/spare-parts" },
-            { label: "Bundles", href: "/products/bundles" },
-            { label: "Other Extras", href: "/products/other-extras" },
-            { label: "Sale", href: "/products/sale" },
-          ],
+          label: "Sofas",
+          href: "/products/sofas",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        },
+        {
+          label: "Mattresses",
+          href: "/products/mattresses",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        },
+        {
+          label: "Cabinets",
+          href: "/products/cabinets",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        },
+        {
+          label: "Extras",
+          href: "/products/extras",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
         },
       ],
     },
