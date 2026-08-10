@@ -26,19 +26,19 @@ const FOOTER_LINKS = {
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-wbk-lightgrey bg-wbk-white">
+    <footer className="mt-auto border-t border-wbk-lightgrey/10 bg-wbk-black relative z-30">
       <Container className="py-16">
         <div className="grid grid-cols-2 gap-10 lg:grid-cols-4">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-1">
             <Image
-              src="/logos/WBK-Logo-Black.svg"
+              src="/logos/WBK-Logo-Gold-White.svg"
               alt="WallBedKing"
               width={130}
               height={30}
               className="h-7 w-auto"
             />
-            <p className="mt-4 text-sm leading-relaxed text-wbk-brown max-w-xs">
+            <p className="mt-4 text-sm leading-relaxed text-wbk-lightgrey/70 max-w-xs">
               Premium modular murphy beds and space-saving furniture for modern living.
             </p>
           </div>
@@ -46,7 +46,7 @@ export function Footer() {
           {/* Link columns */}
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
             <div key={title}>
-              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-wbk-brown">
+              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-wbk-gold">
                 {title}
               </p>
               <ul className="space-y-2.5">
@@ -54,7 +54,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-wbk-black transition-colors duration-150 hover:text-wbk-green"
+                      className="text-sm text-wbk-lightgrey/80 transition-colors duration-150 hover:text-wbk-white"
                     >
                       {link.label}
                     </Link>
@@ -66,15 +66,15 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-wbk-lightgrey pt-8 sm:flex-row">
-          <p className="text-xs text-wbk-brown">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-wbk-lightgrey/10 pt-8 sm:flex-row">
+          <p className="text-xs text-wbk-lightgrey/40">
             © {new Date().getFullYear()} WallBedKing. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link href="/privacy" className="text-xs text-wbk-brown hover:text-wbk-black transition-colors duration-150">
+            <Link href="/privacy" className="text-xs text-wbk-lightgrey/40 hover:text-wbk-white transition-colors duration-150">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="text-xs text-wbk-brown hover:text-wbk-black transition-colors duration-150">
+            <Link href="/terms" className="text-xs text-wbk-lightgrey/40 hover:text-wbk-white transition-colors duration-150">
               Terms of Service
             </Link>
           </div>
