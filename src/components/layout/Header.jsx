@@ -178,7 +178,7 @@ export function Header() {
             {/* Configurator button */}
             <Button
               as="link"
-              href="/configurator"
+              href="/products/beds/integrated-bed"
               variant="primary"
               size="sm"
               className="hidden lg:inline-flex bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-wbk-white shadow-sm font-medium tracking-widest uppercase"

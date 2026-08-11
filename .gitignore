@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 3D raw and intermediate files (keep only production glb)
+*.blend
+*.blend1
+*-backup.glb
+*-opt.glb
+*-webp.glb
+*-optimized.glb
+*-final.glb

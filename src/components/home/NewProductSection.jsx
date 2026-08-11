@@ -246,6 +246,8 @@ export function NewProductSection() {
       {/* ── Action Buttons Container ── */}
       <div className="relative z-30 flex items-center gap-4 mt-8 md:mt-12">
         <Button
+          as="link"
+          href="/products/beds/integrated-bed"
           variant="primary"
           size="lg"
           className="bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black"
@@ -253,6 +255,8 @@ export function NewProductSection() {
           Start configurator
         </Button>
         <Button
+          as="link"
+          href="/products/beds"
           variant="secondary"
           size="lg"
           className="bg-white/80 backdrop-blur-sm border-wbk-brown/30"

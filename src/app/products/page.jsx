@@ -22,7 +22,7 @@ const WALLBEDS_PRODUCTS = [
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/integrated-bed",
+    link: "/products/beds/integrated-bed",
   },
   {
     id: "wallbed-2",
@@ -34,7 +34,7 @@ const WALLBEDS_PRODUCTS = [
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/bed-with-sofa",
+    link: "/products/beds/bed-with-sofa",
   },
   {
     id: "wallbed-3",
@@ -46,7 +46,7 @@ const WALLBEDS_PRODUCTS = [
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/classic-wall-bed",
+    link: "/products/beds/classic-wall-bed",
   },
   {
     id: "wallbed-4",
@@ -58,7 +58,7 @@ const WALLBEDS_PRODUCTS = [
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/studio-bed",
+    link: "/products/beds/studio-bed",
   },
   {
     id: "wallbed-5",
@@ -70,19 +70,19 @@ const WALLBEDS_PRODUCTS = [
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/premium-bed",
+    link: "/products/beds/premium-bed",
   },
   {
     id: "wallbed-6",
-    title: "Premium Wall Bed",
+    title: "Luxury Murphy Bed",
     orientation: "Vertical",
     size: "160x200",
     colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£699",
+    price: "£899",
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/premium-bed",
+    link: "/products/beds/luxury-murphy-bed",
   },
 ];
 
@@ -97,7 +97,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa1.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/bed-with-sofa-studio",
+    link: "/products/sofas/bed-with-sofa",
   },
   {
     id: "sofa-2",
@@ -109,7 +109,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa2.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofa-wallbed-studio",
+    link: "/products/sofas/studio-sofa-wallbed",
   },
   {
     id: "sofa-3",
@@ -121,7 +121,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa3.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/classic-sofa-bed",
+    link: "/products/sofas/classic-sofa-bed",
   },
   {
     id: "sofa-4",
@@ -133,7 +133,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa1.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/modular-sofa-bed",
+    link: "/products/sofas/modular-sofa-bed",
   },
   {
     id: "sofa-5",
@@ -145,7 +145,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa2.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/deluxe-sofa-wallbed",
+    link: "/products/sofas/deluxe-sofa-wallbed",
   },
   {
     id: "sofa-6",
@@ -157,7 +157,7 @@ const SOFAS_PRODUCTS = [
     image: "/sofa2.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/deluxe-sofa-wallbed",
+    link: "/products/sofas/deluxe-sofa-wallbed",
   },
 ];
 
