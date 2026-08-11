@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
@@ -54,6 +54,46 @@ export default function ProductDetailPage() {
   const [styleOpen, setStyleOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [activeTab, setActiveTab] = useState("description");
+  const [customerPhotos, setCustomerPhotos] = useState([
+    {
+      src: "/sofa1.webp",
+      author: "Roz M.",
+      comment: "Looks amazing in our small apartment living room! Easy to pull down.",
+      stars: "★★★★★",
+    },
+    {
+      src: "/sofa2.webp",
+      author: "Iain D.",
+      comment: "The mechanism is solid and the framing fits nicely into our cabinets.",
+      stars: "★★★★★",
+    },
+    {
+      src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+      author: "Sarah J.",
+      comment: "Outstanding product, completely transformed our guest room.",
+      stars: "★★★★★",
+    },
+  ]);
+  const fileInputRef = useRef(null);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCustomerPhotos((prev) => [
+        {
+          src: event.target.result,
+          author: "You (Verified Buyer)",
+          comment: "My newly installed WallBedKing setup!",
+          stars: "★★★★★",
+        },
+        ...prev,
+      ]);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Mount protection
   useEffect(() => {
@@ -169,9 +209,9 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="relative h-[94vh] max-h-[94vh] flex flex-col bg-white overflow-hidden pt-20">
+    <div className="relative min-h-screen flex flex-col bg-white pt-20">
       {/* ── MAIN PRODUCT LAYOUT: FULL-SECTION CANVAS WITH TRANSPARENT SIDE PANELS ── */}
-      <section className="relative z-10 flex-1 min-h-0 flex items-center overflow-hidden pb-2">
+      <section className="relative z-10 w-full h-[85vh] min-h-[550px] flex items-center overflow-hidden pb-2">
         {/* 3D Canvas spans the full section width as a background layer, shifted up vertically */}
         <div className="absolute inset-0 z-0 flex items-center justify-center -translate-y-10 lg:-translate-y-20">
           {mounted && ready && (
@@ -450,6 +490,431 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── TABS NAVIGATION SECTION ── */}
+      <section className="relative z-20 bg-white border-t border-wbk-lightgrey/60 py-16">
+        <Container size="lg">
+          {/* Tab buttons header */}
+          <div className="flex border-b border-wbk-lightgrey/40 mb-12 overflow-x-auto scrollbar-none whitespace-nowrap">
+            {[
+              { id: "description", label: "Description" },
+              { id: "media", label: "Photos & Videos" },
+              { id: "support", label: "Support & Guides" },
+              { id: "reviews", label: "Reviews" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative py-4 px-6 font-poppins text-sm font-medium tracking-wide uppercase transition-all duration-300 cursor-pointer ${
+                  activeTab === tab.id
+                    ? "text-wbk-gold font-semibold"
+                    : "text-wbk-brown hover:text-wbk-black"
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTabUnderbar"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wbk-gold"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab contents wrapper */}
+          <div className="min-h-[250px]">
+            {/* Description Tab */}
+            {activeTab === "description" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-12"
+              >
+                <div className="space-y-6">
+                  <h3 className="font-new-york text-2xl text-wbk-black">
+                    About {activeProduct.title}
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Crafted with premium materials and absolute precision, the {activeProduct.title} is designed to be the ultimate space-saving solution for modern, multi-functional homes. Leveraging our signature SizeFlex™ & TypeFlex™ innovation, it transitions seamlessly from a clean cabinetry design to a luxurious bed setup.
+                  </p>
+                  <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold" />
+                      Premium solid carbon steel metal framework
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold" />
+                      Heavy duty counter-balance mechanism (10,000+ cycle test)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold" />
+                      Automatic self-folding leg system for safety and ease
+                    </li>
+                  </ul>
+                </div>
+                <div className="bg-[#F4F2F0]/60 p-8 rounded-2xl border border-wbk-lightgrey/40">
+                  <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-black mb-6">
+                    Specifications
+                  </h4>
+                  <table className="w-full text-xs font-poppins text-wbk-black/80 space-y-3">
+                    <tbody>
+                      <tr className="border-b border-wbk-lightgrey/40">
+                        <td className="py-2.5 font-medium">Mechanism</td>
+                        <td className="py-2.5 text-right text-wbk-brown">Gas Piston Cylinder System</td>
+                      </tr>
+                      <tr className="border-b border-wbk-lightgrey/40">
+                        <td className="py-2.5 font-medium">Bed depth (Folded)</td>
+                        <td className="py-2.5 text-right text-wbk-brown">40 cm</td>
+                      </tr>
+                      <tr className="border-b border-wbk-lightgrey/40">
+                        <td className="py-2.5 font-medium">Mattress height limit</td>
+                        <td className="py-2.5 text-right text-wbk-brown">Up to 25 cm thickness</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 font-medium">Warranty</td>
+                        <td className="py-2.5 text-right text-wbk-brown">5 Years mechanism warranty</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Photos & Videos Tab */}
+            {activeTab === "media" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-16"
+              >
+                {/* Official Gallery */}
+                <div className="space-y-6">
+                  <h3 className="font-new-york text-xl text-wbk-black">
+                    Official Product Gallery
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {galleryImages.map((img, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setLightboxIndex(idx)}
+                        className="group relative aspect-square bg-[#F4F2F0] border border-wbk-lightgrey/40 overflow-hidden rounded-xl cursor-pointer"
+                      >
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <span className="text-white text-xs font-semibold uppercase tracking-wider font-poppins">
+                            View
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Customer Shared Setups Gallery */}
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="font-new-york text-xl text-wbk-black">
+                        Customer Setup Gallery
+                      </h3>
+                      <p className="text-xs text-wbk-brown font-poppins">
+                        See how other customers styled their WallBedKing product in their homes.
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePhotoUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        className="px-5 py-2.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[10px] font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-sm cursor-pointer"
+                      >
+                        Share your setup photo
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    {/* Share setup upload placeholder card */}
+                    <div
+                      onClick={() => fileInputRef.current.click()}
+                      className="border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-xl aspect-square flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-colors group bg-[#F4F2F0]/20"
+                    >
+                      <span className="text-2xl text-wbk-brown group-hover:scale-110 transition-transform mb-2">📸</span>
+                      <span className="text-xs font-semibold text-wbk-black font-poppins uppercase tracking-wider">
+                        Upload Setup Photo
+                      </span>
+                      <span className="text-[10px] text-wbk-brown font-poppins mt-1">
+                        Show off your room design
+                      </span>
+                    </div>
+
+                    {customerPhotos.map((photo, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white border border-wbk-lightgrey/50 rounded-xl overflow-hidden shadow-xs flex flex-col justify-between group"
+                      >
+                        <div className="relative aspect-square w-full bg-[#F4F2F0] overflow-hidden">
+                          <img
+                            src={photo.src}
+                            alt={`Setup by ${photo.author}`}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
+                          />
+                        </div>
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-center justify-between text-[10px] font-poppins">
+                            <span className="font-semibold text-wbk-black">{photo.author}</span>
+                            <span className="text-wbk-gold font-bold">{photo.stars}</span>
+                          </div>
+                          <p className="text-[11px] font-poppins text-wbk-brown italic leading-relaxed">
+                            "{photo.comment}"
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Simulated Video Section */}
+                <div className="bg-[#F4F2F0]/60 p-8 rounded-2xl border border-wbk-lightgrey/40 text-center space-y-4 max-w-2xl mx-auto">
+                  <h4 className="font-new-york text-xl text-wbk-black">
+                    Watch setup guide
+                  </h4>
+                  <p className="text-xs font-poppins text-wbk-brown leading-relaxed">
+                    See how easily you can customize, open, and close the WallBedKing system in real-time.
+                  </p>
+                  <div className="relative aspect-video bg-[#E4E0DE] rounded-xl flex items-center justify-center overflow-hidden border border-wbk-lightgrey group cursor-pointer shadow-sm max-w-lg mx-auto">
+                    <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-wbk-black ml-1 text-lg">▶</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Support & Guides Tab */}
+            {activeTab === "support" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-8"
+              >
+                <div className="space-y-2">
+                  <h3 className="font-new-york text-2xl text-wbk-black">
+                    Guides & Downloads
+                  </h3>
+                  <p className="font-poppins text-xs text-wbk-brown max-w-2xl leading-relaxed">
+                    Download official step-by-step manuals, structural guidelines, and requirements in PDF format.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: "Wall Bed Installation & Assembly Manual",
+                      size: "PDF, 4.2 MB",
+                      desc: "Complete guide on drilling, frame assembly, and wall fixation.",
+                    },
+                    {
+                      title: "Gas Piston Adjustment & Tensioning Sheet",
+                      size: "PDF, 1.8 MB",
+                      desc: "Tension calculation guidelines for custom mattress loads.",
+                    },
+                    {
+                      title: "Cabinetry Mounting Specifications",
+                      size: "PDF, 2.5 MB",
+                      desc: "Clearance requirements and mounting configurations for side cabinets.",
+                    },
+                    {
+                      title: "Sofa Mechanism Integration Guide",
+                      size: "PDF, 3.1 MB",
+                      desc: "Assembly checklist for attaching and aligning the front sofa base.",
+                    },
+                  ].map((doc, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start justify-between p-6 bg-[#F4F2F0]/50 rounded-xl border border-wbk-lightgrey/40 hover:border-wbk-gold transition-colors group"
+                    >
+                      <div className="space-y-1.5 max-w-[70%]">
+                        <span className="text-[10px] font-semibold text-wbk-gold uppercase tracking-wider font-poppins">
+                          {doc.size}
+                        </span>
+                        <h4 className="font-poppins font-medium text-sm text-wbk-black">
+                          {doc.title}
+                        </h4>
+                        <p className="text-xs text-wbk-brown font-poppins leading-relaxed">
+                          {doc.desc}
+                        </p>
+                      </div>
+                      <button className="flex items-center gap-1.5 px-4 py-2 border border-wbk-black text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full hover:bg-wbk-black hover:text-white transition-all duration-300 shrink-0 cursor-pointer">
+                        Download
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Reviews Tab */}
+            {activeTab === "reviews" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-12"
+              >
+                {/* ── HIGH FIDELITY RATING BREAKDOWN BLOCK (ALZA-STYLE) ── */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 bg-white border border-wbk-lightgrey/50 p-8 rounded-2xl shadow-xs">
+                  {/* Left Column: Big score and star display */}
+                  <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4 border-b md:border-b-0 md:border-r border-wbk-lightgrey/30 pb-6 md:pb-0 md:pr-8">
+                    <div className="text-5xl font-semibold font-poppins text-wbk-black tracking-tight">
+                      4,9
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[#D2AA7C] text-xl tracking-wider select-none">
+                        ★★★★★
+                      </div>
+                      <div className="text-[11px] text-wbk-brown font-poppins">
+                        Rated by <span className="font-semibold text-wbk-black">742 buyers</span>
+                      </div>
+                    </div>
+                    <button className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer">
+                      Write a review
+                    </button>
+                  </div>
+
+                  {/* Middle Column: Star bar breakdown */}
+                  <div className="md:col-span-4 flex flex-col justify-center space-y-2">
+                    {[
+                      { stars: 5, count: 674, percent: 90 },
+                      { stars: 4, count: 50, percent: 7 },
+                      { stars: 3, count: 4, percent: 1 },
+                      { stars: 2, count: 5, percent: 1 },
+                      { stars: 1, count: 9, percent: 1 },
+                    ].map((row) => (
+                      <div key={row.stars} className="flex items-center gap-3 text-xs font-poppins">
+                        <span className="w-3 text-right font-medium text-wbk-black">{row.stars}</span>
+                        <span className="text-[#D2AA7C] text-[10px]">★</span>
+                        <div className="flex-1 h-2 bg-[#F4F2F0] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#A3A48C] rounded-full"
+                            style={{ width: `${row.percent}%` }}
+                          />
+                        </div>
+                        <span className="w-10 text-right text-wbk-brown">{row.count}x</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right Column: Key purchase feedback metrics */}
+                  <div className="md:col-span-4 flex flex-col justify-center gap-4 pl-0 md:pl-8 text-xs font-poppins">
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                        ✓
+                      </div>
+                      <div>
+                        <div className="font-semibold text-wbk-black text-sm">98%</div>
+                        <div className="text-wbk-brown text-[11px] leading-relaxed">
+                          proportion recommended by our users
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                        ⚙
+                      </div>
+                      <div>
+                        <div className="font-semibold text-wbk-black text-sm">0,06%</div>
+                        <div className="text-wbk-brown text-[11px] leading-relaxed">
+                          extremely low warranty claim rate
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                        ★
+                      </div>
+                      <div>
+                        <div className="font-semibold text-wbk-black text-sm">201</div>
+                        <div className="text-wbk-brown text-[11px] leading-relaxed">
+                          written customer evaluations
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* List of Reviews */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    {
+                      author: "Iain Donald",
+                      stars: "★★★★★",
+                      text: "Outstanding quality wall bed and excellent customer service. Straightforward installation instructions. Highly recommended if you want to save space.",
+                      date: "2 weeks ago",
+                    },
+                    {
+                      author: "Roz M",
+                      stars: "★★★★★",
+                      text: "The bed we bought is fantastic, we have a small room and it fits away perfectly. You can use your own mattress. We are really pleased with this product and would definitely recommend Wall Bed King.",
+                      date: "1 month ago",
+                    },
+                    {
+                      author: "Christopher Pettite",
+                      stars: "★★★★★",
+                      text: "I bought a bed from Wall Bed King, I have to say they have been one of the best companies I have dealt with in a long time. Prompt and helpful response to all my inquiries.",
+                      date: "3 months ago",
+                    },
+                    {
+                      author: "Catherine O'Connor",
+                      stars: "★★★★★",
+                      text: "I paid a great price for a small double bed, which made my space much better and useful and I could not be happier and more pleased with my purchase!",
+                      date: "4 months ago",
+                    },
+                  ].map((rev, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white p-6 rounded-xl border border-wbk-lightgrey/50 shadow-xs flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-wbk-gold text-xs font-semibold tracking-wider font-poppins">
+                            {rev.stars}
+                          </span>
+                          <span className="text-[10px] text-wbk-brown font-poppins uppercase">
+                            {rev.date}
+                          </span>
+                        </div>
+                        <p className="text-xs font-poppins leading-relaxed text-wbk-black/90">
+                          "{rev.text}"
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-wbk-lightgrey/20 text-xs font-poppins font-medium text-wbk-black">
+                        {rev.author}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </Container>
       </section>
