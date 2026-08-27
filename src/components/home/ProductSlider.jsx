@@ -6,11 +6,14 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { ProductCard } from "@/components/ui/ProductCard";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
+
+import { POPULAR_PRODUCTS_OVERVIEW } from "@/data/products";
 
 export function ProductSlider() {
   const [offset, setOffset] = useState(32);
@@ -22,13 +25,13 @@ export function ProductSlider() {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width >= 1548) {
-        setOffset((width - 1548) / 2 + 32); // Max-width 7xl (1280px) + padding-lg (32px)
+        setOffset((width - 1548) / 2 + 32);
       } else if (width >= 1280) {
-        setOffset(32); // lg
+        setOffset(32);
       } else if (width >= 1024) {
-        setOffset(24); // sm
+        setOffset(24);
       } else {
-        setOffset(16); // default px-4
+        setOffset(16);
       }
     };
 
@@ -37,88 +40,7 @@ export function ProductSlider() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const products = [
-    {
-      title: "MORPHY™ Bed with Sofa",
-      orientation: "Vertical",
-      size: "180x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-      price: "£799",
-      link: "/products/sofas/bed-with-sofa",
-    },
-    {
-      title: "Integrated MORPHY™ Bed",
-      orientation: "Vertical",
-      size: "180x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-      price: "£799",
-      link: "/products/beds/integrated-bed",
-    },
-    {
-      title: "Bed with sofa",
-      orientation: "Vertical",
-      size: "180x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-      price: "£799",
-      link: "/products/sofas/bed-with-sofa",
-    },
-    {
-      title: "Studio Sofa Wallbed",
-      orientation: "Vertical",
-      size: "180x200",
-      colors: ["#E4E0DE", "#D2AA7C", "#A5988E"],
-      price: "£849",
-      link: "/products/sofas/studio-sofa-wallbed",
-    },
-    {
-      title: "Classic Wall Bed",
-      orientation: "Horizontal",
-      size: "150x200",
-      colors: ["#A5988E", "#E4E0DE", "#090A0A"],
-      price: "£699",
-      link: "/products/beds/classic-wall-bed",
-    },
-    {
-      title: "Studio Murphy Bed",
-      orientation: "Vertical",
-      size: "140x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE"],
-      price: "£599",
-      link: "/products/beds/studio-bed",
-    },
-    {
-      title: "Premium Wall Bed",
-      orientation: "Vertical",
-      size: "160x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-      price: "£699",
-      link: "/products/beds/premium-bed",
-    },
-    {
-      title: "Luxury Murphy Bed",
-      orientation: "Vertical",
-      size: "160x200",
-      colors: ["#A5988E", "#090A0A"],
-      price: "£899",
-      link: "/products/beds/luxury-murphy-bed",
-    },
-    {
-      title: "Modular Sofa Bed",
-      orientation: "Vertical",
-      size: "180x200",
-      colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-      price: "£899",
-      link: "/products/sofas/modular-sofa-bed",
-    },
-    {
-      title: "Classic Wall Bed",
-      orientation: "Horizontal",
-      size: "150x200",
-      colors: ["#A5988E", "#E4E0DE", "#090A0A"],
-      price: "£699",
-      link: "/products/classic-wall-bed",
-    },
-  ];
+  const products = POPULAR_PRODUCTS_OVERVIEW;
 
   return (
     <section className="py-24 bg-white overflow-hidden">
@@ -173,56 +95,7 @@ export function ProductSlider() {
               key={idx}
               className="!w-[400px] !sm:w-[320px] !md:w-[380px] select-none"
             >
-              <Link href={prod.link} className="group block space-y-4">
-                {/* Image Box - Light grey background container */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60">
-                  {/* Primary Product Image */}
-                  <img
-                    src="/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
-                    alt={prod.title}
-                    className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0"
-                  />
-                  {/* Hover Product Image with Mattress */}
-                  <img
-                    src="/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp"
-                    alt={`${prod.title} details`}
-                    className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                  />
-                </div>
-
-                {/* Product Text Details */}
-                <div className="space-y-2 px-1">
-                  <h3 className="font-poppins font-medium text-lg text-wbk-black transition-colors duration-200 group-hover:text-wbk-gold">
-                    {prod.title}
-                  </h3>
-
-                  {/* Specs */}
-                  <div className="text-xs text-wbk-black space-y-0.5">
-                    <div>Orientation: {prod.orientation}</div>
-                    <div>Size: {prod.size}</div>
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <span>Colors:</span>
-                      <div className="flex items-center">
-                        {prod.colors.map((color, cIdx) => (
-                          <span
-                            key={cIdx}
-                            className="inline-block h-3.5 w-3.5 rounded-full border border-wbk-lightgrey/80 -mr-1"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="pt-1 text-sm text-wbk-black">
-                    from{" "}
-                    <span className="font-semibold text-base">
-                      {prod.price}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <ProductCard product={prod} />
             </SwiperSlide>
           ))}
         </Swiper>

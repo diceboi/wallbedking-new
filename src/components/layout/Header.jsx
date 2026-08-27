@@ -18,7 +18,6 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-/* ── Navigation data ─────────────────────────────────────── */
 const NAV_ITEMS = [
   {
     label: "Products",
@@ -28,26 +27,21 @@ const NAV_ITEMS = [
         {
           label: "Murphy Beds",
           href: "/products/beds",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+          image: "/product-images/morphy-integrated/160x200.jpg",
         },
         {
           label: "Sofas",
           href: "/products/sofas",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+          image: "/sofa1.webp",
         },
         {
           label: "Mattresses",
           href: "/products/mattresses",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
         },
         {
           label: "Cabinets",
           href: "/products/cabinets",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-        },
-        {
-          label: "Extras",
-          href: "/products/extras",
           image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
         },
       ],

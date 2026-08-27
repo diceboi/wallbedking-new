@@ -88,3 +88,13 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(163, 164, 140, 0.85);
 }
+
+/* ── VERTICAL GALLERY SWIPER ── */
+.vertical-gallery-swiper {
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.vertical-gallery-swiper .swiper-wrapper {
+  flex-direction: column !important;
+}

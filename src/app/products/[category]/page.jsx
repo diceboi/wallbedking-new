@@ -4,7 +4,8 @@ import { useParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { IconChevronDown } from "@tabler/icons-react";
+import { ProductCard } from "@/components/ui/ProductCard";
+import { IconChevronDown, IconFilter, Icon3dCubeSphere } from "@tabler/icons-react";
 import {
   ALL_PRODUCTS,
   CATEGORIES_INFO,
@@ -12,15 +13,17 @@ import {
 } from "@/data/products";
 
 export default function CategoryArchivePage() {
-  const { category } = useParams();
-  const currentCategory = category || "beds";
+  const params = useParams();
+  const currentCategory = params?.category || "beds";
 
   const catInfo = CATEGORIES_INFO[currentCategory] || {
     label: currentCategory.replace("-", " "),
     title: currentCategory.replace("-", " "),
+    description: "Explore our collection.",
+    subcategories: []
   };
-  const products = ALL_PRODUCTS[currentCategory] || [];
 
+  const rawCategoryProducts = ALL_PRODUCTS[currentCategory] || [];
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -30,19 +33,21 @@ export default function CategoryArchivePage() {
   // ── FILTER STATES ──
   const [selectedSize, setSelectedSize] = useState("All");
   const [selectedOrientation, setSelectedOrientation] = useState("All");
+  const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  // Dropdown options
-  const sizeOptions = ["All", "Single", "Double", "King", "Super King"];
-  const orientationOptions = ["All", "Vertical", "Horizontal"];
+  // Derive dynamic filter choices from actual data
+  const distinctSizes = ["All", ...Array.from(new Set(rawCategoryProducts.map(p => p.size).filter(Boolean)))];
+  const distinctOrientations = ["All", ...Array.from(new Set(rawCategoryProducts.map(p => p.orientation).filter(Boolean)))];
+  const distinctTypes = ["All", ...Array.from(new Set(rawCategoryProducts.map(p => p.type || p.sub_category).filter(Boolean)))];
   const priceOptions = ["All", "Under £500", "£500 - £800", "Over £800"];
 
-  // Filter logic
-  const filteredProducts = products.filter((prod) => {
+  // Filter products
+  const filteredProducts = rawCategoryProducts.filter((prod) => {
     if (selectedSize !== "All" && prod.size !== selectedSize) return false;
-    if (selectedOrientation !== "All" && prod.orientation !== selectedOrientation)
-      return false;
+    if (selectedOrientation !== "All" && prod.orientation !== selectedOrientation) return false;
+    if (selectedType !== "All" && prod.type !== selectedType && prod.sub_category !== selectedType) return false;
     if (selectedPrice !== "All") {
       const p = prod.numericPrice;
       if (selectedPrice === "Under £500" && p >= 500) return false;
@@ -52,7 +57,7 @@ export default function CategoryArchivePage() {
     return true;
   });
 
-  // Swipeable Filter Bar Scroll Logic
+  // Drag scroll for horizontal filter bar
   const scrollRef = useRef(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -92,17 +97,32 @@ export default function CategoryArchivePage() {
     <div className="bg-wbk-white min-h-screen pt-28 pb-20">
       <Container size="xl">
         {/* Category Header */}
-        <div className="mb-8">
-          <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
-            {catInfo.label}
-          </h1>
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80 mb-2">
+              <Link href="/products" className="hover:text-wbk-black transition-colors">
+                Products
+              </Link>
+              <span>/</span>
+              <span className="capitalize text-wbk-black font-medium">{catInfo.label}</span>
+            </nav>
+            <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
+              {catInfo.label}
+            </h1>
+            <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
+              {catInfo.description}
+            </p>
+          </div>
+          <div className="text-xs text-wbk-brown font-poppins">
+            Showing <span className="font-semibold text-wbk-black">{filteredProducts.length}</span> of {rawCategoryProducts.length} items
+          </div>
         </div>
 
         {/* Separator line */}
-        <hr className="border-wbk-lightgrey/60 mb-8" />
+        <hr className="border-wbk-lightgrey/60 mb-6" />
 
-        {/* Filters bar - Draggable/Swipeable container */}
-        <div className="relative mb-12 z-10">
+        {/* Filters bar - Draggable container */}
+        <div className="relative mb-10 z-10">
           <div
             ref={scrollRef}
             onMouseDown={handleMouseDown}
@@ -111,83 +131,123 @@ export default function CategoryArchivePage() {
             onMouseMove={handleMouseMove}
             className="flex items-center gap-3 overflow-x-auto scrollbar-none select-none touch-pan-x cursor-grab active:cursor-grabbing pb-2"
           >
+            {/* Type / Model Filter */}
+            {distinctTypes.length > 2 && (
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() =>
+                    setActiveDropdown(activeDropdown === "type" ? null : "type")
+                  }
+                  className="flex items-center justify-between gap-3 px-5 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap shadow-2xs"
+                >
+                  <span>Type: <strong className="font-semibold">{selectedType}</strong></span>
+                  <IconChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${
+                      activeDropdown === "type" ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {activeDropdown === "type" && (
+                  <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[160px]">
+                    {distinctTypes.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setSelectedType(opt);
+                          setActiveDropdown(null);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
+                          selectedType === opt ? "bg-wbk-lightgrey/60 font-semibold text-wbk-black" : "text-wbk-black/80"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Size Filter */}
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() =>
-                  setActiveDropdown(activeDropdown === "size" ? null : "size")
-                }
-                className="flex items-center justify-between gap-4 px-6 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap"
-              >
-                <span>Size: {selectedSize}</span>
-                <IconChevronDown
-                  size={14}
-                  className={`transition-transform duration-200 ${
-                    activeDropdown === "size" ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {activeDropdown === "size" && (
-                <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[150px]">
-                  {sizeOptions.map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => {
-                        setSelectedSize(opt);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
-                        selectedSize === opt
-                          ? "bg-wbk-lightgrey/60 font-semibold"
-                          : ""
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {distinctSizes.length > 2 && (
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() =>
+                    setActiveDropdown(activeDropdown === "size" ? null : "size")
+                  }
+                  className="flex items-center justify-between gap-3 px-5 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap shadow-2xs"
+                >
+                  <span>Size: <strong className="font-semibold">{selectedSize}</strong></span>
+                  <IconChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${
+                      activeDropdown === "size" ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {activeDropdown === "size" && (
+                  <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[160px]">
+                    {distinctSizes.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setSelectedSize(opt);
+                          setActiveDropdown(null);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
+                          selectedSize === opt ? "bg-wbk-lightgrey/60 font-semibold text-wbk-black" : "text-wbk-black/80"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Orientation Filter */}
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() =>
-                  setActiveDropdown(
-                    activeDropdown === "orientation" ? null : "orientation"
-                  )
-                }
-                className="flex items-center justify-between gap-4 px-6 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap"
-              >
-                <span>Orientation: {selectedOrientation}</span>
-                <IconChevronDown
-                  size={14}
-                  className={`transition-transform duration-200 ${
-                    activeDropdown === "orientation" ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {activeDropdown === "orientation" && (
-                <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[150px]">
-                  {orientationOptions.map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => {
-                        setSelectedOrientation(opt);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
-                        selectedOrientation === opt
-                          ? "bg-wbk-lightgrey/60 font-semibold"
-                          : ""
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {distinctOrientations.length > 2 && (
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() =>
+                    setActiveDropdown(
+                      activeDropdown === "orientation" ? null : "orientation"
+                    )
+                  }
+                  className="flex items-center justify-between gap-3 px-5 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap shadow-2xs"
+                >
+                  <span>Orientation: <strong className="font-semibold">{selectedOrientation}</strong></span>
+                  <IconChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${
+                      activeDropdown === "orientation" ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {activeDropdown === "orientation" && (
+                  <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[160px]">
+                    {distinctOrientations.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setSelectedOrientation(opt);
+                          setActiveDropdown(null);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
+                          selectedOrientation === opt
+                            ? "bg-wbk-lightgrey/60 font-semibold text-wbk-black"
+                            : "text-wbk-black/80"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Price Filter */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -195,9 +255,9 @@ export default function CategoryArchivePage() {
                 onClick={() =>
                   setActiveDropdown(activeDropdown === "price" ? null : "price")
                 }
-                className="flex items-center justify-between gap-4 px-6 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap"
+                className="flex items-center justify-between gap-3 px-5 py-2.5 border border-wbk-lightgrey rounded-full text-xs font-poppins text-wbk-black hover:border-wbk-black transition-all bg-white whitespace-nowrap shadow-2xs"
               >
-                <span>Price: {selectedPrice}</span>
+                <span>Price: <strong className="font-semibold">{selectedPrice}</strong></span>
                 <IconChevronDown
                   size={14}
                   className={`transition-transform duration-200 ${
@@ -206,7 +266,7 @@ export default function CategoryArchivePage() {
                 />
               </button>
               {activeDropdown === "price" && (
-                <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[150px]">
+                <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-wbk-lightgrey/80 rounded-2xl shadow-lg p-2 min-w-[160px]">
                   {priceOptions.map((opt) => (
                     <button
                       key={opt}
@@ -215,9 +275,7 @@ export default function CategoryArchivePage() {
                         setActiveDropdown(null);
                       }}
                       className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors hover:bg-wbk-lightgrey/40 ${
-                        selectedPrice === opt
-                          ? "bg-wbk-lightgrey/60 font-semibold"
-                          : ""
+                        selectedPrice === opt ? "bg-wbk-lightgrey/60 font-semibold text-wbk-black" : "text-wbk-black/80"
                       }`}
                     >
                       {opt}
@@ -226,70 +284,51 @@ export default function CategoryArchivePage() {
                 </div>
               )}
             </div>
+
+            {/* Reset Filters button */}
+            {(selectedSize !== "All" || selectedOrientation !== "All" || selectedType !== "All" || selectedPrice !== "All") && (
+              <button
+                onClick={() => {
+                  setSelectedSize("All");
+                  setSelectedOrientation("All");
+                  setSelectedType("All");
+                  setSelectedPrice("All");
+                }}
+                className="px-4 py-2 text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24">
-          {filteredProducts.map((prod) => (
-            <Link
-              key={prod.id}
-              href={`/products/${currentCategory}/${prod.slug || prod.id}`}
-              className="group block"
+        {filteredProducts.length === 0 ? (
+          <div className="py-20 text-center space-y-4 bg-[#F4F2F0]/40 rounded-2xl border border-wbk-lightgrey/60">
+            <p className="font-new-york text-2xl text-wbk-black">No products found</p>
+            <p className="text-xs font-poppins text-wbk-brown">Try adjusting your filters to see more results.</p>
+            <button
+              onClick={() => {
+                setSelectedSize("All");
+                setSelectedOrientation("All");
+                setSelectedType("All");
+                setSelectedPrice("All");
+              }}
+              className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full"
             >
-              {/* Product Card Image Container */}
-              <div className="relative aspect-[4/3] bg-[#EFECE9] overflow-hidden flex items-center justify-center p-8 transition-colors duration-500 group-hover:bg-[#E4E0DE]">
-                {/* Sale Tag */}
-                {prod.sale && (
-                  <span className="absolute top-4 right-4 bg-[#7A7B68] text-white text-[10px] uppercase font-poppins tracking-wider font-semibold px-2.5 py-1 z-10">
-                    {prod.sale}
-                  </span>
-                )}
-
-                {/* Primary Image */}
-                <img
-                  src={prod.image}
-                  alt={prod.title}
-                  className="w-full h-full object-contain filter brightness-95 group-hover:opacity-0 transition-opacity duration-300 z-0"
-                />
-
-                {/* Hover Image */}
-                <img
-                  src={prod.hoverImage}
-                  alt={`${prod.title} Open`}
-                  className="absolute inset-0 w-full h-full object-contain p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-1"
-                />
-              </div>
-
-              {/* Product Metadata */}
-              <div className="mt-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-new-york text-xl text-wbk-black group-hover:text-wbk-green transition-colors duration-200">
-                    {prod.title}
-                  </h3>
-                  <span className="font-poppins font-medium text-sm text-wbk-black">
-                    {prod.price}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-wbk-brown font-poppins">
-                  <span>{prod.orientation}</span>
-                  {prod.colors && (
-                    <div className="flex items-center gap-1.5">
-                      {prod.colors.map((col, idx) => (
-                        <span
-                          key={idx}
-                          className="w-3 h-3 rounded-full border border-black/10 shadow-xs inline-block"
-                          style={{ backgroundColor: col }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24">
+            {filteredProducts.map((prod) => (
+              <ProductCard
+                key={prod.id || prod.slug}
+                product={prod}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Other Categories Section */}
         <div className="mt-20 border-t border-wbk-lightgrey/80 pt-16">
@@ -297,7 +336,7 @@ export default function CategoryArchivePage() {
             Other categories
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {OTHER_CATEGORIES_LIST.filter(
               (cat) => cat.slug !== currentCategory
             ).map((otherCat) => (
@@ -306,15 +345,13 @@ export default function CategoryArchivePage() {
                 href={`/products/${otherCat.slug}`}
                 className="group flex flex-col items-center text-center"
               >
-                {/* Image Box */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center p-6 transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center p-6 transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-xl">
                   <img
                     src={otherCat.image}
                     alt={otherCat.label}
                     className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                {/* Label */}
                 <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
                   {otherCat.label}
                 </span>

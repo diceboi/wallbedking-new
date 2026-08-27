@@ -1,23 +1,36 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Container } from "@/components/ui/Container";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Mousewheel } from "swiper/modules";
+
+// Swiper CSS
+import "swiper/css";
+import "swiper/css/navigation";
+
 import {
   IconChevronDown,
+  IconChevronUp,
   IconChevronLeft,
   IconChevronRight,
   IconX,
   IconShoppingCart,
   IconArrowsUpDown,
+  IconZoomIn,
+  IconPhoto,
+  IconCheck,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
+  getProductVariants,
   getFallbackProduct,
   GLOBAL_GALLERY_TEMPLATES,
+  RAW_CATALOG,
 } from "@/data/products";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
@@ -38,34 +51,82 @@ const ConfiguratorCanvas = dynamic(
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const categorySlug = params?.category || "beds";
   const productSlug = params?.product || "integrated-bed";
 
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
 
-  // ── CUSTOMIZER STATES ──
+  // ── CUSTOMIZER & GALLERY STATES ──
   const [isFolded, setIsFolded] = useState(false);
-  const [sofaIncluded, setSofaIncluded] = useState(true);
+  const [sofaIncluded, setSofaIncluded] = useState(false);
   const [productFormat, setProductFormat] = useState("Vertical");
   const [productStyle, setProductStyle] = useState("Integrated");
-  const [productSize, setProductSize] = useState("King 160 x 200");
+  const [productSize, setProductSize] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState(null);
+
   const [formatOpen, setFormatOpen] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
+
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState("description");
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+
+  // Vertical gallery step-scrolling state & refs
+  const galleryContainerRef = useRef(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(true);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = galleryContainerRef.current;
+    if (!el) return;
+    setCanScrollUp(el.scrollTop > 4);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+  }, []);
+
+  const handleScrollGallery = useCallback((direction) => {
+    const el = galleryContainerRef.current;
+    if (!el) return;
+    const firstCard = el.querySelector("[data-gallery-card]");
+    const cardHeight = firstCard
+      ? firstCard.getBoundingClientRect().height
+      : 140;
+    const gap = 10;
+    const step = cardHeight + gap;
+
+    el.scrollBy({
+      top: direction === "down" ? step : -step,
+      behavior: "smooth",
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateScrollButtons();
+    }, 150);
+    window.addEventListener("resize", updateScrollButtons);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updateScrollButtons);
+    };
+  }, [updateScrollButtons]);
+
   const [customerPhotos, setCustomerPhotos] = useState([
     {
       src: "/sofa1.webp",
       author: "Roz M.",
-      comment: "Looks amazing in our small apartment living room! Easy to pull down.",
+      comment:
+        "Looks amazing in our small apartment living room! Easy to pull down.",
       stars: "★★★★★",
     },
     {
       src: "/sofa2.webp",
       author: "Iain D.",
-      comment: "The mechanism is solid and the framing fits nicely into our cabinets.",
+      comment:
+        "The mechanism is solid and the framing fits nicely into our cabinets.",
       stars: "★★★★★",
     },
     {
@@ -95,41 +156,91 @@ export default function ProductDetailPage() {
     reader.readAsDataURL(file);
   };
 
-  // Mount protection
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Lookup product in database
+  // Lookup active product
   const activeProduct =
     findProductBySlug(categorySlug, productSlug) ||
     getFallbackProduct(categorySlug, productSlug);
+
+  // Available variants for the family / category
+  const familyVariants = useMemo(() => {
+    return getProductVariants(activeProduct);
+  }, [
+    categorySlug,
+    productSlug,
+    activeProduct.parent_category,
+    activeProduct.type,
+  ]);
+
+  // Derived options for dropdowns based on actual products in the family
+  const availableFormats = useMemo(() => {
+    const set = new Set(
+      familyVariants.map((v) => v.orientation).filter(Boolean),
+    );
+    return set.size > 0 ? Array.from(set) : ["Vertical", "Horizontal"];
+  }, [familyVariants]);
+
+  const availableStyles = useMemo(() => {
+    if (activeProduct.parent_category === "beds") {
+      return ["Classic", "Studio", "Integrated"];
+    }
+    if (activeProduct.parent_category === "sofas") {
+      return ["Bed Front", "Free Standing"];
+    }
+    if (activeProduct.parent_category === "mattresses") {
+      return ["Comfort", "Luxury", "Supreme"];
+    }
+    if (activeProduct.parent_category === "cabinets") {
+      return ["Cabinet", "Side Unit", "Extension"];
+    }
+    const set = new Set(
+      familyVariants.map((v) => v.type || v.sub_category).filter(Boolean),
+    );
+    return set.size > 0 ? Array.from(set) : [activeProduct.type || "Standard"];
+  }, [familyVariants, activeProduct.parent_category, activeProduct.type]);
+
+  const availableSizes = useMemo(() => {
+    const matching = familyVariants.filter((v) => {
+      const matchFormat = !productFormat || v.orientation === productFormat;
+      const matchStyle =
+        !productStyle ||
+        v.type === productStyle ||
+        v.sub_category === productStyle;
+      return matchFormat && matchStyle;
+    });
+
+    if (matching.length > 0) {
+      return matching.map((v) => ({
+        label:
+          v.sizeLabel ||
+          `${v.size} ${v.width ? `${v.width / 10}x${v.length / 10}` : ""}`,
+        product: v,
+      }));
+    }
+
+    return familyVariants.map((v) => ({
+      label: v.sizeLabel || v.name,
+      product: v,
+    }));
+  }, [familyVariants, productFormat, productStyle]);
 
   // Initialize/sync customizer states when route parameters change
   useEffect(() => {
     if (!productSlug) return;
     setReady(false);
-
-    // Default sofa to Include (true)
-    setSofaIncluded(true);
+    setSelectedImageIndex(0);
 
     if (activeProduct) {
       setProductFormat(activeProduct.orientation || "Vertical");
-      const styleName = productSlug.includes("integrated")
-        ? "Integrated"
-        : productSlug.includes("classic")
-          ? "Classic"
-          : isSofa
-            ? "Sofa"
-            : "Integrated";
-      setProductStyle(styleName);
-      const sizeName =
-        activeProduct.size === "King"
-          ? "King 160 x 200"
-          : activeProduct.size === "Double"
-            ? "Double 120 x 190"
-            : "Double 120 x 160";
-      setProductSize(sizeName);
+      setProductStyle(activeProduct.type || "Integrated");
+      setProductSize(
+        activeProduct.sizeLabel || activeProduct.size || "King 160 x 200",
+      );
+      setSelectedVariant(activeProduct);
+      setSofaIncluded(activeProduct.has3D || false);
     }
 
     const timer = setTimeout(() => {
@@ -139,40 +250,68 @@ export default function ProductDetailPage() {
     return () => clearTimeout(timer);
   }, [categorySlug, productSlug]);
 
-  // Pricing calculations
-  const getBasePrice = () => {
-    let base = activeProduct.numericPrice || 799;
-    if (productSize.includes("120 x 190")) base += 50;
-    if (productSize.includes("160 x 200")) base += 100;
-    if (productStyle === "Integrated") base += 80;
-    return base;
+  // When dropdown selections change, pick matching variant
+  const handleOptionChange = (newFormat, newStyle, newSizeLabel) => {
+    const fmt = newFormat ?? productFormat;
+    const sty = newStyle ?? productStyle;
+    const sz = newSizeLabel ?? productSize;
+
+    if (newFormat !== undefined) setProductFormat(newFormat);
+    if (newStyle !== undefined) setProductStyle(newStyle);
+    if (newSizeLabel !== undefined) setProductSize(newSizeLabel);
+
+    const match =
+      familyVariants.find((v) => {
+        const mFmt = v.orientation === fmt;
+        const mSty = v.type === sty || v.sub_category === sty;
+        const mSz = v.sizeLabel === sz || v.size === sz;
+        return mFmt && mSty && mSz;
+      }) ||
+      familyVariants.find((v) => v.type === sty && v.orientation === fmt) ||
+      familyVariants[0];
+
+    if (match) {
+      setSelectedVariant(match);
+      if (match.sizeLabel) setProductSize(match.sizeLabel);
+    }
   };
 
-  const getSofaSurcharge = () => {
-    return sofaIncluded ? 280 : 0;
-  };
+  // Current display product is selectedVariant or activeProduct
+  const displayProduct = selectedVariant || activeProduct;
+  const has3D = Boolean(
+    displayProduct?.has3D ||
+    displayProduct?.type === "Integrated" ||
+    productSlug === "integrated-bed",
+  );
 
-  const totalDecimal = getBasePrice() + getSofaSurcharge();
+  // Dynamic pricing
+  const currentPrice =
+    displayProduct?.price_gbp || displayProduct?.numericPrice || 799;
+  const sofaSurcharge = has3D && sofaIncluded ? 280 : 0;
+  const totalDecimal = currentPrice + sofaSurcharge;
 
-  // Dynamic gallery images (uses product-specific gallery if provided, otherwise template)
+  // Dynamic gallery images
   const galleryImages =
-    activeProduct.gallery && activeProduct.gallery.length > 0
-      ? activeProduct.gallery
+    displayProduct.gallery && displayProduct.gallery.length > 0
+      ? displayProduct.gallery
       : [
           {
-            src: activeProduct.image,
-            alt: `${activeProduct.title} Primary View`,
+            src: displayProduct.image,
+            alt: `${displayProduct.title} Primary View`,
           },
           {
-            src: activeProduct.hoverImage,
-            alt: `${activeProduct.title} Open View`,
+            src: displayProduct.hover_image || displayProduct.hoverImage,
+            alt: `${displayProduct.title} Open View`,
           },
           ...GLOBAL_GALLERY_TEMPLATES.filter(
             (img) =>
-              img.src !== activeProduct.image &&
-              img.src !== activeProduct.hoverImage,
+              img.src !== displayProduct.image &&
+              img.src !== displayProduct.hover_image,
           ),
         ];
+
+  const currentMainImage =
+    galleryImages[selectedImageIndex] || galleryImages[0];
 
   const handlePrevImage = (e) => {
     e.stopPropagation();
@@ -209,25 +348,27 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-white pt-20">
-      {/* ── MAIN PRODUCT LAYOUT: FULL-SECTION CANVAS WITH TRANSPARENT SIDE PANELS ── */}
-      <section className="relative z-10 w-full h-[85vh] min-h-[550px] flex items-center overflow-hidden pb-2">
-        {/* 3D Canvas spans the full section width as a background layer, shifted up vertically */}
-        <div className="absolute inset-0 z-0 flex items-center justify-center -translate-y-10 lg:-translate-y-20">
-          {mounted && ready && (
-            <ConfiguratorCanvas
-              key={`${categorySlug}-${productSlug}`}
-              isFolded={isFolded}
-              sofaIncluded={sofaIncluded}
-            />
-          )}
-        </div>
+    <div className="relative min-h-screen flex flex-col bg-white pt-12 pb-20">
+      {/* ── MAIN PRODUCT SECTION ── */}
+      <section className="relative z-10 w-full min-h-[620px] lg:h-[86vh] flex items-center overflow-hidden pb-4">
+        {/* If 3D is active: 3D Canvas spans full section width as interactive background layer */}
+        {has3D && (
+          <div className="absolute inset-0 z-0 flex items-center justify-center -translate-y-10 lg:-translate-y-20">
+            {mounted && ready && (
+              <ConfiguratorCanvas
+                key={`${categorySlug}-${productSlug}-${displayProduct.slug}`}
+                isFolded={isFolded}
+                sofaIncluded={sofaIncluded}
+              />
+            )}
+          </div>
+        )}
 
-        {/* Floating UI Grid on top (transparent columns, pointer events pass to canvas on empty areas) */}
+        {/* Floating UI Grid on top */}
         <Container className="w-full h-full relative z-10 pointer-events-none flex flex-col justify-between py-1">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch h-full">
-            {/* ── LEFT COLUMN: CUSTOMIZATION CONTROLS (TRANSPARENT BACKGROUND) ── */}
-            <div className="lg:col-span-3 flex flex-col justify-start space-y-6 pointer-events-auto h-full overflow-y-auto custom-scrollbar pr-1">
+            {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS ── */}
+            <div className="lg:col-span-3 flex flex-col justify-between space-y-5 pointer-events-auto h-full overflow-y-auto custom-scrollbar pr-1">
               <div className="space-y-3">
                 {/* Breadcrumbs */}
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
@@ -247,18 +388,25 @@ export default function ProductDetailPage() {
                 </nav>
 
                 {/* Title */}
-                <div className="space-y-2">
-                  <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black leading-tight">
-                    {activeProduct.title}
+                <div className="space-y-1">
+                  <h1 className="font-new-york text-4xl sm:text-5xl text-wbk-black leading-tight tracking-tight">
+                    {displayProduct.title || displayProduct.name}
                   </h1>
-                  <p className="font-poppins text-md font-light text-wbk-black">
-                    {productSize}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs font-poppins text-wbk-brown">
+                    <span>{productSize}</span>
+                    {has3D && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wbk-green/30 text-wbk-black font-semibold text-[10px]">
+                        3D View
+                      </span>
+                    )}
+                  </div>
                 </div>
+              </div>
 
-                {/* Dropdowns */}
-                <div className="space-y-2.5">
-                  {/* Format */}
+              {/* Dropdowns */}
+              <div className="space-y-2.5 pt-1">
+                {/* Format / Orientation */}
+                {availableFormats.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       Format:
@@ -269,21 +417,25 @@ export default function ProductDetailPage() {
                         setStyleOpen(false);
                         setSizeOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/40 hover:bg-white/70 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
                     >
                       <span>{productFormat}</span>
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {formatOpen && (
                       <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs">
-                        {["Vertical", "Horizontal"].map((item) => (
+                        {availableFormats.map((item) => (
                           <button
                             key={item}
                             onClick={() => {
-                              setProductFormat(item);
+                              handleOptionChange(item, undefined, undefined);
                               setFormatOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium text-wbk-black transition-colors"
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors ${
+                              productFormat === item
+                                ? "text-wbk-gold font-semibold"
+                                : "text-wbk-black"
+                            }`}
                           >
                             {item}
                           </button>
@@ -291,8 +443,10 @@ export default function ProductDetailPage() {
                       </div>
                     )}
                   </div>
+                )}
 
-                  {/* Style */}
+                {/* Style / Type */}
+                {availableStyles.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       Style:
@@ -303,21 +457,25 @@ export default function ProductDetailPage() {
                         setFormatOpen(false);
                         setSizeOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/40 hover:bg-white/70 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
                     >
                       <span>{productStyle}</span>
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {styleOpen && (
                       <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs">
-                        {["Integrated", "Classic", "Sofa"].map((item) => (
+                        {availableStyles.map((item) => (
                           <button
                             key={item}
                             onClick={() => {
-                              setProductStyle(item);
+                              handleOptionChange(undefined, item, undefined);
                               setStyleOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium text-wbk-black transition-colors"
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors ${
+                              productStyle === item
+                                ? "text-wbk-gold font-semibold"
+                                : "text-wbk-black"
+                            }`}
                           >
                             {item}
                           </button>
@@ -325,8 +483,10 @@ export default function ProductDetailPage() {
                       </div>
                     )}
                   </div>
+                )}
 
-                  {/* Size */}
+                {/* Size */}
+                {availableSizes.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       Size:
@@ -337,34 +497,52 @@ export default function ProductDetailPage() {
                         setFormatOpen(false);
                         setStyleOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/40 hover:bg-white/70 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
                     >
-                      <span>{productSize}</span>
-                      <IconChevronDown size={14} className="text-wbk-brown" />
+                      <span className="truncate">
+                        {productSize || availableSizes[0]?.label}
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className="text-wbk-brown shrink-0 ml-1"
+                      />
                     </button>
                     {sizeOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs">
-                        {[
-                          "Double 120 x 160",
-                          "Double 120 x 190",
-                          "King 160 x 200",
-                        ].map((item) => (
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-y-auto max-h-56 text-xs">
+                        {availableSizes.map((item, idx) => (
                           <button
-                            key={item}
+                            key={idx}
                             onClick={() => {
-                              setProductSize(item);
+                              handleOptionChange(
+                                undefined,
+                                undefined,
+                                item.label,
+                              );
+                              if (item.product)
+                                setSelectedVariant(item.product);
                               setSizeOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium text-wbk-black transition-colors"
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between ${
+                              productSize === item.label
+                                ? "text-wbk-gold font-semibold"
+                                : "text-wbk-black"
+                            }`}
                           >
-                            {item}
+                            <span>{item.label}</span>
+                            {item.product?.price_gbp && (
+                              <span className="text-[11px] text-wbk-brown font-poppins">
+                                £{item.product.price_gbp}
+                              </span>
+                            )}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
+                )}
 
-                  {/* Sofa toggle */}
+                {/* Sofa toggle (shown when 3D or sofa model) */}
+                {has3D && (
                   <div className="pt-0.5">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       + Sofa:
@@ -416,77 +594,148 @@ export default function ProductDetailPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Spec description */}
-              <div className="pt-3 border-t border-wbk-lightgrey/40">
-                <p className="text-[14px] text-wbk-black leading-relaxed font-poppins">
-                  Morphy isn't just a bed – it's a complete modular sleeping
-                  system with SizeFlex™ & TypeFlex™ innovation.
+              <div className="pt-2">
+                <p className="text-[13px] text-wbk-black leading-relaxed font-poppins">
+                  {displayProduct.description ||
+                    "The Classic Wall Bed is a practical and durable space-saving solution for bedrooms, guest rooms and multifunctional spaces."}
                 </p>
               </div>
+            </div>
 
-              {/* Price + Cart */}
-              <div className="space-y-2 pt-3 border-t border-wbk-lightgrey/40 shrink-0">
-                <div className="font-poppins flex items-baseline justify-between">
-                  <span className="text-[10px] uppercase tracking-widest text-wbk-brown font-medium">
-                    Total
-                  </span>
-                  <span className="font-bold text-wbk-black text-2xl leading-none">
-                    £{totalDecimal}
+            {/* ── CENTER COLUMN: 3D CONTROLS OR 2D MAIN IMAGE DISPLAY ── */}
+            <div className="lg:col-span-7 relative min-h-[340px] lg:min-h-0 flex flex-col justify-center items-center pointer-events-none">
+              {has3D ? (
+                /* 3D Mode Top Controls */
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex flex-col items-center gap-1.5">
+                  <button
+                    onClick={() => setIsFolded(!isFolded)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
+                  >
+                    <IconArrowsUpDown size={13} className="animate-pulse" />
+                    {isFolded ? "Open Bed" : "Close Bed"}
+                  </button>
+                  <p className="text-[10px] text-wbk-brown/70 font-poppins select-none pointer-events-none hidden md:block">
+                    ← Drag to rotate 3D view →
+                  </p>
+                </div>
+              ) : (
+                /* Non-3D Mode: High-Impact Center Main Image */
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 pointer-events-auto">
+                  <div
+                    onClick={() => setLightboxIndex(selectedImageIndex)}
+                    className="relative group w-full max-w-[560px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-2xl border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={currentMainImage?.src || selectedImageIndex}
+                        src={currentMainImage?.src}
+                        alt={currentMainImage?.alt || displayProduct.title}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="max-h-full max-w-full object-contain filter drop-shadow-xs select-none"
+                      />
+                    </AnimatePresence>
+
+                    <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs shadow-md">
+                      <IconZoomIn size={13} />
+                      <span>Click to zoom</span>
+                    </div>
+
+                    <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs">
+                      <IconPhoto size={12} className="text-wbk-brown" />
+                      <span>
+                        {selectedImageIndex + 1} / {galleryImages.length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY ── */}
+            <div className="lg:col-span-2 flex flex-col justify-between pointer-events-auto h-full overflow-hidden">
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between pb-2 shrink-0 border-b border-wbk-lightgrey/40">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                    Gallery ({galleryImages.length})
+                  </p>
+                  <span className="text-[10px] text-wbk-brown/70 font-poppins">
+                    {has3D ? "Photos" : "Select view"}
                   </span>
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md group">
-                  <IconShoppingCart
-                    size={14}
-                    className="transition-transform duration-200 group-hover:scale-110"
-                  />
-                  Add to cart
-                </button>
-              </div>
-            </div>
 
-            {/* ── CENTER COLUMN: SPACER & FOLD BUTTON ── */}
-            <div className="lg:col-span-7 relative min-h-[220px] lg:min-h-0 flex flex-col justify-end items-center pointer-events-none pb-2">
-              {/* Fold/Unfold button */}
-              <div className="pointer-events-auto flex flex-col items-center gap-4 mb-20">
-                {/* Drag hint */}
-                <p className="text-[12px] text-wbk-brown/60 font-poppins select-none pointer-events-none hidden md:block">
-                  ← Drag to rotate →
-                </p>
-                <button
-                  onClick={() => setIsFolded(!isFolded)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
-                >
-                  <IconArrowsUpDown size={13} className="animate-pulse" />
-                  {isFolded ? "Open" : "Close"}
-                </button>
-              </div>
-            </div>
+                <div className="relative flex-1 flex flex-col items-center justify-between py-2 min-h-0">
+                  {/* Up Arrow - Scroll 1 full image step up */}
+                  <button
+                    type="button"
+                    onClick={() => handleScrollGallery("up")}
+                    disabled={!canScrollUp}
+                    className="w-full flex items-center justify-center py-1.5 text-wbk-brown hover:text-wbk-black transition-colors shrink-0 cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
+                    aria-label="Previous gallery image"
+                  >
+                    <IconChevronUp size={18} />
+                  </button>
 
-            {/* ── RIGHT COLUMN: GALLERY + PRICE + CART (COMPACT SIZE, TRANSPARENT) ── */}
-            <div className="lg:col-span-2 flex flex-col justify-between gap-3 pointer-events-auto h-full overflow-hidden">
-              {/* Gallery 2-col scrollable grid */}
-              <div className="flex flex-col gap-1.5 min-h-0 flex-1 overflow-hidden">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins shrink-0">
-                  Gallery ({galleryImages.length})
-                </p>
-                <div className="grid grid-cols-2 gap-2 overflow-y-auto custom-scrollbar p-0.5">
-                  {galleryImages.map((img, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setLightboxIndex(idx)}
-                      className="relative w-full aspect-square rounded-md overflow-hidden bg-white/70 hover:bg-white border border-wbk-lightgrey/80 hover:border-wbk-green shadow-xs transition-all duration-200 group cursor-pointer focus:outline-none"
-                    >
-                      <img
-                        src={img.src}
-                        alt={img.alt}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </button>
-                  ))}
+                  {/* Vertical Scroll Container - Constrained to ~140-150px thumbnail size */}
+                  <div
+                    ref={galleryContainerRef}
+                    onScroll={updateScrollButtons}
+                    className="w-full flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center gap-2.5 my-1 pr-0.5"
+                  >
+                    {galleryImages.map((img, idx) => {
+                      const isSelected = !has3D && idx === selectedImageIndex;
+                      return (
+                        <div
+                          key={idx}
+                          data-gallery-card
+                          className="w-full max-w-[140px] xl:max-w-[150px] aspect-square shrink-0 mx-auto"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (has3D) {
+                                setLightboxIndex(idx);
+                              } else {
+                                setSelectedImageIndex(idx);
+                              }
+                            }}
+                            className={`relative w-full h-full aspect-square rounded-xl overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
+                              isSelected
+                                ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs opacity-100 scale-[0.98]"
+                                : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={img.src}
+                              alt={img.alt}
+                              className="w-full h-full object-cover object-center rounded-lg group-hover:scale-105 transition-transform duration-300"
+                              onLoad={updateScrollButtons}
+                            />
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Down Arrow - Scroll 1 full image step down */}
+                  <button
+                    type="button"
+                    onClick={() => handleScrollGallery("down")}
+                    disabled={!canScrollDown}
+                    className="w-full flex items-center justify-center py-1.5 text-wbk-brown hover:text-wbk-black transition-colors shrink-0 cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
+                    aria-label="Next gallery image"
+                  >
+                    <IconChevronDown size={18} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -494,10 +743,101 @@ export default function ProductDetailPage() {
         </Container>
       </section>
 
+      {/* ── RATINGS & REVIEWS SUMMARY SECTION ── */}
+      <Container size="xl" className="pt-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 bg-white border border-wbk-lightgrey/50 p-8 rounded-2xl shadow-xs">
+          <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4 border-b md:border-b-0 md:border-r border-wbk-lightgrey/30 pb-6 md:pb-0 md:pr-8">
+            <div className="text-5xl font-semibold font-poppins text-wbk-black tracking-tight">
+              4,9
+            </div>
+            <div className="space-y-1">
+              <div className="text-[#D2AA7C] text-xl tracking-wider select-none">
+                ★★★★★
+              </div>
+              <div className="text-[11px] text-wbk-brown font-poppins">
+                Rated by{" "}
+                <span className="font-semibold text-wbk-black">742 buyers</span>
+              </div>
+            </div>
+            <button className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer">
+              Write a review
+            </button>
+          </div>
+
+          <div className="md:col-span-4 flex flex-col justify-center space-y-2">
+            {[
+              { stars: 5, count: 674, percent: 90 },
+              { stars: 4, count: 50, percent: 7 },
+              { stars: 3, count: 4, percent: 1 },
+              { stars: 2, count: 5, percent: 1 },
+              { stars: 1, count: 9, percent: 1 },
+            ].map((row) => (
+              <div
+                key={row.stars}
+                className="flex items-center gap-3 text-xs font-poppins"
+              >
+                <span className="w-3 text-right font-medium text-wbk-black">
+                  {row.stars}
+                </span>
+                <span className="text-[#D2AA7C] text-[10px]">★</span>
+                <div className="flex-1 h-2 bg-[#F4F2F0] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#A3A48C] rounded-full"
+                    style={{ width: `${row.percent}%` }}
+                  />
+                </div>
+                <span className="w-10 text-right text-wbk-brown">
+                  {row.count}x
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="md:col-span-4 flex flex-col justify-center gap-4 pl-0 md:pl-8 text-xs font-poppins">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                ✓
+              </div>
+              <div>
+                <div className="font-semibold text-wbk-black text-sm">98%</div>
+                <div className="text-wbk-brown text-[11px] leading-relaxed">
+                  proportion recommended by our users
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                ⚙
+              </div>
+              <div>
+                <div className="font-semibold text-wbk-black text-sm">
+                  0,06%
+                </div>
+                <div className="text-wbk-brown text-[11px] leading-relaxed">
+                  extremely low warranty claim rate
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
+                ★
+              </div>
+              <div>
+                <div className="font-semibold text-wbk-black text-sm">201</div>
+                <div className="text-wbk-brown text-[11px] leading-relaxed">
+                  written customer evaluations
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+
       {/* ── TABS NAVIGATION SECTION ── */}
-      <section className="relative z-20 bg-white border-t border-wbk-lightgrey/60 py-16">
-        <Container size="lg">
-          {/* Tab buttons header */}
+      <section className="relative z-20 bg-white py-16">
+        <Container size="xl">
           <div className="flex border-b border-wbk-lightgrey/40 mb-12 overflow-x-auto scrollbar-none whitespace-nowrap">
             {[
               { id: "description", label: "Description" },
@@ -526,7 +866,6 @@ export default function ProductDetailPage() {
             ))}
           </div>
 
-          {/* Tab contents wrapper */}
           <div className="min-h-[250px]">
             {/* Description Tab */}
             {activeTab === "description" && (
@@ -538,10 +877,11 @@ export default function ProductDetailPage() {
               >
                 <div className="space-y-6">
                   <h3 className="font-new-york text-2xl text-wbk-black">
-                    About {activeProduct.title}
+                    About {displayProduct.title || displayProduct.name}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Crafted with premium materials and absolute precision, the {activeProduct.title} is designed to be the ultimate space-saving solution for modern, multi-functional homes. Leveraging our signature SizeFlex™ & TypeFlex™ innovation, it transitions seamlessly from a clean cabinetry design to a luxurious bed setup.
+                    {displayProduct.description ||
+                      "The Morphy Wall Bed is a flexible modular sleeping system designed to adapt to changing spaces and needs."}
                   </p>
                   <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
                     <li className="flex items-center gap-2">
@@ -560,25 +900,95 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="bg-[#F4F2F0]/60 p-8 rounded-2xl border border-wbk-lightgrey/40">
                   <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-black mb-6">
-                    Specifications
+                    Technical Specifications
                   </h4>
                   <table className="w-full text-xs font-poppins text-wbk-black/80 space-y-3">
                     <tbody>
                       <tr className="border-b border-wbk-lightgrey/40">
                         <td className="py-2.5 font-medium">Mechanism</td>
-                        <td className="py-2.5 text-right text-wbk-brown">Gas Piston Cylinder System</td>
+                        <td className="py-2.5 text-right text-wbk-brown">
+                          Gas Piston Cylinder System
+                        </td>
                       </tr>
-                      <tr className="border-b border-wbk-lightgrey/40">
-                        <td className="py-2.5 font-medium">Bed depth (Folded)</td>
-                        <td className="py-2.5 text-right text-wbk-brown">40 cm</td>
-                      </tr>
-                      <tr className="border-b border-wbk-lightgrey/40">
-                        <td className="py-2.5 font-medium">Mattress height limit</td>
-                        <td className="py-2.5 text-right text-wbk-brown">Up to 25 cm thickness</td>
-                      </tr>
+                      {displayProduct.width && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Mattress Size (W x L)
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.width / 10} x{" "}
+                            {displayProduct.length
+                              ? displayProduct.length / 10
+                              : 200}{" "}
+                            cm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.frame_width && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">Frame width</td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.frame_width} mm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.folded_up_height && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Folded up height
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.folded_up_height} mm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.folded_up_projection && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Bed depth (Folded)
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.folded_up_projection} mm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.folded_down_projection && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Bed depth (Open)
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.folded_down_projection} mm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.mounting_frame_height && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Mounting frame height
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.mounting_frame_height} mm
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.maximum_mattress_depth && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            Max mattress thickness
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            Up to {displayProduct.maximum_mattress_depth / 10}{" "}
+                            cm
+                          </td>
+                        </tr>
+                      )}
                       <tr>
                         <td className="py-2.5 font-medium">Warranty</td>
-                        <td className="py-2.5 text-right text-wbk-brown">5 Years mechanism warranty</td>
+                        <td className="py-2.5 text-right text-wbk-brown">
+                          {displayProduct.warranty ||
+                            "Lifetime mechanism warranty"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -594,7 +1004,6 @@ export default function ProductDetailPage() {
                 exit={{ opacity: 0 }}
                 className="space-y-16"
               >
-                {/* Official Gallery */}
                 <div className="space-y-6">
                   <h3 className="font-new-york text-xl text-wbk-black">
                     Official Product Gallery
@@ -621,7 +1030,7 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Customer Shared Setups Gallery */}
+                {/* Customer Setup Gallery */}
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
@@ -629,7 +1038,8 @@ export default function ProductDetailPage() {
                         Customer Setup Gallery
                       </h3>
                       <p className="text-xs text-wbk-brown font-poppins">
-                        See how other customers styled their WallBedKing product in their homes.
+                        See how other customers styled their WallBedKing product
+                        in their homes.
                       </p>
                     </div>
                     <div>
@@ -650,12 +1060,13 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    {/* Share setup upload placeholder card */}
                     <div
                       onClick={() => fileInputRef.current.click()}
                       className="border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-xl aspect-square flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-colors group bg-[#F4F2F0]/20"
                     >
-                      <span className="text-2xl text-wbk-brown group-hover:scale-110 transition-transform mb-2">📸</span>
+                      <span className="text-2xl text-wbk-brown group-hover:scale-110 transition-transform mb-2">
+                        📸
+                      </span>
                       <span className="text-xs font-semibold text-wbk-black font-poppins uppercase tracking-wider">
                         Upload Setup Photo
                       </span>
@@ -678,8 +1089,12 @@ export default function ProductDetailPage() {
                         </div>
                         <div className="p-4 space-y-2">
                           <div className="flex items-center justify-between text-[10px] font-poppins">
-                            <span className="font-semibold text-wbk-black">{photo.author}</span>
-                            <span className="text-wbk-gold font-bold">{photo.stars}</span>
+                            <span className="font-semibold text-wbk-black">
+                              {photo.author}
+                            </span>
+                            <span className="text-wbk-gold font-bold">
+                              {photo.stars}
+                            </span>
                           </div>
                           <p className="text-[11px] font-poppins text-wbk-brown italic leading-relaxed">
                             "{photo.comment}"
@@ -690,13 +1105,14 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Simulated Video Section */}
+                {/* Setup Video Guide */}
                 <div className="bg-[#F4F2F0]/60 p-8 rounded-2xl border border-wbk-lightgrey/40 text-center space-y-4 max-w-2xl mx-auto">
                   <h4 className="font-new-york text-xl text-wbk-black">
                     Watch setup guide
                   </h4>
                   <p className="text-xs font-poppins text-wbk-brown leading-relaxed">
-                    See how easily you can customize, open, and close the WallBedKing system in real-time.
+                    See how easily you can customize, open, and close the
+                    WallBedKing system in real-time.
                   </p>
                   <div className="relative aspect-video bg-[#E4E0DE] rounded-xl flex items-center justify-center overflow-hidden border border-wbk-lightgrey group cursor-pointer shadow-sm max-w-lg mx-auto">
                     <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
@@ -720,7 +1136,8 @@ export default function ProductDetailPage() {
                     Guides & Downloads
                   </h3>
                   <p className="font-poppins text-xs text-wbk-brown max-w-2xl leading-relaxed">
-                    Download official step-by-step manuals, structural guidelines, and requirements in PDF format.
+                    Download official step-by-step manuals, structural
+                    guidelines, and requirements in PDF format.
                   </p>
                 </div>
 
@@ -779,90 +1196,6 @@ export default function ProductDetailPage() {
                 exit={{ opacity: 0 }}
                 className="space-y-12"
               >
-                {/* ── HIGH FIDELITY RATING BREAKDOWN BLOCK (ALZA-STYLE) ── */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 bg-white border border-wbk-lightgrey/50 p-8 rounded-2xl shadow-xs">
-                  {/* Left Column: Big score and star display */}
-                  <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4 border-b md:border-b-0 md:border-r border-wbk-lightgrey/30 pb-6 md:pb-0 md:pr-8">
-                    <div className="text-5xl font-semibold font-poppins text-wbk-black tracking-tight">
-                      4,9
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[#D2AA7C] text-xl tracking-wider select-none">
-                        ★★★★★
-                      </div>
-                      <div className="text-[11px] text-wbk-brown font-poppins">
-                        Rated by <span className="font-semibold text-wbk-black">742 buyers</span>
-                      </div>
-                    </div>
-                    <button className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer">
-                      Write a review
-                    </button>
-                  </div>
-
-                  {/* Middle Column: Star bar breakdown */}
-                  <div className="md:col-span-4 flex flex-col justify-center space-y-2">
-                    {[
-                      { stars: 5, count: 674, percent: 90 },
-                      { stars: 4, count: 50, percent: 7 },
-                      { stars: 3, count: 4, percent: 1 },
-                      { stars: 2, count: 5, percent: 1 },
-                      { stars: 1, count: 9, percent: 1 },
-                    ].map((row) => (
-                      <div key={row.stars} className="flex items-center gap-3 text-xs font-poppins">
-                        <span className="w-3 text-right font-medium text-wbk-black">{row.stars}</span>
-                        <span className="text-[#D2AA7C] text-[10px]">★</span>
-                        <div className="flex-1 h-2 bg-[#F4F2F0] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#A3A48C] rounded-full"
-                            style={{ width: `${row.percent}%` }}
-                          />
-                        </div>
-                        <span className="w-10 text-right text-wbk-brown">{row.count}x</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Right Column: Key purchase feedback metrics */}
-                  <div className="md:col-span-4 flex flex-col justify-center gap-4 pl-0 md:pl-8 text-xs font-poppins">
-                    <div className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
-                        ✓
-                      </div>
-                      <div>
-                        <div className="font-semibold text-wbk-black text-sm">98%</div>
-                        <div className="text-wbk-brown text-[11px] leading-relaxed">
-                          proportion recommended by our users
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
-                        ⚙
-                      </div>
-                      <div>
-                        <div className="font-semibold text-wbk-black text-sm">0,06%</div>
-                        <div className="text-wbk-brown text-[11px] leading-relaxed">
-                          extremely low warranty claim rate
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-[#A3A48C]/10 text-[#A3A48C] flex items-center justify-center text-xs shrink-0 mt-0.5 select-none font-bold">
-                        ★
-                      </div>
-                      <div>
-                        <div className="font-semibold text-wbk-black text-sm">201</div>
-                        <div className="text-wbk-brown text-[11px] leading-relaxed">
-                          written customer evaluations
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* List of Reviews */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[
                     {
@@ -919,6 +1252,365 @@ export default function ProductDetailPage() {
         </Container>
       </section>
 
+      {/* ── MORPHY / BED FEATURE BLOCKS & VIDEO SECTION ── */}
+      {(categorySlug === "beds" ||
+        activeProduct?.parent_category === "beds" ||
+        has3D) && (
+        <section className="relative z-20 bg-white py-20 border-t border-wbk-lightgrey/40">
+          <Container size="xl" className="space-y-20">
+            {/* Section Header */}
+            <div className="text-center max-w-3xl mx-auto space-y-4">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                System Innovations & Features
+              </span>
+              <h2 className="font-new-york text-4xl sm:text-5xl lg:text-6xl text-wbk-black leading-tight tracking-tight">
+                Say hello to Morphy
+              </h2>
+              <p className="font-poppins text-sm text-wbk-brown leading-relaxed">
+                The next generation of modular and adaptable wall bed systems by
+                Wall Bed King.
+              </p>
+            </div>
+
+            {/* Video Showcase (Clean background-less) */}
+            <div className="space-y-6 pb-12 border-b border-wbk-lightgrey/40">
+              <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black/90 shadow-md">
+                <iframe
+                  title="Discover Morphy – Modular Bed System"
+                  src="https://www.youtube.com/embed/VJba8mH8WTk?showinfo=0&rel=0"
+                  className="absolute inset-0 w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+
+            {/* Alternating Left/Right Feature Rows (No background boxes, clean dividers) */}
+            <div className="space-y-16">
+              {/* Feature 1: Two ways to flex your space (Cinematic Video Banner with Title Overlay & Description Below) */}
+              <div className="space-y-8 pb-16 border-b border-wbk-lightgrey/40">
+                {/* Video Card with Overlay Title */}
+                <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-3xl overflow-hidden shadow-xl border border-wbk-lightgrey/40 bg-black group">
+                  <video
+                    src="/videos/morphy-indiegogo-trailer.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover select-none"
+                  />
+                  {/* Dark gradient overlay for crystal-clear title readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+
+                  {/* Overlaid Title Content */}
+                  <div className="absolute inset-0 p-8 sm:p-12 md:p-16 flex flex-col justify-end items-center">
+                    <span className="text-[11px] sm:text-xs uppercase tracking-widest font-semibold text-wbk-gold font-poppins mb-2 drop-shadow-sm">
+                      Flexibility
+                    </span>
+                    <h3 className="font-new-york text-3xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight max-w-3xl drop-shadow-md">
+                      Two ways to flex your space
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Subtitle / Paragraph Description below the video in container width */}
+                <p className="font-poppins text-sm sm:text-sm text-wbk-black/85 leading-relaxed text-center">
+                  Morphy isn’t just a bed — it’s a complete, next-generation
+                  modular sleeping system designed to adapt to your life. With
+                  our SizeFlex™ and TypeFlex™ innovations, one frame can
+                  transform, resize, and reimagine itself. Whether you move
+                  homes, grow your family, or simply want a new look, your
+                  Morphy evolves with you — without compromise.
+                </p>
+              </div>
+
+              {/* Card 2: SizeFlex™ */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
+                  <span className="text-3xl mb-2">📐</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
+                    Image Slot — SizeFlex™
+                  </span>
+                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
+                    Add custom image here
+                  </span>
+                </div>
+                <div className="lg:col-span-5 space-y-4 lg:order-2">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                    SizeFlex™ Innovation
+                  </span>
+                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                    SizeFlex™ — your bed that grows with you
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Why buy a new bed every time your needs change? With
+                    SizeFlex™, your Morphy can grow from Single to Double,
+                    Queen, or even King size — all using the same base
+                    components. Our modular frame system features universal
+                    parts that connect and expand easily. When you’re ready for
+                    a bigger bed, simply order the additional modules you need
+                    and reconfigure your existing frame — no need to replace the
+                    whole system. Morphy currently supports 16 different size
+                    configurations.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3: TypeFlex™ */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
+                <div className="lg:col-span-5 space-y-4">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                    TypeFlex™ Adaptability
+                  </span>
+                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                    TypeFlex™ — reimagine your space, your way
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Your Morphy isn’t limited to one purpose. With TypeFlex™,
+                    the same base can be transformed into a wall bed, storage
+                    bed, ottoman bed, or even a bunk bed. Start simple — then
+                    upgrade at your own pace. Add panels to turn it into a
+                    Morphy Studio wall bed, or add modules such as desks,
+                    cabinets, or sofas. Every component connects seamlessly,
+                    giving you complete freedom to design your perfect setup.
+                  </p>
+                </div>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
+                  <span className="text-3xl mb-2">🔄</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
+                    Image Slot — TypeFlex™
+                  </span>
+                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
+                    Add custom image here
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 4: Flexible Orientation */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
+                  <span className="text-3xl mb-2">↕️</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
+                    Image Slot — Flexible Orientation
+                  </span>
+                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
+                    Add custom image here
+                  </span>
+                </div>
+                <div className="lg:col-span-5 space-y-4 lg:order-2">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                    Orientation
+                  </span>
+                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                    Endless possibilities with Flexible Orientation
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Change your mind, not your furniture. Morphy’s universal
+                    base lets you install the same bed vertically or
+                    horizontally—even years after your purchase. Avoid costly
+                    exchanges, adapt your bed with ease, and make any room truly
+                    yours.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 5: Modular and Upgradeable */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
+                <div className="lg:col-span-5 space-y-4">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                    Upgradeable
+                  </span>
+                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                    Modular & Upgradeable System
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Start with a simple Classic and upgrade anytime: add a
+                    cabinet, switch to Studio, or integrate side units, sofas,
+                    or desks (module options launching soon!). With Morphy, your
+                    bed isn’t fixed—it evolves alongside your needs, giving you
+                    total control and lasting value.
+                  </p>
+                </div>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
+                  <span className="text-3xl mb-2">🛋️</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
+                    Image Slot — Modular Upgrades
+                  </span>
+                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
+                    Add custom image here
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 6: Lifetime Warranty */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
+                  <span className="text-3xl mb-2">🛡️</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
+                    Image Slot — Lifetime Warranty
+                  </span>
+                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
+                    Add custom image here
+                  </span>
+                </div>
+                <div className="lg:col-span-5 space-y-4 lg:order-2">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                    Quality
+                  </span>
+                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                    Lifetime Warranty & Sustainable Quality
+                  </h3>
+                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
+                    Morphy isn’t locked into one purpose. Transform it from a
+                    wall bed to an ottoman, bunk, or traditional frame as life
+                    changes. Lifetime warranty means long-lasting quality, and
+                    modular reuse means you’ll never need to discard your bed
+                    when styles or needs change. Choose sustainability, choose
+                    Morphy.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 7: Modules Coming Soon */}
+              <div className="py-8 space-y-3">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                  Modules Coming Soon
+                </span>
+                <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                  Elevate Your Morphy Experience
+                </h3>
+                <p className="font-poppins text-sm leading-relaxed text-wbk-brown max-w-3xl">
+                  Get ready to personalize your space like never before! Our
+                  sleek new sofa module, versatile desk module, and smart
+                  storage units are designed to perfectly complement and expand
+                  your Morphy bed—effortlessly transforming your space for work,
+                  rest, and play.
+                </p>
+              </div>
+            </div>
+
+            {/* Morphy FAQ Accordion Section (Clean background-less) */}
+            <div className="pt-8 border-t border-wbk-lightgrey/40 space-y-8">
+              <div className="space-y-2 text-center max-w-xl mx-auto">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
+                  Got Questions?
+                </span>
+                <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                  Frequently Asked Questions
+                </h3>
+              </div>
+
+              <div className="divide-y divide-wbk-lightgrey/40 max-w-3xl mx-auto">
+                {[
+                  {
+                    q: "What is Morphy?",
+                    a: "Morphy is the next-generation modular wall bed system by WallBedKing — designed to save space, adapt to any room, and evolve with your life. It can be wall or floor mounted, or built into a cabinet body. Unlike traditional folding beds, it features a modular base, bolt-on legs, and interchangeable parts you can reconfigure anytime.",
+                  },
+                  {
+                    q: "What makes Morphy different from other wall beds?",
+                    a: "Traditional wall beds have fixed-size frames when installed. Morphy is fully modular — you can install it vertically or horizontally, change sizes, add cabinets or sofas later, and even convert it into other bed types. It’s the world’s first wall bed that grows and transforms with you.",
+                  },
+                  {
+                    q: "What is SizeFlex™?",
+                    a: "SizeFlex™ lets you use the same core parts to build different bed sizes — from Single to Double to King, we have 16 different sizes available. When your needs change, you simply add or remove modules instead of buying a whole new frame.",
+                  },
+                  {
+                    q: "What is TypeFlex™?",
+                    a: "TypeFlex™ means your Morphy base isn’t limited to one bed type. It can become a wall bed, storage bed, ottoman bed, or even a bunk. One system, endless options.",
+                  },
+                  {
+                    q: "Can I install Morphy vertically or horizontally?",
+                    a: "Yes! Morphy’s universal base allows both orientations — so you can switch from vertical to horizontal installation at any time without needing a new frame.",
+                  },
+                  {
+                    q: "Can I add more modules later?",
+                    a: "Absolutely. Start simple with a Classic model and expand whenever you’re ready — add the front panels to turn it instantly into a Studio wall bed, or add cabinets, a sofa, a desk, and side units (modules launching soon). You can always purchase additional parts directly from us, saving money and avoiding waste.",
+                  },
+                  {
+                    q: "Are all parts compatible with future Morphy upgrades?",
+                    a: "Yes. Every Morphy component is designed to work seamlessly with future upgrades and new modules — ensuring your bed stays compatible for years to come.",
+                  },
+                  {
+                    q: "Are replacement parts always available?",
+                    a: "We make every effort to keep all replacement parts in stock, so you can easily order what you need, whenever you need it.",
+                  },
+                  {
+                    q: "How will I know which parts I need to upgrade my bed?",
+                    a: "We’ll guide you through it. Just tell us what you currently have and what you’d like to upgrade to, and we’ll make sure you get every part you need for a smooth transition.",
+                  },
+                  {
+                    q: "Can I install a Morphy wall bed myself?",
+                    a: "Yes — installation of the Morphy Classic and Morphy Studio is similar to our other models and comes with detailed instructions. For built-in or cabinet installations, we recommend a professional installer or carpenter — unless you are very good at DIY.",
+                  },
+                  {
+                    q: "Do I need special tools to reconfigure or upgrade?",
+                    a: "No. Morphy arrives flat-packed for easy self-assembly, and reconfiguration can be done with basic tools — no professional installation required.",
+                  },
+                  {
+                    q: "Is Morphy compatible with any mattress?",
+                    a: "Yes. Morphy fits all standard mattress sizes and thicknesses, up to 30 cm / 12 in. You can keep your favourite mattress or replace it anytime without changing the bed frame.",
+                  },
+                  {
+                    q: "How durable is the Morphy system?",
+                    a: "Extremely. Morphy is built from premium, long-lasting materials and powered by a German gas piston system for smooth, safe operation. Every structural component is backed by a lifetime warranty — built to last, built for life.",
+                  },
+                  {
+                    q: "What does the lifetime warranty cover?",
+                    a: "The lifetime warranty covers all structural parts of your Morphy bed — including the frame, joints, and mechanical components. If a component ever fails due to manufacturing defects, we’ll replace it free of charge.",
+                  },
+                  {
+                    q: "Is it sustainable?",
+                    a: "Yes. Morphy’s modularity means you’ll never need to throw away your bed when your space or style changes. By upgrading instead of replacing, you save resources, reduce waste, and support long-term sustainability.",
+                  },
+                  {
+                    q: "Is Morphy available worldwide?",
+                    a: "Yes — we offer fast, reliable, worldwide shipping, with all systems shipped factory-direct for the best value for money.",
+                  },
+                  {
+                    q: "How can I stay tuned for new modules and updates?",
+                    a: "Follow us on social media or visit our website regularly for the latest product launches, new module announcements, and exclusive offers.",
+                  },
+                  {
+                    q: "Why should I choose Morphy?",
+                    a: "Because Morphy gives you freedom. Freedom to adapt your home, your way — to upgrade, resize, or restyle your bed at any time. It’s smarter, more sustainable, and built to last a lifetime.",
+                  },
+                ].map((faq, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div key={idx} className="py-4">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                        className="w-full flex items-center justify-between text-left font-poppins font-medium text-sm text-wbk-black hover:text-wbk-gold transition-colors py-1 cursor-pointer"
+                      >
+                        <span>{faq.q}</span>
+                        <span className="text-lg font-bold text-wbk-brown ml-4">
+                          {isOpen ? "−" : "+"}
+                        </span>
+                      </button>
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <p className="pt-2 text-xs font-poppins text-wbk-brown leading-relaxed pr-8">
+                              {faq.a}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Container>
+        </section>
+      )}
+
       {/* ── LIGHTBOX MODAL OVERLAY ── */}
       {lightboxIndex !== -1 && (
         <div
@@ -927,14 +1619,14 @@ export default function ProductDetailPage() {
         >
           <button
             onClick={() => setLightboxIndex(-1)}
-            className="absolute top-6 right-6 text-wbk-white hover:text-wbk-green p-2 rounded-full hover:bg-white/10 transition-all cursor-pointer"
+            className="absolute top-6 right-6 text-wbk-white hover:text-wbk-green p-2 rounded-full hover:bg-white/10 transition-all cursor-pointer z-20"
             aria-label="Close lightbox"
           >
             <IconX size={24} />
           </button>
           <button
             onClick={handlePrevImage}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer z-20"
             aria-label="Previous image"
           >
             <IconChevronLeft size={28} />
@@ -944,23 +1636,66 @@ export default function ProductDetailPage() {
             className="relative max-w-4xl max-h-[80vh] w-full flex flex-col items-center justify-center"
           >
             <img
-              src={galleryImages[lightboxIndex].src}
-              alt={galleryImages[lightboxIndex].alt}
-              className="max-w-full max-h-[70vh] object-contain shadow-2xl"
+              src={galleryImages[lightboxIndex]?.src}
+              alt={galleryImages[lightboxIndex]?.alt}
+              className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg"
             />
             <p className="mt-4 font-poppins text-xs text-wbk-white/80 text-center tracking-wide px-4">
-              {galleryImages[lightboxIndex].alt}
+              {galleryImages[lightboxIndex]?.alt}
             </p>
           </div>
           <button
             onClick={handleNextImage}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer z-20"
             aria-label="Next image"
           >
             <IconChevronRight size={28} />
           </button>
         </div>
       )}
+
+      {/* ── PERSISTENT STICKY BOTTOM BAR: PRODUCT TITLE, SIZE, TOTAL PRICE & ADD TO CART ── */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
+        className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none"
+      >
+        <Container
+          size="xl"
+          className="flex items-center justify-between gap-4 bg-wbk-green/75 backdrop-blur-sm shadow-[0_-8px_30px_rgba(0,0,0,0.08)] py-2.5 transition-all duration-300 pointer-events-auto"
+        >
+          {/* Left: Product Name & Selected Size */}
+          <div className="flex flex-col min-w-0">
+            <span className="font-new-york text-base sm:text-lg text-wbk-black truncate leading-tight">
+              {displayProduct.title || displayProduct.name}
+            </span>
+            <span className="font-poppins text-[11px] text-wbk-white font-light truncate">
+              {productSize || "Standard"}
+            </span>
+          </div>
+
+          {/* Right: Total Price & Add to Cart Button */}
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+            <div className="flex flex-col items-end font-poppins">
+              <span className="text-[9px] uppercase tracking-widest text-wbk-white font-semibold">
+                Total
+              </span>
+              <span className="font-bold text-wbk-black text-xl sm:text-2xl leading-none">
+                £{totalDecimal}
+              </span>
+            </div>
+
+            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer">
+              <IconShoppingCart
+                size={15}
+                className="transition-transform duration-200 group-hover:scale-110"
+              />
+              <span>Add to cart</span>
+            </button>
+          </div>
+        </Container>
+      </motion.div>
     </div>
   );
 }

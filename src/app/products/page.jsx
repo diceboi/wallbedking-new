@@ -7,159 +7,12 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { ALL_PRODUCTS, CATEGORIES_INFO } from "@/data/products";
 
 import "swiper/css";
 import "swiper/css/navigation";
 
-const WALLBEDS_PRODUCTS = [
-  {
-    id: "wallbed-1",
-    title: "Integrated MORPHY™ Bed",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£799",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/integrated-bed",
-  },
-  {
-    id: "wallbed-2",
-    title: "Bed with sofa",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£799",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/bed-with-sofa",
-  },
-  {
-    id: "wallbed-3",
-    title: "Classic Wall Bed",
-    orientation: "Horizontal",
-    size: "150x200",
-    colors: ["#A5988E", "#E4E0DE", "#090A0A"],
-    price: "£699",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/classic-wall-bed",
-  },
-  {
-    id: "wallbed-4",
-    title: "Studio Murphy Bed",
-    orientation: "Vertical",
-    size: "140x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE"],
-    price: "£599",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/studio-bed",
-  },
-  {
-    id: "wallbed-5",
-    title: "Premium Wall Bed",
-    orientation: "Vertical",
-    size: "160x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£699",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/premium-bed",
-  },
-  {
-    id: "wallbed-6",
-    title: "Luxury Murphy Bed",
-    orientation: "Vertical",
-    size: "160x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£899",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/luxury-murphy-bed",
-  },
-];
-
-const SOFAS_PRODUCTS = [
-  {
-    id: "sofa-1",
-    title: "MORPHY™ Bed with Sofa",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£799",
-    image: "/sofa1.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/bed-with-sofa",
-  },
-  {
-    id: "sofa-2",
-    title: "Studio Sofa Wallbed",
-    orientation: "Vertical",
-    size: "160x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£849",
-    image: "/sofa2.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/studio-sofa-wallbed",
-  },
-  {
-    id: "sofa-3",
-    title: "Classic Sofa Bed",
-    orientation: "Horizontal",
-    size: "150x200",
-    colors: ["#A5988E", "#E4E0DE", "#090A0A"],
-    price: "£749",
-    image: "/sofa3.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/classic-sofa-bed",
-  },
-  {
-    id: "sofa-4",
-    title: "Modular Sofa Bed",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£899",
-    image: "/sofa1.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/modular-sofa-bed",
-  },
-  {
-    id: "sofa-5",
-    title: "Deluxe Sofa Wallbed",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£949",
-    image: "/sofa2.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/deluxe-sofa-wallbed",
-  },
-  {
-    id: "sofa-6",
-    title: "Deluxe Sofa Wallbed",
-    orientation: "Vertical",
-    size: "180x200",
-    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"],
-    price: "£949",
-    image: "/sofa2.webp",
-    hoverImage:
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/sofas/deluxe-sofa-wallbed",
-  },
-];
+import { ProductCard } from "@/components/ui/ProductCard";
 
 export default function ProductsPage() {
   const [offset, setOffset] = useState(32);
@@ -169,7 +22,7 @@ export default function ProductsPage() {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width >= 1548) {
-        setOffset((width - 1548) / 2 + 32); // Max-width 2xl + padding
+        setOffset((width - 1548) / 2 + 32);
       } else if (width >= 1280) {
         setOffset(32);
       } else if (width >= 1024) {
@@ -184,11 +37,20 @@ export default function ProductsPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Callback Refs state for Swipers (to handle React hydration timing cleanly)
   const [bedsPrevEl, setBedsPrevEl] = useState(null);
   const [bedsNextEl, setBedsNextEl] = useState(null);
   const [sofasPrevEl, setSofasPrevEl] = useState(null);
   const [sofasNextEl, setSofasNextEl] = useState(null);
+  const [mattressesPrevEl, setMattressesPrevEl] = useState(null);
+  const [mattressesNextEl, setMattressesNextEl] = useState(null);
+  const [cabinetsPrevEl, setCabinetsPrevEl] = useState(null);
+  const [cabinetsNextEl, setCabinetsNextEl] = useState(null);
+
+  // Distinct representative items per category
+  const bedItems = (ALL_PRODUCTS.beds || []).filter((_, idx) => idx % 4 === 0).slice(0, 8);
+  const sofaItems = (ALL_PRODUCTS.sofas || []).filter((_, idx) => idx % 2 === 0).slice(0, 8);
+  const mattressItems = ALL_PRODUCTS.mattresses || [];
+  const cabinetItems = (ALL_PRODUCTS.cabinets || []).filter((_, idx) => idx % 2 === 0).slice(0, 8);
 
   return (
     <div className="bg-wbk-white">
@@ -199,8 +61,7 @@ export default function ProductsPage() {
           backgroundImage: "url('/category-images/integrated-beds.webp')",
         }}
       >
-        {/* Soft, premium overlay for better contrast & luxury feel */}
-        <div className="absolute inset-0 bg-gradient-to-r from-wbk-white/60 via-wbk-white/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-wbk-white/70 via-wbk-white/30 to-transparent" />
 
         <Container size="xl" className="relative z-10 pt-[60px]">
           <div className="max-w-2xl px-2">
@@ -208,66 +69,60 @@ export default function ProductsPage() {
               Our Products
             </h1>
             <p className="mt-4 font-poppins text-base sm:text-lg text-wbk-black/80 max-w-xl leading-relaxed">
-              Murphy beds, sofas, cabinets and a lot more in all shapes and
-              sizes
+              Murphy beds, modular sofas, comfort mattresses and coordinated cabinetry in all shapes and sizes.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Button
                 as="link"
-                href="/shop"
+                href="/products/beds"
                 variant="white"
                 size="lg"
                 className="shadow-md hover:shadow-lg"
               >
-                Start shopping
+                Explore Murphy Beds
               </Button>
               <Button
                 as="link"
-                href="/about"
+                href="/products/beds/integrated-bed"
                 variant="secondary"
                 size="lg"
-                className="border-wbk-white text-wbk-white hover:bg-wbk-white hover:text-wbk-black bg-black/5 backdrop-blur-sm shadow-md hover:shadow-lg"
+                className="border-wbk-black/20 text-wbk-black hover:bg-wbk-black hover:text-white bg-white/60 backdrop-blur-sm shadow-md"
               >
-                About Us
+                3D Configurator
               </Button>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* ── POPULAR PRODUCTS SECTION ── */}
+      {/* ── PRODUCT CATEGORIES CAROUSEL SECTION ── */}
       <section className="py-20 overflow-hidden">
         <Container size="xl">
           <h2 className="font-new-york text-4xl sm:text-5xl text-wbk-black mb-16">
-            Popular products
+            Explore by Category
           </h2>
 
           <div className="space-y-24">
-            {/* ── WALLBEDS CATEGORY ROW ── */}
+            {/* ── 1. MURPHY BEDS ── */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-16 border-t border-wbk-lightgrey/40 first:border-t-0 first:pt-0">
-              {/* Left Column: Category Description & CTA */}
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
-                    Wallbeds
+                    Murphy Beds
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Precision-engineered fold-away bed mechanisms with SizeFlex™ and TypeFlex™ modularity. Available in Classic, Studio, and Integrated models.
                   </p>
                 </div>
                 <Link
                   href="/products/beds"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All beds
+                  All Murphy Beds
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
 
-              {/* Right Columns: Swiper Slider */}
               <div
                 className="lg:col-span-3 relative overflow-visible"
                 style={{
@@ -285,77 +140,22 @@ export default function ProductsPage() {
                   spaceBetween={4}
                   className="w-full overflow-visible"
                 >
-                  {WALLBEDS_PRODUCTS.map((product) => (
+                  {bedItems.map((product) => (
                     <SwiperSlide
-                      key={product.id}
-                      className="!w-[280px] sm:!w-[320px] select-none"
+                      key={product.slug || product.id}
+                      className="!w-[300px] sm:!w-[340px] select-none"
                     >
-                      <Link
-                        href={product.link}
-                        className="group block space-y-4"
-                      >
-                        {/* Image Box - Default styled block from ProductSlider */}
-                        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/30">
-                          {/* Primary Product Image */}
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0"
-                          />
-                          {/* Hover Product Image */}
-                          <img
-                            src={product.hoverImage}
-                            alt={`${product.title} details`}
-                            className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                          />
-                        </div>
-
-                        {/* Product Text Details */}
-                        <div className="space-y-2 px-1">
-                          <h4 className="font-poppins font-medium text-base text-wbk-black transition-colors duration-200 group-hover:text-wbk-gold">
-                            {product.title}
-                          </h4>
-
-                          {/* Specs */}
-                          <div className="text-xs text-wbk-black space-y-0.5">
-                            <div>Orientation: {product.orientation}</div>
-                            <div>Size: {product.size}</div>
-                            <div className="flex items-center gap-1.5 pt-1">
-                              <span>Colors:</span>
-                              <div className="flex items-center">
-                                {product.colors.map((color, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-block h-3.5 w-3.5 rounded-full border border-wbk-lightgrey/80 -mr-1"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Price */}
-                          <div className="pt-1 text-xs text-wbk-brown font-poppins">
-                            from{" "}
-                            <span className="font-bold text-wbk-black text-sm">
-                              {product.price}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
+                      <ProductCard product={product} />
                     </SwiperSlide>
                   ))}
                 </Swiper>
 
-                {/* Navigation Button - Left */}
                 <button
                   ref={setBedsPrevEl}
                   className="absolute left-4 md:-left-5 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
                 >
                   <IconChevronLeft size={18} />
                 </button>
-
-                {/* Navigation Button - Right */}
                 <button
                   ref={setBedsNextEl}
                   className="absolute right-4 md:right-8 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
@@ -365,31 +165,26 @@ export default function ProductsPage() {
               </div>
             </div>
 
-            {/* ── SOFAS CATEGORY ROW ── */}
+            {/* ── 2. SOFAS ── */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-16 border-t border-wbk-lightgrey/40">
-              {/* Left Column: Category Description & CTA */}
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
                     Sofas
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Adaptable modular sofas designed for front bed attachment or freestanding living configurations with removable upholstery.
                   </p>
                 </div>
                 <Link
                   href="/products/sofas"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All sofas
+                  All Sofas
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
 
-              {/* Right Columns: Swiper Slider */}
               <div
                 className="lg:col-span-3 relative overflow-visible"
                 style={{
@@ -407,79 +202,148 @@ export default function ProductsPage() {
                   spaceBetween={4}
                   className="w-full overflow-visible"
                 >
-                  {SOFAS_PRODUCTS.map((product) => (
+                  {sofaItems.map((product) => (
                     <SwiperSlide
-                      key={product.id}
-                      className="!w-[280px] sm:!w-[320px] select-none"
+                      key={product.slug || product.id}
+                      className="!w-[300px] sm:!w-[340px] select-none"
                     >
-                      <Link
-                        href={product.link}
-                        className="group block space-y-4"
-                      >
-                        {/* Image Box - Default styled block from ProductSlider */}
-                        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/30">
-                          {/* Primary Product Image */}
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0"
-                          />
-                          {/* Hover Product Image */}
-                          <img
-                            src={product.hoverImage}
-                            alt={`${product.title} details`}
-                            className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                          />
-                        </div>
-
-                        {/* Product Text Details */}
-                        <div className="space-y-2 px-1">
-                          <h4 className="font-poppins font-medium text-base text-wbk-black transition-colors duration-200 group-hover:text-wbk-gold">
-                            {product.title}
-                          </h4>
-
-                          {/* Specs */}
-                          <div className="text-xs text-wbk-black space-y-0.5">
-                            <div>Orientation: {product.orientation}</div>
-                            <div>Size: {product.size}</div>
-                            <div className="flex items-center gap-1.5 pt-1">
-                              <span>Colors:</span>
-                              <div className="flex items-center">
-                                {product.colors.map((color, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-block h-3.5 w-3.5 rounded-full border border-wbk-lightgrey/80 -mr-1"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Price */}
-                          <div className="pt-1 text-xs text-wbk-brown font-poppins">
-                            from{" "}
-                            <span className="font-bold text-wbk-black text-sm">
-                              {product.price}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
+                      <ProductCard product={product} />
                     </SwiperSlide>
                   ))}
                 </Swiper>
 
-                {/* Navigation Button - Left */}
                 <button
                   ref={setSofasPrevEl}
                   className="absolute left-4 md:-left-5 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
                 >
                   <IconChevronLeft size={18} />
                 </button>
-
-                {/* Navigation Button - Right */}
                 <button
                   ref={setSofasNextEl}
+                  className="absolute right-4 md:right-8 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  <IconChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* ── 3. MATTRESSES ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-16 border-t border-wbk-lightgrey/40">
+              <div className="lg:col-span-1 flex flex-col justify-between items-start">
+                <div>
+                  <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
+                    Mattresses
+                  </h3>
+                  <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
+                    Comfort, Luxury, and Supreme comfort grades with optimal thickness specifically rated for wall bed integration.
+                  </p>
+                </div>
+                <Link
+                  href="/products/mattresses"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
+                >
+                  All Mattresses
+                  <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                </Link>
+              </div>
+
+              <div
+                className="lg:col-span-3 relative overflow-visible"
+                style={{
+                  width: `calc(100% + ${offset}px)`,
+                  marginRight: `-${offset}px`,
+                }}
+              >
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{
+                    prevEl: mattressesPrevEl,
+                    nextEl: mattressesNextEl,
+                  }}
+                  slidesPerView="auto"
+                  spaceBetween={4}
+                  className="w-full overflow-visible"
+                >
+                  {mattressItems.map((product) => (
+                    <SwiperSlide
+                      key={product.slug || product.id}
+                      className="!w-[300px] sm:!w-[340px] select-none"
+                    >
+                      <ProductCard product={product} />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+
+                <button
+                  ref={setMattressesPrevEl}
+                  className="absolute left-4 md:-left-5 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  <IconChevronLeft size={18} />
+                </button>
+                <button
+                  ref={setMattressesNextEl}
+                  className="absolute right-4 md:right-8 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  <IconChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* ── 4. CABINETS ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-16 border-t border-wbk-lightgrey/40">
+              <div className="lg:col-span-1 flex flex-col justify-between items-start">
+                <div>
+                  <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
+                    Cabinets & Storage
+                  </h3>
+                  <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
+                    Vertical & Horizontal front enclosures, extensions, and matching side storage units available in Pine, Beech, Oak, and White finishes.
+                  </p>
+                </div>
+                <Link
+                  href="/products/cabinets"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
+                >
+                  All Cabinets
+                  <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                </Link>
+              </div>
+
+              <div
+                className="lg:col-span-3 relative overflow-visible"
+                style={{
+                  width: `calc(100% + ${offset}px)`,
+                  marginRight: `-${offset}px`,
+                }}
+              >
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{
+                    prevEl: cabinetsPrevEl,
+                    nextEl: cabinetsNextEl,
+                  }}
+                  slidesPerView="auto"
+                  spaceBetween={4}
+                  className="w-full overflow-visible"
+                >
+                  {cabinetItems.map((product) => (
+                    <SwiperSlide
+                      key={product.slug || product.id}
+                      className="!w-[300px] sm:!w-[340px] select-none"
+                    >
+                      <ProductCard product={product} />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+
+                <button
+                  ref={setCabinetsPrevEl}
+                  className="absolute left-4 md:-left-5 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  <IconChevronLeft size={18} />
+                </button>
+                <button
+                  ref={setCabinetsNextEl}
                   className="absolute right-4 md:right-8 top-[180px] -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
                 >
                   <IconChevronRight size={18} />
