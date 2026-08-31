@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -160,28 +160,75 @@ export default function ProductDetailPage() {
     setMounted(true);
   }, []);
 
-  // Lookup active product
-  const activeProduct =
-    findProductBySlug(categorySlug, productSlug) ||
-    getFallbackProduct(categorySlug, productSlug);
+  // Read size from URL search parameters if provided (e.g. ?size=135x190)
+  const searchParams = useSearchParams();
+  const sizeQuery = searchParams?.get("size");
 
-  // Available variants for the family / category
+  // Helper to map (style, orientation) to the 6 flagship bed slugs
+  const getFlagshipBedSlug = useCallback((style, orientation) => {
+    const s = (style || "Classic").toLowerCase();
+    const o = (orientation || "Vertical").toLowerCase();
+    if (s === "integrated") return `integrated-${o}-wall-bed`;
+    if (s === "studio") return `studio-${o}-wall-bed`;
+    return `classic-${o}-wall-bed`;
+  }, []);
+
+  // Helper to match size query string against variants
+  const findMatchingVariant = useCallback((variants, query) => {
+    if (!variants || !variants.length || !query) return null;
+    const clean = query.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    // 1. Exact sizeSlug match (e.g. "135x190")
+    const matchSlug = variants.find(
+      (v) => (v.sizeSlug || "").replace(/[^a-z0-9]/g, "") === clean
+    );
+    if (matchSlug) return matchSlug;
+
+    // 2. Dimensions match (e.g. 135x190 or 1350x1900)
+    const matchDim = variants.find((v) => {
+      const w = Math.min(v.width || 0, v.length || 0);
+      const l = Math.max(v.width || 0, v.length || 0);
+      const dimCm = `${Math.round(w / 10)}x${Math.round(l / 10)}`;
+      const dimMm = `${w}x${l}`;
+      return clean.includes(dimCm) || clean.includes(dimMm);
+    });
+    if (matchDim) return matchDim;
+
+    // 3. Name or size category match (e.g. "double", "king", "single")
+    const matchName = variants.find((v) => {
+      const s = (v.size || v.sizeLabel || v.name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+      return s.includes(clean) || clean.includes(s);
+    });
+    if (matchName) return matchName;
+
+    return null;
+  }, []);
+
+  // Lookup active product (flagship or specific)
+  const activeProduct = useMemo(() => {
+    return (
+      findProductBySlug(categorySlug, productSlug) ||
+      getFallbackProduct(categorySlug, productSlug)
+    );
+  }, [categorySlug, productSlug]);
+
+  // Available variants for the family / category (all sizes for this flagship bed)
   const familyVariants = useMemo(() => {
     return getProductVariants(activeProduct);
-  }, [
-    categorySlug,
-    productSlug,
-    activeProduct.parent_category,
-    activeProduct.type,
-  ]);
+  }, [activeProduct]);
 
   // Derived options for dropdowns based on actual products in the family
   const availableFormats = useMemo(() => {
+    if (activeProduct.parent_category === "beds") {
+      return ["Vertical", "Horizontal"];
+    }
     const set = new Set(
       familyVariants.map((v) => v.orientation).filter(Boolean),
     );
     return set.size > 0 ? Array.from(set) : ["Vertical", "Horizontal"];
-  }, [familyVariants]);
+  }, [familyVariants, activeProduct.parent_category]);
 
   const availableStyles = useMemo(() => {
     if (activeProduct.parent_category === "beds") {
@@ -200,9 +247,15 @@ export default function ProductDetailPage() {
       familyVariants.map((v) => v.type || v.sub_category).filter(Boolean),
     );
     return set.size > 0 ? Array.from(set) : [activeProduct.type || "Standard"];
-  }, [familyVariants, activeProduct.parent_category, activeProduct.type]);
+  }, [familyVariants, activeProduct.parent_category]);
 
   const availableSizes = useMemo(() => {
+    if (activeProduct.parent_category === "beds") {
+      return familyVariants.map((v) => ({
+        label: v.sizeLabel || v.name,
+        product: v,
+      }));
+    }
     const matching = familyVariants.filter((v) => {
       const matchFormat = !productFormat || v.orientation === productFormat;
       const matchStyle =
@@ -225,21 +278,48 @@ export default function ProductDetailPage() {
       label: v.sizeLabel || v.name,
       product: v,
     }));
-  }, [familyVariants, productFormat, productStyle]);
+  }, [familyVariants, productFormat, productStyle, activeProduct.parent_category]);
 
-  // Initialize/sync customizer states when route parameters change
+  // Initialize/sync customizer states when route parameters or size change
   useEffect(() => {
     if (!productSlug) return;
     setReady(false);
     setSelectedImageIndex(0);
 
     if (activeProduct) {
-      setProductFormat(activeProduct.orientation || "Vertical");
-      setProductStyle(activeProduct.type || "Integrated");
-      setProductSize(
-        activeProduct.sizeLabel || activeProduct.size || "King 160 x 200",
-      );
-      setSelectedVariant(activeProduct);
+      const currentFmt = activeProduct.orientation || "Vertical";
+      const currentSty = activeProduct.type || "Classic";
+      setProductFormat(currentFmt);
+      setProductStyle(currentSty);
+
+      // Find matching size variant from familyVariants
+      let targetVariant = null;
+      if (sizeQuery) {
+        targetVariant = findMatchingVariant(familyVariants, sizeQuery);
+      }
+      if (!targetVariant && activeProduct.defaultSizeSlug) {
+        targetVariant = findMatchingVariant(
+          familyVariants,
+          activeProduct.defaultSizeSlug
+        );
+      }
+      if (!targetVariant && familyVariants.length > 0) {
+        targetVariant =
+          findMatchingVariant(familyVariants, "135x190") ||
+          findMatchingVariant(familyVariants, "160x200") ||
+          familyVariants[0];
+      }
+
+      if (targetVariant) {
+        setSelectedVariant(targetVariant);
+        setProductSize(targetVariant.sizeLabel || targetVariant.size);
+      } else {
+        setSelectedVariant(activeProduct);
+        setProductSize(
+          activeProduct.sizeLabel || activeProduct.size || "Standard"
+        );
+      }
+
       setSofaIncluded(activeProduct.has3D || false);
     }
 
@@ -248,31 +328,56 @@ export default function ProductDetailPage() {
     }, 30);
 
     return () => clearTimeout(timer);
-  }, [categorySlug, productSlug]);
+  }, [
+    categorySlug,
+    productSlug,
+    sizeQuery,
+    activeProduct,
+    familyVariants,
+    findMatchingVariant,
+  ]);
 
-  // When dropdown selections change, pick matching variant
+  // When dropdown selections change, pick matching variant or navigate
   const handleOptionChange = (newFormat, newStyle, newSizeLabel) => {
     const fmt = newFormat ?? productFormat;
     const sty = newStyle ?? productStyle;
-    const sz = newSizeLabel ?? productSize;
+
+    // Bed flagship navigation when format or style changes
+    if (
+      categorySlug === "beds" &&
+      (newFormat !== undefined || newStyle !== undefined)
+    ) {
+      const targetSlug = getFlagshipBedSlug(sty, fmt);
+      if (targetSlug !== productSlug) {
+        const currentSizeSlug = selectedVariant?.sizeSlug || "135x190";
+        router.push(`/products/beds/${targetSlug}?size=${currentSizeSlug}`);
+        return;
+      }
+    }
 
     if (newFormat !== undefined) setProductFormat(newFormat);
     if (newStyle !== undefined) setProductStyle(newStyle);
-    if (newSizeLabel !== undefined) setProductSize(newSizeLabel);
 
-    const match =
-      familyVariants.find((v) => {
-        const mFmt = v.orientation === fmt;
-        const mSty = v.type === sty || v.sub_category === sty;
-        const mSz = v.sizeLabel === sz || v.size === sz;
-        return mFmt && mSty && mSz;
-      }) ||
-      familyVariants.find((v) => v.type === sty && v.orientation === fmt) ||
-      familyVariants[0];
+    if (newSizeLabel !== undefined) {
+      setProductSize(newSizeLabel);
+      const match =
+        familyVariants.find(
+          (v) => v.sizeLabel === newSizeLabel || v.name === newSizeLabel
+        ) || findMatchingVariant(familyVariants, newSizeLabel);
 
-    if (match) {
-      setSelectedVariant(match);
-      if (match.sizeLabel) setProductSize(match.sizeLabel);
+      if (match) {
+        setSelectedVariant(match);
+        if (match.sizeLabel) setProductSize(match.sizeLabel);
+
+        // Update URL shallowly without reloading page
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          if (match.sizeSlug) {
+            url.searchParams.set("size", match.sizeSlug);
+          }
+          window.history.replaceState(null, "", url.toString());
+        }
+      }
     }
   };
 
@@ -281,6 +386,8 @@ export default function ProductDetailPage() {
   const has3D = Boolean(
     displayProduct?.has3D ||
     displayProduct?.type === "Integrated" ||
+    activeProduct?.has3D ||
+    productSlug.includes("integrated") ||
     productSlug === "integrated-bed",
   );
 

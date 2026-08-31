@@ -5,7 +5,7 @@ import { IconShieldCheck, IconTruck, IconTools } from "@tabler/icons-react";
 
 export function TopMenu() {
   return (
-    <div className="bg-wbk-black text-wbk-white text-[11px] border-b border-wbk-black/80 font-poppins select-none relative z-50">
+    <div className="hidden md:block bg-wbk-black text-wbk-white text-[11px] border-b border-wbk-black/80 font-poppins select-none relative z-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
         {/* Left: Highlights / Assurances */}
         <div className="flex items-center gap-6 text-[#A5988E]">

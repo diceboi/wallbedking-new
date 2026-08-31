@@ -130,7 +130,7 @@ export function Header() {
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             {/* 3D Configurator CTA */}
             <Link
-              href="/products/beds/integrated-bed"
+              href="/products/beds/integrated-vertical-wall-bed"
               className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 bg-wbk-green hover:bg-wbk-black border border-wbk-green hover:border-wbk-black text-wbk-white text-xs font-medium tracking-[0.14em] uppercase transition-colors shadow-xs"
             >
               <Icon3dCubeSphere size={15} />
@@ -246,7 +246,7 @@ export function Header() {
             overflow: isMenuVisible ? "visible" : "hidden",
           }}
           onMouseEnter={cancelCloseSubmenu}
-          onMouseLeave={() => scheduleCloseSubmenu(500)}
+          onMouseLeave={() => setSubMenu(null)}
         >
           <MainMenu />
           <Submenu />

@@ -69,15 +69,74 @@ export const OTHER_CATEGORIES_LIST = [
   { slug: "extras", label: "Extras", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
 ];
 
+// Helpers to derive clean dimensions, size labels and slugs
+export const getCleanBedDimensions = (item) => {
+  if (!item || item.parent_category !== "beds") {
+    return {
+      widthCm: item?.width ? Math.round(item.width / 10) : 0,
+      lengthCm: item?.length ? Math.round(item.length / 10) : 0,
+    };
+  }
+  const w = Math.min(item.width || 0, item.length || 0) / 10;
+  const l = Math.max(item.width || 0, item.length || 0) / 10;
+  return { widthCm: Math.round(w), lengthCm: Math.round(l) };
+};
+
+export const getCleanBedSizeLabel = (item) => {
+  if (!item) return "";
+  if (item.parent_category !== "beds") {
+    return item.size_label || item.sizeLabel || item.name;
+  }
+  const { widthCm, lengthCm } = getCleanBedDimensions(item);
+  let baseName = item.name
+    .replace(/Horizontal.*Bed/i, "")
+    .replace(/Vertical.*Bed/i, "")
+    .replace(/Classic.*Bed/i, "")
+    .replace(/Studio.*Bed/i, "")
+    .replace(/Integrated.*Bed/i, "")
+    .replace(/MORPHY™.*Bed/i, "")
+    .replace(/MORPHY.*Bed/i, "")
+    .trim();
+
+  if (!baseName) {
+    baseName = item.size_category || "Standard";
+  }
+
+  const isMorphy = item.name.includes("MORPHY");
+  return `${baseName}${isMorphy ? " MORPHY™" : ""} (${widthCm}x${lengthCm} cm)`;
+};
+
+export const getCleanBedSizeSlug = (item) => {
+  if (!item) return "";
+  const { widthCm, lengthCm } = getCleanBedDimensions(item);
+  return `${widthCm}x${lengthCm}`;
+};
+
 // Helper to convert catalog item to uniform UI product
-const formatCatalogItem = (item) => {
+export const formatCatalogItem = (item) => {
   const isIntegrated = item.type === "Integrated" || item.has_3d;
-  const gallery = (item.product_images && item.product_images.length > 0)
-    ? item.product_images.map((src, i) => ({ src, alt: `${item.name} View ${i + 1}` }))
-    : isIntegrated ? GLOBAL_GALLERY_TEMPLATES : [
-        { src: item.image, alt: item.name },
-        { src: item.hover_image, alt: `${item.name} Open` }
-      ];
+  const gallery =
+    item.product_images && item.product_images.length > 0
+      ? item.product_images.map((src, i) => ({
+          src,
+          alt: `${item.name} View ${i + 1}`,
+        }))
+      : isIntegrated
+      ? GLOBAL_GALLERY_TEMPLATES
+      : [
+          { src: item.image, alt: item.name },
+          { src: item.hover_image, alt: `${item.name} Open` },
+        ];
+
+  const sizeLabel =
+    item.parent_category === "beds"
+      ? getCleanBedSizeLabel(item)
+      : item.size_label || item.size_category;
+
+  const sizeSlug =
+    item.parent_category === "beds"
+      ? getCleanBedSizeSlug(item)
+      : (item.slug || String(item.id));
 
   return {
     ...item,
@@ -88,16 +147,205 @@ const formatCatalogItem = (item) => {
     numericPrice: item.price_gbp,
     salePrice: item.sale_price_gbp ? `£${item.sale_price_gbp}` : null,
     size: item.size_category,
-    sizeLabel: item.size_label,
-    colors: item.color === "Beige" ? ["#D2AA7C"] : item.color === "Grey" ? ["#A5988E"] : item.color === "White" ? ["#FFFFFF"] : ["#090A0A"],
-    gallery: gallery,
+    sizeLabel,
+    sizeSlug,
+    colors:
+      item.color === "Beige"
+        ? ["#D2AA7C"]
+        : item.color === "Grey"
+        ? ["#A5988E"]
+        : item.color === "White"
+        ? ["#FFFFFF"]
+        : ["#090A0A"],
+    gallery,
     has3D: Boolean(item.has_3d),
   };
 };
 
+// ── 6 FLAGSHIP BED MODELS (STARS OF THE CATALOG) ──
+export const FLAGSHIP_BEDS = [
+  {
+    id: "flagship-classic-vertical",
+    rawId: "flagship-classic-vertical",
+    slug: "classic-vertical-wall-bed",
+    name: "Classic Vertical Wall Bed",
+    title: "Classic Vertical Wall Bed",
+    type: "Classic",
+    sub_category: "Classic",
+    orientation: "Vertical",
+    parent_category: "beds",
+    description:
+      "The Classic Vertical Wall Bed is a heavy-duty, space-saving fold-away mechanism engineered for everyday durability. Designed with counterbalanced gas pistons and an all-steel frame.",
+    tagline: "Core mechanism, vertical fold",
+    badge: "Best Value",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hoverImage:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price: "from £419",
+    numericPrice: 419,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "135x190",
+    has_3d: false,
+    has3D: false,
+    colors: ["#090A0A"],
+    link: "/products/beds/classic-vertical-wall-bed",
+  },
+  {
+    id: "flagship-classic-horizontal",
+    rawId: "flagship-classic-horizontal",
+    slug: "classic-horizontal-wall-bed",
+    name: "Classic Horizontal Wall Bed",
+    title: "Classic Horizontal Wall Bed",
+    type: "Classic",
+    sub_category: "Classic",
+    orientation: "Horizontal",
+    parent_category: "beds",
+    description:
+      "Ideal for rooms with low ceilings, lofts, or narrow floor plans. Folds down along its long side to minimise ceiling height requirements.",
+    tagline: "Low ceiling solution",
+    badge: "Low Ceiling",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hoverImage:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price: "from £419",
+    numericPrice: 419,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "135x190",
+    has_3d: false,
+    has3D: false,
+    colors: ["#090A0A"],
+    link: "/products/beds/classic-horizontal-wall-bed",
+  },
+  {
+    id: "flagship-studio-vertical",
+    rawId: "flagship-studio-vertical",
+    slug: "studio-vertical-wall-bed",
+    name: "Studio Vertical Wall Bed",
+    title: "Studio Vertical Wall Bed",
+    type: "Studio",
+    sub_category: "Studio",
+    orientation: "Vertical",
+    parent_category: "beds",
+    description:
+      "Features front decorative panels, modern aesthetics, and smooth gas-assisted lifting. Perfect as a standalone statement wall bed.",
+    tagline: "With decorative front panel",
+    badge: "Popular",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hoverImage:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price: "from £524",
+    numericPrice: 524,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "135x190",
+    has_3d: false,
+    has3D: false,
+    colors: ["#090A0A"],
+    link: "/products/beds/studio-vertical-wall-bed",
+  },
+  {
+    id: "flagship-studio-horizontal",
+    rawId: "flagship-studio-horizontal",
+    slug: "studio-horizontal-wall-bed",
+    name: "Studio Horizontal Wall Bed",
+    title: "Studio Horizontal Wall Bed",
+    type: "Studio",
+    sub_category: "Studio",
+    orientation: "Horizontal",
+    parent_category: "beds",
+    description:
+      "Horizontal fold-down design fitted with front decorative panels for contemporary studio apartments and home offices.",
+    tagline: "Horizontal studio design",
+    badge: "Compact Living",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hoverImage:
+      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price: "from £524",
+    numericPrice: 524,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "135x190",
+    has_3d: false,
+    has3D: false,
+    colors: ["#090A0A"],
+    link: "/products/beds/studio-horizontal-wall-bed",
+  },
+  {
+    id: "flagship-integrated-vertical",
+    rawId: "flagship-integrated-vertical",
+    slug: "integrated-vertical-wall-bed",
+    name: "Integrated Vertical Murphy Bed",
+    title: "Integrated Vertical Murphy Bed",
+    type: "Integrated",
+    sub_category: "Integrated",
+    orientation: "Vertical",
+    parent_category: "beds",
+    description:
+      "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Supports full 3D interactive customization.",
+    tagline: "Cabinetry & wardrobe ready",
+    badge: "3D Configurator",
+    image: "/product-images/morphy-integrated/160x200.jpg",
+    hover_image: "/product-images/morphy-integrated/160x200-3.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-3.jpg",
+    price: "from £699",
+    numericPrice: 699,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "160x200",
+    has_3d: true,
+    has3D: true,
+    colors: ["#090A0A", "#A5988E", "#D2AA7C"],
+    gallery: GLOBAL_GALLERY_TEMPLATES,
+    link: "/products/beds/integrated-vertical-wall-bed",
+  },
+  {
+    id: "flagship-integrated-horizontal",
+    rawId: "flagship-integrated-horizontal",
+    slug: "integrated-horizontal-wall-bed",
+    name: "Integrated Horizontal Murphy Bed",
+    title: "Integrated Horizontal Murphy Bed",
+    type: "Integrated",
+    sub_category: "Integrated",
+    orientation: "Horizontal",
+    parent_category: "beds",
+    description:
+      "Side-folding mechanism engineered for low-profile horizontal cabinetry, bookshelf integration, and low-ceiling built-ins.",
+    tagline: "Horizontal cabinetry integration",
+    badge: "Custom Fit",
+    image: "/product-images/morphy-integrated/160x200.jpg",
+    hover_image: "/product-images/morphy-integrated/160x200-3.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-3.jpg",
+    price: "from £699",
+    numericPrice: 699,
+    size: "19 Sizes",
+    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
+    defaultSizeSlug: "140x200",
+    has_3d: true,
+    has3D: true,
+    colors: ["#090A0A", "#A5988E", "#D2AA7C"],
+    gallery: GLOBAL_GALLERY_TEMPLATES,
+    link: "/products/beds/integrated-horizontal-wall-bed",
+  },
+];
+
+// All bed variants for internal lookups and configurator sizing
+export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
+  (p) => p.parent_category === "beds"
+).map(formatCatalogItem);
+
 // Categorized product arrays
 export const ALL_PRODUCTS = {
-  beds: RAW_CATALOG.filter((p) => p.parent_category === "beds").map(formatCatalogItem),
+  beds: FLAGSHIP_BEDS,
   sofas: RAW_CATALOG.filter((p) => p.parent_category === "sofas").map(formatCatalogItem),
   mattresses: RAW_CATALOG.filter((p) => p.parent_category === "mattresses").map(formatCatalogItem),
   cabinets: RAW_CATALOG.filter((p) => p.parent_category === "cabinets").map(formatCatalogItem),
@@ -108,57 +356,57 @@ export const ALL_PRODUCTS = {
 export const POPULAR_PRODUCTS_OVERVIEW = [
   {
     id: "popular-integrated",
-    title: "Integrated MORPHY™ Bed",
+    title: "Integrated Vertical Murphy Bed",
     orientation: "Vertical & Horizontal",
     size: "76x190 to 200x200",
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
-    price: "from £749",
-    numericPrice: 749,
+    price: "from £699",
+    numericPrice: 699,
     image: "/product-images/morphy-integrated/160x200.jpg",
     hoverImage: "/product-images/morphy-integrated/160x200-3.jpg",
-    link: "/products/beds/integrated-bed",
+    link: "/products/beds/integrated-vertical-wall-bed",
     categoryKey: "beds",
     has3D: true,
   },
   {
-    id: "popular-classic-morphy",
-    title: "Classic MORPHY™ Bed",
-    orientation: "Vertical & Horizontal",
+    id: "popular-classic-vertical",
+    title: "Classic Vertical Wall Bed",
+    orientation: "Vertical",
     size: "76x190 to 200x200",
     colors: ["#090A0A"],
-    price: "from £749",
-    numericPrice: 749,
+    price: "from £419",
+    numericPrice: 419,
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/single-vertical-classic-morphy-bed-90x190",
+    link: "/products/beds/classic-vertical-wall-bed",
     categoryKey: "beds",
     has3D: false,
   },
   {
-    id: "popular-studio-morphy",
-    title: "Studio MORPHY™ Bed",
-    orientation: "Vertical & Horizontal",
+    id: "popular-studio-vertical",
+    title: "Studio Vertical Wall Bed",
+    orientation: "Vertical",
     size: "76x190 to 200x200",
     colors: ["#090A0A"],
-    price: "from £999",
-    numericPrice: 999,
+    price: "from £524",
+    numericPrice: 524,
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/single-vertical-studio-morphy-bed-90x190",
+    link: "/products/beds/studio-vertical-wall-bed",
     categoryKey: "beds",
     has3D: false,
   },
   {
-    id: "popular-classic-base",
-    title: "Classic Wall Bed",
-    orientation: "Vertical & Horizontal",
-    size: "76x190 to 200x180",
+    id: "popular-classic-horizontal",
+    title: "Classic Horizontal Wall Bed",
+    orientation: "Horizontal",
+    size: "76x190 to 200x200",
     colors: ["#090A0A"],
-    price: "from £599",
-    numericPrice: 599,
+    price: "from £419",
+    numericPrice: 419,
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    link: "/products/beds/single-vertical-classic-bed-90x190",
+    link: "/products/beds/classic-horizontal-wall-bed",
     categoryKey: "beds",
     has3D: false,
   },
@@ -220,28 +468,55 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
   },
 ];
 
+// Helper to find flagship bed from a slug or variant
+export const getFlagshipBed = (type = "Classic", orientation = "Vertical") => {
+  const normType = String(type).toLowerCase();
+  const normOrient = String(orientation).toLowerCase();
+
+  return (
+    FLAGSHIP_BEDS.find(
+      (f) =>
+        f.type.toLowerCase() === normType &&
+        f.orientation.toLowerCase() === normOrient
+    ) || FLAGSHIP_BEDS[0]
+  );
+};
+
 // Look up a product by slug or ID
 export const findProductBySlug = (categorySlug, productSlug) => {
   if (!productSlug) return null;
   const cleanSlug = productSlug.toLowerCase();
 
-  // Special alias for integrated-bed
-  if (cleanSlug === "integrated-bed") {
-    const found = RAW_CATALOG.find((p) => p.slug === "european-king-vertical-integrated-morphy-bed-160x200") || RAW_CATALOG[135];
-    return formatCatalogItem({ ...found, slug: "integrated-bed", name: "Integrated MORPHY™ Bed", has_3d: true });
+  // 1. Exact match against the 6 Flagship beds
+  const flagshipMatch = FLAGSHIP_BEDS.find((f) => f.slug === cleanSlug);
+  if (flagshipMatch) {
+    return { ...flagshipMatch };
   }
 
-  // Search by exact slug or match
+  // 2. Special backward compatibility alias for integrated-bed
+  if (cleanSlug === "integrated-bed") {
+    const integratedFlagship = FLAGSHIP_BEDS.find(
+      (f) => f.slug === "integrated-vertical-wall-bed"
+    );
+    return { ...integratedFlagship, slug: "integrated-bed" };
+  }
+
+  // 3. Search by exact slug or match in RAW_CATALOG
   const rawItem = RAW_CATALOG.find(
-    (p) => p.slug === cleanSlug || String(p.id) === cleanSlug || `wbk-${p.id}` === cleanSlug
+    (p) =>
+      p.slug === cleanSlug ||
+      String(p.id) === cleanSlug ||
+      `wbk-${p.id}` === cleanSlug
   );
 
   if (rawItem) {
     return formatCatalogItem(rawItem);
   }
 
-  // Substring match
-  const subMatch = RAW_CATALOG.find((p) => p.slug.includes(cleanSlug) || cleanSlug.includes(p.slug));
+  // 4. Substring match
+  const subMatch = RAW_CATALOG.find(
+    (p) => p.slug.includes(cleanSlug) || cleanSlug.includes(p.slug)
+  );
   if (subMatch) {
     return formatCatalogItem(subMatch);
   }
@@ -252,25 +527,48 @@ export const findProductBySlug = (categorySlug, productSlug) => {
 // Get all matching variant items for the same family/model
 export const getProductVariants = (currentProduct) => {
   if (!currentProduct) return [];
-  const type = currentProduct.type || "Classic";
   const parentCat = currentProduct.parent_category || "beds";
+  const type = currentProduct.type || "Classic";
+  const orientation = currentProduct.orientation || "Vertical";
 
-  return RAW_CATALOG.filter((p) => {
-    if (parentCat === "beds") {
-      return p.parent_category === "beds" && p.type === type;
-    }
-    return p.parent_category === parentCat;
-  }).map(formatCatalogItem);
+  if (parentCat === "beds") {
+    // Return all size variants for this specific flagship (type + orientation)
+    const matching = RAW_CATALOG.filter(
+      (p) =>
+        p.parent_category === "beds" &&
+        p.type === type &&
+        p.orientation === orientation
+    );
+
+    // Sort logically by width, then length
+    matching.sort((a, b) => {
+      const wa = Math.min(a.width || 0, a.length || 0);
+      const wb = Math.min(b.width || 0, b.length || 0);
+      if (wa !== wb) return wa - wb;
+      return (
+        Math.max(a.width || 0, a.length || 0) -
+        Math.max(b.width || 0, b.length || 0)
+      );
+    });
+
+    return matching.map(formatCatalogItem);
+  }
+
+  return RAW_CATALOG.filter((p) => p.parent_category === parentCat).map(
+    formatCatalogItem
+  );
 };
 
 // Fallback generator for unknown product slugs
 export const getFallbackProduct = (categorySlug, productSlug) => {
-  const cleanSlug = productSlug || "integrated-bed";
+  const cleanSlug = productSlug || "classic-vertical-wall-bed";
   const title = cleanSlug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-  const isSofa = cleanSlug.toLowerCase().includes("sofa") || (categorySlug && categorySlug.toLowerCase().includes("sofa"));
+  const isSofa =
+    cleanSlug.toLowerCase().includes("sofa") ||
+    (categorySlug && categorySlug.toLowerCase().includes("sofa"));
   const isIntegrated = cleanSlug.toLowerCase().includes("integrated");
 
   return {
@@ -282,17 +580,31 @@ export const getFallbackProduct = (categorySlug, productSlug) => {
     price: "£799",
     numericPrice: 799,
     has3D: isIntegrated,
-    image: isIntegrated ? "/product-images/morphy-integrated/160x200.jpg" : isSofa ? "/sofa1.webp" : "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hoverImage: isIntegrated ? "/product-images/morphy-integrated/160x200-3.jpg" : "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    image: isIntegrated
+      ? "/product-images/morphy-integrated/160x200.jpg"
+      : isSofa
+      ? "/sofa1.webp"
+      : "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hoverImage: isIntegrated
+      ? "/product-images/morphy-integrated/160x200-3.jpg"
+      : "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     orientation: "Vertical",
     size: "King",
     sizeLabel: "King 160 x 200",
     categoryKey: categorySlug || "beds",
     parent_category: categorySlug || "beds",
     type: isIntegrated ? "Integrated" : "Classic",
-    gallery: isIntegrated ? GLOBAL_GALLERY_TEMPLATES : [
-      { src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp", alt: title },
-      { src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp", alt: `${title} Open` }
-    ],
+    gallery: isIntegrated
+      ? GLOBAL_GALLERY_TEMPLATES
+      : [
+          {
+            src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+            alt: title,
+          },
+          {
+            src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+            alt: `${title} Open`,
+          },
+        ],
   };
 };

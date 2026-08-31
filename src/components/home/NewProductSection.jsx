@@ -247,7 +247,7 @@ export function NewProductSection() {
       <div className="relative z-30 flex items-center gap-4 mt-8 md:mt-12">
         <Button
           as="link"
-          href="/products/beds/integrated-bed"
+          href="/products/beds/integrated-vertical-wall-bed"
           variant="primary"
           size="lg"
           className="bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black"

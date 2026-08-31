@@ -12,6 +12,9 @@ import {
   IconUser,
   IconPhone,
   Icon3dCubeSphere,
+  IconTruck,
+  IconShieldCheck,
+  IconTools,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
@@ -150,7 +153,7 @@ export function MobileMenuDrawer() {
                     {/* 3D Configurator CTA */}
                     <div className="p-4 bg-[#F4F2F0]">
                       <Link
-                        href="/products/beds/integrated-bed"
+                        href="/products/beds/integrated-vertical-wall-bed"
                         onClick={closeMobileMenu}
                         className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-wbk-green text-wbk-white hover:bg-wbk-black text-xs font-medium uppercase tracking-[0.14em] shadow-sm transition-colors"
                       >
@@ -197,6 +200,49 @@ export function MobileMenuDrawer() {
                           </div>
                         </div>
                       </a>
+                    </div>
+
+                    {/* Secondary Information & Support Links */}
+                    <div className="px-4 py-3 bg-[#FBF9F8] border-t border-wbk-lightgrey flex items-center justify-around text-xs text-wbk-brown font-medium">
+                      <Link
+                        href="/support/faq"
+                        onClick={closeMobileMenu}
+                        className="hover:text-wbk-black transition-colors py-1"
+                      >
+                        FAQ
+                      </Link>
+                      <span className="text-wbk-lightgrey">|</span>
+                      <Link
+                        href="/support/installation-guides"
+                        onClick={closeMobileMenu}
+                        className="hover:text-wbk-black transition-colors py-1"
+                      >
+                        Installation
+                      </Link>
+                      <span className="text-wbk-lightgrey">|</span>
+                      <Link
+                        href="/support/contact"
+                        onClick={closeMobileMenu}
+                        className="hover:text-wbk-black transition-colors py-1"
+                      >
+                        Contact
+                      </Link>
+                    </div>
+
+                    {/* Brand Trust Assurances */}
+                    <div className="p-4 bg-[#F4F2F0] border-t border-wbk-lightgrey/70 space-y-2.5 text-[11px] text-wbk-brown">
+                      <div className="flex items-center gap-2">
+                        <IconTruck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <span className="text-wbk-black/80 font-medium">Free UK Mainland Delivery</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <IconShieldCheck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <span className="text-wbk-black/80 font-medium">30-Year Mechanism Warranty</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <IconTools size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <span className="text-wbk-black/80 font-medium">Precision Engineered Mechanisms</span>
+                      </div>
                     </div>
                   </motion.div>
                 ) : (
@@ -260,11 +306,21 @@ export function MobileMenuDrawer() {
                           <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
                             {item.title}
                           </div>
-                          {item.badge && (
+                          {(item.orientation || item.type || item.price) ? (
+                            <div className="text-[10px] text-wbk-brown flex items-center gap-1.5 mt-0.5 font-poppins flex-wrap">
+                              {item.orientation && <span>{item.orientation}</span>}
+                              {item.type && <span>• {item.type}</span>}
+                              {item.price && (
+                                <span className="font-semibold text-wbk-black">
+                                  • {item.price}
+                                </span>
+                              )}
+                            </div>
+                          ) : item.badge ? (
                             <span className="inline-block mt-0.5 text-[9px] uppercase tracking-wider text-wbk-brown">
                               {item.badge}
                             </span>
-                          )}
+                          ) : null}
                         </div>
                         <IconChevronRight
                           size={14}

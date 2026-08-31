@@ -40,7 +40,7 @@ export function MenuContextProvider({ children }) {
     setSubMenuState(slug ?? null);
   }, []);
 
-  const scheduleCloseSubmenu = useCallback((delayMs = 500) => {
+  const scheduleCloseSubmenu = useCallback((delayMs = 0) => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     closeTimeoutRef.current = setTimeout(() => {
       setSubMenuState(null);

@@ -31,7 +31,6 @@ export function MainMenuItem({ item }) {
         cancelCloseSubmenu();
         setSubMenu(item.slug);
       }}
-      onMouseLeave={() => scheduleCloseSubmenu(500)}
       onClick={() => router.push(item.href)}
       className={`relative group flex items-center gap-1.5 h-12 px-3.5 text-xs font-medium uppercase tracking-[0.14em] cursor-pointer transition-colors select-none ${
         isActive

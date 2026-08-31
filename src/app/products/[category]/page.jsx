@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect, useContext } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -36,6 +36,8 @@ export default function CategoryArchivePage() {
     setMounted(true);
   }, []);
 
+  const searchParams = useSearchParams();
+
   // ── FILTER STATES ──
   const [selectedSize, setSelectedSize] = useState("All");
   const [selectedOrientation, setSelectedOrientation] = useState("All");
@@ -43,53 +45,95 @@ export default function CategoryArchivePage() {
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  // Derive dynamic filter choices from actual data
-  const distinctSizes = [
-    "All",
-    ...Array.from(
-      new Set(rawCategoryProducts.map((p) => p.size).filter(Boolean)),
-    ),
-  ];
+  useEffect(() => {
+    const orient = searchParams?.get("orientation");
+    if (orient) {
+      const match = ["Vertical", "Horizontal"].find(
+        (o) => o.toLowerCase() === orient.toLowerCase()
+      );
+      if (match) setSelectedOrientation(match);
+    }
+    const typ = searchParams?.get("type");
+    if (typ) {
+      const match = ["Classic", "Studio", "Integrated"].find(
+        (t) => t.toLowerCase() === typ.toLowerCase()
+      );
+      if (match) setSelectedType(match);
+    }
+  }, [searchParams]);
+
+  // Derive dynamic filter choices
+  const distinctSizes =
+    currentCategory === "beds"
+      ? [
+          "All",
+          "Small Single",
+          "Single",
+          "Small Double",
+          "Double",
+          "King",
+          "Super King",
+        ]
+      : [
+          "All",
+          ...Array.from(
+            new Set(rawCategoryProducts.map((p) => p.size).filter(Boolean))
+          ),
+        ];
+
   const distinctOrientations = [
     "All",
     ...Array.from(
-      new Set(rawCategoryProducts.map((p) => p.orientation).filter(Boolean)),
+      new Set(rawCategoryProducts.map((p) => p.orientation).filter(Boolean))
     ),
   ];
+
   const distinctTypes = [
     "All",
     ...Array.from(
       new Set(
         rawCategoryProducts
           .map((p) => p.type || p.sub_category)
-          .filter(Boolean),
-      ),
+          .filter(Boolean)
+      )
     ),
   ];
+
   const priceOptions = ["All", "Under £500", "£500 - £800", "Over £800"];
 
   // Filter products
-  const filteredProducts = rawCategoryProducts.filter((prod) => {
-    if (selectedSize !== "All" && prod.size !== selectedSize) return false;
-    if (
-      selectedOrientation !== "All" &&
-      prod.orientation !== selectedOrientation
-    )
-      return false;
-    if (
-      selectedType !== "All" &&
-      prod.type !== selectedType &&
-      prod.sub_category !== selectedType
-    )
-      return false;
-    if (selectedPrice !== "All") {
-      const p = prod.numericPrice;
-      if (selectedPrice === "Under £500" && p >= 500) return false;
-      if (selectedPrice === "£500 - £800" && (p < 500 || p > 800)) return false;
-      if (selectedPrice === "Over £800" && p <= 800) return false;
-    }
-    return true;
-  });
+  const filteredProducts = rawCategoryProducts
+    .filter((prod) => {
+      if (
+        selectedOrientation !== "All" &&
+        prod.orientation !== selectedOrientation
+      )
+        return false;
+      if (
+        selectedType !== "All" &&
+        prod.type !== selectedType &&
+        prod.sub_category !== selectedType
+      )
+        return false;
+      if (selectedPrice !== "All") {
+        const p = prod.numericPrice;
+        if (selectedPrice === "Under £500" && p >= 500) return false;
+        if (selectedPrice === "£500 - £800" && (p < 500 || p > 800)) return false;
+        if (selectedPrice === "Over £800" && p <= 800) return false;
+      }
+      return true;
+    })
+    .map((prod) => {
+      // If user filtered by size on beds, link directly with ?size= query param
+      if (currentCategory === "beds" && selectedSize !== "All") {
+        const sizeSlug = selectedSize.toLowerCase().replace(/\s+/g, "-");
+        return {
+          ...prod,
+          link: `/products/beds/${prod.slug}?size=${sizeSlug}`,
+        };
+      }
+      return prod;
+    });
 
   const { isMenuVisible } = useContext(MenuContext);
   const [isSticky, setIsSticky] = useState(false);
