@@ -341,7 +341,7 @@ export default function ProductDetailPage() {
 
   if (!mounted) {
     return (
-      <div className="bg-wbk-white min-h-screen pt-28 flex items-center justify-center">
+      <div className="bg-wbk-white min-h-screen pt-16 flex items-center justify-center">
         <div className="h-10 w-10 border-4 border-wbk-green border-t-transparent rounded-full animate-spin" />
       </div>
     );

@@ -2,19 +2,22 @@
 
 import { useContext, useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, A11y } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
 import { MenuContext } from "@/context/MenuContext";
 import { SUBMENU_DATA } from "@/data/navigation";
 import { SubmenuItem } from "./SubmenuItem";
 
-const NAV_ORDER = ["beds", "sofas", "mattresses", "cabinets", "extras", "support"];
+const NAV_ORDER = [
+  "beds",
+  "sofas",
+  "mattresses",
+  "cabinets",
+  "extras",
+  "support",
+];
 
 const slideVariants = {
   enter: (dir) => ({
-    x: dir === 0 ? 0 : dir > 0 ? 40 : -40,
+    x: dir === 0 ? 0 : dir > 0 ? 35 : -35,
     opacity: 0,
   }),
   center: {
@@ -22,7 +25,7 @@ const slideVariants = {
     opacity: 1,
   },
   exit: (dir) => ({
-    x: dir === 0 ? 0 : dir > 0 ? -40 : 40,
+    x: dir === 0 ? 0 : dir > 0 ? -35 : 35,
     opacity: 0,
   }),
 };
@@ -52,13 +55,6 @@ export function Submenu() {
     prevIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  const breakpoints = {
-    0: { slidesPerView: 1.5, spaceBetween: 12 },
-    640: { slidesPerView: 2.5, spaceBetween: 16 },
-    1024: { slidesPerView: 4, spaceBetween: 20 },
-    1280: { slidesPerView: 5, spaceBetween: 24 },
-  };
-
   return (
     <AnimatePresence>
       {shouldShow && (
@@ -72,7 +68,7 @@ export function Submenu() {
           onMouseLeave={() => scheduleCloseSubmenu(500)}
           className="absolute left-0 right-0 top-full z-40 bg-wbk-white border-b border-wbk-lightgrey shadow-xl overflow-hidden before:absolute before:-top-4 before:left-0 before:right-0 before:h-4 before:content-['']"
         >
-          <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <AnimatePresence mode="wait" custom={direction}>
               {activeData && (
                 <motion.div
@@ -83,18 +79,12 @@ export function Submenu() {
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                  className="w-full"
+                  className="w-full flex justify-start"
                 >
-                  <Swiper
-                    modules={[Navigation, A11y]}
-                    navigation
-                    spaceBetween={20}
-                    breakpoints={breakpoints}
-                    className="wbk-submenu-swiper pb-1"
-                  >
+                  <div className="flex items-stretch justify-start gap-5 w-full overflow-x-auto custom-scrollbar pb-1">
                     {/* Parent category card */}
                     {activeData.parent && (
-                      <SwiperSlide key={`parent-${subMenu}`} className="h-auto">
+                      <div className="w-[230px] xl:w-[245px] shrink-0 flex flex-col">
                         <SubmenuItem
                           isParent
                           title={activeData.parent.title}
@@ -103,12 +93,15 @@ export function Submenu() {
                           tagline={activeData.parent.tagline}
                           onClick={() => setSubMenu(null)}
                         />
-                      </SwiperSlide>
+                      </div>
                     )}
 
                     {/* Child items / products */}
                     {activeData.items?.map((item, idx) => (
-                      <SwiperSlide key={`${subMenu}-item-${idx}`} className="h-auto">
+                      <div
+                        key={`${subMenu}-item-${idx}`}
+                        className="w-[230px] xl:w-[245px] shrink-0 flex flex-col"
+                      >
                         <SubmenuItem
                           title={item.title}
                           image={item.image}
@@ -116,9 +109,9 @@ export function Submenu() {
                           badge={item.badge}
                           onClick={() => setSubMenu(null)}
                         />
-                      </SwiperSlide>
+                      </div>
                     ))}
-                  </Swiper>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

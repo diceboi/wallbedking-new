@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -29,8 +29,51 @@ const LANGUAGES = [
 export function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const [activeLang, setActiveLang] = useState("EN");
-  const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu } =
-    useContext(MenuContext);
+  const {
+    subMenu,
+    setSubMenu,
+    cancelCloseSubmenu,
+    scheduleCloseSubmenu,
+    isMenuVisible,
+    setIsMenuVisible,
+  } = useContext(MenuContext);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+
+          // Always visible at the top of the page
+          if (currentScrollY < 60) {
+            setIsMenuVisible(true);
+          } else {
+            const diff = currentScrollY - lastScrollY.current;
+
+            // Scroll down threshold (> 10px) -> hide behind upper bar
+            if (diff > 10) {
+              setIsMenuVisible(false);
+              setSubMenu(null);
+            }
+            // Scroll up threshold (< -10px) -> show category bar
+            else if (diff < -10) {
+              setIsMenuVisible(true);
+            }
+          }
+
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [setSubMenu]);
 
   return (
     <>
@@ -54,10 +97,18 @@ export function Header() {
         <TopMenu />
 
         {/* Primary header bar */}
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 lg:gap-8 relative z-30 bg-wbk-white">
+        <div
+          className={`w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 lg:gap-8 relative z-30 bg-wbk-white transition-all duration-200 ${
+            !isMenuVisible ? "border-b border-wbk-lightgrey shadow-xs" : ""
+          }`}
+        >
           {/* Left section: Logo + Contact Info */}
           <div className="flex items-center gap-6 shrink-0">
-            <Link href="/" className="shrink-0 flex items-center" aria-label="WallBedKing home">
+            <Link
+              href="/"
+              className="shrink-0 flex items-center"
+              aria-label="WallBedKing home"
+            >
               <Image
                 src="/logos/WBK-Logo-Gold-Black.svg"
                 alt="WallBedKing"
@@ -164,19 +215,42 @@ export function Header() {
         </div>
 
         {/* Mobile Search Row (< md screens) */}
-        <div className="md:hidden px-4 pb-3 pt-1 border-t border-wbk-lightgrey/60 bg-wbk-white">
+        <motion.div
+          className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white overflow-hidden"
+          initial={false}
+          animate={{
+            height: isMenuVisible ? "auto" : 0,
+            opacity: isMenuVisible ? 1 : 0,
+            paddingTop: isMenuVisible ? 4 : 0,
+            paddingBottom: isMenuVisible ? 12 : 0,
+          }}
+          transition={{ duration: 0.25 }}
+        >
           <SearchBar />
-        </div>
+        </motion.div>
 
         {/* Desktop Category Navigation & Animated Mega Submenu */}
-        <div
-          className="hidden xl:block relative"
+        <motion.div
+          className="hidden xl:block relative z-20"
+          initial={false}
+          animate={{
+            height: isMenuVisible ? 50 : 0,
+            y: isMenuVisible ? 0 : -50,
+            opacity: isMenuVisible ? 1 : 0,
+          }}
+          transition={{
+            duration: 0.28,
+            ease: [0.25, 1, 0.5, 1],
+          }}
+          style={{
+            overflow: isMenuVisible ? "visible" : "hidden",
+          }}
           onMouseEnter={cancelCloseSubmenu}
           onMouseLeave={() => scheduleCloseSubmenu(500)}
         >
           <MainMenu />
           <Submenu />
-        </div>
+        </motion.div>
       </header>
 
       {/* Slide-out Mobile Menu Drawer */}

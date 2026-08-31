@@ -13,7 +13,7 @@ export function MainMenu() {
       onMouseEnter={cancelCloseSubmenu}
       className="border-t border-b border-wbk-lightgrey bg-wbk-white relative z-20 h-[50px]"
     >
-      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 flex items-stretch justify-between h-full">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-stretch justify-between h-full">
         {/* Main navigation item tabs */}
         <div className="flex items-stretch flex-wrap h-full">
           {MAIN_NAV_ITEMS.map((item) => (

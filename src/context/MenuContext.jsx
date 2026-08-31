@@ -9,6 +9,10 @@ export const MenuContext = createContext({
   cancelCloseSubmenu: () => {},
   scheduleCloseSubmenu: () => {},
 
+  // Header scroll visibility
+  isMenuVisible: true,
+  setIsMenuVisible: () => {},
+
   // Unified drawer system
   activeDrawer: null, // null | 'mobile' | 'cart' | 'user'
   setActiveDrawer: () => {},
@@ -21,6 +25,9 @@ export const MenuContext = createContext({
 });
 
 export function MenuContextProvider({ children }) {
+  // --- Header scroll visibility ---
+  const [isMenuVisible, setIsMenuVisible] = useState(true);
+
   // --- Desktop submenu ---
   const [subMenu, setSubMenuState] = useState(null);
   const closeTimeoutRef = useRef(null);
@@ -75,6 +82,8 @@ export function MenuContextProvider({ children }) {
         setSubMenu,
         scheduleCloseSubmenu,
         cancelCloseSubmenu,
+        isMenuVisible,
+        setIsMenuVisible,
         activeDrawer,
         setActiveDrawer,
         closeDrawer,

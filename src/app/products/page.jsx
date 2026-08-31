@@ -4,7 +4,6 @@ import { useRef, useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { Container } from "@/components/ui/Container";
-import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { ALL_PRODUCTS, CATEGORIES_INFO } from "@/data/products";
@@ -47,61 +46,48 @@ export default function ProductsPage() {
   const [cabinetsNextEl, setCabinetsNextEl] = useState(null);
 
   // Distinct representative items per category
-  const bedItems = (ALL_PRODUCTS.beds || []).filter((_, idx) => idx % 4 === 0).slice(0, 8);
-  const sofaItems = (ALL_PRODUCTS.sofas || []).filter((_, idx) => idx % 2 === 0).slice(0, 8);
+  const bedItems = (ALL_PRODUCTS.beds || [])
+    .filter((_, idx) => idx % 4 === 0)
+    .slice(0, 8);
+  const sofaItems = (ALL_PRODUCTS.sofas || [])
+    .filter((_, idx) => idx % 2 === 0)
+    .slice(0, 8);
   const mattressItems = ALL_PRODUCTS.mattresses || [];
-  const cabinetItems = (ALL_PRODUCTS.cabinets || []).filter((_, idx) => idx % 2 === 0).slice(0, 8);
+  const cabinetItems = (ALL_PRODUCTS.cabinets || [])
+    .filter((_, idx) => idx % 2 === 0)
+    .slice(0, 8);
 
   return (
-    <div className="bg-wbk-white">
-      {/* ── HERO BANNER SECTION ── */}
-      <section
-        className="relative h-[65vh] min-h-[500px] w-full flex items-center bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/category-images/integrated-beds.webp')",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-wbk-white/70 via-wbk-white/30 to-transparent" />
-
-        <Container size="xl" className="relative z-10 pt-[60px]">
-          <div className="max-w-2xl px-2">
-            <h1 className="font-new-york text-5xl sm:text-6xl md:text-7xl text-wbk-black leading-tight tracking-tight">
-              Our Products
+    <div className="bg-wbk-white min-h-screen pt-16 pb-20">
+      <Container size="xl">
+        {/* Products Header with Breadcrumbs */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80 mb-2">
+              <Link href="/" className="hover:text-wbk-black transition-colors">
+                Home
+              </Link>
+              <span>/</span>
+              <span className="capitalize text-wbk-black font-medium">
+                Products
+              </span>
+            </nav>
+            <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
+              All Products
             </h1>
-            <p className="mt-4 font-poppins text-base sm:text-lg text-wbk-black/80 max-w-xl leading-relaxed">
-              Murphy beds, modular sofas, comfort mattresses and coordinated cabinetry in all shapes and sizes.
+            <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
+              Explore our complete collection of modular space-saving Murphy
+              beds, modular sofas, comfort mattresses, and coordinated
+              cabinetry.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Button
-                as="link"
-                href="/products/beds"
-                variant="white"
-                size="lg"
-                className="shadow-md hover:shadow-lg"
-              >
-                Explore Murphy Beds
-              </Button>
-              <Button
-                as="link"
-                href="/products/beds/integrated-bed"
-                variant="secondary"
-                size="lg"
-                className="border-wbk-black/20 text-wbk-black hover:bg-wbk-black hover:text-white bg-white/60 backdrop-blur-sm shadow-md"
-              >
-                3D Configurator
-              </Button>
-            </div>
           </div>
-        </Container>
-      </section>
+        </div>
 
-      {/* ── PRODUCT CATEGORIES CAROUSEL SECTION ── */}
-      <section className="py-20 overflow-hidden">
-        <Container size="xl">
-          <h2 className="font-new-york text-4xl sm:text-5xl text-wbk-black mb-16">
-            Explore by Category
-          </h2>
+        {/* Separator line */}
+        <hr className="border-wbk-lightgrey/60 mb-12" />
 
+        {/* ── PRODUCT CATEGORIES CAROUSEL SECTION ── */}
+        <div className="overflow-hidden">
           <div className="space-y-24">
             {/* ── 1. MURPHY BEDS ── */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-16 border-t border-wbk-lightgrey/40 first:border-t-0 first:pt-0">
@@ -111,7 +97,9 @@ export default function ProductsPage() {
                     Murphy Beds
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Precision-engineered fold-away bed mechanisms with SizeFlex™ and TypeFlex™ modularity. Available in Classic, Studio, and Integrated models.
+                    Precision-engineered fold-away bed mechanisms with SizeFlex™
+                    and TypeFlex™ modularity. Available in Classic, Studio, and
+                    Integrated models.
                   </p>
                 </div>
                 <Link
@@ -173,7 +161,9 @@ export default function ProductsPage() {
                     Sofas
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Adaptable modular sofas designed for front bed attachment or freestanding living configurations with removable upholstery.
+                    Adaptable modular sofas designed for front bed attachment or
+                    freestanding living configurations with removable
+                    upholstery.
                   </p>
                 </div>
                 <Link
@@ -235,7 +225,8 @@ export default function ProductsPage() {
                     Mattresses
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Comfort, Luxury, and Supreme comfort grades with optimal thickness specifically rated for wall bed integration.
+                    Comfort, Luxury, and Supreme comfort grades with optimal
+                    thickness specifically rated for wall bed integration.
                   </p>
                 </div>
                 <Link
@@ -297,7 +288,9 @@ export default function ProductsPage() {
                     Cabinets & Storage
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Vertical & Horizontal front enclosures, extensions, and matching side storage units available in Pine, Beech, Oak, and White finishes.
+                    Vertical & Horizontal front enclosures, extensions, and
+                    matching side storage units available in Pine, Beech, Oak,
+                    and White finishes.
                   </p>
                 </div>
                 <Link
@@ -351,8 +344,8 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-        </Container>
-      </section>
+        </div>
+      </Container>
     </div>
   );
 }
