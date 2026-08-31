@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -8,200 +8,104 @@ import {
   IconShoppingBag,
   IconUser,
   IconChevronDown,
+  Icon3dCubeSphere,
 } from "@tabler/icons-react";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { NavItem } from "@/components/layout/NavItem";
-import { Button } from "@/components/ui/Button";
+import { TopMenu } from "./TopMenu";
+import { ContactInfo } from "./ContactInfo";
+import { SearchBar } from "./SearchBar";
+import { MainMenu } from "./MainMenu";
+import { Submenu } from "./Submenu";
+import { MobileToggle } from "./MobileToggle";
+import { MobileMenuDrawer } from "./MobileMenuDrawer";
+import { MenuContext } from "@/context/MenuContext";
 
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
-
-const NAV_ITEMS = [
-  {
-    label: "Products",
-    dropdown: {
-      isImageGrid: true,
-      items: [
-        {
-          label: "Murphy Beds",
-          href: "/products/beds",
-          image: "/product-images/morphy-integrated/160x200.jpg",
-        },
-        {
-          label: "Sofas",
-          href: "/products/sofas",
-          image: "/sofa1.webp",
-        },
-        {
-          label: "Mattresses",
-          href: "/products/mattresses",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-        },
-        {
-          label: "Cabinets",
-          href: "/products/cabinets",
-          image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-        },
-      ],
-    },
-  },
-  {
-    label: "Support",
-    dropdown: {
-      columns: [
-        {
-          label: "Help",
-          items: [
-            {
-              label: "Installation Guides",
-              href: "/support/installation-guides",
-            },
-            {
-              label: "Installation Videos",
-              href: "/support/installation-videos",
-            },
-            { label: "FAQ", href: "/support/faq" },
-            { label: "Delivery", href: "/support/delivery" },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    label: "About",
-    href: "/about",
-  },
-  {
-    label: "Contact",
-    href: "/contact",
-  },
-  {
-    label: "More",
-    dropdown: {
-      columns: [
-        {
-          label: "Discover",
-          items: [
-            { label: "Case Studies", href: "/more/case-studies" },
-            { label: "Trade Customers", href: "/more/trade-customers" },
-            { label: "Reviews", href: "/more/reviews" },
-          ],
-        },
-      ],
-    },
-  },
-];
-
-/* ── Language options ────────────────────────────────────── */
+/* ── Language choices ────────────────────────────────────── */
 const LANGUAGES = [
   { code: "en", label: "EN" },
   { code: "hu", label: "HU" },
   { code: "de", label: "DE" },
 ];
 
-/* ── Header ─────────────────────────────────────────────── */
 export function Header() {
-  const [openItem, setOpenItem] = useState(null);
   const [langOpen, setLangOpen] = useState(false);
   const [activeLang, setActiveLang] = useState("EN");
-
-  const closeTimer = useRef(null);
-
-  const handleEnter = useCallback((label) => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setOpenItem(label);
-    setLangOpen(false);
-  }, []);
-
-  const handleLeave = useCallback(() => {
-    closeTimer.current = setTimeout(() => setOpenItem(null), 120);
-  }, []);
+  const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu } =
+    useContext(MenuContext);
 
   return (
     <>
-      {/* Overlay – dims page content when dropdown is open */}
+      {/* Dimmed backdrop when mega submenu is open */}
       <AnimatePresence>
-        {openItem && (
+        {subMenu && (
           <motion.div
-            key="overlay"
+            key="submenu-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 top-[60px] z-30 bg-wbk-black/10"
-            onMouseEnter={() => setOpenItem(null)}
+            onClick={() => setSubMenu(null)}
+            className="fixed inset-0 z-30 bg-wbk-black/20 backdrop-blur-[1px] hidden xl:block"
           />
         )}
       </AnimatePresence>
 
-      {/* ── Header bar ────────────────────────────────────── */}
-      <header className="fixed inset-x-0 top-0 z-50 h-[60px] bg-wbk-white border-b border-wbk-lightgrey">
-        <div className="mx-auto flex h-full w-full items-center justify-between px-4">
-          {/* Logo */}
-          <Link href="/" className="shrink-0" aria-label="WallBedKing home">
-            <Image
-              src="/logos/WBK-Logo-Gold-Black.svg"
-              alt="WallBedKing"
-              width={140}
-              height={32}
-              priority
-              className="h-7 w-auto"
-            />
-          </Link>
+      <header className="sticky top-0 z-40 w-full bg-wbk-white shadow-xs font-poppins">
+        {/* Top announcement & quick links bar */}
+        <TopMenu />
 
-          {/* Main nav */}
-          <nav
-            className="hidden lg:flex items-center gap-8 h-full"
-            onMouseLeave={handleLeave}
-          >
-            {NAV_ITEMS.map((item) => (
-              <NavItem
-                key={item.label}
-                item={item}
-                isOpen={openItem === item.label}
-                onMouseEnter={() => handleEnter(item.label)}
-                onMouseLeave={handleLeave}
+        {/* Primary header bar */}
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 lg:gap-8 relative z-30 bg-wbk-white">
+          {/* Left section: Logo + Contact Info */}
+          <div className="flex items-center gap-6 shrink-0">
+            <Link href="/" className="shrink-0 flex items-center" aria-label="WallBedKing home">
+              <Image
+                src="/logos/WBK-Logo-Gold-Black.svg"
+                alt="WallBedKing"
+                width={150}
+                height={34}
+                priority
+                className="h-7 sm:h-8 w-auto"
               />
-            ))}
-          </nav>
+            </Link>
+            <ContactInfo />
+          </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-4">
-            {/* Configurator button */}
-            <Button
-              as="link"
+          {/* Center: Live instant product search */}
+          <div className="hidden md:flex flex-1 justify-center max-w-md">
+            <SearchBar />
+          </div>
+
+          {/* Right section: CTA, Language, Cart, Account, MobileToggle */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* 3D Configurator CTA */}
+            <Link
               href="/products/beds/integrated-bed"
-              variant="primary"
-              size="sm"
-              className="hidden lg:inline-flex bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-wbk-white shadow-sm font-medium tracking-widest uppercase"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 bg-wbk-green hover:bg-wbk-black border border-wbk-green hover:border-wbk-black text-wbk-white text-xs font-medium tracking-[0.14em] uppercase transition-colors shadow-xs"
             >
-              Configurator
-            </Button>
+              <Icon3dCubeSphere size={15} />
+              <span>Configurator</span>
+            </Link>
 
-            {/* Language selector */}
+            {/* Language Selector Dropdown */}
             <div
-              className="relative"
-              onMouseEnter={() => {
-                setLangOpen(true);
-                setOpenItem(null);
-              }}
+              className="relative hidden sm:block"
+              onMouseEnter={() => setLangOpen(true)}
               onMouseLeave={() => setLangOpen(false)}
             >
               <button
-                className="flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-wbk-black hover:text-wbk-green transition-colors duration-150"
+                type="button"
+                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green py-1 transition-colors"
                 aria-label="Select language"
               >
-                {activeLang}
+                <span>{activeLang}</span>
                 <IconChevronDown
                   size={12}
-                  className={cn(
-                    "transition-transform duration-200",
-                    langOpen ? "rotate-180" : "rotate-0",
-                  )}
+                  className={`transition-transform duration-200 ${
+                    langOpen ? "rotate-180" : "rotate-0"
+                  }`}
                 />
               </button>
+
               <AnimatePresence>
                 {langOpen && (
                   <motion.div
@@ -209,21 +113,21 @@ export function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 min-w-[60px] bg-wbk-white shadow-md border border-wbk-lightgrey py-1"
+                    className="absolute right-0 top-full mt-1 min-w-[70px] bg-wbk-white shadow-lg border border-wbk-lightgrey py-1 z-50 rounded-none"
                   >
                     {LANGUAGES.map((lang) => (
                       <button
                         key={lang.code}
+                        type="button"
                         onClick={() => {
                           setActiveLang(lang.label);
                           setLangOpen(false);
                         }}
-                        className={cn(
-                          "block w-full px-4 py-2 text-left text-xs font-medium uppercase tracking-widest transition-colors duration-150",
+                        className={`block w-full px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors ${
                           activeLang === lang.label
-                            ? "text-wbk-green"
-                            : "text-wbk-black hover:text-wbk-green hover:bg-wbk-lightgrey",
-                        )}
+                            ? "text-wbk-green font-semibold bg-[#F4F2F0]"
+                            : "text-wbk-black hover:text-wbk-green hover:bg-[#FBF9F8]"
+                        }`}
                       >
                         {lang.label}
                       </button>
@@ -233,32 +137,50 @@ export function Header() {
               </AnimatePresence>
             </div>
 
-            {/* Cart */}
+            {/* Cart Button */}
             <Link
               href="/cart"
               aria-label="Shopping cart"
-              className="relative text-wbk-black hover:text-wbk-green transition-colors duration-150"
+              className="relative p-1.5 text-wbk-black hover:text-wbk-green transition-colors"
             >
-              <IconShoppingBag size={20} strokeWidth={1.5} />
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-wbk-gold text-[9px] font-semibold text-wbk-black">
+              <IconShoppingBag size={21} strokeWidth={1.5} />
+              <span className="absolute 0 top-0.5 right-0.5 flex h-4 w-4 items-center justify-center bg-wbk-gold text-[9px] font-bold text-wbk-black">
                 0
               </span>
             </Link>
 
-            {/* User */}
+            {/* User Account */}
             <Link
               href="/account"
               aria-label="Your account"
-              className="text-wbk-black hover:text-wbk-green transition-colors duration-150"
+              className="p-1.5 text-wbk-black hover:text-wbk-green transition-colors hidden sm:block"
             >
-              <IconUser size={20} strokeWidth={1.5} />
+              <IconUser size={21} strokeWidth={1.5} />
             </Link>
+
+            {/* Mobile Navigation Toggle */}
+            <MobileToggle />
           </div>
+        </div>
+
+        {/* Mobile Search Row (< md screens) */}
+        <div className="md:hidden px-4 pb-3 pt-1 border-t border-wbk-lightgrey/60 bg-wbk-white">
+          <SearchBar />
+        </div>
+
+        {/* Desktop Category Navigation & Animated Mega Submenu */}
+        <div
+          className="hidden xl:block relative"
+          onMouseEnter={cancelCloseSubmenu}
+          onMouseLeave={() => scheduleCloseSubmenu(500)}
+        >
+          <MainMenu />
+          <Submenu />
         </div>
       </header>
 
-      {/* Spacer so page content sits below the fixed header */}
-      <div className="h-[60px]" aria-hidden="true" />
+      {/* Slide-out Mobile Menu Drawer */}
+      <MobileMenuDrawer />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { Poppins } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MenuContextProvider } from "@/context/MenuContext";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -30,9 +31,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${poppins.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <MenuContextProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </MenuContextProvider>
       </body>
     </html>
   );
