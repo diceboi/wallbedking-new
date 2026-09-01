@@ -17,10 +17,14 @@ import {
   IconTools,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
 
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu } = useContext(MenuContext);
+  const { totalItems, openCart } = useCart();
+  const { user, openUserDrawer } = useAuth();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
   const [level, setLevel] = useState(0);
@@ -164,22 +168,36 @@ export function MobileMenuDrawer() {
 
                     {/* User & Cart shortcuts */}
                     <div className="grid grid-cols-2 divide-x divide-wbk-lightgrey/70 bg-wbk-white">
-                      <Link
-                        href="/cart"
-                        onClick={closeMobileMenu}
-                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMobileMenu();
+                          openCart();
+                        }}
+                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green cursor-pointer"
                       >
                         <IconShoppingBag size={17} strokeWidth={1.5} />
-                        <span>Cart (0)</span>
-                      </Link>
-                      <Link
-                        href="/account"
-                        onClick={closeMobileMenu}
-                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green"
+                        <span>Cart ({totalItems})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMobileMenu();
+                          openUserDrawer();
+                        }}
+                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green cursor-pointer"
                       >
-                        <IconUser size={17} strokeWidth={1.5} />
-                        <span>Account</span>
-                      </Link>
+                        {user ? (
+                          <div className="w-5 h-5 rounded-full bg-wbk-black text-white text-[10px] flex items-center justify-center font-semibold">
+                            {(user.user_metadata?.full_name?.[0] || user.email?.[0] || "U").toUpperCase()}
+                          </div>
+                        ) : (
+                          <IconUser size={17} strokeWidth={1.5} />
+                        )}
+                        <span className="truncate max-w-[100px]">
+                          {user ? (user.user_metadata?.full_name?.split(" ")[0] || "Account") : "Account"}
+                        </span>
+                      </button>
                     </div>
 
                     {/* Quick Call */}

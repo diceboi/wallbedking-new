@@ -3,6 +3,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { MenuContextProvider } from "@/context/MenuContext";
+import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { UserDrawer } from "@/components/auth/UserDrawer";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -33,11 +37,17 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${poppins.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ScrollToTop />
-        <MenuContextProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </MenuContextProvider>
+        <AuthProvider>
+          <CartProvider>
+            <MenuContextProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <CartDrawer />
+              <UserDrawer />
+            </MenuContextProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

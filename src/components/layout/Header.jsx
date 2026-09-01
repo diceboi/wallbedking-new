@@ -18,6 +18,8 @@ import { Submenu } from "./Submenu";
 import { MobileToggle } from "./MobileToggle";
 import { MobileMenuDrawer } from "./MobileMenuDrawer";
 import { MenuContext } from "@/context/MenuContext";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 /* ── Language choices ────────────────────────────────────── */
 const LANGUAGES = [
@@ -29,6 +31,8 @@ const LANGUAGES = [
 export function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const [activeLang, setActiveLang] = useState("EN");
+  const { totalItems, openCart } = useCart();
+  const { user, openUserDrawer } = useAuth();
   const {
     subMenu,
     setSubMenu,
@@ -36,6 +40,7 @@ export function Header() {
     scheduleCloseSubmenu,
     isMenuVisible,
     setIsMenuVisible,
+    isSearchOpen,
   } = useContext(MenuContext);
   const lastScrollY = useRef(0);
 
@@ -46,6 +51,14 @@ export function Header() {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
+
+          // Never collapse header while user is searching or typing!
+          if (isSearchOpen) {
+            setIsMenuVisible(true);
+            lastScrollY.current = currentScrollY;
+            ticking = false;
+            return;
+          }
 
           // Always visible at the top of the page
           if (currentScrollY < 60) {
@@ -73,7 +86,7 @@ export function Header() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [setSubMenu]);
+  }, [setSubMenu, isSearchOpen, setIsMenuVisible]);
 
   return (
     <>
@@ -189,25 +202,35 @@ export function Header() {
             </div>
 
             {/* Cart Button */}
-            <Link
-              href="/cart"
-              aria-label="Shopping cart"
-              className="relative p-1.5 text-wbk-black hover:text-wbk-green transition-colors"
+            <button
+              type="button"
+              onClick={openCart}
+              aria-label={`Shopping cart with ${totalItems} items`}
+              className="relative p-1.5 text-wbk-black hover:text-wbk-green transition-colors cursor-pointer"
             >
               <IconShoppingBag size={21} strokeWidth={1.5} />
-              <span className="absolute 0 top-0.5 right-0.5 flex h-4 w-4 items-center justify-center bg-wbk-gold text-[9px] font-bold text-wbk-black">
-                0
-              </span>
-            </Link>
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center bg-wbk-gold text-[9px] font-bold text-wbk-black rounded-full shadow-xs animate-in zoom-in-50 duration-200">
+                  {totalItems}
+                </span>
+              )}
+            </button>
 
             {/* User Account */}
-            <Link
-              href="/account"
-              aria-label="Your account"
-              className="p-1.5 text-wbk-black hover:text-wbk-green transition-colors hidden sm:block"
+            <button
+              type="button"
+              onClick={() => openUserDrawer()}
+              aria-label={user ? "Your account" : "Sign in"}
+              className="p-1.5 text-wbk-black hover:text-wbk-green transition-colors hidden sm:flex items-center relative cursor-pointer"
             >
-              <IconUser size={21} strokeWidth={1.5} />
-            </Link>
+              {user ? (
+                <div className="w-7 h-7 rounded-full bg-wbk-black text-wbk-white text-[11px] font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs">
+                  {(user.user_metadata?.full_name?.[0] || user.email?.[0] || "U").toUpperCase()}
+                </div>
+              ) : (
+                <IconUser size={21} strokeWidth={1.5} />
+              )}
+            </button>
 
             {/* Mobile Navigation Toggle */}
             <MobileToggle />
@@ -216,7 +239,7 @@ export function Header() {
 
         {/* Mobile Search Row (< md screens) */}
         <motion.div
-          className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white overflow-hidden"
+          className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white relative z-30"
           initial={false}
           animate={{
             height: isMenuVisible ? "auto" : 0,
@@ -225,6 +248,9 @@ export function Header() {
             paddingBottom: isMenuVisible ? 12 : 0,
           }}
           transition={{ duration: 0.25 }}
+          style={{
+            overflow: isMenuVisible ? "visible" : "hidden",
+          }}
         >
           <SearchBar />
         </motion.div>

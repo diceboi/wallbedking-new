@@ -13,6 +13,10 @@ export const MenuContext = createContext({
   isMenuVisible: true,
   setIsMenuVisible: () => {},
 
+  // Search visibility
+  isSearchOpen: false,
+  setIsSearchOpen: () => {},
+
   // Unified drawer system
   activeDrawer: null, // null | 'mobile' | 'cart' | 'user'
   setActiveDrawer: () => {},
@@ -27,6 +31,7 @@ export const MenuContext = createContext({
 export function MenuContextProvider({ children }) {
   // --- Header scroll visibility ---
   const [isMenuVisible, setIsMenuVisible] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // --- Desktop submenu ---
   const [subMenu, setSubMenuState] = useState(null);
@@ -84,6 +89,8 @@ export function MenuContextProvider({ children }) {
         cancelCloseSubmenu,
         isMenuVisible,
         setIsMenuVisible,
+        isSearchOpen,
+        setIsSearchOpen,
         activeDrawer,
         setActiveDrawer,
         closeDrawer,

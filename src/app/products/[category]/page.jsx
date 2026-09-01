@@ -11,6 +11,10 @@ import {
   IconFilter,
   Icon3dCubeSphere,
 } from "@tabler/icons-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode, Mousewheel } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/free-mode";
 import {
   ALL_PRODUCTS,
   CATEGORIES_INFO,
@@ -66,20 +70,20 @@ export default function CategoryArchivePage() {
   const distinctSizes =
     currentCategory === "beds"
       ? [
-          "All",
-          "Small Single",
-          "Single",
-          "Small Double",
-          "Double",
-          "King",
-          "Super King",
-        ]
+        "All",
+        "Small Single",
+        "Single",
+        "Small Double",
+        "Double",
+        "King",
+        "Super King",
+      ]
       : [
-          "All",
-          ...Array.from(
-            new Set(rawCategoryProducts.map((p) => p.size).filter(Boolean))
-          ),
-        ];
+        "All",
+        ...Array.from(
+          new Set(rawCategoryProducts.map((p) => p.size).filter(Boolean))
+        ),
+      ];
 
   const distinctOrientations = [
     "All",
@@ -215,259 +219,266 @@ export default function CategoryArchivePage() {
           </div>
         </div>
 
-        {/* Separator line */}
-        <hr className="border-wbk-lightgrey/60 mb-6" />
-
         {/* Sentinel for sticky detection */}
-        <div ref={sentinelRef} className="h-px w-full pointer-events-none -mt-6 mb-2" />
+        <div ref={sentinelRef} className="h-px w-full pointer-events-none mb-0" />
 
         {/* Filters bar */}
         <div
           ref={filterContainerRef}
-          className={`sticky z-30 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
-            isMenuVisible ? "top-[88px] xl:top-[138px]" : "top-[88px]"
-          } ${
-            isSticky
-              ? "bg-wbk-white/95 backdrop-blur-md border-b border-wbk-lightgrey py-3 shadow-xs -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8"
-              : "relative mb-8 py-1"
-          }`}
+          className={`sticky z-30 bg-wbk-white border-y border-wbk-lightgrey h-14 sm:h-[58px] flex items-center -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+            isMenuVisible
+              ? "top-[106px] md:top-[97px] xl:top-[147px]"
+              : "top-[53px] md:top-[97px] xl:top-[97px]"
+          } ${isSticky ? "shadow-xs" : ""}`}
         >
           <motion.div
             animate={{
               x: isSticky ? [10, 0] : 0,
             }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="flex items-center justify-start gap-2.5 sm:gap-3 flex-wrap"
+            className="w-full h-full flex items-center overflow-x-clip"
           >
-            {/* Left label animation when sticky */}
-            {isSticky && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2 }}
-                className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-wbk-black px-3.5 py-2 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 shrink-0"
-              >
-                <IconFilter size={14} className="text-wbk-gold" />
-                <span>Filters</span>
-              </motion.div>
-            )}
-
-            {/* Type / Model Filter */}
-            {distinctTypes.length > 2 && (
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveDropdown(activeDropdown === "type" ? null : "type")
-                  }
-                  className={`flex items-center justify-between gap-3 px-5 py-2.5 border text-xs font-poppins transition-all rounded-full cursor-pointer ${
-                    selectedType !== "All"
-                      ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                      : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                  }`}
-                >
-                  <span>
-                    Type:{" "}
-                    <strong className="font-semibold">{selectedType}</strong>
-                  </span>
-                  <IconChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === "type" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                    }`}
-                  />
-                </button>
-                {activeDropdown === "type" && (
-                  <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
-                    {distinctTypes.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => {
-                          setSelectedType(opt);
-                          setActiveDropdown(null);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors ${
-                          selectedType === opt
-                            ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                            : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+            <Swiper
+              modules={[FreeMode, Mousewheel]}
+              slidesPerView="auto"
+              spaceBetween={10}
+              freeMode={{
+                enabled: true,
+                momentumRatio: 0.75,
+              }}
+              mousewheel={{
+                forceToAxis: true,
+              }}
+              grabCursor={true}
+              onTouchStart={() => setActiveDropdown(null)}
+              onSliderMove={() => setActiveDropdown(null)}
+              className="filter-swiper !overflow-visible w-full h-full flex items-center"
+            >
+              {/* Left label animation when sticky */}
+              {isSticky && (
+                <SwiperSlide className="!w-auto !h-full flex items-center">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-wbk-black px-3.5 h-9 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 shrink-0 select-none">
+                    <IconFilter size={14} className="text-wbk-gold" />
+                    <span>Filters</span>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Size Filter */}
-            {distinctSizes.length > 2 && (
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveDropdown(activeDropdown === "size" ? null : "size")
-                  }
-                  className={`flex items-center justify-between gap-3 px-5 py-2.5 border text-xs font-poppins transition-all rounded-full cursor-pointer ${
-                    selectedSize !== "All"
-                      ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                      : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                  }`}
-                >
-                  <span>
-                    Size:{" "}
-                    <strong className="font-semibold">{selectedSize}</strong>
-                  </span>
-                  <IconChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === "size" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                    }`}
-                  />
-                </button>
-                {activeDropdown === "size" && (
-                  <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
-                    {distinctSizes.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSize(opt);
-                          setActiveDropdown(null);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors ${
-                          selectedSize === opt
-                            ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                            : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Orientation Filter */}
-            {distinctOrientations.length > 2 && (
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveDropdown(
-                      activeDropdown === "orientation" ? null : "orientation",
-                    )
-                  }
-                  className={`flex items-center justify-between gap-3 px-5 py-2.5 border text-xs font-poppins transition-all rounded-full cursor-pointer ${
-                    selectedOrientation !== "All"
-                      ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                      : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                  }`}
-                >
-                  <span>
-                    Orientation:{" "}
-                    <strong className="font-semibold">
-                      {selectedOrientation}
-                    </strong>
-                  </span>
-                  <IconChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === "orientation" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                    }`}
-                  />
-                </button>
-                {activeDropdown === "orientation" && (
-                  <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
-                    {distinctOrientations.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => {
-                          setSelectedOrientation(opt);
-                          setActiveDropdown(null);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors ${
-                          selectedOrientation === opt
-                            ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                            : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Price Filter */}
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveDropdown(activeDropdown === "price" ? null : "price")
-                }
-                className={`flex items-center justify-between gap-3 px-5 py-2.5 border text-xs font-poppins transition-all rounded-full cursor-pointer ${
-                  selectedPrice !== "All"
-                    ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                    : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                }`}
-              >
-                <span>
-                  Price:{" "}
-                  <strong className="font-semibold">{selectedPrice}</strong>
-                </span>
-                <IconChevronDown
-                  size={14}
-                  className={`transition-transform duration-200 ${
-                    activeDropdown === "price" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                  }`}
-                />
-              </button>
-              {activeDropdown === "price" && (
-                <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
-                  {priceOptions.map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => {
-                        setSelectedPrice(opt);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors ${
-                        selectedPrice === opt
-                          ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                          : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+                </SwiperSlide>
               )}
-            </div>
 
-            {/* Reset Filters button */}
-            {(selectedSize !== "All" ||
-              selectedOrientation !== "All" ||
-              selectedType !== "All" ||
-              selectedPrice !== "All") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSize("All");
-                  setSelectedOrientation("All");
-                  setSelectedType("All");
-                  setSelectedPrice("All");
-                }}
-                className="px-4 py-2 text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap rounded-full hover:bg-[#F4F2F0] transition-colors"
-              >
-                Reset filters
-              </button>
-            )}
+              {/* Type / Model Filter */}
+              {distinctTypes.length > 2 && (
+                <SwiperSlide className="!w-auto !h-full flex items-center">
+                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveDropdown(activeDropdown === "type" ? null : "type")
+                      }
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedType !== "All"
+                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                        }`}
+                    >
+                      <span>
+                        Type:{" "}
+                        <strong className="font-semibold">{selectedType}</strong>
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${activeDropdown === "type" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                          }`}
+                      />
+                    </button>
+                    {activeDropdown === "type" && (
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                        {distinctTypes.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setSelectedType(opt);
+                              setActiveDropdown(null);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedType === opt
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                              }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              )}
+
+              {/* Size Filter */}
+              {distinctSizes.length > 2 && (
+                <SwiperSlide className="!w-auto !h-full flex items-center">
+                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveDropdown(activeDropdown === "size" ? null : "size")
+                      }
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedSize !== "All"
+                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                        }`}
+                    >
+                      <span>
+                        Size:{" "}
+                        <strong className="font-semibold">{selectedSize}</strong>
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${activeDropdown === "size" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                          }`}
+                      />
+                    </button>
+                    {activeDropdown === "size" && (
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl max-h-72 overflow-y-auto custom-scrollbar">
+                        {distinctSizes.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSize(opt);
+                              setActiveDropdown(null);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedSize === opt
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                              }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              )}
+
+              {/* Orientation Filter */}
+              {distinctOrientations.length > 2 && (
+                <SwiperSlide className="!w-auto !h-full flex items-center">
+                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "orientation" ? null : "orientation",
+                        )
+                      }
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedOrientation !== "All"
+                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                        }`}
+                    >
+                      <span>
+                        Orientation:{" "}
+                        <strong className="font-semibold">
+                          {selectedOrientation}
+                        </strong>
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${activeDropdown === "orientation" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                          }`}
+                      />
+                    </button>
+                    {activeDropdown === "orientation" && (
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                        {distinctOrientations.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setSelectedOrientation(opt);
+                              setActiveDropdown(null);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedOrientation === opt
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                              }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              )}
+
+              {/* Price Filter */}
+              <SwiperSlide className="!w-auto !h-full flex items-center">
+                <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveDropdown(activeDropdown === "price" ? null : "price")
+                    }
+                    className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedPrice !== "All"
+                      ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                      : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
+                  >
+                    <span>
+                      Price:{" "}
+                      <strong className="font-semibold">{selectedPrice}</strong>
+                    </span>
+                    <IconChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 ${activeDropdown === "price" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        }`}
+                    />
+                  </button>
+                  {activeDropdown === "price" && (
+                    <div className="absolute top-full right-0 sm:left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                      {priceOptions.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPrice(opt);
+                            setActiveDropdown(null);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedPrice === opt
+                            ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                            : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                            }`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </SwiperSlide>
+
+              {/* Reset Filters button */}
+              {(selectedSize !== "All" ||
+                selectedOrientation !== "All" ||
+                selectedType !== "All" ||
+                selectedPrice !== "All") && (
+                <SwiperSlide className="!w-auto !h-full flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSize("All");
+                      setSelectedOrientation("All");
+                      setSelectedType("All");
+                      setSelectedPrice("All");
+                    }}
+                    className="px-4 h-9 text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap rounded-full hover:bg-[#F4F2F0] transition-colors select-none flex items-center"
+                  >
+                    Reset filters
+                  </button>
+                </SwiperSlide>
+              )}
+            </Swiper>
           </motion.div>
         </div>
 

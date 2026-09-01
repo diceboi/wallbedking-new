@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useContext } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { IconSearch, IconX, IconArrowRight } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RAW_CATALOG } from "@/data/products";
+import { MenuContext } from "@/context/MenuContext";
 
 export function SearchBar() {
   const router = useRouter();
@@ -14,6 +15,12 @@ export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  const { setIsSearchOpen } = useContext(MenuContext);
+
+  // Synchronize search open state with MenuContext to lock header during search
+  useEffect(() => {
+    setIsSearchOpen?.(isOpen);
+  }, [isOpen, setIsSearchOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -23,7 +30,11 @@ export function SearchBar() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   // Filter catalog items
@@ -55,9 +66,9 @@ export function SearchBar() {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-xs md:max-w-sm lg:max-w-md">
+    <div ref={containerRef} className="relative w-full md:max-w-sm lg:max-w-md">
       {/* Search Input Box */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center rounded-full">
         <IconSearch
           size={16}
           strokeWidth={1.5}
@@ -74,7 +85,7 @@ export function SearchBar() {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search beds, sofas, mattresses..."
-          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins"
+          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins "
         />
         {query && (
           <button
@@ -99,7 +110,7 @@ export function SearchBar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full mt-1 bg-wbk-white border border-wbk-lightgrey shadow-xl z-50 overflow-hidden"
+            className="absolute left-0 right-0 top-full mt-1.5 bg-wbk-white border border-wbk-lightgrey shadow-2xl z-50 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto"
           >
             {results.length > 0 ? (
               <div className="divide-y divide-wbk-lightgrey/60">

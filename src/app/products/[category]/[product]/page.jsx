@@ -32,6 +32,7 @@ import {
   GLOBAL_GALLERY_TEMPLATES,
   RAW_CATALOG,
 } from "@/data/products";
+import { useCart } from "@/context/CartContext";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -396,6 +397,31 @@ export default function ProductDetailPage() {
     displayProduct?.price_gbp || displayProduct?.numericPrice || 799;
   const sofaSurcharge = has3D && sofaIncluded ? 280 : 0;
   const totalDecimal = currentPrice + sofaSurcharge;
+
+  // ── CART INTEGRATION ──
+  const { addItem } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
+
+  const handleAddToCart = () => {
+    const itemToAdd = {
+      id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
+      productId: displayProduct?.slug || displayProduct?.id || productSlug,
+      title: displayProduct?.title || displayProduct?.name || "Wall Bed",
+      image: currentMainImage?.src || displayProduct?.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+      price: totalDecimal,
+      options: {
+        size: productSize || "Standard",
+        orientation: productFormat,
+        type: productStyle,
+        sofaIncluded: Boolean(sofaIncluded),
+      },
+      href: `/products/${categorySlug}/${productSlug}${productSize ? `?size=${encodeURIComponent(productSize)}` : ""}`,
+    };
+
+    addItem(itemToAdd, 1, true);
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2200);
+  };
 
   // Dynamic gallery images
   const galleryImages =
@@ -1793,12 +1819,25 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer">
-              <IconShoppingCart
-                size={15}
-                className="transition-transform duration-200 group-hover:scale-110"
-              />
-              <span>Add to cart</span>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer"
+            >
+              {isAdded ? (
+                <>
+                  <IconCheck size={16} className="text-wbk-gold" />
+                  <span className="text-wbk-gold">Added to cart!</span>
+                </>
+              ) : (
+                <>
+                  <IconShoppingCart
+                    size={15}
+                    className="transition-transform duration-200 group-hover:scale-110"
+                  />
+                  <span>Add to cart</span>
+                </>
+              )}
             </button>
           </div>
         </Container>
