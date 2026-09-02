@@ -49,8 +49,8 @@ export function HeroSection() {
 
   return (
     <>
-      {/* Full-screen Loading Overlay covering the entire page */}
-      {mounted && <Hero3DLoader />}
+      {/* Full-screen Loading Overlay covering the entire page immediately from first paint */}
+      <Hero3DLoader />
 
       {/*
        * Fixed hero — sits behind everything, pinned below the 60px header.

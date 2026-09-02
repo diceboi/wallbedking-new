@@ -49,6 +49,8 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    max-width: 100vw;
+    overflow-x: clip;
   }
 
   body {
@@ -56,6 +58,8 @@
     color: var(--color-wbk-black);
     background-color: var(--color-wbk-white);
     min-height: 100vh;
+    max-width: 100vw;
+    overflow-x: clip;
   }
 
   h1,

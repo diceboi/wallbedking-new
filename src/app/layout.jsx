@@ -34,8 +34,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${poppins.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${poppins.variable} antialiased`}>
+      <body className="min-h-screen flex flex-col bg-wbk-white">
         <ScrollToTop />
         <AuthProvider>
           <CartProvider>

@@ -15,16 +15,24 @@ import {
   IconTruck,
   IconShieldCheck,
   IconTools,
+  IconWorld,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
 
+const LANGUAGES = [
+  { code: "en", label: "EN" },
+  { code: "hu", label: "HU" },
+  { code: "de", label: "DE" },
+];
+
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu } = useContext(MenuContext);
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
+  const [activeLang, setActiveLang] = useState("EN");
 
   // Navigation depth: 0 = Top menu, 1 = Category details
   const [level, setLevel] = useState(0);
@@ -107,6 +115,30 @@ export function MobileMenuDrawer() {
               >
                 <IconX size={16} />
               </button>
+            </div>
+
+            {/* Quick Language Selector Bar */}
+            <div className="px-4 py-2 bg-[#F4F2F0] border-b border-wbk-lightgrey flex items-center justify-between">
+              <span className="text-[11px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center gap-1.5">
+                <IconWorld size={14} className="text-wbk-gold" />
+                Language
+              </span>
+              <div className="flex items-center gap-1.5">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => setActiveLang(lang.label)}
+                    className={`px-3 py-0.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                      activeLang === lang.label
+                        ? "bg-wbk-black text-wbk-white shadow-2xs"
+                        : "bg-white text-wbk-black hover:bg-wbk-green hover:text-white border border-wbk-lightgrey"
+                    }`}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Scrollable Content */}

@@ -43,7 +43,16 @@ export function Header() {
     isSearchOpen,
   } = useContext(MenuContext);
   const lastScrollY = useRef(0);
+  const scrollDeltaAccumulator = useRef(0);
+  const isMenuVisibleRef = useRef(true);
+  const isTransitioningRef = useRef(false);
+  const transitionTimerRef = useRef(null);
   const headerRef = useRef(null);
+
+  // Keep ref synchronized with state
+  useEffect(() => {
+    isMenuVisibleRef.current = isMenuVisible;
+  }, [isMenuVisible]);
 
   const updateHeaderHeight = () => {
     if (headerRef.current) {
@@ -57,11 +66,31 @@ export function Header() {
     }
   };
 
+  const changeMenuVisibility = (visible) => {
+    if (isMenuVisibleRef.current === visible) return;
+    isMenuVisibleRef.current = visible;
+    setIsMenuVisible(visible);
+    if (!visible) setSubMenu(null);
+
+    // Hard lock scroll listener during animation to completely eliminate oscillation feedback loops
+    isTransitioningRef.current = true;
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      isTransitioningRef.current = false;
+      lastScrollY.current = Math.max(0, window.scrollY);
+      scrollDeltaAccumulator.current = 0;
+      updateHeaderHeight();
+    }, 320);
+  };
+
   useEffect(() => {
     updateHeaderHeight();
 
     const ro = new ResizeObserver(() => {
-      updateHeaderHeight();
+      // Only update if not actively transitioning to prevent mid-animation thrashing
+      if (!isTransitioningRef.current) {
+        updateHeaderHeight();
+      }
     });
 
     if (headerRef.current) {
@@ -71,6 +100,7 @@ export function Header() {
     window.addEventListener("resize", updateHeaderHeight);
     return () => {
       ro.disconnect();
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
       window.removeEventListener("resize", updateHeaderHeight);
     };
   }, []);
@@ -81,36 +111,57 @@ export function Header() {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
+          const currentScrollY = Math.max(0, window.scrollY);
 
-          // Never collapse header while user is searching or typing!
-          if (isSearchOpen) {
-            setIsMenuVisible(true);
+          // If currently animating transition, do not evaluate state changes!
+          if (isTransitioningRef.current) {
             lastScrollY.current = currentScrollY;
-            updateHeaderHeight();
             ticking = false;
             return;
           }
 
-          // Always visible at the top of the page
-          if (currentScrollY < 60) {
-            setIsMenuVisible(true);
-          } else {
-            const diff = currentScrollY - lastScrollY.current;
+          // Never collapse header while user is searching or typing!
+          if (isSearchOpen) {
+            changeMenuVisibility(true);
+            lastScrollY.current = currentScrollY;
+            scrollDeltaAccumulator.current = 0;
+            ticking = false;
+            return;
+          }
 
-            // Scroll down threshold (> 15px) -> hide behind upper bar
-            if (diff > 15) {
-              setIsMenuVisible(false);
-              setSubMenu(null);
-            }
-            // Scroll up threshold (< -15px) -> show category bar
-            else if (diff < -15) {
-              setIsMenuVisible(true);
+          // Top zone: Always keep header fully visible near top of page
+          if (currentScrollY <= 40) {
+            changeMenuVisibility(true);
+            scrollDeltaAccumulator.current = 0;
+          } else {
+            const stepDiff = currentScrollY - lastScrollY.current;
+
+            if (stepDiff > 0) {
+              // Scrolling down
+              if (scrollDeltaAccumulator.current < 0) {
+                scrollDeltaAccumulator.current = 0;
+              }
+              scrollDeltaAccumulator.current += stepDiff;
+
+              // Collapse only after a definite cumulative downward scroll of >= 30px past 100px
+              if (scrollDeltaAccumulator.current >= 30 && currentScrollY > 100) {
+                changeMenuVisibility(false);
+              }
+            } else if (stepDiff < 0) {
+              // Scrolling up
+              if (scrollDeltaAccumulator.current > 0) {
+                scrollDeltaAccumulator.current = 0;
+              }
+              scrollDeltaAccumulator.current += stepDiff;
+
+              // Reveal only after a clear, deliberate cumulative upward scroll of >= 60px
+              if (scrollDeltaAccumulator.current <= -60) {
+                changeMenuVisibility(true);
+              }
             }
           }
 
           lastScrollY.current = currentScrollY;
-          updateHeaderHeight();
           ticking = false;
         });
         ticking = true;
@@ -119,7 +170,7 @@ export function Header() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [setSubMenu, isSearchOpen, setIsMenuVisible]);
+  }, [setSubMenu, isSearchOpen]);
 
   return (
     <>
@@ -141,6 +192,7 @@ export function Header() {
       <header
         ref={headerRef}
         className="sticky top-0 z-50 w-full bg-wbk-white font-poppins"
+        style={{ position: "sticky", top: 0 }}
       >
         {/* Top announcement & quick links bar */}
         <TopMenu />
@@ -284,13 +336,13 @@ export function Header() {
           animate={{
             height: isMenuVisible ? 52 : 0,
             opacity: isMenuVisible ? 1 : 0,
-            paddingTop: isMenuVisible ? 4 : 0,
-            paddingBottom: isMenuVisible ? 12 : 0,
+            paddingTop: isMenuVisible ? 8 : 0,
+            paddingBottom: isMenuVisible ? 8 : 0,
           }}
-          transition={{ duration: 0.25 }}
-          onUpdate={updateHeaderHeight}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          onAnimationComplete={updateHeaderHeight}
           style={{
-            overflow: isMenuVisible ? "visible" : "hidden",
+            overflow: "hidden",
           }}
         >
           <SearchBar />
@@ -309,7 +361,7 @@ export function Header() {
             duration: 0.25,
             ease: [0.25, 1, 0.5, 1],
           }}
-          onUpdate={updateHeaderHeight}
+          onAnimationComplete={updateHeaderHeight}
           style={{
             overflow: isMenuVisible ? "visible" : "hidden",
           }}

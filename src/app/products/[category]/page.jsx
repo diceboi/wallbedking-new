@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { IconChevronDown, IconFilter } from "@tabler/icons-react";
+import { IconChevronDown, IconFilter, IconChevronRight } from "@tabler/icons-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Mousewheel } from "swiper/modules";
 import "swiper/css";
@@ -209,6 +209,8 @@ export default function CategoryArchivePage() {
 
   const { isMenuVisible, subMenu } = useContext(MenuContext);
   const [isSticky, setIsSticky] = useState(false);
+  const [filterSwiper, setFilterSwiper] = useState(null);
+  const [isFilterEnd, setIsFilterEnd] = useState(false);
   const sentinelRef = useRef(null);
   const filterContainerRef = useRef(null);
 
@@ -261,12 +263,63 @@ export default function CategoryArchivePage() {
     selectedType !== "All" ||
     selectedPrice !== "All";
 
+  const productGridRef = useRef(null);
+
+  // Smoothly scroll to the top of the product grid below sticky header and filter bar
+  const scrollToProducts = () => {
+    if (typeof window === "undefined") return;
+
+    requestAnimationFrame(() => {
+      if (!productGridRef.current) return;
+      const headerEl = document.querySelector("header");
+      const headerHeight = headerEl ? headerEl.offsetHeight : 92;
+      const filterHeight = filterContainerRef.current
+        ? filterContainerRef.current.offsetHeight
+        : 58;
+      const totalStickyOffset = headerHeight + filterHeight;
+
+      const rect = productGridRef.current.getBoundingClientRect();
+      const targetScrollY =
+        window.pageYOffset + rect.top - totalStickyOffset - 16;
+
+      window.scrollTo({
+        top: Math.max(0, targetScrollY),
+        behavior: "smooth",
+      });
+    });
+  };
+
+  const handleSelectType = (opt) => {
+    setSelectedType(opt);
+    setActiveDropdown(null);
+    scrollToProducts();
+  };
+
+  const handleSelectSize = (opt) => {
+    setSelectedSize(opt);
+    setActiveDropdown(null);
+    scrollToProducts();
+  };
+
+  const handleSelectOrientation = (opt) => {
+    setSelectedOrientation(opt);
+    setActiveDropdown(null);
+    scrollToProducts();
+  };
+
+  const handleSelectPrice = (opt) => {
+    setSelectedPrice(opt);
+    setActiveDropdown(null);
+    scrollToProducts();
+  };
+
   const clearAllFilters = () => {
     setSelectedSize("All");
     setSelectedOrientation("All");
     setSelectedType("All");
     setSelectedPrice("All");
     setActiveDropdown(null);
+    scrollToProducts();
   };
 
   if (!mounted) {
@@ -320,12 +373,16 @@ export default function CategoryArchivePage() {
         {/* ── Original Swiper Filter Bar with Unclipped Floating Dropdowns ── */}
         <div
           ref={filterContainerRef}
-          style={{ top: "calc(var(--header-height, 92px) - 1px)" }}
-          className={`sticky z-20 bg-wbk-white border-y border-wbk-lightgrey h-14 sm:h-[58px] flex items-center -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 transition-shadow duration-200 !overflow-visible ${
-            isSticky ? "shadow-xs" : ""
+          style={{
+            top: "calc(var(--header-height, 92px) - 1px)",
+            overflowX: "clip",
+            overflowY: "visible",
+          }}
+          className={`sticky z-20 bg-wbk-white h-14 sm:h-[58px] flex items-center -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 transition-shadow duration-200 relative ${
+            isSticky ? "" : ""
           }`}
         >
-          <div className="w-full h-full flex items-center !overflow-visible">
+          <div className="w-full h-full flex items-center relative !overflow-visible">
             <Swiper
               modules={[FreeMode, Mousewheel]}
               slidesPerView="auto"
@@ -338,6 +395,13 @@ export default function CategoryArchivePage() {
                 forceToAxis: true,
               }}
               grabCursor={true}
+              onSwiper={(swiper) => {
+                setFilterSwiper(swiper);
+                setIsFilterEnd(swiper.isEnd);
+              }}
+              onSlideChange={(swiper) => setIsFilterEnd(swiper.isEnd)}
+              onReachEnd={() => setIsFilterEnd(true)}
+              onFromEdge={() => setIsFilterEnd(false)}
               className="filter-swiper !overflow-visible w-full h-full flex items-center"
             >
               {/* Stable Filters label badge */}
@@ -390,10 +454,7 @@ export default function CategoryArchivePage() {
                           <button
                             key={opt}
                             type="button"
-                            onClick={() => {
-                              setSelectedType(opt);
-                              setActiveDropdown(null);
-                            }}
+                            onClick={() => handleSelectType(opt)}
                             className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
                               selectedType === opt
                                 ? "bg-[#F4F2F0] font-semibold text-wbk-black"
@@ -451,10 +512,7 @@ export default function CategoryArchivePage() {
                           <button
                             key={opt}
                             type="button"
-                            onClick={() => {
-                              setSelectedSize(opt);
-                              setActiveDropdown(null);
-                            }}
+                            onClick={() => handleSelectSize(opt)}
                             className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
                               selectedSize === opt
                                 ? "bg-[#F4F2F0] font-semibold text-wbk-black"
@@ -514,10 +572,7 @@ export default function CategoryArchivePage() {
                           <button
                             key={opt}
                             type="button"
-                            onClick={() => {
-                              setSelectedOrientation(opt);
-                              setActiveDropdown(null);
-                            }}
+                            onClick={() => handleSelectOrientation(opt)}
                             className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
                               selectedOrientation === opt
                                 ? "bg-[#F4F2F0] font-semibold text-wbk-black"
@@ -572,10 +627,7 @@ export default function CategoryArchivePage() {
                         <button
                           key={opt}
                           type="button"
-                          onClick={() => {
-                            setSelectedPrice(opt);
-                            setActiveDropdown(null);
-                          }}
+                          onClick={() => handleSelectPrice(opt)}
                           className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
                             selectedPrice === opt
                               ? "bg-[#F4F2F0] font-semibold text-wbk-black"
@@ -603,12 +655,39 @@ export default function CategoryArchivePage() {
                 </SwiperSlide>
               )}
             </Swiper>
+
+            {/* Subtle right gradient to fade filter chips behind arrow */}
+            {!isFilterEnd && (
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-wbk-white via-wbk-white/90 to-transparent pointer-events-none z-20" />
+            )}
+
+            {/* Right scroll indicator green button */}
+            <div
+              className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
+                isFilterEnd ? "opacity-0 pointer-events-none scale-90" : "opacity-100 scale-100"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  filterSwiper?.slideNext();
+                }}
+                aria-label="Scroll filters right"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer"
+              >
+                <IconChevronRight size={15} stroke={2.5} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="py-20 text-center space-y-4 bg-[#F4F2F0]/40 rounded-2xl border border-wbk-lightgrey/60">
+          <div
+            ref={productGridRef}
+            className="py-20 text-center space-y-4 bg-[#F4F2F0]/40 rounded-2xl border border-wbk-lightgrey/60"
+          >
             <p className="font-new-york text-2xl text-wbk-black">
               No products found
             </p>
@@ -624,7 +703,10 @@ export default function CategoryArchivePage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24">
+          <div
+            ref={productGridRef}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24"
+          >
             {filteredProducts.map((prod) => (
               <ProductCard key={prod.id || prod.slug} product={prod} />
             ))}
