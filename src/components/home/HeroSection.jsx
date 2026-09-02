@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useScroll, useTransform, useSpring, motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Hero3DCanvas } from "@/components/home/Hero3DCanvas";
+import { Hero3DLoader } from "@/components/home/Hero3DLoader";
 import { IconChevronDown } from "@tabler/icons-react";
 
 export function HeroSection() {
@@ -48,6 +49,9 @@ export function HeroSection() {
 
   return (
     <>
+      {/* Full-screen Loading Overlay covering the entire page */}
+      {mounted && <Hero3DLoader />}
+
       {/*
        * Fixed hero — sits behind everything, pinned below the 60px header.
        * Doesn't move at all when scrolling.

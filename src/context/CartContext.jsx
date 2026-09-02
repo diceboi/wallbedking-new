@@ -6,6 +6,48 @@ const CartContext = createContext(null);
 
 const STORAGE_KEY = "wbk_cart_v1";
 const PROMO_STORAGE_KEY = "wbk_promo_v1";
+const DELIVERY_STORAGE_KEY = "wbk_delivery_v1";
+
+// Delivery options matching Wall Bed King standard
+export const DELIVERY_OPTIONS = {
+  delivery_option_economy: {
+    id: "delivery_option_economy",
+    key: "delivery_option_economy",
+    label: "Free delivery",
+    menu: "Free delivery",
+    cost: 0,
+    code: 1,
+    message: "Delivery within 2 - 4 weeks",
+  },
+  delivery_option_standard: {
+    id: "delivery_option_standard",
+    key: "delivery_option_standard",
+    label: "Standard delivery",
+    menu: "Standard delivery £49",
+    cost: 49,
+    code: 2,
+    message: "Delivery within 1 - 2 weeks",
+  },
+  delivery_option_express: {
+    id: "delivery_option_express",
+    key: "delivery_option_express",
+    label: "Express delivery",
+    menu: "Express delivery £79",
+    cost: 79,
+    code: 3,
+    message: "Delivery within 2 - 5 working days",
+  },
+  delivery_option_pickup: {
+    id: "delivery_option_pickup",
+    key: "delivery_option_pickup",
+    label: "Warehouse Collection",
+    menu: "Collection (Free)",
+    cost: 0,
+    code: 1,
+    address: "Wall Bed King, Harlow, CM20 2HU. Mon - Fri, 10am - 4pm. Must be arranged by contacting us.",
+    message: "To be collected from our warehouse in Harlow, CM20 2HU. Mon - Fri, 10am - 4pm. Must be arranged by contacting us.",
+  },
+};
 
 // Sample valid promo codes
 const PROMO_CODES = {
@@ -19,6 +61,7 @@ export function CartProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [promoCode, setPromoCode] = useState(null);
   const [promoError, setPromoError] = useState("");
+  const [deliveryOption, setDeliveryOption] = useState("delivery_option_economy");
   const [isMounted, setIsMounted] = useState(false);
 
   // Load cart from localStorage on mount (prevents SSR hydration mismatch)
@@ -33,6 +76,10 @@ export function CartProvider({ children }) {
       const savedPromo = localStorage.getItem(PROMO_STORAGE_KEY);
       if (savedPromo) {
         setPromoCode(savedPromo);
+      }
+      const savedDelivery = localStorage.getItem(DELIVERY_STORAGE_KEY);
+      if (savedDelivery && DELIVERY_OPTIONS[savedDelivery]) {
+        setDeliveryOption(savedDelivery);
       }
     } catch (e) {
       console.warn("Could not read cart from localStorage", e);
@@ -62,6 +109,16 @@ export function CartProvider({ children }) {
       console.warn("Could not save promo to localStorage", e);
     }
   }, [promoCode, isMounted]);
+
+  // Save delivery option to localStorage on changes
+  useEffect(() => {
+    if (!isMounted) return;
+    try {
+      localStorage.setItem(DELIVERY_STORAGE_KEY, deliveryOption);
+    } catch (e) {
+      console.warn("Could not save delivery option to localStorage", e);
+    }
+  }, [deliveryOption, isMounted]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -185,8 +242,14 @@ export function CartProvider({ children }) {
     }, 0);
   }, [items]);
 
-  // Shipping is free UK Mainland for all wall bed orders
-  const shipping = 0;
+  // Shipping option details
+  const selectedDeliveryDetails = useMemo(() => {
+    return DELIVERY_OPTIONS[deliveryOption] || DELIVERY_OPTIONS.delivery_option_economy;
+  }, [deliveryOption]);
+
+  const shipping = useMemo(() => {
+    return selectedDeliveryDetails?.cost ?? 0;
+  }, [selectedDeliveryDetails]);
 
   // Calculate discount based on active promo code
   const discount = useMemo(() => {
@@ -203,13 +266,25 @@ export function CartProvider({ children }) {
 
   // 20% UK VAT included in price
   const vatIncluded = useMemo(() => {
-    const taxableTotal = Math.max(0, subtotal - discount);
+    const taxableTotal = Math.max(0, subtotal - discount + shipping);
     return Math.round(taxableTotal - taxableTotal / 1.2);
-  }, [subtotal, discount]);
+  }, [subtotal, discount, shipping]);
 
   const total = useMemo(() => {
     return Math.max(0, subtotal - discount + shipping);
   }, [subtotal, discount, shipping]);
+
+  // Generate unique customCartId matching Wall Bed King standard
+  // Format: {pid}-{qty}||T={timestamp}||D={delivery_option}
+  const customCartId = useMemo(() => {
+    const parts = items.map(
+      (item) => `${item.rawId || item.productId || item.id}-${item.quantity || 1}`
+    );
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const timestamp = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    return `${parts.join("-")}||T=${timestamp}||D=${deliveryOption}`;
+  }, [items, deliveryOption]);
 
   const activePromoDetails = useMemo(() => {
     if (!promoCode || !PROMO_CODES[promoCode]) return null;
@@ -231,6 +306,11 @@ export function CartProvider({ children }) {
     totalItems,
     subtotal,
     shipping,
+    deliveryOption,
+    setDeliveryOption,
+    selectedDeliveryDetails,
+    deliveryOptions: DELIVERY_OPTIONS,
+    customCartId,
     discount,
     vatIncluded,
     total,

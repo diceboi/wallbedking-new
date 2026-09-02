@@ -14,8 +14,11 @@ import {
   IconChevronRight,
   IconSparkles,
   IconPrinter,
+  IconBrandPaypal,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
+import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 
 export default function CheckoutPage() {
   const {
@@ -23,17 +26,19 @@ export default function CheckoutPage() {
     subtotal,
     discount,
     vatIncluded,
+    shipping,
     total,
+    deliveryOption,
+    setDeliveryOption,
+    deliveryOptions,
+    selectedDeliveryDetails,
     promoCode,
     activePromoDetails,
     clearCart,
     isMounted,
   } = useCart();
 
-  // Delivery method choice
-  const [shippingMethod, setShippingMethod] = useState("standard"); // 'standard' | 'white-glove'
-  const shippingCost = shippingMethod === "white-glove" ? 49 : 0;
-  const finalTotal = total + shippingCost;
+  const finalTotal = total;
 
   // Form states
   const [formData, setFormData] = useState({
@@ -449,9 +454,7 @@ export default function CheckoutPage() {
                     </select>
                   </div>
                 </div>
-              </div>
-
-              {/* Step 3: Shipping Method Selection */}
+              </div>              {/* Step 3: Shipping Method Selection */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-wbk-lightgrey/80">
                   <h2 className="font-new-york text-xl text-wbk-black flex items-center gap-2.5">
@@ -463,304 +466,183 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Standard Option */}
-                  <label
-                    className={`flex items-center justify-between p-4 border cursor-pointer transition-all ${
-                      shippingMethod === "standard"
-                        ? "border-wbk-black bg-[#FBF9F8] shadow-xs"
-                        : "border-wbk-lightgrey bg-white hover:border-wbk-brown"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="shippingOption"
-                        checked={shippingMethod === "standard"}
-                        onChange={() => setShippingMethod("standard")}
-                        className="accent-wbk-black"
-                      />
-                      <div>
-                        <span className="block text-xs font-semibold text-wbk-black">
-                          Standard UK Mainland Delivery
-                        </span>
-                        <span className="block text-[11px] text-wbk-brown">
-                          Direct dispatched with tracking (3–5 working days)
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-wbk-green uppercase tracking-wider">
-                      Free
-                    </span>
-                  </label>
-
-                  {/* White Glove Option */}
-                  <label
-                    className={`flex items-center justify-between p-4 border cursor-pointer transition-all ${
-                      shippingMethod === "white-glove"
-                        ? "border-wbk-black bg-[#FBF9F8] shadow-xs"
-                        : "border-wbk-lightgrey bg-white hover:border-wbk-brown"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="shippingOption"
-                        checked={shippingMethod === "white-glove"}
-                        onChange={() => setShippingMethod("white-glove")}
-                        className="accent-wbk-black"
-                      />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-wbk-black">
-                            White Glove Room of Choice Service
-                          </span>
-                          <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-wbk-gold text-wbk-black uppercase">
-                            Recommended
-                          </span>
+                  {Object.values(deliveryOptions).map((opt) => {
+                    const isSelected = deliveryOption === opt.id;
+                    return (
+                      <label
+                        key={opt.id}
+                        onClick={() => setDeliveryOption(opt.id)}
+                        className={`flex items-start justify-between p-4 border cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-wbk-black bg-[#FBF9F8] shadow-xs"
+                            : "border-wbk-lightgrey bg-white hover:border-wbk-brown"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="radio"
+                            name="shippingOption"
+                            checked={isSelected}
+                            onChange={() => setDeliveryOption(opt.id)}
+                            className="mt-0.5 accent-wbk-black cursor-pointer"
+                          />
+                          <div>
+                            <span className="block text-xs font-semibold text-wbk-black">
+                              {opt.label}
+                            </span>
+                            <span className="block text-[11px] text-wbk-brown mt-0.5">
+                              {opt.message}
+                            </span>
+                          </div>
                         </div>
-                        <span className="block text-[11px] text-wbk-brown">
-                          Carried directly into your room of choice + packaging removal
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider shrink-0 ml-2 ${
+                            opt.cost === 0 ? "text-wbk-green" : "text-wbk-black font-poppins"
+                          }`}
+                        >
+                          {opt.cost === 0 ? "Free" : `£${opt.cost}.00`}
                         </span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-wbk-black font-poppins">
-                      £49.00
-                    </span>
-                  </label>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Step 4: Payment Simulation */}
+              {/* Step 4: Secure Payment */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-wbk-lightgrey/80">
                   <h2 className="font-new-york text-xl text-wbk-black flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
                       4
                     </span>
-                    <span>Payment Method</span>
+                    <span>Secure Payment</span>
                   </h2>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {/* Payment method selector tabs */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => handleChange("paymentMethod", "card")}
-                      className={`p-3 text-center border text-xs font-medium transition-all ${
+                      className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
                         formData.paymentMethod === "card"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
                           : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
                       }`}
                     >
-                      <IconCreditCard size={18} className="mx-auto mb-1" />
-                      <span>Credit Card</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChange("paymentMethod", "klarna")}
-                      className={`p-3 text-center border text-xs font-medium transition-all ${
-                        formData.paymentMethod === "klarna"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black"
-                          : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
-                      }`}
-                    >
-                      <span className="block font-bold text-xs mb-1 text-pink-600">Klarna.</span>
-                      <span>Pay in 3</span>
+                      <IconCreditCard size={20} className="mx-auto mb-1 text-wbk-black" />
+                      <span className="block">Credit / Debit Card</span>
+                      <span className="text-[10px] text-wbk-brown font-normal">Stripe & Apple Pay</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleChange("paymentMethod", "paypal")}
-                      className={`p-3 text-center border text-xs font-medium transition-all ${
+                      className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
                         formData.paymentMethod === "paypal"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
                           : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
                       }`}
                     >
-                      <span className="block font-bold text-xs mb-1 text-blue-600">PayPal</span>
-                      <span>Express</span>
+                      <IconBrandPaypal size={20} className="mx-auto mb-1 text-[#003087]" />
+                      <span className="block font-semibold text-[#003087]">PayPal</span>
+                      <span className="text-[10px] text-wbk-brown font-normal">Express & Pay in 3</span>
                     </button>
                   </div>
 
-                  {/* Card Details Box */}
+                  {/* Stripe Payment Box */}
                   {formData.paymentMethod === "card" && (
-                    <div className="p-4 sm:p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
-                      <div>
-                        <label
-                          htmlFor="cardNumber"
-                          className="block text-[11px] font-medium uppercase tracking-wider text-wbk-black mb-1"
-                        >
-                          Card Number
-                        </label>
-                        <input
-                          id="cardNumber"
-                          type="text"
-                          maxLength={19}
-                          placeholder="4532 •••• •••• 8921"
-                          value={formData.cardNumber}
-                          onChange={(e) => handleChange("cardNumber", e.target.value)}
-                          className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey bg-white focus:border-wbk-black focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label
-                            htmlFor="cardExpiry"
-                            className="block text-[11px] font-medium uppercase tracking-wider text-wbk-black mb-1"
-                          >
-                            Expiry
-                          </label>
-                          <input
-                            id="cardExpiry"
-                            type="text"
-                            maxLength={5}
-                            placeholder="MM/YY"
-                            value={formData.cardExpiry}
-                            onChange={(e) => handleChange("cardExpiry", e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey bg-white focus:border-wbk-black focus:outline-none"
-                          />
+                    <div className="p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
+                      <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <IconLock size={16} className="text-wbk-green" />
+                          <span>Direct Stripe Checkout</span>
                         </div>
-
-                        <div>
-                          <label
-                            htmlFor="cardCvc"
-                            className="block text-[11px] font-medium uppercase tracking-wider text-wbk-black mb-1"
-                          >
-                            CVC
-                          </label>
-                          <input
-                            id="cardCvc"
-                            type="text"
-                            maxLength={4}
-                            placeholder="123"
-                            value={formData.cardCvc}
-                            onChange={(e) => handleChange("cardCvc", e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey bg-white focus:border-wbk-black focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="col-span-2 sm:col-span-1">
-                          <label
-                            htmlFor="cardName"
-                            className="block text-[11px] font-medium uppercase tracking-wider text-wbk-black mb-1"
-                          >
-                            Name on Card
-                          </label>
-                          <input
-                            id="cardName"
-                            type="text"
-                            placeholder="J SMITH"
-                            value={formData.cardName}
-                            onChange={(e) => handleChange("cardName", e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey bg-white focus:border-wbk-black focus:outline-none uppercase"
-                          />
+                        <div className="flex items-center gap-1.5 text-[10px] text-wbk-brown font-mono">
+                          <span className="px-1.5 py-0.5 bg-white border border-wbk-lightgrey">VISA</span>
+                          <span className="px-1.5 py-0.5 bg-white border border-wbk-lightgrey">Mastercard</span>
+                          <span className="px-1.5 py-0.5 bg-white border border-wbk-lightgrey">AMEX</span>
                         </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Klarna Description */}
-                  {formData.paymentMethod === "klarna" && (
-                    <div className="p-5 bg-pink-50/50 border border-pink-200 text-xs text-wbk-black space-y-1.5">
-                      <span className="font-semibold text-pink-700 block">
-                        Split your purchase into 3 interest-free payments:
-                      </span>
-                      <p className="text-[11px] text-wbk-brown">
-                        Pay £{(finalTotal / 3).toFixed(2)} today, and the rest in two automatic monthly payments with 0% interest and no fees when paid on time.
+                      <p className="text-xs text-wbk-brown leading-relaxed">
+                        You will be redirected to Stripe’s secure 256-bit encrypted checkout to complete your transaction with card or Apple Pay.
                       </p>
+
+                      <div className="pt-2">
+                        <StripeCheckoutButton label={`Pay £${finalTotal.toLocaleString()} with Stripe`} />
+                      </div>
                     </div>
                   )}
 
-                  {/* PayPal Description */}
+                  {/* PayPal Payment Box */}
                   {formData.paymentMethod === "paypal" && (
-                    <div className="p-5 bg-blue-50/50 border border-blue-200 text-xs text-wbk-black">
-                      <p className="text-[11px] text-wbk-brown">
-                        After clicking "Complete Order", you will be safely redirected to PayPal to complete your purchase using your PayPal balance or linked bank card.
+                    <div className="p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
+                      <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
+                        <span className="font-semibold text-wbk-black">PayPal Checkout</span>
+                        <span className="text-[10px] text-wbk-brown">Pay with balance, card, or Pay in 3</span>
+                      </div>
+
+                      <p className="text-xs text-wbk-brown leading-relaxed">
+                        Click the PayPal button below to log into your PayPal account and confirm your payment safely.
                       </p>
+
+                      <div className="pt-2">
+                        <PayPalCheckoutButton />
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {/* Error message */}
-                {errorMessage && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-700">
-                    {errorMessage}
-                  </div>
-                )}
-
-                {/* Terms agreement checkbox */}
-                <div className="pt-3">
-                  <label className="flex items-start gap-2.5 cursor-pointer text-xs text-wbk-brown">
-                    <input
-                      type="checkbox"
-                      checked={formData.agreeTerms}
-                      onChange={(e) => handleChange("agreeTerms", e.target.checked)}
-                      className="accent-wbk-black mt-0.5"
-                    />
-                    <span>
-                      I agree to the{" "}
-                      <Link href="/terms" className="text-wbk-black underline">
-                        Terms and Conditions
-                      </Link>{" "}
-                      and acknowledge the{" "}
-                      <Link href="/privacy" className="text-wbk-black underline">
-                        Privacy Policy
-                      </Link>
-                      .
-                    </span>
-                  </label>
+                {/* Terms agreement */}
+                <div className="pt-3 text-[11px] text-wbk-brown leading-relaxed">
+                  By confirming payment, you agree to the Wall Bed King{" "}
+                  <Link href="/terms" className="text-wbk-black underline hover:text-wbk-green">
+                    Terms & Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-wbk-black underline hover:text-wbk-green">
+                    Privacy Policy
+                  </Link>
+                  .
                 </div>
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all shadow-md cursor-pointer disabled:opacity-50"
-                >
-                  <IconLock size={16} />
-                  <span>
-                    {isSubmitting
-                      ? "Processing Secure Payment..."
-                      : `Pay £${finalTotal.toLocaleString()} & Complete Order`}
-                  </span>
-                </button>
               </div>
             </div>
 
             {/* Right Column: Order Summary (5 cols) */}
             <div className="lg:col-span-5 sticky top-20 space-y-6">
               <div className="bg-[#FBF9F8] border border-wbk-lightgrey p-6 sm:p-8 space-y-6">
-                <h3 className="font-new-york text-xl text-wbk-black pb-3 border-b border-wbk-lightgrey">
-                  Order Summary ({items.length})
-                </h3>
+                <div className="flex items-center justify-between pb-4 border-b border-wbk-lightgrey">
+                  <h2 className="font-new-york text-xl text-wbk-black">Your Order</h2>
+                  <span className="text-xs text-wbk-brown font-poppins">
+                    {items.length} {items.length === 1 ? "item" : "items"}
+                  </span>
+                </div>
 
-                {/* Mini Item List */}
-                <div className="space-y-4 divide-y divide-wbk-lightgrey/50 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                {/* Items List Preview */}
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
                   {items.map((item) => (
-                    <div key={item.id} className="pt-3 first:pt-0 flex gap-3 items-center">
-                      <div className="relative w-14 h-14 bg-white border border-wbk-lightgrey/60 shrink-0 p-1 flex items-center justify-center">
+                    <div key={item.id} className="flex items-center gap-3">
+                      <div className="relative w-14 h-14 bg-white border border-wbk-lightgrey shrink-0 overflow-hidden">
                         <Image
-                          src={item.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"}
+                          src={item.image || "/sofa1.webp"}
                           alt={item.title}
                           fill
-                          sizes="56px"
-                          className="object-contain p-1"
+                          className="object-cover"
                         />
-                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-wbk-black text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+                        <span className="absolute top-0 right-0 bg-wbk-black text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center">
                           {item.quantity}
                         </span>
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-medium text-wbk-black truncate">
+                        <h4 className="text-xs font-semibold text-wbk-black truncate">
                           {item.title}
                         </h4>
-                        <p className="text-[10.5px] text-wbk-brown truncate">
-                          {item.options?.size || "Standard"} {item.options?.orientation ? `• ${item.options.orientation}` : ""}
-                        </p>
+                        <span className="text-[11px] text-wbk-brown block truncate">
+                          {item.options?.size} {item.options?.orientation && `(${item.options.orientation})`}
+                        </span>
                       </div>
 
                       <div className="text-xs font-bold text-wbk-black font-poppins">
@@ -789,7 +671,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-between">
                     <span>Delivery Option</span>
                     <span className="font-semibold text-wbk-black">
-                      {shippingCost === 0 ? "Free UK Delivery" : "£49.00 (White Glove)"}
+                      {shipping === 0 ? "Free Delivery" : `£${shipping}.00 (${selectedDeliveryDetails?.label})`}
                     </span>
                   </div>
 

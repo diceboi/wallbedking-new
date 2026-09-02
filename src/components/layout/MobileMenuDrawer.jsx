@@ -239,7 +239,7 @@ export function MobileMenuDrawer() {
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link
-                        href="/support/contact"
+                        href="/contact"
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >

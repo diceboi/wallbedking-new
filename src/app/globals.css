@@ -141,9 +141,21 @@
 }
 
 /* ── CATEGORY FILTER BAR SWIPER ── */
+.filter-swiper {
+  overflow: visible !important;
+}
+
 .filter-swiper .swiper-wrapper {
   display: flex !important;
   align-items: center !important;
   height: 100% !important;
+  overflow: visible !important;
+}
+
+.filter-swiper .swiper-slide {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: visible !important;
 }
 

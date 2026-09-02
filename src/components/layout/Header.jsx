@@ -43,6 +43,37 @@ export function Header() {
     isSearchOpen,
   } = useContext(MenuContext);
   const lastScrollY = useRef(0);
+  const headerRef = useRef(null);
+
+  const updateHeaderHeight = () => {
+    if (headerRef.current) {
+      const h = headerRef.current.getBoundingClientRect().height;
+      if (h > 0) {
+        document.documentElement.style.setProperty(
+          "--header-height",
+          `${Math.round(h)}px`,
+        );
+      }
+    }
+  };
+
+  useEffect(() => {
+    updateHeaderHeight();
+
+    const ro = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    if (headerRef.current) {
+      ro.observe(headerRef.current);
+    }
+
+    window.addEventListener("resize", updateHeaderHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updateHeaderHeight);
+    };
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -56,6 +87,7 @@ export function Header() {
           if (isSearchOpen) {
             setIsMenuVisible(true);
             lastScrollY.current = currentScrollY;
+            updateHeaderHeight();
             ticking = false;
             return;
           }
@@ -66,18 +98,19 @@ export function Header() {
           } else {
             const diff = currentScrollY - lastScrollY.current;
 
-            // Scroll down threshold (> 10px) -> hide behind upper bar
-            if (diff > 10) {
+            // Scroll down threshold (> 15px) -> hide behind upper bar
+            if (diff > 15) {
               setIsMenuVisible(false);
               setSubMenu(null);
             }
-            // Scroll up threshold (< -10px) -> show category bar
-            else if (diff < -10) {
+            // Scroll up threshold (< -15px) -> show category bar
+            else if (diff < -15) {
               setIsMenuVisible(true);
             }
           }
 
           lastScrollY.current = currentScrollY;
+          updateHeaderHeight();
           ticking = false;
         });
         ticking = true;
@@ -100,19 +133,22 @@ export function Header() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setSubMenu(null)}
-            className="fixed inset-0 z-30 bg-wbk-black/20 backdrop-blur-[1px] hidden xl:block"
+            className="fixed inset-0 z-40 bg-wbk-black/20 backdrop-blur-[1px] hidden xl:block"
           />
         )}
       </AnimatePresence>
 
-      <header className="sticky top-0 z-40 w-full bg-wbk-white shadow-xs font-poppins">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-50 w-full bg-wbk-white font-poppins"
+      >
         {/* Top announcement & quick links bar */}
         <TopMenu />
 
         {/* Primary header bar */}
         <div
           className={`w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 lg:gap-8 relative z-30 bg-wbk-white transition-all duration-200 ${
-            !isMenuVisible ? "border-b border-wbk-lightgrey shadow-xs" : ""
+            !isMenuVisible ? "border-b border-wbk-lightgrey " : ""
           }`}
         >
           {/* Left section: Logo + Contact Info */}
@@ -225,7 +261,11 @@ export function Header() {
             >
               {user ? (
                 <div className="w-7 h-7 rounded-full bg-wbk-black text-wbk-white text-[11px] font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs">
-                  {(user.user_metadata?.full_name?.[0] || user.email?.[0] || "U").toUpperCase()}
+                  {(
+                    user.user_metadata?.full_name?.[0] ||
+                    user.email?.[0] ||
+                    "U"
+                  ).toUpperCase()}
                 </div>
               ) : (
                 <IconUser size={21} strokeWidth={1.5} />
@@ -242,12 +282,13 @@ export function Header() {
           className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white relative z-30"
           initial={false}
           animate={{
-            height: isMenuVisible ? "auto" : 0,
+            height: isMenuVisible ? 52 : 0,
             opacity: isMenuVisible ? 1 : 0,
             paddingTop: isMenuVisible ? 4 : 0,
             paddingBottom: isMenuVisible ? 12 : 0,
           }}
           transition={{ duration: 0.25 }}
+          onUpdate={updateHeaderHeight}
           style={{
             overflow: isMenuVisible ? "visible" : "hidden",
           }}
@@ -257,7 +298,7 @@ export function Header() {
 
         {/* Desktop Category Navigation & Animated Mega Submenu */}
         <motion.div
-          className="hidden xl:block relative z-20"
+          className="hidden xl:block relative z-20 bg-wbk-white"
           initial={false}
           animate={{
             height: isMenuVisible ? 50 : 0,
@@ -265,9 +306,10 @@ export function Header() {
             opacity: isMenuVisible ? 1 : 0,
           }}
           transition={{
-            duration: 0.28,
+            duration: 0.25,
             ease: [0.25, 1, 0.5, 1],
           }}
+          onUpdate={updateHeaderHeight}
           style={{
             overflow: isMenuVisible ? "visible" : "hidden",
           }}

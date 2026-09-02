@@ -8,19 +8,20 @@ const FOOTER_LINKS = {
     { label: "Sofas",        href: "/products/sofas" },
     { label: "Mattresses",   href: "/products/mattresses" },
     { label: "Cabinets",     href: "/products/cabinets" },
-    { label: "Sale",         href: "/products/sale" },
+    { label: "Configurator", href: "/products/beds/integrated-vertical-wall-bed" },
   ],
   Support: [
     { label: "Installation Guides", href: "/support/installation-guides" },
+    { label: "Video Walkthroughs",  href: "/support/installation-videos" },
     { label: "FAQ",                 href: "/support/faq" },
-    { label: "Delivery",            href: "/support/delivery" },
+    { label: "Delivery & Shipping", href: "/support/delivery" },
   ],
   Company: [
-    { label: "About",           href: "/about" },
-    { label: "Contact",         href: "/contact" },
-    { label: "Trade Customers", href: "/more/trade-customers" },
-    { label: "Case Studies",    href: "/more/case-studies" },
-    { label: "Reviews",         href: "/more/reviews" },
+    { label: "About Us",            href: "/about" },
+    { label: "Contact & Showroom",  href: "/contact" },
+    { label: "Customer Reviews",    href: "/reviews" },
+    { label: "Terms of Service",    href: "/terms" },
+    { label: "Privacy Policy",      href: "/privacy" },
   ],
 };
 

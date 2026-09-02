@@ -113,7 +113,7 @@ export function Submenu() {
           transition={{ duration: 0.2, ease: "easeOut" }}
           onMouseEnter={cancelCloseSubmenu}
           onMouseLeave={() => setSubMenu(null)}
-          className="absolute left-0 right-0 top-full z-40 bg-wbk-white border-b border-wbk-lightgrey shadow-xl overflow-hidden before:absolute before:-top-4 before:left-0 before:right-0 before:h-4 before:content-['']"
+          className="absolute left-0 right-0 top-full z-50 bg-wbk-white border-b border-wbk-lightgrey shadow-xl overflow-hidden before:absolute before:-top-4 before:left-0 before:right-0 before:h-4 before:content-['']"
         >
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <AnimatePresence mode="wait" custom={direction}>

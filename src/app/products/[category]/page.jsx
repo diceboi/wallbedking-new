@@ -1,16 +1,12 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
-import {
-  IconChevronDown,
-  IconFilter,
-  Icon3dCubeSphere,
-} from "@tabler/icons-react";
+import { IconChevronDown, IconFilter } from "@tabler/icons-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Mousewheel } from "swiper/modules";
 import "swiper/css";
@@ -19,6 +15,9 @@ import {
   ALL_PRODUCTS,
   CATEGORIES_INFO,
   OTHER_CATEGORIES_LIST,
+  RAW_CATALOG,
+  formatCatalogItem,
+  getFlagshipBed,
 } from "@/data/products";
 import { MenuContext } from "@/context/MenuContext";
 
@@ -33,9 +32,11 @@ export default function CategoryArchivePage() {
     subcategories: [],
   };
 
-  const rawCategoryProducts = ALL_PRODUCTS[currentCategory] || [];
-  const [mounted, setMounted] = useState(false);
+  const rawCategoryProducts = useMemo(() => {
+    return ALL_PRODUCTS[currentCategory] || [];
+  }, [currentCategory]);
 
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -53,23 +54,27 @@ export default function CategoryArchivePage() {
     const orient = searchParams?.get("orientation");
     if (orient) {
       const match = ["Vertical", "Horizontal"].find(
-        (o) => o.toLowerCase() === orient.toLowerCase()
+        (o) => o.toLowerCase() === orient.toLowerCase(),
       );
       if (match) setSelectedOrientation(match);
     }
     const typ = searchParams?.get("type");
     if (typ) {
       const match = ["Classic", "Studio", "Integrated"].find(
-        (t) => t.toLowerCase() === typ.toLowerCase()
+        (t) => t.toLowerCase() === typ.toLowerCase(),
       );
       if (match) setSelectedType(match);
     }
+    const sz = searchParams?.get("size");
+    if (sz) {
+      setSelectedSize(sz);
+    }
   }, [searchParams]);
 
-  // Derive dynamic filter choices
-  const distinctSizes =
-    currentCategory === "beds"
-      ? [
+  // Derive dynamic filter choices based on category
+  const distinctSizes = useMemo(() => {
+    if (currentCategory === "beds") {
+      return [
         "All",
         "Small Single",
         "Single",
@@ -77,72 +82,142 @@ export default function CategoryArchivePage() {
         "Double",
         "King",
         "Super King",
-      ]
-      : [
-        "All",
-        ...Array.from(
-          new Set(rawCategoryProducts.map((p) => p.size).filter(Boolean))
-        ),
       ];
-
-  const distinctOrientations = [
-    "All",
-    ...Array.from(
-      new Set(rawCategoryProducts.map((p) => p.orientation).filter(Boolean))
-    ),
-  ];
-
-  const distinctTypes = [
-    "All",
-    ...Array.from(
+    }
+    const sizes = Array.from(
       new Set(
         rawCategoryProducts
+          .map((p) => p.size || p.size_category || p.size_label)
+          .filter(Boolean),
+      ),
+    );
+    return ["All", ...sizes];
+  }, [currentCategory, rawCategoryProducts]);
+
+  const distinctOrientations = useMemo(() => {
+    const orients = Array.from(
+      new Set(
+        (currentCategory === "beds"
+          ? RAW_CATALOG.filter((p) => p.parent_category === "beds")
+          : rawCategoryProducts
+        )
+          .map((p) => p.orientation)
+          .filter(Boolean),
+      ),
+    );
+    return ["All", ...orients];
+  }, [currentCategory, rawCategoryProducts]);
+
+  const distinctTypes = useMemo(() => {
+    const types = Array.from(
+      new Set(
+        (currentCategory === "beds"
+          ? RAW_CATALOG.filter((p) => p.parent_category === "beds")
+          : rawCategoryProducts
+        )
           .map((p) => p.type || p.sub_category)
-          .filter(Boolean)
-      )
-    ),
-  ];
+          .filter(Boolean),
+      ),
+    );
+    return ["All", ...types];
+  }, [currentCategory, rawCategoryProducts]);
 
   const priceOptions = ["All", "Under £500", "£500 - £800", "Over £800"];
 
-  // Filter products
-  const filteredProducts = rawCategoryProducts
-    .filter((prod) => {
+  // ── REAL FILTERING LOGIC ──
+  const filteredProducts = useMemo(() => {
+    let baseList = [];
+
+    if (currentCategory === "beds") {
+      if (selectedSize !== "All") {
+        // If a specific size is chosen, find all bed variants in catalog for this size
+        const rawBeds = RAW_CATALOG.filter(
+          (p) =>
+            p.parent_category === "beds" &&
+            (p.size_category === selectedSize ||
+              p.size === selectedSize ||
+              p.size_label?.toLowerCase().includes(selectedSize.toLowerCase())),
+        );
+
+        baseList = rawBeds.map((raw) => {
+          const formatted = formatCatalogItem(raw);
+          const flagship = getFlagshipBed(raw.type, raw.orientation);
+          return {
+            ...formatted,
+            link: `/products/beds/${flagship.slug}?size=${formatted.sizeSlug}`,
+          };
+        });
+      } else {
+        // Show the 6 flagship models
+        baseList = ALL_PRODUCTS.beds || [];
+      }
+    } else {
+      baseList = rawCategoryProducts;
+    }
+
+    return baseList.filter((prod) => {
+      // Orientation filter
       if (
         selectedOrientation !== "All" &&
-        prod.orientation !== selectedOrientation
-      )
+        prod.orientation?.toLowerCase() !== selectedOrientation.toLowerCase()
+      ) {
         return false;
-      if (
-        selectedType !== "All" &&
-        prod.type !== selectedType &&
-        prod.sub_category !== selectedType
-      )
-        return false;
-      if (selectedPrice !== "All") {
-        const p = prod.numericPrice;
-        if (selectedPrice === "Under £500" && p >= 500) return false;
-        if (selectedPrice === "£500 - £800" && (p < 500 || p > 800)) return false;
-        if (selectedPrice === "Over £800" && p <= 800) return false;
       }
-      return true;
-    })
-    .map((prod) => {
-      // If user filtered by size on beds, link directly with ?size= query param
-      if (currentCategory === "beds" && selectedSize !== "All") {
-        const sizeSlug = selectedSize.toLowerCase().replace(/\s+/g, "-");
-        return {
-          ...prod,
-          link: `/products/beds/${prod.slug}?size=${sizeSlug}`,
-        };
-      }
-      return prod;
-    });
 
-  const { isMenuVisible } = useContext(MenuContext);
+      // Type / Sub-category filter
+      if (selectedType !== "All") {
+        const matchesType =
+          prod.type?.toLowerCase() === selectedType.toLowerCase() ||
+          prod.sub_category?.toLowerCase() === selectedType.toLowerCase();
+        if (!matchesType) return false;
+      }
+
+      // Size filter for non-beds categories
+      if (currentCategory !== "beds" && selectedSize !== "All") {
+        const prodSizeStr =
+          `${prod.size || ""} ${prod.size_category || ""} ${prod.sizeLabel || ""}`.toLowerCase();
+        if (!prodSizeStr.includes(selectedSize.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Price filter
+      if (selectedPrice !== "All") {
+        const priceNum =
+          prod.numericPrice ||
+          Number(String(prod.price || "").replace(/[^0-9.]/g, "")) ||
+          0;
+        if (selectedPrice === "Under £500" && priceNum >= 500) return false;
+        if (
+          selectedPrice === "£500 - £800" &&
+          (priceNum < 500 || priceNum > 800)
+        )
+          return false;
+        if (selectedPrice === "Over £800" && priceNum <= 800) return false;
+      }
+
+      return true;
+    });
+  }, [
+    currentCategory,
+    rawCategoryProducts,
+    selectedSize,
+    selectedOrientation,
+    selectedType,
+    selectedPrice,
+  ]);
+
+  const { isMenuVisible, subMenu } = useContext(MenuContext);
   const [isSticky, setIsSticky] = useState(false);
   const sentinelRef = useRef(null);
   const filterContainerRef = useRef(null);
+
+  // Close filter dropdown if desktop submenu opens
+  useEffect(() => {
+    if (subMenu) {
+      setActiveDropdown(null);
+    }
+  }, [subMenu]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -154,8 +229,11 @@ export default function CategoryArchivePage() {
         setActiveDropdown(null);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
   }, []);
 
   // Track sticky state when scrolled past sentinel
@@ -169,13 +247,27 @@ export default function CategoryArchivePage() {
       },
       {
         threshold: 0,
-        rootMargin: "-90px 0px 0px 0px",
-      }
+        rootMargin: "-100px 0px 0px 0px",
+      },
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, []);
+
+  const hasActiveFilters =
+    selectedSize !== "All" ||
+    selectedOrientation !== "All" ||
+    selectedType !== "All" ||
+    selectedPrice !== "All";
+
+  const clearAllFilters = () => {
+    setSelectedSize("All");
+    setSelectedOrientation("All");
+    setSelectedType("All");
+    setSelectedPrice("All");
+    setActiveDropdown(null);
+  };
 
   if (!mounted) {
     return (
@@ -186,7 +278,7 @@ export default function CategoryArchivePage() {
   }
 
   return (
-    <div className="bg-wbk-white min-h-screen pt-28 pb-20">
+    <div className="bg-wbk-white min-h-screen pt-12 pb-20">
       <Container size="xl">
         {/* Category Header */}
         <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -215,29 +307,25 @@ export default function CategoryArchivePage() {
             <span className="font-semibold text-wbk-black">
               {filteredProducts.length}
             </span>{" "}
-            of {rawCategoryProducts.length} items
+            {filteredProducts.length === 1 ? "item" : "items"}
           </div>
         </div>
 
         {/* Sentinel for sticky detection */}
-        <div ref={sentinelRef} className="h-px w-full pointer-events-none mb-0" />
+        <div
+          ref={sentinelRef}
+          className="h-px w-full pointer-events-none mb-0"
+        />
 
-        {/* Filters bar */}
+        {/* ── Original Swiper Filter Bar with Unclipped Floating Dropdowns ── */}
         <div
           ref={filterContainerRef}
-          className={`sticky z-30 bg-wbk-white border-y border-wbk-lightgrey h-14 sm:h-[58px] flex items-center -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
-            isMenuVisible
-              ? "top-[106px] md:top-[97px] xl:top-[147px]"
-              : "top-[53px] md:top-[97px] xl:top-[97px]"
-          } ${isSticky ? "shadow-xs" : ""}`}
+          style={{ top: "calc(var(--header-height, 92px) - 1px)" }}
+          className={`sticky z-20 bg-wbk-white border-y border-wbk-lightgrey h-14 sm:h-[58px] flex items-center -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 transition-shadow duration-200 !overflow-visible ${
+            isSticky ? "shadow-xs" : ""
+          }`}
         >
-          <motion.div
-            animate={{
-              x: isSticky ? [10, 0] : 0,
-            }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-full h-full flex items-center overflow-x-clip"
-          >
+          <div className="w-full h-full flex items-center !overflow-visible">
             <Swiper
               modules={[FreeMode, Mousewheel]}
               slidesPerView="auto"
@@ -250,46 +338,54 @@ export default function CategoryArchivePage() {
                 forceToAxis: true,
               }}
               grabCursor={true}
-              onTouchStart={() => setActiveDropdown(null)}
-              onSliderMove={() => setActiveDropdown(null)}
               className="filter-swiper !overflow-visible w-full h-full flex items-center"
             >
-              {/* Left label animation when sticky */}
-              {isSticky && (
-                <SwiperSlide className="!w-auto !h-full flex items-center">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-wbk-black px-3.5 h-9 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 shrink-0 select-none">
-                    <IconFilter size={14} className="text-wbk-gold" />
-                    <span>Filters</span>
-                  </div>
-                </SwiperSlide>
-              )}
+              {/* Stable Filters label badge */}
+              <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-wbk-black px-3.5 h-9 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 shrink-0 select-none">
+                  <IconFilter size={14} className="text-wbk-gold" />
+                  <span>Filters</span>
+                </div>
+              </SwiperSlide>
 
               {/* Type / Model Filter */}
               {distinctTypes.length > 2 && (
-                <SwiperSlide className="!w-auto !h-full flex items-center">
-                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={() =>
-                        setActiveDropdown(activeDropdown === "type" ? null : "type")
+                        setActiveDropdown(
+                          activeDropdown === "type" ? null : "type",
+                        )
                       }
-                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedType !== "All"
-                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                        }`}
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                        selectedType !== "All"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
                     >
                       <span>
                         Type:{" "}
-                        <strong className="font-semibold">{selectedType}</strong>
+                        <strong className="font-semibold">
+                          {selectedType}
+                        </strong>
                       </span>
                       <IconChevronDown
                         size={14}
-                        className={`transition-transform duration-200 ${activeDropdown === "type" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                          }`}
+                        className={`transition-transform duration-200 ${
+                          activeDropdown === "type"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
+                        }`}
                       />
                     </button>
+
                     {activeDropdown === "type" && (
-                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-2xl">
                         {distinctTypes.map((opt) => (
                           <button
                             key={opt}
@@ -298,10 +394,11 @@ export default function CategoryArchivePage() {
                               setSelectedType(opt);
                               setActiveDropdown(null);
                             }}
-                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedType === opt
-                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                              }`}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
+                              selectedType === opt
+                                ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                                : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                            }`}
                           >
                             {opt}
                           </button>
@@ -314,30 +411,42 @@ export default function CategoryArchivePage() {
 
               {/* Size Filter */}
               {distinctSizes.length > 2 && (
-                <SwiperSlide className="!w-auto !h-full flex items-center">
-                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={() =>
-                        setActiveDropdown(activeDropdown === "size" ? null : "size")
+                        setActiveDropdown(
+                          activeDropdown === "size" ? null : "size",
+                        )
                       }
-                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedSize !== "All"
-                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                        }`}
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                        selectedSize !== "All"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
                     >
                       <span>
                         Size:{" "}
-                        <strong className="font-semibold">{selectedSize}</strong>
+                        <strong className="font-semibold">
+                          {selectedSize}
+                        </strong>
                       </span>
                       <IconChevronDown
                         size={14}
-                        className={`transition-transform duration-200 ${activeDropdown === "size" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                          }`}
+                        className={`transition-transform duration-200 ${
+                          activeDropdown === "size"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
+                        }`}
                       />
                     </button>
+
                     {activeDropdown === "size" && (
-                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl max-h-72 overflow-y-auto custom-scrollbar">
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[190px] rounded-2xl max-h-72 overflow-y-auto custom-scrollbar">
                         {distinctSizes.map((opt) => (
                           <button
                             key={opt}
@@ -346,10 +455,11 @@ export default function CategoryArchivePage() {
                               setSelectedSize(opt);
                               setActiveDropdown(null);
                             }}
-                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedSize === opt
-                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                              }`}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
+                              selectedSize === opt
+                                ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                                : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                            }`}
                           >
                             {opt}
                           </button>
@@ -362,19 +472,25 @@ export default function CategoryArchivePage() {
 
               {/* Orientation Filter */}
               {distinctOrientations.length > 2 && (
-                <SwiperSlide className="!w-auto !h-full flex items-center">
-                  <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === "orientation" ? null : "orientation",
+                          activeDropdown === "orientation"
+                            ? null
+                            : "orientation",
                         )
                       }
-                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedOrientation !== "All"
-                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                        }`}
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                        selectedOrientation !== "All"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
                     >
                       <span>
                         Orientation:{" "}
@@ -384,12 +500,16 @@ export default function CategoryArchivePage() {
                       </span>
                       <IconChevronDown
                         size={14}
-                        className={`transition-transform duration-200 ${activeDropdown === "orientation" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                          }`}
+                        className={`transition-transform duration-200 ${
+                          activeDropdown === "orientation"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
+                        }`}
                       />
                     </button>
+
                     {activeDropdown === "orientation" && (
-                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-2xl">
                         {distinctOrientations.map((opt) => (
                           <button
                             key={opt}
@@ -398,10 +518,11 @@ export default function CategoryArchivePage() {
                               setSelectedOrientation(opt);
                               setActiveDropdown(null);
                             }}
-                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedOrientation === opt
-                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                              }`}
+                            className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
+                              selectedOrientation === opt
+                                ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                                : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                            }`}
                           >
                             {opt}
                           </button>
@@ -413,17 +534,23 @@ export default function CategoryArchivePage() {
               )}
 
               {/* Price Filter */}
-              <SwiperSlide className="!w-auto !h-full flex items-center">
-                <div className="relative h-full flex items-center" onClick={(e) => e.stopPropagation()}>
+              <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                <div
+                  className="relative flex items-center !overflow-visible"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
                     onClick={() =>
-                      setActiveDropdown(activeDropdown === "price" ? null : "price")
+                      setActiveDropdown(
+                        activeDropdown === "price" ? null : "price",
+                      )
                     }
-                    className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${selectedPrice !== "All"
-                      ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                      : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                      }`}
+                    className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                      selectedPrice !== "All"
+                        ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                        : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                    }`}
                   >
                     <span>
                       Price:{" "}
@@ -431,12 +558,16 @@ export default function CategoryArchivePage() {
                     </span>
                     <IconChevronDown
                       size={14}
-                      className={`transition-transform duration-200 ${activeDropdown === "price" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
-                        }`}
+                      className={`transition-transform duration-200 ${
+                        activeDropdown === "price"
+                          ? "rotate-180 text-wbk-gold"
+                          : "text-wbk-brown"
+                      }`}
                     />
                   </button>
+
                   {activeDropdown === "price" && (
-                    <div className="absolute top-full right-0 sm:left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-xl p-2 min-w-[170px] rounded-2xl">
+                    <div className="absolute top-full right-0 sm:left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-2xl">
                       {priceOptions.map((opt) => (
                         <button
                           key={opt}
@@ -445,10 +576,11 @@ export default function CategoryArchivePage() {
                             setSelectedPrice(opt);
                             setActiveDropdown(null);
                           }}
-                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap ${selectedPrice === opt
-                            ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                            : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                            }`}
+                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
+                            selectedPrice === opt
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                          }`}
                         >
                           {opt}
                         </button>
@@ -459,27 +591,19 @@ export default function CategoryArchivePage() {
               </SwiperSlide>
 
               {/* Reset Filters button */}
-              {(selectedSize !== "All" ||
-                selectedOrientation !== "All" ||
-                selectedType !== "All" ||
-                selectedPrice !== "All") && (
-                <SwiperSlide className="!w-auto !h-full flex items-center">
+              {hasActiveFilters && (
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedSize("All");
-                      setSelectedOrientation("All");
-                      setSelectedType("All");
-                      setSelectedPrice("All");
-                    }}
-                    className="px-4 h-9 text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap rounded-full hover:bg-[#F4F2F0] transition-colors select-none flex items-center"
+                    onClick={clearAllFilters}
+                    className="px-4 h-9 border border-transparent text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap rounded-full hover:bg-[#F4F2F0] transition-colors select-none flex items-center justify-center"
                   >
                     Reset filters
                   </button>
                 </SwiperSlide>
               )}
             </Swiper>
-          </motion.div>
+          </div>
         </div>
 
         {/* Product Grid */}
@@ -492,13 +616,9 @@ export default function CategoryArchivePage() {
               Try adjusting your filters to see more results.
             </p>
             <button
-              onClick={() => {
-                setSelectedSize("All");
-                setSelectedOrientation("All");
-                setSelectedType("All");
-                setSelectedPrice("All");
-              }}
-              className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full"
+              type="button"
+              onClick={clearAllFilters}
+              className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full cursor-pointer hover:bg-wbk-green hover:text-wbk-black transition-colors"
             >
               Clear all filters
             </button>

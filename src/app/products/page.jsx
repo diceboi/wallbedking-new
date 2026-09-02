@@ -58,7 +58,7 @@ export default function ProductsPage() {
     .slice(0, 8);
 
   return (
-    <div className="bg-wbk-white min-h-screen pt-16 pb-20">
+    <div className="bg-wbk-white min-h-screen pt-12 pb-20">
       <Container size="xl">
         {/* Products Header with Breadcrumbs */}
         <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">

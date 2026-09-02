@@ -27,8 +27,8 @@ export function ProductCard({ product, className = "" }) {
     (product.parent_category && product.slug
       ? `/products/${product.parent_category}/${product.slug}`
       : product.slug
-      ? `/products/beds/${product.slug}`
-      : `/products/beds/${product.id || "integrated-bed"}`);
+        ? `/products/beds/${product.slug}`
+        : `/products/beds/${product.id || "integrated-bed"}`);
 
   // Image resolution
   const image =
@@ -40,14 +40,17 @@ export function ProductCard({ product, className = "" }) {
     "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp";
 
   // Pricing format
-  const rawPrice = product.price || (product.price_gbp ? `£${product.price_gbp}` : "£799");
-  const priceDisplay = String(rawPrice).startsWith("£") ? rawPrice : `£${rawPrice}`;
+  const rawPrice =
+    product.price || (product.price_gbp ? `£${product.price_gbp}` : "£799");
+  const priceDisplay = String(rawPrice).startsWith("£")
+    ? rawPrice
+    : `£${rawPrice}`;
   const isFrom = !String(priceDisplay).toLowerCase().includes("from");
 
   return (
     <Link href={link} className={`group block space-y-4 ${className}`}>
       {/* Image Box - Light grey background container */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/30 rounded-none">
+      <div className="relative aspect-[1/1] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/30 rounded-none">
         {/* Primary Product Image */}
         <img
           src={image}
@@ -91,9 +94,7 @@ export function ProductCard({ product, className = "" }) {
         {/* Price */}
         <div className="pt-1 text-sm text-wbk-black font-poppins">
           {isFrom ? "from " : ""}
-          <span className="font-semibold text-base">
-            {priceDisplay}
-          </span>
+          <span className="font-semibold text-base">{priceDisplay}</span>
           {product.salePrice && product.salePrice !== priceDisplay && (
             <span className="ml-2 text-xs text-wbk-brown line-through font-normal">
               {product.salePrice}

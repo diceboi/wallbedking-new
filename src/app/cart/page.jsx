@@ -19,6 +19,8 @@ import {
   IconHeadset,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
+import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 
 export default function CartPage() {
   const {
@@ -29,7 +31,12 @@ export default function CartPage() {
     subtotal,
     discount,
     vatIncluded,
+    shipping,
     total,
+    deliveryOption,
+    setDeliveryOption,
+    deliveryOptions,
+    selectedDeliveryDetails,
     promoCode,
     promoError,
     activePromoDetails,
@@ -309,13 +316,57 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span>UK Mainland Delivery</span>
-                      <IconCheck size={14} className="text-wbk-green" />
+                  {/* Delivery Selection */}
+                  <div className="pt-2 border-t border-wbk-lightgrey/60 space-y-2">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
+                      Delivery Option
+                    </span>
+                    <div className="space-y-1.5">
+                      {Object.values(deliveryOptions).map((opt) => {
+                        const isSelected = deliveryOption === opt.id;
+                        return (
+                          <label
+                            key={opt.id}
+                            onClick={() => setDeliveryOption(opt.id)}
+                            className={`flex items-start justify-between p-2.5 border text-xs cursor-pointer transition-colors ${
+                              isSelected
+                                ? "border-wbk-black bg-white shadow-xs"
+                                : "border-wbk-lightgrey bg-[#FBF9F8] hover:border-gray-400"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <input
+                                type="radio"
+                                name="cart_delivery"
+                                checked={isSelected}
+                                onChange={() => setDeliveryOption(opt.id)}
+                                className="mt-0.5 accent-wbk-black cursor-pointer"
+                              />
+                              <div>
+                                <span className="font-medium text-wbk-black block leading-tight">
+                                  {opt.label}
+                                </span>
+                                <span className="text-[10px] text-wbk-brown block mt-0.5">
+                                  {opt.message}
+                                </span>
+                              </div>
+                            </div>
+                            <span className={`font-semibold text-xs shrink-0 ml-2 ${opt.cost === 0 ? "text-wbk-green" : "text-wbk-black"}`}>
+                              {opt.cost === 0 ? "FREE" : `£${opt.cost}`}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
-                    <span className="font-semibold text-wbk-green uppercase text-[11px] tracking-wider">
-                      Free
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>Selected Delivery</span>
+                      {shipping === 0 && <IconCheck size={14} className="text-wbk-green" />}
+                    </div>
+                    <span className={`font-semibold text-[11px] uppercase tracking-wider ${shipping === 0 ? "text-wbk-green" : "text-wbk-black"}`}>
+                      {shipping === 0 ? "Free" : `£${shipping}`}
                     </span>
                   </div>
 
@@ -392,18 +443,35 @@ export default function CartPage() {
                   )}
                 </div>
 
-                {/* Checkout Primary Button */}
-                <Link
-                  href="/checkout"
-                  className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all shadow-md group cursor-pointer"
-                >
-                  <IconLock size={16} />
-                  <span>Proceed to Checkout</span>
-                  <IconArrowRight
-                    size={16}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
-                </Link>
+                {/* Primary Checkout Actions */}
+                <div className="space-y-3 pt-2">
+                  <Link
+                    href="/checkout"
+                    className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all shadow-md group cursor-pointer"
+                  >
+                    <IconLock size={16} />
+                    <span>Proceed to Checkout</span>
+                    <IconArrowRight
+                      size={16}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
+                  </Link>
+
+                  {/* Express Checkout Divider */}
+                  <div className="relative flex items-center justify-center py-1">
+                    <div className="border-t border-wbk-lightgrey w-full"></div>
+                    <span className="bg-[#FBF9F8] px-3 text-[10px] font-medium uppercase tracking-widest text-wbk-brown shrink-0">
+                      Or Quick Pay With
+                    </span>
+                    <div className="border-t border-wbk-lightgrey w-full"></div>
+                  </div>
+
+                  {/* Express Instant Checkout Buttons */}
+                  <div className="space-y-2.5">
+                    <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
+                    <PayPalCheckoutButton />
+                  </div>
+                </div>
 
                 {/* Accepted Payment Icons */}
                 <div className="pt-3 text-center space-y-2 border-t border-wbk-lightgrey/60">

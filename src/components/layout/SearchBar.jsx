@@ -30,7 +30,9 @@ export function SearchBar() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    document.addEventListener("touchstart", handleClickOutside, {
+      passive: true,
+    });
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
@@ -66,7 +68,10 @@ export function SearchBar() {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full md:max-w-sm lg:max-w-md">
+    <div
+      ref={containerRef}
+      className="relative w-full md:max-w-sm lg:max-w-md rounded-full"
+    >
       {/* Search Input Box */}
       <div className="relative flex items-center rounded-full">
         <IconSearch
@@ -85,7 +90,7 @@ export function SearchBar() {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search beds, sofas, mattresses..."
-          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins "
+          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins rounded-full"
         />
         {query && (
           <button
@@ -127,7 +132,10 @@ export function SearchBar() {
                   >
                     <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
                       <Image
-                        src={item.image || "/product-images/morphy-integrated/160x200.jpg"}
+                        src={
+                          item.image ||
+                          "/product-images/morphy-integrated/160x200.jpg"
+                        }
                         alt={item.name}
                         width={44}
                         height={44}
