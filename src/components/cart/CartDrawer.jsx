@@ -16,6 +16,7 @@ import {
   IconLock,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 
 export function CartDrawer() {
   const {
@@ -28,6 +29,7 @@ export function CartDrawer() {
     subtotal,
     isMounted,
   } = useCart();
+  const { t, formatPrice, localizedHref } = useLocale();
 
   // Prevent background scrolling when cart drawer is open
   useEffect(() => {
@@ -81,7 +83,7 @@ export function CartDrawer() {
               <div className="flex items-center gap-2.5">
                 <IconShoppingBag size={20} className="text-wbk-gold" />
                 <h2 className="font-new-york text-xl text-wbk-black">
-                  Shopping Cart
+                  {t("cart.title", "Shopping Cart")}
                 </h2>
                 <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-wbk-lightgrey/60 text-wbk-black">
                   {totalItems}
@@ -101,7 +103,9 @@ export function CartDrawer() {
             <div className="px-6 py-2.5 bg-[#F4F2F0] border-b border-wbk-lightgrey/50 flex items-center gap-2 text-xs text-wbk-brown">
               <IconTruck size={16} className="text-wbk-green shrink-0" />
               <span>
-                <strong className="text-wbk-black font-semibold">Free UK Mainland Delivery</strong> applied to your order.
+                <strong className="text-wbk-black font-semibold">
+                  {t("common.freeDelivery", "Free Mainland Delivery")}
+                </strong>
               </span>
             </div>
 
@@ -113,17 +117,20 @@ export function CartDrawer() {
                     <IconShoppingBag size={28} strokeWidth={1.5} />
                   </div>
                   <h3 className="font-new-york text-xl text-wbk-black mb-1">
-                    Your cart is empty
+                    {t("cart.empty", "Your cart is empty")}
                   </h3>
                   <p className="text-xs text-wbk-brown max-w-xs leading-relaxed mb-6">
-                    Explore our precision-engineered wall beds, modular sofas, and orthopedic mattresses.
+                    {t(
+                      "cart.emptyDesc",
+                      "Explore our precision-engineered wall beds, modular sofas, and orthopedic mattresses.",
+                    )}
                   </p>
                   <Link
-                    href="/products/beds"
+                    href={localizedHref("/products/beds")}
                     onClick={closeCart}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-none shadow-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-full shadow-sm"
                   >
-                    <span>Discover Murphy Beds</span>
+                    <span>{t("cart.discoverBeds", "Discover Murphy Beds")}</span>
                     <IconArrowRight size={14} />
                   </Link>
                 </div>
@@ -212,7 +219,7 @@ export function CartDrawer() {
                         {/* Line Total */}
                         <div className="text-right">
                           <span className="text-xs font-bold text-wbk-black font-poppins">
-                            £{((Number(item.price) || 0) * (Number(item.quantity) || 1)).toLocaleString()}
+                            {formatPrice((Number(item.price) || 0) * (Number(item.quantity) || 1))}
                           </span>
                         </div>
                       </div>
@@ -227,36 +234,38 @@ export function CartDrawer() {
               <div className="p-6 border-t border-wbk-lightgrey/70 bg-[#FBF9F8] space-y-4">
                 {/* Subtotal summary */}
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-wbk-brown font-medium">Subtotal</span>
+                  <span className="text-wbk-brown font-medium">
+                    {t("cart.subtotal", "Subtotal")}
+                  </span>
                   <span className="text-lg font-bold text-wbk-black font-poppins">
-                    £{subtotal.toLocaleString()}
+                    {formatPrice(subtotal)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-wbk-brown pb-1">
-                  <span>Shipping & Taxes</span>
+                  <span>{t("cart.shipping", "Shipping")}</span>
                   <span className="text-wbk-green font-semibold">
-                    Free UK Mainland Delivery
+                    {t("common.freeDelivery", "Free Mainland Delivery")}
                   </span>
                 </div>
 
                 {/* Checkout CTA Buttons */}
                 <div className="space-y-2 pt-1">
                   <Link
-                    href="/checkout"
+                    href={localizedHref("/checkout")}
                     onClick={closeCart}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 shadow-md group cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 rounded-full shadow-md group cursor-pointer"
                   >
                     <IconLock size={15} />
-                    <span>Proceed to Checkout</span>
+                    <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
                     <IconArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
 
                   <Link
-                    href="/cart"
+                    href={localizedHref("/cart")}
                     onClick={closeCart}
-                    className="w-full flex items-center justify-center py-2.5 px-4 border border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black text-xs font-medium uppercase tracking-[0.14em] transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center py-2.5 px-4 border border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black text-xs font-medium uppercase tracking-[0.14em] transition-colors rounded-full cursor-pointer"
                   >
-                    View Shopping Basket
+                    {t("cart.viewBasket", "View Shopping Basket")}
                   </Link>
                 </div>
 

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "@/context/LocaleContext";
+import { getProductPrice } from "@/lib/i18n";
 
 const DEFAULT_COLORS = ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"];
 
 export function ProductCard({ product, className = "" }) {
+  const { locale, localizedHref, t } = useLocale();
   if (!product) return null;
 
   const title = product.title || product.name || "Wall Bed";
@@ -22,13 +25,14 @@ export function ProductCard({ product, className = "" }) {
   }
 
   // Calculate destination link
-  const link =
+  const rawLink =
     product.link ||
     (product.parent_category && product.slug
       ? `/products/${product.parent_category}/${product.slug}`
       : product.slug
         ? `/products/beds/${product.slug}`
         : `/products/beds/${product.id || "integrated-bed"}`);
+  const link = localizedHref(rawLink);
 
   // Image resolution
   const image =
@@ -39,12 +43,9 @@ export function ProductCard({ product, className = "" }) {
     product.hover_image ||
     "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp";
 
-  // Pricing format
-  const rawPrice =
-    product.price || (product.price_gbp ? `£${product.price_gbp}` : "£799");
-  const priceDisplay = String(rawPrice).startsWith("£")
-    ? rawPrice
-    : `£${rawPrice}`;
+  // Market-aware Pricing format
+  const pricing = getProductPrice(product, locale);
+  const priceDisplay = pricing.display;
   const isFrom = !String(priceDisplay).toLowerCase().includes("from");
 
   return (
@@ -63,11 +64,19 @@ export function ProductCard({ product, className = "" }) {
           alt={`${title} details`}
           className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
+
+        {/* Sale badge */}
+        {pricing.isOnSale && (
+          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-2xs z-10">
+            Sale {pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : ""}
+          </span>
+        )}
       </div>
 
       {/* Product Text Details */}
       <div className="space-y-2 px-1">
-        <h3 className="font-poppins font-medium text-lg text-wbk-black transition-colors duration-200 group-hover:text-wbk-gold line-clamp-1">
+        {/* Title */}
+        <h3 className="font-poppins font-medium text-base text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
           {title}
         </h3>
 
@@ -92,12 +101,14 @@ export function ProductCard({ product, className = "" }) {
         </div>
 
         {/* Price */}
-        <div className="pt-1 text-sm text-wbk-black font-poppins">
-          {isFrom ? "from " : ""}
-          <span className="font-semibold text-base">{priceDisplay}</span>
-          {product.salePrice && product.salePrice !== priceDisplay && (
-            <span className="ml-2 text-xs text-wbk-brown line-through font-normal">
-              {product.salePrice}
+        <div className="pt-1 text-sm text-wbk-black font-poppins flex items-baseline gap-2 flex-wrap">
+          <div>
+            {isFrom ? `${t("common.from", "from")} ` : ""}
+            <span className="font-semibold text-base">{priceDisplay}</span>
+          </div>
+          {pricing.isOnSale && (
+            <span className="text-xs text-wbk-brown line-through font-normal">
+              {pricing.regularDisplay}
             </span>
           )}
         </div>

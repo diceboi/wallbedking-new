@@ -10,6 +10,7 @@ import {
   IconBrush,
   Icon3dCubeSphere,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 export function SubmenuItem({
   title,
@@ -23,10 +24,13 @@ export function SubmenuItem({
   price,
   onClick,
 }) {
+  const { localizedHref } = useLocale();
+  const targetLink = localizedHref(href);
+
   if (isParent) {
     return (
       <Link
-        href={href}
+        href={targetLink}
         onClick={onClick}
         className="group flex flex-col h-full justify-between bg-[#F4F2F0] border border-wbk-lightgrey hover:border-wbk-gold transition-all duration-200"
       >
@@ -68,7 +72,7 @@ export function SubmenuItem({
 
   return (
     <Link
-      href={href}
+      href={targetLink}
       onClick={onClick}
       className="group flex flex-col h-full bg-wbk-white border border-wbk-lightgrey/60 hover:border-wbk-black hover:shadow-sm transition-all duration-200"
     >

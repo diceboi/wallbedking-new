@@ -5,6 +5,7 @@ import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { MenuContextProvider } from "@/context/MenuContext";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import "./globals.css";
@@ -38,15 +39,17 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col bg-wbk-white">
         <ScrollToTop />
         <AuthProvider>
-          <CartProvider>
-            <MenuContextProvider>
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <CartDrawer />
-              <UserDrawer />
-            </MenuContextProvider>
-          </CartProvider>
+          <LocaleProvider>
+            <CartProvider>
+              <MenuContextProvider>
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+                <CartDrawer />
+                <UserDrawer />
+              </MenuContextProvider>
+            </CartProvider>
+          </LocaleProvider>
         </AuthProvider>
       </body>
     </html>

@@ -262,7 +262,7 @@ export function NewProductSection() {
       <div className="relative z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-[320px] sm:max-w-md px-4 mt-8 md:mt-12">
         <Button
           as="link"
-          href="/products/beds/integrated-vertical-wall-bed"
+          href="/configurator"
           variant="primary"
           size="md"
           className="w-full sm:w-auto text-center justify-center bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-xs font-semibold uppercase tracking-wider py-3.5"

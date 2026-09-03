@@ -20,17 +20,23 @@ import { MobileMenuDrawer } from "./MobileMenuDrawer";
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
+import { FlagIcon } from "@/components/ui/FlagIcon";
 
-/* ── Language choices ────────────────────────────────────── */
+/* ── Language choices (7 Parallel Markets) ────────────────── */
 const LANGUAGES = [
-  { code: "en", label: "EN" },
-  { code: "hu", label: "HU" },
-  { code: "de", label: "DE" },
+  { code: "en", label: "UK", name: "English (UK)", flag: "🇬🇧" },
+  { code: "us", label: "US", name: "English (US $)", flag: "🇺🇸" },
+  { code: "de", label: "DE", name: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", label: "FR", name: "Français", flag: "🇫🇷" },
+  { code: "es", label: "ES", name: "Español", flag: "🇪🇸" },
+  { code: "por", label: "POR", name: "Português", flag: "🇵🇹" },
+  { code: "it", label: "IT", name: "Italiano", flag: "🇮🇹" },
 ];
 
 export function Header() {
   const [langOpen, setLangOpen] = useState(false);
-  const [activeLang, setActiveLang] = useState("EN");
+  const { locale, market, switchLocale, localizedHref, t } = useLocale();
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
   const {
@@ -144,7 +150,10 @@ export function Header() {
               scrollDeltaAccumulator.current += stepDiff;
 
               // Collapse only after a definite cumulative downward scroll of >= 30px past 100px
-              if (scrollDeltaAccumulator.current >= 30 && currentScrollY > 100) {
+              if (
+                scrollDeltaAccumulator.current >= 30 &&
+                currentScrollY > 100
+              ) {
                 changeMenuVisibility(false);
               }
             } else if (stepDiff < 0) {
@@ -206,7 +215,7 @@ export function Header() {
           {/* Left section: Logo + Contact Info */}
           <div className="flex items-center gap-6 shrink-0">
             <Link
-              href="/"
+              href={localizedHref("/")}
               className="shrink-0 flex items-center"
               aria-label="WallBedKing home"
             >
@@ -231,11 +240,11 @@ export function Header() {
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             {/* 3D Configurator CTA */}
             <Link
-              href="/products/beds/integrated-vertical-wall-bed"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 bg-wbk-green hover:bg-wbk-black border border-wbk-green hover:border-wbk-black text-wbk-white text-xs font-medium tracking-[0.14em] uppercase transition-colors shadow-xs"
+              href={localizedHref("/configurator")}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 bg-wbk-green hover:bg-wbk-black border border-wbk-green hover:border-wbk-black text-wbk-white text-xs font-medium tracking-[0.14em] uppercase transition-colors shadow-xs rounded-full"
             >
               <Icon3dCubeSphere size={15} />
-              <span>Configurator</span>
+              <span>{t("header.configuratorCta", "Configurator")}</span>
             </Link>
 
             {/* Language Selector Dropdown */}
@@ -246,10 +255,11 @@ export function Header() {
             >
               <button
                 type="button"
-                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green py-1 transition-colors"
+                className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green py-1 transition-colors cursor-pointer"
                 aria-label="Select language"
               >
-                <span>{activeLang}</span>
+                <FlagIcon country={locale} size={16} />
+                <span>{market?.label || "UK"}</span>
                 <IconChevronDown
                   size={12}
                   className={`transition-transform duration-200 ${
@@ -265,25 +275,29 @@ export function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1 min-w-[70px] bg-wbk-white shadow-lg border border-wbk-lightgrey py-1 z-50 rounded-none"
+                    className="absolute right-0 top-full mt-1 min-w-[110px] bg-wbk-white shadow-lg border border-wbk-lightgrey py-1 z-50 rounded-none"
                   >
-                    {LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.code}
-                        type="button"
-                        onClick={() => {
-                          setActiveLang(lang.label);
-                          setLangOpen(false);
-                        }}
-                        className={`block w-full px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors ${
-                          activeLang === lang.label
-                            ? "text-wbk-green font-semibold bg-[#F4F2F0]"
-                            : "text-wbk-black hover:text-wbk-green hover:bg-[#FBF9F8]"
-                        }`}
-                      >
-                        {lang.label}
-                      </button>
-                    ))}
+                    {LANGUAGES.map((lang) => {
+                      const isSelected = locale === lang.code;
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => {
+                            switchLocale(lang.code);
+                            setLangOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 w-full px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors cursor-pointer ${
+                            isSelected
+                              ? "text-wbk-green font-semibold bg-[#F4F2F0]"
+                              : "text-wbk-black hover:text-wbk-green hover:bg-[#FBF9F8]"
+                          }`}
+                        >
+                          <FlagIcon country={lang.code} size={16} />
+                          <span>{lang.label}</span>
+                        </button>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>

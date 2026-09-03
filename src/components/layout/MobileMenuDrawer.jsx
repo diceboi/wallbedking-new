@@ -20,19 +20,25 @@ import {
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
+import { FlagIcon } from "@/components/ui/FlagIcon";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
 
 const LANGUAGES = [
-  { code: "en", label: "EN" },
-  { code: "hu", label: "HU" },
-  { code: "de", label: "DE" },
+  { code: "en", label: "UK", flag: "🇬🇧" },
+  { code: "us", label: "US", flag: "🇺🇸" },
+  { code: "de", label: "DE", flag: "🇩🇪" },
+  { code: "fr", label: "FR", flag: "🇫🇷" },
+  { code: "es", label: "ES", flag: "🇪🇸" },
+  { code: "por", label: "POR", flag: "🇵🇹" },
+  { code: "it", label: "IT", flag: "🇮🇹" },
 ];
 
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu } = useContext(MenuContext);
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
-  const [activeLang, setActiveLang] = useState("EN");
+  const { locale, switchLocale, localizedHref, t } = useLocale();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
   const [level, setLevel] = useState(0);
@@ -123,21 +129,25 @@ export function MobileMenuDrawer() {
                 <IconWorld size={14} className="text-wbk-gold" />
                 Language
               </span>
-              <div className="flex items-center gap-1.5">
-                {LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => setActiveLang(lang.label)}
-                    className={`px-3 py-0.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                      activeLang === lang.label
-                        ? "bg-wbk-black text-wbk-white shadow-2xs"
-                        : "bg-white text-wbk-black hover:bg-wbk-green hover:text-white border border-wbk-lightgrey"
-                    }`}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {LANGUAGES.map((lang) => {
+                  const isSelected = locale === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => switchLocale(lang.code)}
+                      className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-wbk-black text-wbk-white shadow-2xs"
+                          : "bg-white text-wbk-black hover:bg-wbk-green hover:text-white border border-wbk-lightgrey"
+                      }`}
+                    >
+                      <FlagIcon country={lang.code} size={14} />
+                      <span>{lang.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -165,11 +175,11 @@ export function MobileMenuDrawer() {
                           className="flex items-stretch justify-between bg-wbk-white hover:bg-[#FBF9F8] transition-colors"
                         >
                           <Link
-                            href={item.href}
+                            href={localizedHref(item.href)}
                             onClick={closeMobileMenu}
                             className="flex-1 py-3.5 px-4 text-xs font-medium uppercase tracking-[0.14em] text-wbk-black hover:text-wbk-green transition-colors"
                           >
-                            {item.title}
+                            {t(`nav.${item.id}`, item.title)}
                           </Link>
 
                           {hasSub && (
@@ -189,9 +199,9 @@ export function MobileMenuDrawer() {
                     {/* 3D Configurator CTA */}
                     <div className="p-4 bg-[#F4F2F0]">
                       <Link
-                        href="/products/beds/integrated-vertical-wall-bed"
+                        href={localizedHref("/configurator")}
                         onClick={closeMobileMenu}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-wbk-green text-wbk-white hover:bg-wbk-black text-xs font-medium uppercase tracking-[0.14em] shadow-sm transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-wbk-green text-wbk-white hover:bg-wbk-black text-xs font-medium uppercase tracking-[0.14em] shadow-sm transition-colors rounded-full"
                       >
                         <Icon3dCubeSphere size={16} />
                         <span>Interactive 3D Configurator</span>
@@ -310,7 +320,7 @@ export function MobileMenuDrawer() {
                     {/* Category Title & View All */}
                     {activeCategoryData?.parent && (
                       <Link
-                        href={activeCategoryData.parent.href}
+                        href={localizedHref(activeCategoryData.parent.href)}
                         onClick={closeMobileMenu}
                         className="flex items-center gap-3 p-3 bg-[#F4F2F0] hover:bg-[#E4E0DE] transition-colors"
                       >
@@ -339,7 +349,7 @@ export function MobileMenuDrawer() {
                     {activeCategoryData?.items?.map((item, idx) => (
                       <Link
                         key={idx}
-                        href={item.href}
+                        href={localizedHref(item.href)}
                         onClick={closeMobileMenu}
                         className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
                       >

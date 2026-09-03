@@ -8,9 +8,11 @@ import { IconSearch, IconX, IconArrowRight } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RAW_CATALOG } from "@/data/products";
 import { MenuContext } from "@/context/MenuContext";
+import { useLocale } from "@/context/LocaleContext";
 
 export function SearchBar() {
   const router = useRouter();
+  const { t, localizedHref } = useLocale();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -57,11 +59,13 @@ export function SearchBar() {
   const handleSelect = (item) => {
     setIsOpen(false);
     setQuery("");
-    router.push(`/products/${item.parent_category}/${item.slug}`);
+    router.push(localizedHref(`/products/${item.parent_category}/${item.slug}`));
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
+    if (e.key === "Enter" && results.length > 0) {
+      handleSelect(results[0]);
+    } else if (e.key === "Escape") {
       setIsOpen(false);
       inputRef.current?.blur();
     }
@@ -70,10 +74,10 @@ export function SearchBar() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full md:max-w-sm lg:max-w-md rounded-full"
+      className="relative w-full md:max-w-sm lg:max-w-md rounded-none"
     >
       {/* Search Input Box */}
-      <div className="relative flex items-center rounded-full">
+      <div className="relative flex items-center rounded-none">
         <IconSearch
           size={16}
           strokeWidth={1.5}
@@ -89,8 +93,8 @@ export function SearchBar() {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search beds, sofas, mattresses..."
-          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins rounded-full"
+          placeholder={t("header.searchPlaceholder", "Search beds, sofas, mattresses...")}
+          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins"
         />
         {query && (
           <button

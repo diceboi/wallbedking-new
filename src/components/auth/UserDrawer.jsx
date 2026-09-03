@@ -263,7 +263,7 @@ export function UserDrawer() {
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
                           <IconPackage size={17} strokeWidth={1.5} />
                         </div>
                         <div>
@@ -284,7 +284,7 @@ export function UserDrawer() {
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
                           <IconCube size={17} strokeWidth={1.5} />
                         </div>
                         <div>
@@ -305,7 +305,7 @@ export function UserDrawer() {
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
                           <IconMapPin size={17} strokeWidth={1.5} />
                         </div>
                         <div>
@@ -326,7 +326,7 @@ export function UserDrawer() {
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
                           <IconSettings size={17} strokeWidth={1.5} />
                         </div>
                         <div>
@@ -346,7 +346,7 @@ export function UserDrawer() {
                   <Link
                     href="/account"
                     onClick={closeUserDrawer}
-                    className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors shadow-sm cursor-pointer"
+                    className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
                   >
                     View Account Dashboard
                   </Link>
@@ -358,7 +358,7 @@ export function UserDrawer() {
                       await signOut();
                       closeUserDrawer();
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black hover:border-wbk-black transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black hover:border-wbk-black transition-colors rounded-full cursor-pointer"
                   >
                     <IconLogout size={15} />
                     <span>Sign Out</span>
@@ -397,13 +397,13 @@ export function UserDrawer() {
 
                   {/* Error & Success Messages */}
                   {errorMsg && (
-                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 rounded-xs">
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 rounded-none">
                       <IconAlertCircle size={16} className="shrink-0 mt-0.5 text-red-500" />
                       <span>{errorMsg}</span>
                     </div>
                   )}
                   {successMsg && (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2 rounded-xs">
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2 rounded-none">
                       <IconCheck size={16} className="shrink-0 mt-0.5 text-emerald-600" />
                       <span>{successMsg}</span>
                     </div>
@@ -464,7 +464,7 @@ export function UserDrawer() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2"
+                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-sm mt-2"
                       >
                         {isLoading ? (
                           <>
@@ -482,7 +482,7 @@ export function UserDrawer() {
                           type="button"
                           onClick={handleDemoSignIn}
                           disabled={isLoading}
-                          className="w-full py-2 bg-[#F4F2F0] hover:bg-[#E4E0DE] text-wbk-black text-[11px] font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                          className="w-full py-2 bg-[#F4F2F0] hover:bg-[#E4E0DE] text-wbk-black text-[11px] font-medium tracking-wide transition-colors rounded-full cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <span>Fill Demo Account (Instant Test)</span>
                         </button>
@@ -556,7 +556,7 @@ export function UserDrawer() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2"
+                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-sm mt-2"
                       >
                         {isLoading ? (
                           <>
@@ -604,7 +604,7 @@ export function UserDrawer() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-sm"
                       >
                         {isLoading ? (
                           <>

@@ -115,7 +115,7 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
         type="button"
         onClick={handleStripeCheckout}
         disabled={disabled || isLoading || items.length === 0}
-        className={`w-full relative flex items-center justify-center gap-3 py-4 px-6 bg-[#635BFF] hover:bg-[#5349e4] disabled:bg-gray-400 text-white font-semibold text-xs uppercase tracking-[0.16em] transition-all shadow-md cursor-pointer disabled:cursor-not-allowed group ${className}`}
+        className={`w-full relative flex items-center justify-center gap-3 py-4 px-6 bg-[#635BFF] hover:bg-[#5349e4] disabled:bg-gray-400 text-white font-semibold text-xs uppercase tracking-[0.16em] transition-all rounded-full shadow-md cursor-pointer disabled:cursor-not-allowed group ${className}`}
       >
         {isLoading ? (
           <>
@@ -126,7 +126,7 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
           <>
             <IconLock size={16} />
             <span>{label}</span>
-            <span className="font-mono text-[11px] bg-white/20 px-2 py-0.5 rounded tracking-normal">
+            <span className="font-mono text-[11px] bg-white/20 px-2 py-0.5 rounded-full tracking-normal">
               £{total.toLocaleString()}
             </span>
           </>

@@ -183,6 +183,13 @@ export const FLAGSHIP_BEDS = [
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price_gbp: 599,
+    price_euro: 599,
+    price_usd: 599,
+    sale_percent: 30,
+    sale_price_gbp: 419,
+    sale_price_euro: 419,
+    sale_price_usd: 419,
     price: "from £419",
     numericPrice: 419,
     size: "19 Sizes",
@@ -212,6 +219,13 @@ export const FLAGSHIP_BEDS = [
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price_gbp: 599,
+    price_euro: 599,
+    price_usd: 599,
+    sale_percent: 30,
+    sale_price_gbp: 419,
+    sale_price_euro: 419,
+    sale_price_usd: 419,
     price: "from £419",
     numericPrice: 419,
     size: "19 Sizes",
@@ -241,6 +255,13 @@ export const FLAGSHIP_BEDS = [
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price_gbp: 749,
+    price_euro: 749,
+    price_usd: 749,
+    sale_percent: 30,
+    sale_price_gbp: 524,
+    sale_price_euro: 524,
+    sale_price_usd: 524,
     price: "from £524",
     numericPrice: 524,
     size: "19 Sizes",
@@ -270,6 +291,13 @@ export const FLAGSHIP_BEDS = [
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     hoverImage:
       "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    price_gbp: 749,
+    price_euro: 749,
+    price_usd: 749,
+    sale_percent: 30,
+    sale_price_gbp: 524,
+    sale_price_euro: 524,
+    sale_price_usd: 524,
     price: "from £524",
     numericPrice: 524,
     size: "19 Sizes",
@@ -297,6 +325,13 @@ export const FLAGSHIP_BEDS = [
     image: "/product-images/morphy-integrated/160x200.jpg",
     hover_image: "/product-images/morphy-integrated/160x200-3.jpg",
     hoverImage: "/product-images/morphy-integrated/160x200-3.jpg",
+    price_gbp: 999,
+    price_euro: 999,
+    price_usd: 999,
+    sale_percent: 30,
+    sale_price_gbp: 699,
+    sale_price_euro: 699,
+    sale_price_usd: 699,
     price: "from £699",
     numericPrice: 699,
     size: "19 Sizes",
@@ -325,6 +360,13 @@ export const FLAGSHIP_BEDS = [
     image: "/product-images/morphy-integrated/160x200.jpg",
     hover_image: "/product-images/morphy-integrated/160x200-3.jpg",
     hoverImage: "/product-images/morphy-integrated/160x200-3.jpg",
+    price_gbp: 999,
+    price_euro: 999,
+    price_usd: 999,
+    sale_percent: 30,
+    sale_price_gbp: 699,
+    sale_price_euro: 699,
+    sale_price_usd: 699,
     price: "from £699",
     numericPrice: 699,
     size: "19 Sizes",
@@ -338,6 +380,54 @@ export const FLAGSHIP_BEDS = [
   },
 ];
 
+/**
+ * Computes starting prices ("from") dynamically for flagship beds
+ * based on the cheapest matching product variant in Supabase / catalog.
+ */
+export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
+  const bedItems = rawItems.filter((p) => p.parent_category === "beds");
+
+  return FLAGSHIP_BEDS.map((template) => {
+    const matching = bedItems.filter(
+      (item) =>
+        item.type?.toLowerCase() === template.type?.toLowerCase() &&
+        item.orientation?.toLowerCase() === template.orientation?.toLowerCase()
+    );
+
+    if (matching.length === 0) return template;
+
+    const gbpList = matching.map((m) => m.price_gbp).filter((v) => v != null && !isNaN(v));
+    const euroList = matching.map((m) => m.price_euro ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
+    const usdList = matching.map((m) => m.price_usd ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
+
+    const minGbp = gbpList.length > 0 ? Math.min(...gbpList) : template.price_gbp;
+    const minEuro = euroList.length > 0 ? Math.min(...euroList) : template.price_euro;
+    const minUsd = usdList.length > 0 ? Math.min(...usdList) : template.price_usd;
+
+    // Sale prices
+    const saleGbpList = matching.map((m) => m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
+    const saleEuroList = matching.map((m) => m.sale_price_euro ?? m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
+    const saleUsdList = matching.map((m) => m.sale_price_usd ?? m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
+
+    const minSaleGbp = saleGbpList.length > 0 ? Math.min(...saleGbpList) : null;
+    const minSaleEuro = saleEuroList.length > 0 ? Math.min(...saleEuroList) : null;
+    const minSaleUsd = saleUsdList.length > 0 ? Math.min(...saleUsdList) : null;
+
+    return {
+      ...template,
+      price_gbp: minGbp,
+      price_euro: minEuro,
+      price_usd: minUsd,
+      sale_price_gbp: minSaleGbp,
+      sale_price_euro: minSaleEuro,
+      sale_price_usd: minSaleUsd,
+      sale_percent: template.sale_percent,
+    };
+  });
+}
+
+export const DYNAMIC_FLAGSHIP_BEDS = getDynamicFlagshipBeds(RAW_CATALOG);
+
 // All bed variants for internal lookups and configurator sizing
 export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
   (p) => p.parent_category === "beds"
@@ -345,7 +435,7 @@ export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
 
 // Categorized product arrays
 export const ALL_PRODUCTS = {
-  beds: FLAGSHIP_BEDS,
+  beds: DYNAMIC_FLAGSHIP_BEDS,
   sofas: RAW_CATALOG.filter((p) => p.parent_category === "sofas").map(formatCatalogItem),
   mattresses: RAW_CATALOG.filter((p) => p.parent_category === "mattresses").map(formatCatalogItem),
   cabinets: RAW_CATALOG.filter((p) => p.parent_category === "cabinets").map(formatCatalogItem),

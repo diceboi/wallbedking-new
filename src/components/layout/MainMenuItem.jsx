@@ -5,21 +5,24 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconChevronDown } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
+import { useLocale } from "@/context/LocaleContext";
 
 export function MainMenuItem({ item }) {
   const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu } =
     useContext(MenuContext);
+  const { localizedHref, t } = useLocale();
   const router = useRouter();
   const isActive = subMenu === item.slug;
+  const title = t(`nav.${item.id}`, item.title);
 
   if (!item.hasSubmenu) {
     return (
       <Link
-        href={item.href}
+        href={localizedHref(item.href)}
         onMouseEnter={() => setSubMenu(null)}
         className="relative flex items-center h-12 px-3.5 text-xs font-medium uppercase tracking-[0.14em] text-wbk-black hover:text-wbk-green transition-colors select-none after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-wbk-gold after:transition-all after:duration-200 hover:after:w-full"
       >
-        {item.title}
+        {title}
       </Link>
     );
   }
@@ -31,14 +34,14 @@ export function MainMenuItem({ item }) {
         cancelCloseSubmenu();
         setSubMenu(item.slug);
       }}
-      onClick={() => router.push(item.href)}
+      onClick={() => router.push(localizedHref(item.href))}
       className={`relative group flex items-center gap-1.5 h-12 px-3.5 text-xs font-medium uppercase tracking-[0.14em] cursor-pointer transition-colors select-none ${
         isActive
           ? "text-wbk-green after:w-full"
           : "text-wbk-black hover:text-wbk-green after:w-0 hover:after:w-full"
       } after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-wbk-gold after:transition-all after:duration-200`}
     >
-      <span>{item.title}</span>
+      <span>{title}</span>
       <IconChevronDown
         size={13}
         className={`transition-transform duration-200 ${
