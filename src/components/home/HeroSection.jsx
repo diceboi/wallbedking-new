@@ -37,15 +37,12 @@ export function HeroSection() {
     return () => unsubscribe();
   }, [smoothProgress]);
 
-  // Subtle dark overlay opacity transform (stops fading back in at 100% scroll progress)
+  // Subtle dark overlay to maintain text readability throughout the scroll animation
   const overlayOpacity = useTransform(
     scrollYProgress,
-    [0, 0.4, 1.0],
-    [0.3, 0, 0],
+    [0, 0.5, 1.0],
+    [0.35, 0.25, 0.2],
   );
-
-  // Translates centered text up under the header on scroll (completely clears viewport top)
-  const textY = useTransform(scrollYProgress, [0, 0.45], ["-50%", "-475%"]);
 
   return (
     <>
@@ -62,25 +59,24 @@ export function HeroSection() {
           {mounted && <Hero3DCanvas scrollProgress={scrollProgress} />}
         </div>
 
-        {/* Subtle dark overlay layer for better text readability, fades out on scroll */}
+        {/* Subtle dark overlay layer for better text readability */}
         <motion.div
           style={{ opacity: overlayOpacity }}
           className="absolute inset-0 z-[5] bg-black pointer-events-none"
         />
 
-        {/* Text — centered, fixed, slides up under the z-50 header on scroll */}
-        <motion.div
-          style={{ y: textY, x: "-50%" }}
-          className="flex flex-col items-center justify-center absolute top-1/2 left-1/2 z-10 text-center pointer-events-none"
+        {/* Text — centered, fixed, always remains centered even when scrolling */}
+        <div
+          className="flex flex-col items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center pointer-events-none w-full max-w-2xl px-4"
         >
-          <h1 className="font-new-york text-5xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white">
+          <h1 className="font-new-york text-5xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white drop-shadow-md">
             Modular Murphy Beds
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-wbk-white leading-relaxed">
+          <p className="mt-2 text-sm sm:text-base text-wbk-white leading-relaxed drop-shadow-sm">
             Space-saving, handcrafted wall beds engineered for seamless everyday
             living.
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-3 pointer-events-auto">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 pointer-events-auto">
             <Button
               as="link"
               href="/products/beds"
@@ -100,7 +96,7 @@ export function HeroSection() {
               Explore Models
             </Button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Scroll cue — bottom center */}
         {scrollProgress < 0.15 && (
@@ -108,7 +104,7 @@ export function HeroSection() {
             className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 text-wbk-brown pointer-events-none transition-opacity duration-500"
             style={{ opacity: Math.max(0, 1 - scrollProgress * 8) }}
           >
-            <span className="text-[10px] uppercase tracking-widest font-medium">
+            <span className="text-[10px] uppercase tracking-widest font-medium text-wbk-white/80">
               Scroll to explore
             </span>
             <motion.div
@@ -131,7 +127,7 @@ export function HeroSection() {
        */}
       <div
         ref={containerRef}
-        className="relative h-[250vh] pointer-events-none"
+        className="relative h-[280vh] pointer-events-none"
       />
     </>
   );

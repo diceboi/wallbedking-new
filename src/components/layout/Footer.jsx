@@ -32,7 +32,7 @@ const FOOTER_LINKS = {
 export function Footer() {
   const pathname = usePathname();
   const { localizedHref, t } = useLocale();
-  if (pathname === "/configurator" || pathname?.endsWith("/configurator")) return null;
+  if (pathname === "/configurator" || pathname?.endsWith("/configurator") || pathname?.startsWith("/admin")) return null;
 
   return (
     <footer className="mt-auto border-t border-wbk-lightgrey/10 bg-wbk-black relative z-30">

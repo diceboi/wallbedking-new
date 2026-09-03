@@ -45,9 +45,9 @@ export function ConfiguratorHub() {
     {
       id: "beds",
       name: "Murphy Beds",
-      badge: "3D View",
+      badge: "Soon",
       icon: IconBed,
-      available: true,
+      available: false,
     },
     {
       id: "cabinets",
@@ -122,30 +122,22 @@ export function ConfiguratorHub() {
             <div className="w-16 h-16 rounded-none bg-[#FBF9F8] border border-wbk-lightgrey flex items-center justify-center mb-4 text-wbk-gold shadow-sm">
               <IconBed size={32} />
             </div>
-            <span className="text-[11px] font-bold tracking-wider uppercase text-wbk-gold mb-1">
-              Interactive 3D Mechanism
+            <span className="text-[11px] font-bold tracking-wider uppercase text-wbk-brown mb-1">
+              Coming Soon
             </span>
             <h2 className="text-2xl sm:text-3xl font-new-york text-wbk-black mb-2">
               Murphy Bed 3D Studio
             </h2>
             <p className="text-xs sm:text-sm text-wbk-brown max-w-md mb-6 leading-relaxed">
-              Configure bed sizes, optional integrated front sofa, fold and unfold mechanisms in real-time 3D, and customize cabinet accessories.
+              We are currently engineering the interactive 3D murphy bed customization experience with fold mechanisms, custom finishes, and modular cabinetry.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
-              <Link
-                href="/products/beds/integrated-vertical-wall-bed"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full shadow-sm"
-              >
-                <span>Launch 3D Bed Studio</span>
-                <IconArrowUpRight size={16} />
-              </Link>
-              <Link
-                href="/products/beds"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-wbk-lightgrey/50 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full"
-              >
-                <span>Browse All Beds</span>
-              </Link>
-            </div>
+            <Link
+              href="/products/beds"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full shadow-sm"
+            >
+              <span>Explore Current Bed Collection</span>
+              <IconArrowUpRight size={16} />
+            </Link>
           </div>
         </div>
       )}

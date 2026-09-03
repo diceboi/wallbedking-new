@@ -17,7 +17,7 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Following Section – slides up over the fixed hero */}
-      <div className="relative z-20 -mt-[60vh] bg-wbk-white rounded-none shadow-[0_-20px_50px_rgba(0,0,0,0.08)] border-t border-wbk-lightgrey/60">
+      <div className="relative z-20 -mt-[20vh] bg-wbk-white rounded-none shadow-[0_-20px_50px_rgba(0,0,0,0.08)] border-t border-wbk-lightgrey/60">
         {/* About / Intro Section */}
         <section className="py-24 border-b border-wbk-lightgrey">
           <Container className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">

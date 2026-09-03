@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useContext, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -35,6 +36,9 @@ const LANGUAGES = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   const [langOpen, setLangOpen] = useState(false);
   const { locale, market, switchLocale, localizedHref, t } = useLocale();
   const { totalItems, openCart } = useCart();

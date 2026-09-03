@@ -207,55 +207,43 @@ export default function AdminTranslationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF9F8] text-wbk-black font-poppins antialiased pb-24">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-wbk-black text-white px-6 py-4 shadow-md border-b border-wbk-lightgrey/20">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/logos/WBK-Logo-Gold-White.svg"
-                alt="WallBedKing"
-                width={120}
-                height={26}
-                className="h-6 w-auto"
-              />
-            </Link>
-            <span className="text-[11px] uppercase tracking-widest px-2.5 py-1 bg-white/10 text-wbk-gold rounded-full font-semibold">
-              Admin &middot; Translation Hub
-            </span>
-          </div>
-
-          {/* Quick status & Save CTA */}
-          <div className="flex items-center gap-3">
-            {hasChanges && (
-              <span className="text-xs text-wbk-gold font-medium flex items-center gap-1">
-                <IconAlertCircle size={15} /> Unsaved changes
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer ${
-                hasChanges
-                  ? "bg-wbk-gold text-wbk-black hover:bg-white"
-                  : "bg-white/10 text-white/50 cursor-not-allowed"
-              }`}
-            >
-              {saving ? (
-                <IconRefresh size={16} className="animate-spin" />
-              ) : (
-                <IconDeviceFloppy size={16} />
-              )}
-              <span>{saving ? "Saving..." : "Save Changes"}</span>
-            </button>
-          </div>
+    <div className="space-y-6 font-poppins">
+      {/* Action Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-new-york text-2xl font-medium text-wbk-black">
+            Translation Hub
+          </h2>
+          <p className="text-xs text-wbk-brown">
+            Manage dictionaries and 1-click AI translations across all 7 markets
+          </p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          {hasChanges && (
+            <span className="text-xs text-wbk-gold font-medium flex items-center gap-1">
+              <IconAlertCircle size={15} /> Unsaved changes
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer ${
+              hasChanges
+                ? "bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {saving ? (
+              <IconRefresh size={16} className="animate-spin" />
+            ) : (
+              <IconDeviceFloppy size={16} />
+            )}
+            <span>{saving ? "Saving..." : "Save Changes"}</span>
+          </button>
+        </div>
+      </div>
         {/* Banner notification */}
         {message && (
           <div
@@ -438,7 +426,6 @@ export default function AdminTranslationsPage() {
             </tbody>
           </table>
         </div>
-      </main>
 
       {/* Add Key Modal */}
       {isAddOpen && (
