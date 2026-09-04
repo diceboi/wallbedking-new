@@ -556,29 +556,50 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-white pt-12 pb-20">
+    <div className="relative min-h-screen flex flex-col bg-white pt-4 sm:pt-8 pb-32 sm:pb-36">
       {/* ── MAIN PRODUCT SECTION ── */}
-      <section className="relative z-10 w-full min-h-[620px] lg:h-[86vh] flex items-center overflow-hidden pb-4">
-        {/* If 3D is active: 3D Canvas spans full section width as interactive background layer */}
-        {has3D && (
-          <div className="absolute inset-0 z-0 flex items-center justify-center -translate-y-10 lg:-translate-y-20">
-            {mounted && ready && (
-              <ConfiguratorCanvas
-                key={`${categorySlug}-${productSlug}-${displayProduct.slug}`}
-                isFolded={isFolded}
-                sofaIncluded={sofaIncluded}
-              />
-            )}
-          </div>
-        )}
+      <section className="relative z-10 w-full pb-8">
+        <Container size="xl" className="w-full">
+          {/* Mobile Top Header (Breadcrumbs + Title) visible only on < lg */}
+          <div className="lg:hidden mb-4 space-y-2">
+            {/* Breadcrumbs */}
+            <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
+              <Link
+                href="/products"
+                className="hover:text-wbk-black transition-colors"
+              >
+                Products
+              </Link>
+              <span>/</span>
+              <Link
+                href={`/products/${categorySlug}`}
+                className="capitalize hover:text-wbk-black transition-colors"
+              >
+                {categorySlug.replace("-", " ")}
+              </Link>
+            </nav>
 
-        {/* Floating UI Grid on top */}
-        <Container className="w-full h-full relative z-10 pointer-events-none flex flex-col justify-between py-1">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch h-full">
-            {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS ── */}
-            <div className="lg:col-span-3 flex flex-col justify-between space-y-5 pointer-events-auto h-full overflow-y-auto custom-scrollbar pr-1">
-              <div className="space-y-3">
-                {/* Breadcrumbs */}
+            {/* Title */}
+            <div className="space-y-1">
+              <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black leading-tight tracking-tight">
+                {displayProduct.title || displayProduct.name}
+              </h1>
+              <div className="flex items-center gap-2 text-xs font-poppins text-wbk-brown">
+                <span>{productSize}</span>
+                {has3D && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wbk-green/30 text-wbk-black font-semibold text-[10px]">
+                    3D View
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS (Order 2 on mobile, Column 1 on desktop) ── */}
+            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start space-y-5">
+              {/* Desktop Breadcrumbs & Title (hidden on mobile) */}
+              <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
                   <Link
                     href="/products"
@@ -595,9 +616,8 @@ export default function ProductDetailPage() {
                   </Link>
                 </nav>
 
-                {/* Title */}
                 <div className="space-y-1">
-                  <h1 className="font-new-york text-4xl sm:text-5xl text-wbk-black leading-tight tracking-tight">
+                  <h1 className="font-new-york text-3xl xl:text-4xl text-wbk-black leading-tight tracking-tight">
                     {displayProduct.title || displayProduct.name}
                   </h1>
                   <div className="flex items-center gap-2 text-xs font-poppins text-wbk-brown">
@@ -612,7 +632,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Dropdowns */}
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-3">
                 {/* Format / Orientation */}
                 {availableFormats.length > 0 && (
                   <div className="relative">
@@ -620,26 +640,28 @@ export default function ProductDetailPage() {
                       Format:
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         setFormatOpen(!formatOpen);
                         setStyleOpen(false);
                         setSizeOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span>{productFormat}</span>
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {formatOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-none shadow-lg z-50 overflow-hidden text-xs">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs py-1">
                         {availableFormats.map((item) => (
                           <button
                             key={item}
+                            type="button"
                             onClick={() => {
                               handleOptionChange(item, undefined, undefined);
                               setFormatOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors ${
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
                               productFormat === item
                                 ? "text-wbk-gold font-semibold"
                                 : "text-wbk-black"
@@ -660,26 +682,28 @@ export default function ProductDetailPage() {
                       Style:
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         setStyleOpen(!styleOpen);
                         setFormatOpen(false);
                         setSizeOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span>{productStyle}</span>
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {styleOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-none shadow-lg z-50 overflow-hidden text-xs">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs py-1">
                         {availableStyles.map((item) => (
                           <button
                             key={item}
+                            type="button"
                             onClick={() => {
                               handleOptionChange(undefined, item, undefined);
                               setStyleOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors ${
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
                               productStyle === item
                                 ? "text-wbk-gold font-semibold"
                                 : "text-wbk-black"
@@ -700,12 +724,13 @@ export default function ProductDetailPage() {
                       Size:
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         setSizeOpen(!sizeOpen);
                         setFormatOpen(false);
                         setStyleOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3.5 py-2 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/50 hover:bg-white/80 backdrop-blur-xs transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span className="truncate">
                         {productSize || availableSizes[0]?.label}
@@ -716,10 +741,11 @@ export default function ProductDetailPage() {
                       />
                     </button>
                     {sizeOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-none shadow-lg z-50 overflow-y-auto max-h-56 text-xs">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-y-auto max-h-56 text-xs py-1">
                         {availableSizes.map((item, idx) => (
                           <button
                             key={idx}
+                            type="button"
                             onClick={() => {
                               handleOptionChange(
                                 undefined,
@@ -730,7 +756,7 @@ export default function ProductDetailPage() {
                                 setSelectedVariant(item.product);
                               setSizeOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between ${
+                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between cursor-pointer ${
                               productSize === item.label
                                 ? "text-wbk-gold font-semibold"
                                 : "text-wbk-black"
@@ -751,15 +777,15 @@ export default function ProductDetailPage() {
 
                 {/* Sofa toggle (shown when 3D or sofa model) */}
                 {has3D && (
-                  <div className="pt-0.5">
+                  <div className="pt-1">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       + Sofa:
                     </label>
-                    <div className="relative inline-flex p-1 border border-wbk-black/30 rounded-full bg-white/40 backdrop-blur-xs">
+                    <div className="relative inline-flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0]">
                       <button
                         type="button"
                         onClick={() => setSofaIncluded(true)}
-                        className={`relative z-10 px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                        className={`relative z-10 px-4 sm:px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
                           sofaIncluded
                             ? "text-white"
                             : "text-wbk-brown hover:text-wbk-black"
@@ -777,13 +803,13 @@ export default function ProductDetailPage() {
                           />
                         )}
                         <span className="relative z-10">
-                          {t("common.includeSofa", "Include")}
+                          {t("common.includeSofa", "Include Sofa")}
                         </span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setSofaIncluded(false)}
-                        className={`relative z-10 px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                        className={`relative z-10 px-4 sm:px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
                           !sofaIncluded
                             ? "text-white"
                             : "text-wbk-brown hover:text-wbk-black"
@@ -801,7 +827,7 @@ export default function ProductDetailPage() {
                           />
                         )}
                         <span className="relative z-10">
-                          {t("common.excludeSofa", "Exclude")}
+                          {t("common.excludeSofa", "Exclude Sofa")}
                         </span>
                       </button>
                     </div>
@@ -811,35 +837,47 @@ export default function ProductDetailPage() {
 
               {/* Spec description */}
               <div className="pt-2">
-                <p className="text-[13px] text-wbk-black leading-relaxed font-poppins">
+                <p className="text-[13px] text-wbk-black/90 leading-relaxed font-poppins">
                   {displayProduct.description ||
                     "The Classic Wall Bed is a practical and durable space-saving solution for bedrooms, guest rooms and multifunctional spaces."}
                 </p>
               </div>
             </div>
 
-            {/* ── CENTER COLUMN: 3D CONTROLS OR 2D MAIN IMAGE DISPLAY ── */}
-            <div className="lg:col-span-7 relative min-h-[340px] lg:min-h-0 flex flex-col justify-center items-center pointer-events-none">
+            {/* ── CENTER COLUMN: 3D VIEWER OR 2D MAIN IMAGE (Order 1 on mobile, Column 2 on desktop) ── */}
+            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full">
               {has3D ? (
-                /* 3D Mode Top Controls */
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex flex-col items-center gap-1.5">
-                  <button
-                    onClick={() => setIsFolded(!isFolded)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <IconArrowsUpDown size={13} className="animate-pulse" />
-                    {isFolded ? "Open Bed" : "Close Bed"}
-                  </button>
-                  <p className="text-[10px] text-wbk-brown/70 font-poppins select-none pointer-events-none hidden md:block">
-                    ← Drag to rotate 3D view →
-                  </p>
+                /* 3D Mode Canvas Container */
+                <div className="relative w-full h-[360px] sm:h-[450px] lg:h-[580px] xl:h-[620px] bg-[#F8F7F5] border border-wbk-lightgrey/50 rounded-2xl overflow-hidden flex items-center justify-center shadow-xs">
+                  {mounted && ready && (
+                    <ConfiguratorCanvas
+                      key={`${categorySlug}-${productSlug}-${displayProduct.slug}`}
+                      isFolded={isFolded}
+                      sofaIncluded={sofaIncluded}
+                    />
+                  )}
+
+                  {/* 3D Mode Top Controls */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={() => setIsFolded(!isFolded)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
+                    >
+                      <IconArrowsUpDown size={13} className="animate-pulse" />
+                      {isFolded ? "Open Bed" : "Close Bed"}
+                    </button>
+                    <p className="text-[10px] text-wbk-brown/70 font-poppins select-none pointer-events-none">
+                      ← Drag to rotate 3D view →
+                    </p>
+                  </div>
                 </div>
               ) : (
                 /* Non-3D Mode: High-Impact Center Main Image */
-                <div className="relative w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 pointer-events-auto">
+                <div className="relative w-full flex flex-col items-center justify-center">
                   <div
                     onClick={() => setLightboxIndex(selectedImageIndex)}
-                    className="relative group w-full max-w-[560px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-none border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-sm hover:shadow-md transition-all duration-300"
+                    className="relative group w-full max-w-[620px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-2xl border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-xs hover:shadow-md transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -868,10 +906,54 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
               )}
+
+              {/* ── MOBILE GALLERY HORIZONTAL ROW (visible on < lg) ── */}
+              <div className="w-full lg:hidden mt-3">
+                <div className="flex items-center justify-between pb-1.5">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                    Gallery ({galleryImages.length})
+                  </p>
+                  <span className="text-[10px] text-wbk-brown/70 font-poppins">
+                    {has3D ? "Tap photo to zoom" : "Select view"}
+                  </span>
+                </div>
+                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none py-1">
+                  {galleryImages.map((img, idx) => {
+                    const isSelected = !has3D && idx === selectedImageIndex;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (has3D) {
+                            setLightboxIndex(idx);
+                          } else {
+                            setSelectedImageIndex(idx);
+                          }
+                        }}
+                        className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden bg-[#F4F2F0] border transition-all duration-200 cursor-pointer p-1 ${
+                          isSelected
+                            ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs scale-[0.98]"
+                            : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          className="w-full h-full object-cover object-center rounded-lg"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY ── */}
-            <div className="lg:col-span-2 flex flex-col justify-between pointer-events-auto h-full overflow-hidden">
+            {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY (Desktop Only, hidden on mobile) ── */}
+            <div className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between h-[580px] xl:h-[620px] overflow-hidden">
               <div className="flex flex-col h-full overflow-hidden">
                 <div className="flex items-center justify-between pb-2 shrink-0 border-b border-wbk-lightgrey/40">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
@@ -883,7 +965,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="relative flex-1 flex flex-col items-center justify-between py-2 min-h-0">
-                  {/* Up Arrow - Scroll 1 full image step up */}
+                  {/* Up Arrow */}
                   <button
                     type="button"
                     onClick={() => handleScrollGallery("up")}
@@ -894,7 +976,7 @@ export default function ProductDetailPage() {
                     <IconChevronUp size={18} />
                   </button>
 
-                  {/* Vertical Scroll Container - Constrained to ~140-150px thumbnail size */}
+                  {/* Vertical Scroll Container */}
                   <div
                     ref={galleryContainerRef}
                     onScroll={updateScrollButtons}
@@ -917,7 +999,7 @@ export default function ProductDetailPage() {
                                 setSelectedImageIndex(idx);
                               }
                             }}
-                            className={`relative w-full h-full aspect-square rounded-none overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
+                            className={`relative w-full h-full aspect-square rounded-xl overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
                               isSelected
                                 ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs opacity-100 scale-[0.98]"
                                 : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
@@ -926,7 +1008,7 @@ export default function ProductDetailPage() {
                             <img
                               src={img.src}
                               alt={img.alt}
-                              className="w-full h-full object-cover object-center rounded-none group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover object-center rounded-lg group-hover:scale-105 transition-transform duration-300"
                               onLoad={updateScrollButtons}
                             />
                             {isSelected && (
@@ -938,7 +1020,7 @@ export default function ProductDetailPage() {
                     })}
                   </div>
 
-                  {/* Down Arrow - Scroll 1 full image step down */}
+                  {/* Down Arrow */}
                   <button
                     type="button"
                     onClick={() => handleScrollGallery("down")}
@@ -956,7 +1038,7 @@ export default function ProductDetailPage() {
       </section>
 
       {/* ── RATINGS & REVIEWS SUMMARY SECTION ── */}
-      <Container size="xl" className="pt-16">
+      <Container size="xl" className="pt-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 bg-white border border-wbk-lightgrey/50 p-8 rounded-none shadow-xs">
           <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4 border-b md:border-b-0 md:border-r border-wbk-lightgrey/30 pb-6 md:pb-0 md:pr-8">
             <div className="text-5xl font-semibold font-poppins text-wbk-black tracking-tight">
@@ -1871,34 +1953,34 @@ export default function ProductDetailPage() {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
-        className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none"
+        className="fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 pointer-events-none px-2.5 sm:px-6"
       >
         <Container
           size="xl"
-          className="flex items-center justify-between gap-4 bg-wbk-green/75 backdrop-blur-sm shadow-[0_-8px_30px_rgba(0,0,0,0.08)] py-2.5 transition-all duration-300 pointer-events-auto"
+          className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md rounded-2xl shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
         >
           {/* Left: Product Name & Selected Size */}
-          <div className="flex flex-col min-w-0">
-            <span className="font-new-york text-base sm:text-lg text-wbk-black truncate leading-tight">
+          <div className="flex flex-col min-w-0 max-w-[130px] sm:max-w-xs md:max-w-sm">
+            <span className="font-new-york text-sm sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
               {displayProduct.title || displayProduct.name}
             </span>
-            <span className="font-poppins text-[11px] text-wbk-white font-light truncate">
+            <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
               {productSize || "Standard"}
             </span>
           </div>
 
           {/* Right: Total Price & Add to Cart Button */}
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-6 shrink-0">
             <div className="flex flex-col items-end font-poppins">
-              <span className="text-[9px] uppercase tracking-widest text-wbk-white font-semibold">
+              <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
                 {t("common.total", "Total")}
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="font-bold text-wbk-black text-xl sm:text-2xl leading-none">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-wbk-black text-base sm:text-xl md:text-2xl leading-none">
                   {formatPrice(totalDecimal, locale)}
                 </span>
                 {productPricing.isOnSale && (
-                  <span className="text-xs text-white/75 line-through font-normal">
+                  <span className="text-[10px] sm:text-xs text-wbk-black/60 line-through font-normal hidden sm:inline">
                     {formatPrice(productPricing.regularRaw + sofaSurcharge, locale)}
                   </span>
                 )}
@@ -1908,22 +1990,22 @@ export default function ProductDetailPage() {
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
             >
               {isAdded ? (
                 <>
-                  <IconCheck size={16} className="text-wbk-gold" />
+                  <IconCheck size={14} className="text-wbk-gold" />
                   <span className="text-wbk-gold">
-                    {t("common.addedToCart", "Added to cart!")}
+                    {t("common.addedToCart", "Added!")}
                   </span>
                 </>
               ) : (
                 <>
                   <IconShoppingCart
-                    size={15}
+                    size={14}
                     className="transition-transform duration-200 group-hover:scale-110"
                   />
-                  <span>{t("common.addToCart", "Add to cart")}</span>
+                  <span>{t("common.addToCart", "Add to basket")}</span>
                 </>
               )}
             </button>

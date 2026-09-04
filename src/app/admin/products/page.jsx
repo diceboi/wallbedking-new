@@ -78,7 +78,14 @@ export default function AdminProductsPage() {
         String(p.id).includes(q) ||
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.slug && p.slug.toLowerCase().includes(q)) ||
-        (p.ean && p.ean.toLowerCase().includes(q));
+        (p.ean && p.ean.toLowerCase().includes(q)) ||
+        (p.ean_uk && p.ean_uk.toLowerCase().includes(q)) ||
+        (p.ean_us && p.ean_us.toLowerCase().includes(q)) ||
+        (p.ean_de && p.ean_de.toLowerCase().includes(q)) ||
+        (p.ean_fr && p.ean_fr.toLowerCase().includes(q)) ||
+        (p.ean_es && p.ean_es.toLowerCase().includes(q)) ||
+        (p.ean_it && p.ean_it.toLowerCase().includes(q)) ||
+        (p.ean_pt && p.ean_pt.toLowerCase().includes(q));
 
       return matchesCategory && matchesOrientation && matchesSearch;
     });

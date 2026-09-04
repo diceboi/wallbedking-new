@@ -255,6 +255,13 @@ async function syncToSupabase() {
     const dbPayload = products.map((p) => ({
       id: p.id,
       ean: p.ean || null,
+      ean_uk: p.ean_uk || p.ean || null,
+      ean_us: p.ean_us || null,
+      ean_de: p.ean_de || null,
+      ean_fr: p.ean_fr || null,
+      ean_es: p.ean_es || null,
+      ean_it: p.ean_it || null,
+      ean_pt: p.ean_pt || null,
       name: p.name,
       slug: p.slug,
       width: p.width,

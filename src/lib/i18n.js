@@ -257,3 +257,30 @@ export function localizedHref(href, locale = DEFAULT_LOCALE) {
 
   return mapUrlToLocale(href, locale);
 }
+
+/**
+ * Helper to resolve country-specific EAN barcode with fallback to default EAN.
+ */
+export function getProductEan(product, locale = DEFAULT_LOCALE) {
+  if (!product) return "";
+  const norm = normalizeLocale(locale);
+
+  switch (norm) {
+    case "us":
+      return product.ean_us || product.ean || "";
+    case "de":
+      return product.ean_de || product.ean || "";
+    case "fr":
+      return product.ean_fr || product.ean || "";
+    case "es":
+      return product.ean_es || product.ean || "";
+    case "it":
+      return product.ean_it || product.ean || "";
+    case "por":
+    case "pt":
+      return product.ean_pt || product.ean_por || product.ean || "";
+    case "en":
+    default:
+      return product.ean_uk || product.ean_gb || product.ean || "";
+  }
+}

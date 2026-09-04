@@ -161,16 +161,115 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-wbk-black mb-1">
-                  EAN Barcode
-                </label>
-                <input
-                  type="text"
-                  value={formData.ean || ""}
-                  onChange={(e) => handleChange("ean", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
-                />
+              {/* Country-Specific EAN Barcodes */}
+              <div className="md:col-span-2 p-3.5 bg-[#F4F2F0]/60 border border-wbk-lightgrey/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider">
+                    EAN Barcodes (Country Specific)
+                  </span>
+                  <span className="text-[10px] text-wbk-brown">
+                    Market-specific barcodes for Google Shopping / Logistics
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
+                      Default / Master EAN
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 5070502507993"
+                      value={formData.ean || ""}
+                      onChange={(e) => handleChange("ean", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇬🇧</span> UK (GB) EAN
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN UK"
+                      value={formData.ean_uk || ""}
+                      onChange={(e) => handleChange("ean_uk", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇺🇸</span> US EAN / UPC
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN US"
+                      value={formData.ean_us || ""}
+                      onChange={(e) => handleChange("ean_us", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇩🇪</span> Germany (DE)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN DE"
+                      value={formData.ean_de || ""}
+                      onChange={(e) => handleChange("ean_de", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇫🇷</span> France (FR)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN FR"
+                      value={formData.ean_fr || ""}
+                      onChange={(e) => handleChange("ean_fr", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇪🇸</span> Spain (ES)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN ES"
+                      value={formData.ean_es || ""}
+                      onChange={(e) => handleChange("ean_es", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇮🇹</span> Italy (IT)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN IT"
+                      value={formData.ean_it || ""}
+                      onChange={(e) => handleChange("ean_it", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
+                      <span>🇵🇹</span> Portugal (PT)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="EAN PT"
+                      value={formData.ean_pt || ""}
+                      onChange={(e) => handleChange("ean_pt", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

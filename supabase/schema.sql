@@ -6,6 +6,13 @@
 CREATE TABLE IF NOT EXISTS public.products (
   id INT PRIMARY KEY,
   ean VARCHAR(50),
+  ean_uk VARCHAR(50),
+  ean_us VARCHAR(50),
+  ean_de VARCHAR(50),
+  ean_fr VARCHAR(50),
+  ean_es VARCHAR(50),
+  ean_it VARCHAR(50),
+  ean_pt VARCHAR(50),
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   
