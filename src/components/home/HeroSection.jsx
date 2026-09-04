@@ -52,10 +52,11 @@ export function HeroSection() {
       {/*
        * Fixed hero — sits behind everything, pinned below the 60px header.
        * Doesn't move at all when scrolling.
+       * pointer-events-none and touch-pan-y allow all mobile finger touch gestures to pass through to document scroll.
        */}
-      <div className="fixed top-[60px] left-0 right-0 bottom-0 z-0">
+      <div className="fixed top-[60px] left-0 right-0 bottom-0 z-0 pointer-events-none touch-pan-y">
         {/* 3D Canvas */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           {mounted && <Hero3DCanvas scrollProgress={scrollProgress} />}
         </div>
 
@@ -69,10 +70,10 @@ export function HeroSection() {
         <div
           className="flex flex-col items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center pointer-events-none w-full max-w-2xl px-4"
         >
-          <h1 className="font-new-york text-5xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white drop-shadow-md">
+          <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white drop-shadow-md">
             Modular Murphy Beds
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-wbk-white leading-relaxed drop-shadow-sm">
+          <p className="mt-2 text-xs sm:text-sm md:text-base text-wbk-white leading-relaxed drop-shadow-sm">
             Space-saving, handcrafted wall beds engineered for seamless everyday
             living.
           </p>
@@ -123,11 +124,11 @@ export function HeroSection() {
 
       {/*
        * Scroll spacer — creates the scroll distance for the 3D animation.
-       * The next section (in page.jsx) slides up over the fixed hero.
+       * Receives touch & wheel events so mobile finger scrolling works effortlessly.
        */}
       <div
         ref={containerRef}
-        className="relative h-[280vh] pointer-events-none"
+        className="relative h-[280vh] w-full touch-pan-y"
       />
     </>
   );

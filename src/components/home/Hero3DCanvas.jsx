@@ -114,7 +114,7 @@ function CameraUpdater({
   scrollProgress,
   scrollShift,
 }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const smoothScrollRef = useRef(0);
 
   useFrame((_, delta) => {
@@ -131,7 +131,10 @@ function CameraUpdater({
     const currentZ = basePos[2] + clampedProgress * scrollShift.shiftZ;
 
     camera.position.set(currentX, currentY, currentZ);
-    camera.fov = fov;
+
+    // Adapt FOV slightly on narrow portrait mobile screens so bed is never clipped
+    const isMobilePortrait = size.width < 768 && size.height > size.width;
+    camera.fov = isMobilePortrait ? Math.min(fov + 8, 48) : fov;
 
     if (mode === "rotation") {
       const currentYaw = baseRot[1] + clampedProgress * scrollShift.shiftYaw;
@@ -359,7 +362,11 @@ scrollShift={{
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: lightConfig.exposure,
           }}
-          className="h-full w-full"
+          className="h-full w-full pointer-events-none"
+          style={{
+            pointerEvents: cameraConfig.enableOrbitMouse ? "auto" : "none",
+            touchAction: "pan-y",
+          }}
         >
           <CameraUpdater
             basePos={cameraPos}
@@ -432,14 +439,12 @@ scrollShift={{
             color="#1c1917"
           />
 
-          {cameraConfig.enableOrbitMouse ? (
+          {cameraConfig.enableOrbitMouse && (
             <OrbitControls
               makeDefault
               target={cameraTarget}
               enableZoom={true}
             />
-          ) : (
-            <OrbitControls enabled={false} target={cameraTarget} />
           )}
 
           <Model

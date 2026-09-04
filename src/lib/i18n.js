@@ -133,6 +133,9 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
       currency: "GBP",
       isOnSale: false,
       discountPercent: 0,
+      discountType: null,
+      discountAmount: 0,
+      discountLabel: "",
     };
   }
 
@@ -168,21 +171,55 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
 
   // 2. Resolve sale price strictly from Supabase discount columns
   let finalSalePrice = null;
+  let discountType = null; // "percent" | "fixed"
+  let discountAmount = 0;
   const percentDiscount = product.sale_percent != null ? Number(product.sale_percent) : null;
 
-  if (explicitSalePrice != null && !isNaN(explicitSalePrice) && explicitSalePrice > 0) {
-    // Exact sale price set in backend (e.g. sale_price_gbp)
-    finalSalePrice = explicitSalePrice;
+  if (percentDiscount != null && !isNaN(percentDiscount) && percentDiscount > 0 && percentDiscount < 100) {
+    // Percentage discount (e.g. sale_percent)
+    finalSalePrice = Math.round(regularPrice * (1 - percentDiscount / 100));
+    discountType = "percent";
+    discountAmount = percentDiscount;
   } else if (fixedDiscount != null && !isNaN(fixedDiscount) && fixedDiscount > 0) {
     // Fixed discount amount (e.g. sale_fix_gbp)
     finalSalePrice = Math.max(0, regularPrice - fixedDiscount);
-  } else if (percentDiscount != null && !isNaN(percentDiscount) && percentDiscount > 0 && percentDiscount < 100) {
-    // Percentage discount (e.g. sale_percent)
-    finalSalePrice = Math.round(regularPrice * (1 - percentDiscount / 100));
+    discountType = "fixed";
+    discountAmount = fixedDiscount;
+  } else if (explicitSalePrice != null && !isNaN(explicitSalePrice) && explicitSalePrice > 0 && explicitSalePrice < regularPrice) {
+    // Exact sale price set in backend (e.g. sale_price_gbp)
+    finalSalePrice = explicitSalePrice;
+    if (product.sale_percent != null && Number(product.sale_percent) > 0) {
+      discountType = "percent";
+      discountAmount = Number(product.sale_percent);
+    } else if (fixedDiscount != null && fixedDiscount > 0) {
+      discountType = "fixed";
+      discountAmount = fixedDiscount;
+    } else {
+      const diff = regularPrice - finalSalePrice;
+      if (diff % 10 === 0) {
+        discountType = "fixed";
+        discountAmount = diff;
+      } else {
+        discountType = "percent";
+        discountAmount = Math.round((diff / regularPrice) * 100);
+      }
+    }
   }
 
   const isOnSale = finalSalePrice != null && finalSalePrice < regularPrice;
   const effectivePrice = isOnSale ? finalSalePrice : regularPrice;
+
+  let discountLabel = "";
+  if (isOnSale) {
+    if (discountType === "fixed" && discountAmount > 0) {
+      discountLabel = `-${formatPrice(discountAmount, normLocale)}`;
+    } else if (discountType === "percent" && discountAmount > 0) {
+      discountLabel = `-${discountAmount}%`;
+    } else {
+      const calculatedPct = Math.round(((regularPrice - finalSalePrice) / regularPrice) * 100);
+      discountLabel = calculatedPct > 0 ? `-${calculatedPct}%` : "";
+    }
+  }
 
   return {
     raw: effectivePrice,
@@ -192,7 +229,10 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
     regularDisplay: formatPrice(regularPrice, normLocale),
     saleDisplay: isOnSale ? formatPrice(finalSalePrice, normLocale) : null,
     isOnSale,
+    discountType,
+    discountAmount,
     discountPercent: percentDiscount || (isOnSale ? Math.round(((regularPrice - finalSalePrice) / regularPrice) * 100) : 0),
+    discountLabel,
     currency,
   };
 }

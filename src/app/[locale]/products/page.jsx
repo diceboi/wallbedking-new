@@ -45,17 +45,11 @@ export default function ProductsPage() {
   const [cabinetsPrevEl, setCabinetsPrevEl] = useState(null);
   const [cabinetsNextEl, setCabinetsNextEl] = useState(null);
 
-  // Distinct representative items per category
-  const bedItems = (ALL_PRODUCTS.beds || [])
-    .filter((_, idx) => idx % 4 === 0)
-    .slice(0, 8);
-  const sofaItems = (ALL_PRODUCTS.sofas || [])
-    .filter((_, idx) => idx % 2 === 0)
-    .slice(0, 8);
+  // Distinct representative flagship items per category
+  const bedItems = ALL_PRODUCTS.beds || [];
+  const sofaItems = ALL_PRODUCTS.sofas || [];
   const mattressItems = ALL_PRODUCTS.mattresses || [];
-  const cabinetItems = (ALL_PRODUCTS.cabinets || [])
-    .filter((_, idx) => idx % 2 === 0)
-    .slice(0, 8);
+  const cabinetItems = ALL_PRODUCTS.cabinets || [];
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-20">

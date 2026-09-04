@@ -2,10 +2,12 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSofaConfiguratorStore } from "./store/useSofaConfiguratorStore";
 import { modulesData, getAssetUrl } from "./data/modules";
 import { fabricsData } from "./data/fabrics";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TbListNumbers,
@@ -17,10 +19,13 @@ import {
   TbCheck,
   TbChevronUp,
   TbChevronDown,
+  TbBookmark,
+  TbDeviceFloppy,
 } from "react-icons/tb";
 
 export function ConfigSummary() {
   const { addItem, openCart } = useCart();
+  const { user, openUserDrawer, save3DConfiguration } = useAuth();
 
   const selectedModules = useSofaConfiguratorStore(
     (state) => state.selectedModules,
@@ -45,6 +50,13 @@ export function ConfigSummary() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+
+  // Save to account states
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [designTitle, setDesignTitle] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [accountSaveSuccess, setAccountSaveSuccess] = useState(false);
+  const [accountSaveError, setAccountSaveError] = useState("");
 
   const containerRef = useRef(null);
 
@@ -103,6 +115,53 @@ export function ConfigSummary() {
       setGeneratedUrl(url);
       setShowPopup(true);
       setCopySuccess(false);
+    }
+  };
+
+  const handleOpenSaveToAccount = () => {
+    if (selectedModules.length === 0) {
+      alert("Please add at least one sofa module first.");
+      return;
+    }
+
+    if (!user) {
+      openUserDrawer("login");
+      return;
+    }
+
+    setDesignTitle(`Custom Sofa (${selectedModules.length} Modules) - ${new Date().toLocaleDateString("en-GB")}`);
+    setAccountSaveError("");
+    setAccountSaveSuccess(false);
+    setShowAccountModal(true);
+  };
+
+  const handleConfirmSaveToAccount = async (e) => {
+    e.preventDefault();
+    if (!designTitle.trim()) return;
+
+    setIsSaving(true);
+    setAccountSaveError("");
+    try {
+      const configData = exportConfiguration();
+      const firstThumbnail = groupedList[0]?.thumbnail
+        ? getAssetUrl(groupedList[0].thumbnail)
+        : "/sofa-configurator/sofa-800-thumbnail.webp";
+
+      await save3DConfiguration({
+        title: designTitle.trim(),
+        configString: configData,
+        modulesCount: selectedModules.length,
+        totalPrice,
+        summary: `${selectedModules.length} Modules • Fabric: ${groupedList[0]?.fabricName || "Custom"} • £${totalPrice}`,
+        thumbnail: firstThumbnail,
+      });
+
+      setAccountSaveSuccess(true);
+    } catch (err) {
+      console.error("Save 3D config error:", err);
+      setAccountSaveError(err.message || "Failed to save design to your account.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -274,11 +333,22 @@ export function ConfigSummary() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Save to My Account Button */}
+              <button
+                type="button"
+                onClick={handleOpenSaveToAccount}
+                disabled={selectedModules.length === 0}
+                title={user ? "Save to My Account" : "Sign in to save design to account"}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#F4F2F0] hover:bg-wbk-gold/20 text-wbk-black transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <TbBookmark size={18} className="text-wbk-gold" />
+              </button>
+
               {/* Share/Save Button */}
               <button
                 type="button"
                 onClick={handleSave}
-                title="Save & Share Configuration"
+                title="Save & Share Configuration Link"
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-[#F4F2F0] hover:bg-wbk-lightgrey/80 text-wbk-black transition-colors cursor-pointer"
               >
                 <TbShare size={18} />
@@ -315,7 +385,7 @@ export function ConfigSummary() {
         </motion.div>
       </div>
 
-      {/* Share / Save Modal */}
+      {/* Share Link Modal */}
       <AnimatePresence>
         {showPopup && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-wbk-black/60 backdrop-blur-xs">
@@ -323,12 +393,12 @@ export function ConfigSummary() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-none max-w-md w-full p-6 shadow-2xl border border-wbk-lightgrey flex flex-col gap-4"
+              className="bg-white rounded-none max-w-md w-full p-6 shadow-2xl border border-wbk-lightgrey flex flex-col gap-4 font-poppins"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-wbk-black">
-                    Share or Save Configuration
+                    Share Configuration Link
                   </h3>
                   <p className="text-xs text-wbk-brown mt-1">
                     Anyone opening this link will see your exact custom sofa design.
@@ -372,6 +442,131 @@ export function ConfigSummary() {
                   )}
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Save to Account Modal */}
+      <AnimatePresence>
+        {showAccountModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-wbk-black/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-none max-w-md w-full p-6 shadow-2xl border border-wbk-lightgrey flex flex-col gap-4 font-poppins"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-wbk-gold/15 flex items-center justify-center text-wbk-black shrink-0">
+                    <TbBookmark size={20} className="text-wbk-gold" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-wbk-black">
+                      Save Design to Your Account
+                    </h3>
+                    <p className="text-xs text-wbk-brown">
+                      Access, edit or reload this setup anytime in My Account.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAccountModal(false)}
+                  className="text-wbk-brown hover:text-wbk-black text-lg p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {accountSaveError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs">
+                  {accountSaveError}
+                </div>
+              )}
+
+              {accountSaveSuccess ? (
+                <div className="space-y-4 py-2">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1">
+                    <div className="flex items-center gap-2 font-semibold">
+                      <TbCheck size={18} className="text-emerald-600 shrink-0" />
+                      <span>Design Saved Successfully!</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-800">
+                      Your 3D design has been saved to your account and synchronized with your profile.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/account"
+                      className="flex-1 py-3 text-center bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green transition-colors rounded-full cursor-pointer"
+                      onClick={() => setShowAccountModal(false)}
+                    >
+                      View in Account
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowAccountModal(false)}
+                      className="px-4 py-3 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F2F0] transition-colors rounded-full cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleConfirmSaveToAccount} className="space-y-4">
+                  <div className="p-3 bg-[#FBF9F8] border border-wbk-lightgrey/80 text-xs space-y-1">
+                    <div className="flex items-center justify-between text-wbk-brown">
+                      <span>Configured Modules:</span>
+                      <strong className="text-wbk-black">{selectedModules.length} pcs</strong>
+                    </div>
+                    <div className="flex items-center justify-between text-wbk-brown">
+                      <span>Total Value:</span>
+                      <strong className="text-wbk-black">£{totalPrice}</strong>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
+                      Design Name / Project Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={designTitle}
+                      onChange={(e) => setDesignTitle(e.target.value)}
+                      placeholder="e.g., Living Room Corner Sofa"
+                      className="w-full h-10 px-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAccountModal(false)}
+                      className="px-4 py-2.5 text-xs text-wbk-brown hover:text-wbk-black cursor-pointer font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSaving || !designTitle.trim()}
+                      className="px-6 py-2.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green transition-colors rounded-full cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                    >
+                      {isSaving ? (
+                        <span>Saving...</span>
+                      ) : (
+                        <>
+                          <TbDeviceFloppy size={16} />
+                          <span>Save to Account</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </motion.div>
           </div>
         )}

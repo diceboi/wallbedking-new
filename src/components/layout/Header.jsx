@@ -64,13 +64,18 @@ export function Header() {
     isMenuVisibleRef.current = isMenuVisible;
   }, [isMenuVisible]);
 
+  const headerFullHeightRef = useRef(0);
+
   const updateHeaderHeight = () => {
     if (headerRef.current) {
-      const h = headerRef.current.getBoundingClientRect().height;
+      const h = Math.round(headerRef.current.getBoundingClientRect().height);
       if (h > 0) {
+        if (isMenuVisibleRef.current) {
+          headerFullHeightRef.current = h;
+        }
         document.documentElement.style.setProperty(
           "--header-height",
-          `${Math.round(h)}px`,
+          `${h}px`,
         );
       }
     }
@@ -82,6 +87,24 @@ export function Header() {
     setIsMenuVisible(visible);
     if (!visible) setSubMenu(null);
 
+    // Immediately update --header-height to target height so sticky elements animate in exact sync!
+    if (typeof window !== "undefined") {
+      const isMobile = window.innerWidth < 768;
+      const isDesktop = window.innerWidth >= 1280;
+      const delta = isMobile ? 52 : isDesktop ? 50 : 0;
+      const full =
+        headerFullHeightRef.current ||
+        (headerRef.current
+          ? Math.round(headerRef.current.getBoundingClientRect().height)
+          : 144);
+      const targetHeight = visible ? full : Math.max(0, full - delta);
+
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${targetHeight}px`,
+      );
+    }
+
     // Hard lock scroll listener during animation to completely eliminate oscillation feedback loops
     isTransitioningRef.current = true;
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
@@ -90,7 +113,7 @@ export function Header() {
       lastScrollY.current = Math.max(0, window.scrollY);
       scrollDeltaAccumulator.current = 0;
       updateHeaderHeight();
-    }, 320);
+    }, 280);
   };
 
   useEffect(() => {
@@ -357,10 +380,10 @@ export function Header() {
             paddingTop: isMenuVisible ? 8 : 0,
             paddingBottom: isMenuVisible ? 8 : 0,
           }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
           onAnimationComplete={updateHeaderHeight}
           style={{
-            overflow: "hidden",
+            overflow: isMenuVisible ? "visible" : "hidden",
           }}
         >
           <SearchBar />

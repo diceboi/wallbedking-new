@@ -87,7 +87,7 @@ export function NewProductSection() {
         className="relative w-full max-w-7xl flex flex-col items-center justify-center px-4"
       >
         {/* Dynamic SVG Line Overlay with shadow filter (Both Mobile & Desktop) */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-30">
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-25">
           <defs>
             <filter
               id="line-shadow"
@@ -114,16 +114,16 @@ export function NewProductSection() {
               stroke="white"
               strokeWidth="2"
               strokeDasharray="4 3"
-              filter=""
+              filter="url(#line-shadow)"
             />
           )}
         </svg>
 
-        {/* 1. Left Sofa (Background, Blurred, Floating - pushed to edge on mobile) */}
+        {/* 1. Left Sofa (Background, Blurred, Floating - brought inward for depth) */}
         <motion.div
-          animate={{ y: [15, -15, 15] }}
+          animate={{ y: [12, -12, 12] }}
           transition={{ duration: 7.5, ease: "easeInOut", repeat: Infinity }}
-          className="absolute left-[-32%] sm:left-[-35%] md:left-[-40%] w-[130px] sm:w-[220px] md:w-[500px] aspect-[4/3] pointer-events-none blur-[2px] md:blur-[4px] opacity-40 md:opacity-60 z-10 rotate-12"
+          className="absolute left-[-12%] sm:left-[-16%] md:left-[-22%] w-[140px] sm:w-[220px] md:w-[480px] aspect-[4/3] pointer-events-none blur-[2px] md:blur-[3px] opacity-45 md:opacity-60 z-10 -rotate-6"
         >
           <img
             src="/sofa1.webp"
@@ -132,11 +132,11 @@ export function NewProductSection() {
           />
         </motion.div>
 
-        {/* 2. Right Sofa (Background, Blurred, Floating - pushed to edge on mobile) */}
+        {/* 2. Right Sofa (Background, Blurred, Floating - brought inward for depth) */}
         <motion.div
-          animate={{ y: [-15, 15, -15] }}
+          animate={{ y: [-12, 12, -12] }}
           transition={{ duration: 6.5, ease: "easeInOut", repeat: Infinity }}
-          className="absolute right-[-32%] sm:right-[-35%] md:right-[-40%] w-[130px] sm:w-[220px] md:w-[500px] aspect-[4/3] pointer-events-none blur-[2px] md:blur-[3px] opacity-40 md:opacity-60 z-10 rotate-12"
+          className="absolute right-[-12%] sm:right-[-16%] md:right-[-22%] w-[140px] sm:w-[220px] md:w-[480px] aspect-[4/3] pointer-events-none blur-[2px] md:blur-[3px] opacity-45 md:opacity-60 z-10 rotate-6"
         >
           <img
             src="/sofa2.webp"
@@ -146,7 +146,7 @@ export function NewProductSection() {
         </motion.div>
 
         {/* 3. Center Sofa (Foreground, Sharp, Floating) */}
-        <div className="relative w-full max-w-[220px] sm:max-w-[320px] md:max-w-[650px] aspect-[4/3] z-20 flex items-center justify-center">
+        <div className="relative w-full max-w-[240px] sm:max-w-[320px] md:max-w-[650px] aspect-[4/3] z-20 flex items-center justify-center">
           <motion.div
             animate={{ y: [6, -6, 6] }}
             transition={{ duration: 5.5, ease: "easeInOut", repeat: Infinity }}
@@ -158,10 +158,10 @@ export function NewProductSection() {
               className="w-full h-full object-contain drop-shadow-2xl"
             />
 
-            {/* Hotspot anchor point (moves with the sofa) */}
+            {/* Hotspot anchor point on cushion fabric (moves with the sofa) */}
             <div
               ref={dotRef}
-              className="absolute right-[33%] bottom-[43%] h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 rounded-full bg-white flex items-center justify-center cursor-pointer group shadow-md"
+              className="absolute left-[38%] top-[56%] h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 rounded-full bg-white flex items-center justify-center cursor-pointer group shadow-md z-20"
             >
               <span className="absolute h-full w-full rounded-full bg-white opacity-75 animate-ping" />
             </div>
@@ -226,12 +226,12 @@ export function NewProductSection() {
           <motion.div
             animate={{ y: [6, -6, 6] }}
             transition={{ duration: 5.2, ease: "easeInOut", repeat: Infinity }}
-            className="absolute right-[-15px] sm:right-[-25px] md:right-[-90px] bottom-[5%] sm:bottom-[15%] md:bottom-[28%] z-30 w-[160px] sm:w-[200px] md:w-[260px] bg-wbk-lightgrey/85 backdrop-blur-md p-2.5 sm:p-3 md:p-5 border border-wbk-lightgrey/55 shadow-xl flex items-start gap-2 sm:gap-3 pointer-events-auto"
+            className="absolute right-[-22px] sm:right-[-32px] md:right-[-85px] bottom-[4%] sm:bottom-[12%] md:bottom-[24%] z-30 w-[155px] sm:w-[195px] md:w-[260px] bg-wbk-lightgrey/90 backdrop-blur-md p-2.5 sm:p-3 md:p-5 border border-wbk-lightgrey/60 shadow-xl flex items-start gap-2 sm:gap-3 pointer-events-auto rounded-none"
           >
-            {/* Connecting line target node */}
+            {/* Connecting line target node on the left edge facing the dot */}
             <div
               ref={lineAttachRef}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-transparent"
+              className="absolute left-0 top-3.5 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-xs"
             />
 
             <div className="space-y-1 sm:space-y-2">

@@ -18,6 +18,9 @@ export const supabaseAdmin = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    realtime: {
+      transport: typeof WebSocket !== 'undefined' ? WebSocket : class DummyWS {}
     }
   }
 );

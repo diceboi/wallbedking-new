@@ -12,6 +12,7 @@ import {
   IconSettings,
   IconExternalLink,
   IconX,
+  IconUsers,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -41,6 +42,13 @@ export const ADMIN_NAV_ITEMS = [
     icon: IconFolder,
   },
   {
+    id: "users",
+    label: "Users",
+    href: "/admin/users",
+    icon: IconUsers,
+    hasCount: true,
+  },
+  {
     id: "translations",
     label: "Translations",
     href: "/admin/translations",
@@ -57,14 +65,24 @@ export const ADMIN_NAV_ITEMS = [
 export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
   const pathname = usePathname() || "";
   const [productCount, setProductCount] = useState(234);
+  const [userCount, setUserCount] = useState(null);
 
-  // Fetch product count once on mount
+  // Fetch counts once on mount
   useEffect(() => {
     fetch("/api/admin/products?limit=1")
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.count) {
           setProductCount(data.count);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/admin/users")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && typeof data.count === "number") {
+          setUserCount(data.count);
         }
       })
       .catch(() => {});
@@ -128,7 +146,7 @@ export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
 
               {item.hasCount && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-wbk-gold text-wbk-black leading-none">
-                  {productCount}
+                  {item.id === "users" ? (userCount ?? "…") : productCount}
                 </span>
               )}
             </Link>

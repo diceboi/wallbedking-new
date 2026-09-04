@@ -12,7 +12,12 @@ export function ProductCard({ product, className = "" }) {
 
   const title = product.title || product.name || "Wall Bed";
   const orientation = product.orientation || "Vertical";
-  const size = product.sizeLabel || product.size || "180x200";
+  const size =
+    product.sizeLabel ||
+    product.size ||
+    (product.width && product.length
+      ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm`
+      : "Standard");
 
   // Standardize colors
   let colors = product.colors;
@@ -51,24 +56,35 @@ export function ProductCard({ product, className = "" }) {
   return (
     <Link href={link} className={`group block space-y-4 ${className}`}>
       {/* Image Box - Light grey background container */}
-      <div className="relative aspect-[1/1] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/30 rounded-none">
+      <div className="relative aspect-[1/1] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 rounded-none border border-wbk-lightgrey/30">
+        {/* Subtle top-left green glow behind sale badge */}
+        {pricing.isOnSale && (
+          <div
+            className="absolute top-0 left-0 w-60 h-60 pointer-events-none z-0 transition-opacity duration-300"
+            style={{
+              background:
+                "radial-gradient(circle at 0% 0%, rgba(163, 164, 140, 0.45) 0%, rgba(163, 164, 140, 0.2) 35%, rgba(163, 164, 140, 0.05) 60%, transparent 80%)",
+            }}
+          />
+        )}
+
         {/* Primary Product Image */}
         <img
           src={image}
           alt={title}
-          className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0"
+          className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0 relative z-1"
         />
         {/* Hover Product Image */}
         <img
           src={hoverImage}
           alt={`${title} details`}
-          className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-1"
         />
 
         {/* Sale badge */}
         {pricing.isOnSale && (
-          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-2xs z-10">
-            Sale {pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : ""}
+          <span className="absolute top-0 left-0 px-6 py-3 bg-wbk-green text-white text-xs sm:text-[13px] font-bold uppercase tracking-wider z-10 border-0 select-none">
+            Sale {pricing.discountLabel || (pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : "")}
           </span>
         )}
       </div>
@@ -82,7 +98,11 @@ export function ProductCard({ product, className = "" }) {
 
         {/* Specs */}
         <div className="text-xs text-wbk-black space-y-0.5 font-poppins">
-          {orientation && <div>Orientation: {orientation}</div>}
+          {orientation &&
+            product.parent_category !== "mattresses" &&
+            product.parent_category !== "sofas" && (
+              <div>Orientation: {orientation}</div>
+            )}
           <div>Size: {size}</div>
           {colors && colors.length > 0 && (
             <div className="flex items-center gap-1.5 pt-1">
@@ -104,7 +124,13 @@ export function ProductCard({ product, className = "" }) {
         <div className="pt-1 text-sm text-wbk-black font-poppins flex items-baseline gap-2 flex-wrap">
           <div>
             {isFrom ? `${t("common.from", "from")} ` : ""}
-            <span className="font-semibold text-base">{priceDisplay}</span>
+            <span
+              className={`font-semibold text-base ${
+                pricing.isOnSale ? "text-wbk-green" : "text-wbk-black"
+              }`}
+            >
+              {priceDisplay}
+            </span>
           </div>
           {pricing.isOnSale && (
             <span className="text-xs text-wbk-brown line-through font-normal">

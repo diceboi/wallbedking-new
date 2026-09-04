@@ -124,9 +124,9 @@ export function MobileMenuDrawer() {
             </div>
 
             {/* Quick Language Selector Bar */}
-            <div className="px-4 py-2 bg-[#F4F2F0] border-b border-wbk-lightgrey flex items-center justify-between">
-              <span className="text-[11px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center gap-1.5">
-                <IconWorld size={14} className="text-wbk-gold" />
+            <div className="px-4 py-2.5 bg-[#F4F2F0] border-b border-wbk-lightgrey flex flex-col gap-2">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center gap-1.5">
+                <IconWorld size={13} className="text-wbk-gold" />
                 Language
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -137,7 +137,7 @@ export function MobileMenuDrawer() {
                       key={lang.code}
                       type="button"
                       onClick={() => switchLocale(lang.code)}
-                      className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-wbk-black text-wbk-white shadow-2xs"
                           : "bg-white text-wbk-black hover:bg-wbk-green hover:text-white border border-wbk-lightgrey"

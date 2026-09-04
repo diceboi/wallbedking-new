@@ -69,7 +69,7 @@ export const OTHER_CATEGORIES_LIST = [
   { slug: "extras", label: "Extras", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
 ];
 
-// Helpers to derive clean dimensions, size labels and slugs
+// Helpers to derive clean dimensions, size labels and slugs across all product categories
 export const getCleanBedDimensions = (item) => {
   if (!item || item.parent_category !== "beds") {
     return {
@@ -82,34 +82,115 @@ export const getCleanBedDimensions = (item) => {
   return { widthCm: Math.round(w), lengthCm: Math.round(l) };
 };
 
+export const getProductSizeInfo = (item) => {
+  if (!item) return { size: "Standard", sizeLabel: "Standard", sizeSlug: "" };
+
+  // 1. Murphy Beds
+  if (item.parent_category === "beds") {
+    const { widthCm, lengthCm } = getCleanBedDimensions(item);
+    let baseName = (item.name || "")
+      .replace(/Horizontal.*Bed/i, "")
+      .replace(/Vertical.*Bed/i, "")
+      .replace(/Classic.*Bed/i, "")
+      .replace(/Studio.*Bed/i, "")
+      .replace(/Integrated.*Bed/i, "")
+      .replace(/MORPHY™.*Bed/i, "")
+      .replace(/MORPHY.*Bed/i, "")
+      .trim();
+
+    if (!baseName) {
+      baseName = item.size_category || "Standard";
+    }
+
+    const isMorphy = (item.name || "").includes("MORPHY");
+    const label = `${baseName}${isMorphy ? " MORPHY™" : ""} (${widthCm}x${lengthCm} cm)`;
+    const slug = `${widthCm}x${lengthCm}`;
+    return { size: baseName, sizeLabel: label, sizeSlug: slug };
+  }
+
+  // 2. Mattresses
+  if (item.parent_category === "mattresses") {
+    let mattressSize = "Standard";
+    const name = item.name || "";
+    if (/small\s*double/i.test(name)) mattressSize = "Small Double";
+    else if (/super\s*king/i.test(name)) mattressSize = "Super King";
+    else if (/single/i.test(name)) mattressSize = "Single";
+    else if (/king/i.test(name)) mattressSize = "King";
+    else if (/double/i.test(name)) mattressSize = "Double";
+
+    const wCm = item.width ? Math.round(item.width / 10) : 0;
+    const lCm = item.length ? Math.round(item.length / 10) : 0;
+    const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
+    const label = `${mattressSize}${dim}`;
+    const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    return { size: mattressSize, sizeLabel: label, sizeSlug: slug };
+  }
+
+  // 3. Cabinets
+  if (item.parent_category === "cabinets") {
+    let cabSize = "";
+    const name = item.name || "";
+    if (/small\s*double/i.test(name)) cabSize = "Small Double";
+    else if (/super\s*king/i.test(name)) cabSize = "Super King";
+    else if (/single/i.test(name)) cabSize = "Single";
+    else if (/king/i.test(name)) cabSize = "King";
+    else if (/double/i.test(name)) cabSize = "Double";
+    else if (/side\s*unit/i.test(name)) {
+      if (/door/i.test(name)) cabSize = "Side Unit (Door)";
+      else if (/shelves/i.test(name)) cabSize = "Side Unit (Shelves)";
+      else cabSize = "Side Unit";
+    } else {
+      cabSize = item.sub_category || "Cabinet";
+    }
+
+    if (/extension/i.test(name) && !cabSize.includes("Extension")) {
+      cabSize = `${cabSize} Extension`;
+    }
+
+    const wCm = item.width ? Math.round(item.width / 10) : 0;
+    const lCm = item.length ? Math.round(item.length / 10) : 0;
+    const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
+    const label = `${cabSize}${dim}`;
+    const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    return { size: cabSize, sizeLabel: label, sizeSlug: slug };
+  }
+
+  // 4. Sofas
+  if (item.parent_category === "sofas") {
+    const name = item.name || "";
+    const numMatch = name.match(/\b(600|800|1000|1200|1400|1600|1800|2000)\b/);
+    const sofaNum = numMatch ? numMatch[1] : null;
+    let sofaSize = "";
+    if (/corner\s*seat/i.test(name)) sofaSize = "Corner Seat";
+    else if (/armrest/i.test(name)) sofaSize = "Armrest";
+    else if (/base\s*module/i.test(name)) sofaSize = sofaNum ? `Base Module ${sofaNum}` : "Base Module";
+    else if (sofaNum) sofaSize = `${sofaNum} mm`;
+    else sofaSize = item.size_category || "Standard";
+
+    const wCm = item.width ? Number((item.width / 10).toFixed(1)) : 0;
+    const lCm = item.length ? Number((item.length / 10).toFixed(1)) : 0;
+    const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
+    const label = `${sofaSize}${dim}`;
+    const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    return { size: sofaSize, sizeLabel: label, sizeSlug: slug };
+  }
+
+  // 5. Fallback for extras and other categories
+  const fallbackLabel = item.size_label || item.size_category || item.name || "Standard";
+  const fallbackSize = item.size_category || "Standard";
+  return {
+    size: fallbackSize,
+    sizeLabel: fallbackLabel,
+    sizeSlug: item.slug || String(item.id),
+  };
+};
+
 export const getCleanBedSizeLabel = (item) => {
-  if (!item) return "";
-  if (item.parent_category !== "beds") {
-    return item.size_label || item.sizeLabel || item.name;
-  }
-  const { widthCm, lengthCm } = getCleanBedDimensions(item);
-  let baseName = item.name
-    .replace(/Horizontal.*Bed/i, "")
-    .replace(/Vertical.*Bed/i, "")
-    .replace(/Classic.*Bed/i, "")
-    .replace(/Studio.*Bed/i, "")
-    .replace(/Integrated.*Bed/i, "")
-    .replace(/MORPHY™.*Bed/i, "")
-    .replace(/MORPHY.*Bed/i, "")
-    .trim();
-
-  if (!baseName) {
-    baseName = item.size_category || "Standard";
-  }
-
-  const isMorphy = item.name.includes("MORPHY");
-  return `${baseName}${isMorphy ? " MORPHY™" : ""} (${widthCm}x${lengthCm} cm)`;
+  return getProductSizeInfo(item).sizeLabel;
 };
 
 export const getCleanBedSizeSlug = (item) => {
-  if (!item) return "";
-  const { widthCm, lengthCm } = getCleanBedDimensions(item);
-  return `${widthCm}x${lengthCm}`;
+  return getProductSizeInfo(item).sizeSlug;
 };
 
 // Helper to convert catalog item to uniform UI product
@@ -128,15 +209,7 @@ export const formatCatalogItem = (item) => {
           { src: item.hover_image, alt: `${item.name} Open` },
         ];
 
-  const sizeLabel =
-    item.parent_category === "beds"
-      ? getCleanBedSizeLabel(item)
-      : item.size_label || item.size_category;
-
-  const sizeSlug =
-    item.parent_category === "beds"
-      ? getCleanBedSizeSlug(item)
-      : (item.slug || String(item.id));
+  const sizeInfo = getProductSizeInfo(item);
 
   return {
     ...item,
@@ -146,9 +219,9 @@ export const formatCatalogItem = (item) => {
     price: `£${item.price_gbp}`,
     numericPrice: item.price_gbp,
     salePrice: item.sale_price_gbp ? `£${item.sale_price_gbp}` : null,
-    size: item.size_category,
-    sizeLabel,
-    sizeSlug,
+    size: sizeInfo.size,
+    sizeLabel: sizeInfo.sizeLabel,
+    sizeSlug: sizeInfo.sizeSlug,
     colors:
       item.color === "Beige"
         ? ["#D2AA7C"]
@@ -380,19 +453,322 @@ export const FLAGSHIP_BEDS = [
   },
 ];
 
+// ── FLAGSHIP SOFAS (BED FRONT & FREE STANDING) ──
+export const FLAGSHIP_SOFAS = [
+  {
+    id: "flagship-sofa-bed-front",
+    rawId: "flagship-sofa-bed-front",
+    slug: "bed-front-modular-sofa",
+    aliases: ["bed-front-sofa"],
+    name: "Bed Front Modular Sofa",
+    title: "Bed Front Modular Sofa",
+    type: "Bed Front",
+    sub_category: "Bed Front",
+    orientation: "Modular",
+    parent_category: "sofas",
+    description:
+      "Engineered specifically to sit directly in front of your WallBedKing Murphy bed without blocking the fold-down mechanism. Modular seat and base sections allow complete living space customisation.",
+    tagline: "Engineered for Murphy bed integration",
+    badge: "Bed Front",
+    image: "/sofa1.webp",
+    hover_image: "/sofa2.webp",
+    hoverImage: "/sofa2.webp",
+    price_gbp: 499,
+    price_euro: 499,
+    price_usd: 499,
+    sale_percent: 0,
+    price: "from £499",
+    numericPrice: 499,
+    size: "8 Modules",
+    sizeLabel: "8 Modular Sizes (80 - 140 cm + Corner)",
+    defaultSizeSlug: "sofa-1000-bed-front-100-8x86-7",
+    has_3d: false,
+    has3D: false,
+    colors: ["#D2AA7C", "#A5988E"],
+    link: "/products/sofas/bed-front-modular-sofa",
+  },
+  {
+    id: "flagship-sofa-free-standing",
+    rawId: "flagship-sofa-free-standing",
+    slug: "free-standing-modular-sofa",
+    aliases: ["free-standing-sofa"],
+    name: "Free Standing Modular Sofa",
+    title: "Free Standing Modular Sofa",
+    type: "Free Standing",
+    sub_category: "Free Standing",
+    orientation: "Modular",
+    parent_category: "sofas",
+    description:
+      "A luxurious stand-alone modular sofa system offering maximum relaxation and modular versatility. Perfect for living rooms, guest suites, or placed alongside your wall bed.",
+    tagline: "Free-standing luxury seating",
+    badge: "Free Standing",
+    image: "/sofa2.webp",
+    hover_image: "/sofa3.webp",
+    hoverImage: "/sofa3.webp",
+    price_gbp: 499,
+    price_euro: 499,
+    price_usd: 499,
+    sale_percent: 0,
+    price: "from £499",
+    numericPrice: 499,
+    size: "8 Modules",
+    sizeLabel: "8 Modular Sizes (80 - 140 cm + Corner)",
+    defaultSizeSlug: "sofa-1000-free-standing-107-2x83-4",
+    has_3d: false,
+    has3D: false,
+    colors: ["#D2AA7C", "#A5988E"],
+    link: "/products/sofas/free-standing-modular-sofa",
+  },
+];
+
+// ── FLAGSHIP MATTRESSES (COMFORT, LUXURY, SUPREME) ──
+export const FLAGSHIP_MATTRESSES = [
+  {
+    id: "flagship-comfort-mattress",
+    rawId: "flagship-comfort-mattress",
+    slug: "comfort-mattress",
+    aliases: ["comfort-pocket-sprung-mattress"],
+    name: "Comfort Pocket Sprung Mattress",
+    title: "Comfort Pocket Sprung Mattress",
+    type: "Comfort",
+    sub_category: "Comfort",
+    orientation: "Universal",
+    parent_category: "mattresses",
+    description:
+      "Engineered specifically for everyday restful sleep and optimal weight balance in Murphy beds. Features a 20cm depth profile with individually wrapped pocket springs and soft-touch damask ticking.",
+    tagline: "20cm depth profile, essential comfort",
+    badge: "Best Value",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    price_gbp: 399,
+    price_euro: 399,
+    price_usd: 399,
+    sale_percent: 0,
+    price: "from £399",
+    numericPrice: 399,
+    size: "4 Sizes",
+    sizeLabel: "4 Available Sizes (Single to King)",
+    defaultSizeSlug: "double-comfort-mattress-135x190x20",
+    has_3d: false,
+    has3D: false,
+    colors: ["#FFFFFF"],
+    link: "/products/mattresses/comfort-mattress",
+  },
+  {
+    id: "flagship-luxury-mattress",
+    rawId: "flagship-luxury-mattress",
+    slug: "luxury-mattress",
+    aliases: ["luxury-orthopaedic-mattress"],
+    name: "Luxury Orthopaedic Mattress",
+    title: "Luxury Orthopaedic Mattress",
+    type: "Luxury",
+    sub_category: "Luxury",
+    orientation: "Universal",
+    parent_category: "mattresses",
+    description:
+      "Medium-firm orthopaedic pocket sprung mattress featuring a 25cm deep profile with pressure-relieving memory foam layer and reinforced edge support. Ideal for daily restorative sleep.",
+    tagline: "25cm depth profile, memory foam topper",
+    badge: "Most Popular",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    price_gbp: 499,
+    price_euro: 499,
+    price_usd: 499,
+    sale_percent: 0,
+    price: "from £499",
+    numericPrice: 499,
+    size: "4 Sizes",
+    sizeLabel: "4 Available Sizes (Single to King)",
+    defaultSizeSlug: "double-luxury-mattress-135x190x25",
+    has_3d: false,
+    has3D: false,
+    colors: ["#FFFFFF"],
+    link: "/products/mattresses/luxury-mattress",
+  },
+  {
+    id: "flagship-supreme-mattress",
+    rawId: "flagship-supreme-mattress",
+    slug: "supreme-mattress",
+    aliases: ["supreme-hybrid-mattress"],
+    name: "Supreme Hybrid Mattress",
+    title: "Supreme Hybrid Mattress",
+    type: "Supreme",
+    sub_category: "Supreme",
+    orientation: "Universal",
+    parent_category: "mattresses",
+    description:
+      "Our pinnacle sleep experience. Multi-zone pocket springs paired with high-resilience breathable cooling foam and natural tufted fibers. 25cm profile delivering cloud-like luxury contouring.",
+    tagline: "25cm depth profile, multi-zone hybrid",
+    badge: "Premium Flagship",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    price_gbp: 599,
+    price_euro: 599,
+    price_usd: 599,
+    sale_percent: 0,
+    price: "from £599",
+    numericPrice: 599,
+    size: "4 Sizes",
+    sizeLabel: "4 Available Sizes (Single to King)",
+    defaultSizeSlug: "double-supreme-mattress-135x190x25",
+    has_3d: false,
+    has3D: false,
+    colors: ["#FFFFFF"],
+    link: "/products/mattresses/supreme-mattress",
+  },
+];
+
+// ── FLAGSHIP CABINETS (VERTICAL, HORIZONTAL, SIDE UNITS, EXTENSIONS) ──
+export const FLAGSHIP_CABINETS = [
+  {
+    id: "flagship-vertical-cabinet",
+    rawId: "flagship-vertical-cabinet",
+    slug: "vertical-wall-bed-cabinet",
+    name: "Vertical Wall Bed Enclosure Cabinet",
+    title: "Vertical Wall Bed Enclosure Cabinet",
+    type: "Cabinet",
+    sub_category: "Vertical",
+    orientation: "Vertical",
+    parent_category: "cabinets",
+    description:
+      "Precision-crafted wooden surround enclosure tailored specifically for vertical fold Murphy beds. Features smooth opening clearance and premium timber finishes.",
+    tagline: "Surround enclosure for vertical wall beds",
+    badge: "Vertical Beds",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200-8.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-8.jpg",
+    price_gbp: 649,
+    price_euro: 649,
+    price_usd: 649,
+    sale_percent: 0,
+    price: "from £649",
+    numericPrice: 649,
+    size: "4 Sizes / 4 Finishes",
+    sizeLabel: "Single to King in Pine, Beech, Oak & White",
+    defaultSizeSlug: "double-vertical-cabinet-pine-160x52x215",
+    has_3d: false,
+    has3D: false,
+    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#FFFFFF"],
+    link: "/products/cabinets/vertical-wall-bed-cabinet",
+  },
+  {
+    id: "flagship-horizontal-cabinet",
+    rawId: "flagship-horizontal-cabinet",
+    slug: "horizontal-wall-bed-cabinet",
+    name: "Horizontal Wall Bed Enclosure Cabinet",
+    title: "Horizontal Wall Bed Enclosure Cabinet",
+    type: "Cabinet",
+    sub_category: "Horizontal",
+    orientation: "Horizontal",
+    parent_category: "cabinets",
+    description:
+      "Low-profile wooden enclosure cabinetry designed for horizontal fold wall beds. Ideal for lofts and low ceiling spaces.",
+    tagline: "Low ceiling enclosure for horizontal beds",
+    badge: "Horizontal Beds",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200-8.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-8.jpg",
+    price_gbp: 829,
+    price_euro: 829,
+    price_usd: 829,
+    sale_percent: 0,
+    price: "from £829",
+    numericPrice: 829,
+    size: "2 Sizes / 4 Finishes",
+    sizeLabel: "Double & King in Pine, Beech, Oak & White",
+    defaultSizeSlug: "double-horizontal-cabinet-pine-215x52x180",
+    has_3d: false,
+    has3D: false,
+    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#FFFFFF"],
+    link: "/products/cabinets/horizontal-wall-bed-cabinet",
+  },
+  {
+    id: "flagship-side-unit-cabinet",
+    rawId: "flagship-side-unit-cabinet",
+    slug: "side-storage-wardrobe-cabinet",
+    name: "Modular Side Storage & Wardrobe Unit",
+    title: "Modular Side Storage & Wardrobe Unit",
+    type: "Side Unit",
+    sub_category: "Side Units",
+    orientation: "Vertical",
+    parent_category: "cabinets",
+    description:
+      "Versatile side storage towers available with hanging wardrobe doors or open shelving to frame and extend your wall bed installation.",
+    tagline: "Door + hanger or open shelving options",
+    badge: "Side Storage",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200-8.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-8.jpg",
+    price_gbp: 459,
+    price_euro: 459,
+    price_usd: 459,
+    sale_percent: 0,
+    price: "from £459",
+    numericPrice: 459,
+    size: "2 Styles / 4 Finishes",
+    sizeLabel: "Door + Hanger or Shelves in 4 Finishes",
+    defaultSizeSlug: "vertical-cabinet-side-unit-with-shelves-pine-50x52x215",
+    has_3d: false,
+    has3D: false,
+    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#FFFFFF"],
+    link: "/products/cabinets/side-storage-wardrobe-cabinet",
+  },
+  {
+    id: "flagship-extension-cabinet",
+    rawId: "flagship-extension-cabinet",
+    slug: "overhead-storage-extension-cabinet",
+    name: "Overhead Storage Extension Cabinet",
+    title: "Overhead Storage Extension Cabinet",
+    type: "Cabinet Extension",
+    sub_category: "Extensions",
+    orientation: "Horizontal",
+    parent_category: "cabinets",
+    description:
+      "Top-bridge modular extension cabinet designed to fit directly above your horizontal Murphy bed enclosure to maximize vertical ceiling storage.",
+    tagline: "Overhead bridge storage extension",
+    badge: "Top Bridge",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200-8.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-8.jpg",
+    price_gbp: 499,
+    price_euro: 499,
+    price_usd: 499,
+    sale_percent: 0,
+    price: "from £499",
+    numericPrice: 499,
+    size: "2 Sizes / 4 Finishes",
+    sizeLabel: "Double & King in Pine, Beech, Oak & White",
+    defaultSizeSlug: "double-horizontal-cabinet-extension-pine-215x52x35",
+    has_3d: false,
+    has3D: false,
+    colors: ["#A5988E", "#D2AA7C", "#E4E0DE", "#FFFFFF"],
+    link: "/products/cabinets/overhead-storage-extension-cabinet",
+  },
+];
+
 /**
- * Computes starting prices ("from") dynamically for flagship beds
+ * Computes starting prices ("from") dynamically for flagship models
  * based on the cheapest matching product variant in Supabase / catalog.
  */
-export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
-  const bedItems = rawItems.filter((p) => p.parent_category === "beds");
+export function getDynamicFlagships(templates, rawItems, category) {
+  const catItems = rawItems.filter((p) => p.parent_category === category);
 
-  return FLAGSHIP_BEDS.map((template) => {
-    const matching = bedItems.filter(
-      (item) =>
-        item.type?.toLowerCase() === template.type?.toLowerCase() &&
-        item.orientation?.toLowerCase() === template.orientation?.toLowerCase()
-    );
+  return templates.map((template) => {
+    const matching = catItems.filter((item) => {
+      if (category === "beds") {
+        return (
+          item.type?.toLowerCase() === template.type?.toLowerCase() &&
+          item.orientation?.toLowerCase() === template.orientation?.toLowerCase()
+        );
+      }
+      return (
+        item.sub_category?.toLowerCase() === template.sub_category?.toLowerCase() ||
+        item.type?.toLowerCase() === template.type?.toLowerCase()
+      );
+    });
 
     if (matching.length === 0) return template;
 
@@ -413,6 +789,8 @@ export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
     const minSaleEuro = saleEuroList.length > 0 ? Math.min(...saleEuroList) : null;
     const minSaleUsd = saleUsdList.length > 0 ? Math.min(...saleUsdList) : null;
 
+    const bestPrice = minSaleGbp || minGbp;
+
     return {
       ...template,
       price_gbp: minGbp,
@@ -421,12 +799,37 @@ export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
       sale_price_gbp: minSaleGbp,
       sale_price_euro: minSaleEuro,
       sale_price_usd: minSaleUsd,
+      numericPrice: bestPrice,
+      price: `from £${bestPrice}`,
       sale_percent: template.sale_percent,
     };
   });
 }
 
+export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_BEDS, rawItems, "beds");
+}
+export function getDynamicFlagshipSofas(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_SOFAS, rawItems, "sofas");
+}
+export function getDynamicFlagshipMattresses(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_MATTRESSES, rawItems, "mattresses");
+}
+export function getDynamicFlagshipCabinets(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_CABINETS, rawItems, "cabinets");
+}
+
 export const DYNAMIC_FLAGSHIP_BEDS = getDynamicFlagshipBeds(RAW_CATALOG);
+export const DYNAMIC_FLAGSHIP_SOFAS = getDynamicFlagshipSofas(RAW_CATALOG);
+export const DYNAMIC_FLAGSHIP_MATTRESSES = getDynamicFlagshipMattresses(RAW_CATALOG);
+export const DYNAMIC_FLAGSHIP_CABINETS = getDynamicFlagshipCabinets(RAW_CATALOG);
+
+export const ALL_FLAGSHIP_PRODUCTS = [
+  ...DYNAMIC_FLAGSHIP_BEDS,
+  ...DYNAMIC_FLAGSHIP_SOFAS,
+  ...DYNAMIC_FLAGSHIP_MATTRESSES,
+  ...DYNAMIC_FLAGSHIP_CABINETS,
+];
 
 // All bed variants for internal lookups and configurator sizing
 export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
@@ -436,9 +839,9 @@ export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
 // Categorized product arrays
 export const ALL_PRODUCTS = {
   beds: DYNAMIC_FLAGSHIP_BEDS,
-  sofas: RAW_CATALOG.filter((p) => p.parent_category === "sofas").map(formatCatalogItem),
-  mattresses: RAW_CATALOG.filter((p) => p.parent_category === "mattresses").map(formatCatalogItem),
-  cabinets: RAW_CATALOG.filter((p) => p.parent_category === "cabinets").map(formatCatalogItem),
+  sofas: DYNAMIC_FLAGSHIP_SOFAS,
+  mattresses: DYNAMIC_FLAGSHIP_MATTRESSES,
+  cabinets: DYNAMIC_FLAGSHIP_CABINETS,
   extras: RAW_CATALOG.filter((p) => p.parent_category === "extras").map(formatCatalogItem),
 };
 
@@ -502,7 +905,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
   },
   {
     id: "popular-sofa-bed-front",
-    title: "Sofa Bed Front Module",
+    title: "Bed Front Modular Sofa",
     orientation: "Modular",
     size: "80cm to 140cm",
     colors: ["#D2AA7C", "#A5988E"],
@@ -510,13 +913,13 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     numericPrice: 499,
     image: "/sofa1.webp",
     hoverImage: "/sofa2.webp",
-    link: "/products/sofas/sofa-1000-bed-front-100-8x86-7",
+    link: "/products/sofas/bed-front-modular-sofa",
     categoryKey: "sofas",
     has3D: false,
   },
   {
     id: "popular-sofa-freestanding",
-    title: "Sofa Free Standing Module",
+    title: "Free Standing Modular Sofa",
     orientation: "Modular",
     size: "80cm to 140cm",
     colors: ["#D2AA7C", "#A5988E"],
@@ -524,35 +927,35 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     numericPrice: 499,
     image: "/sofa2.webp",
     hoverImage: "/sofa3.webp",
-    link: "/products/sofas/sofa-1000-free-standing-107-2x83-4",
+    link: "/products/sofas/free-standing-modular-sofa",
     categoryKey: "sofas",
     has3D: false,
   },
   {
     id: "popular-comfort-mattress",
-    title: "Comfort Mattress Range",
+    title: "Comfort Pocket Sprung Mattress",
     orientation: "Universal",
     size: "90x190 to 150x200",
     colors: ["#FFFFFF"],
-    price: "from £299",
-    numericPrice: 299,
+    price: "from £399",
+    numericPrice: 399,
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
     hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    link: "/products/mattresses/single-comfort-mattress-90x190x20",
+    link: "/products/mattresses/comfort-mattress",
     categoryKey: "mattresses",
     has3D: false,
   },
   {
     id: "popular-cabinets",
-    title: "Vertical & Horizontal Cabinets",
-    orientation: "Universal",
+    title: "Vertical Wall Bed Enclosure Cabinet",
+    orientation: "Vertical",
     size: "Pine, Beech, Oak, White",
     colors: ["#A5988E", "#E4E0DE", "#FFFFFF"],
-    price: "from £439",
-    numericPrice: 439,
+    price: "from £649",
+    numericPrice: 649,
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     hoverImage: "/product-images/morphy-integrated/160x200-8.jpg",
-    link: "/products/cabinets/single-vertical-cabinet-pine-115x52x215",
+    link: "/products/cabinets/vertical-wall-bed-cabinet",
     categoryKey: "cabinets",
     has3D: false,
   },
@@ -577,15 +980,19 @@ export const findProductBySlug = (categorySlug, productSlug) => {
   if (!productSlug) return null;
   const cleanSlug = productSlug.toLowerCase();
 
-  // 1. Exact match against the 6 Flagship beds
-  const flagshipMatch = FLAGSHIP_BEDS.find((f) => f.slug === cleanSlug);
+  // 1. Exact match or alias match against ALL Flagship products (beds, sofas, mattresses, cabinets)
+  const flagshipMatch = ALL_FLAGSHIP_PRODUCTS.find(
+    (f) =>
+      f.slug === cleanSlug ||
+      (f.aliases && f.aliases.some((a) => a.toLowerCase() === cleanSlug))
+  );
   if (flagshipMatch) {
     return { ...flagshipMatch };
   }
 
   // 2. Special backward compatibility alias for integrated-bed
   if (cleanSlug === "integrated-bed") {
-    const integratedFlagship = FLAGSHIP_BEDS.find(
+    const integratedFlagship = ALL_FLAGSHIP_PRODUCTS.find(
       (f) => f.slug === "integrated-vertical-wall-bed"
     );
     return { ...integratedFlagship, slug: "integrated-bed" };
@@ -619,6 +1026,7 @@ export const getProductVariants = (currentProduct) => {
   if (!currentProduct) return [];
   const parentCat = currentProduct.parent_category || "beds";
   const type = currentProduct.type || "Classic";
+  const subCategory = currentProduct.sub_category || type;
   const orientation = currentProduct.orientation || "Vertical";
 
   if (parentCat === "beds") {
@@ -626,8 +1034,8 @@ export const getProductVariants = (currentProduct) => {
     const matching = RAW_CATALOG.filter(
       (p) =>
         p.parent_category === "beds" &&
-        p.type === type &&
-        p.orientation === orientation
+        p.type?.toLowerCase() === type.toLowerCase() &&
+        p.orientation?.toLowerCase() === orientation.toLowerCase()
     );
 
     // Sort logically by width, then length
@@ -641,6 +1049,39 @@ export const getProductVariants = (currentProduct) => {
       );
     });
 
+    return matching.map(formatCatalogItem);
+  }
+
+  if (parentCat === "sofas") {
+    const matching = RAW_CATALOG.filter(
+      (p) =>
+        p.parent_category === "sofas" &&
+        (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
+         p.type?.toLowerCase() === type.toLowerCase())
+    );
+    matching.sort((a, b) => (a.id || 0) - (b.id || 0));
+    return matching.map(formatCatalogItem);
+  }
+
+  if (parentCat === "mattresses") {
+    const matching = RAW_CATALOG.filter(
+      (p) =>
+        p.parent_category === "mattresses" &&
+        (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
+         p.type?.toLowerCase() === type.toLowerCase())
+    );
+    matching.sort((a, b) => (a.width || 0) - (b.width || 0));
+    return matching.map(formatCatalogItem);
+  }
+
+  if (parentCat === "cabinets") {
+    const matching = RAW_CATALOG.filter(
+      (p) =>
+        p.parent_category === "cabinets" &&
+        (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
+         p.type?.toLowerCase() === type.toLowerCase())
+    );
+    matching.sort((a, b) => (a.price_gbp || 0) - (b.price_gbp || 0));
     return matching.map(formatCatalogItem);
   }
 

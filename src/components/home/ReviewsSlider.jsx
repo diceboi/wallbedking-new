@@ -70,18 +70,24 @@ export function ReviewsSlider() {
   ];
 
   return (
-    <section className="py-24 bg-white overflow-hidden border-b border-wbk-lightgrey/60">
+    <section className="py-16 md:py-24 bg-white overflow-hidden border-b border-wbk-lightgrey/60">
       {/* Header Container */}
-      <Container className="mb-12 flex items-end justify-between">
-        <div className="space-y-2">
-          <h2 className="font-new-york text-4xl md:text-5xl text-wbk-black leading-tight">
+      <Container className="mb-8 md:mb-12">
+        <div className="flex flex-col gap-2">
+          <h2 className="font-new-york text-3xl sm:text-4xl md:text-5xl text-wbk-black leading-tight">
             Reviews
           </h2>
-        </div>
-        <div>
-          <Button as="link" href="/reviews" variant="secondary" size="md">
-            All reviews
-          </Button>
+          <div className="flex justify-end w-full">
+            <Button
+              as="link"
+              href="/reviews"
+              variant="secondary"
+              size="md"
+              className="whitespace-nowrap"
+            >
+              All reviews
+            </Button>
+          </div>
         </div>
       </Container>
 
@@ -90,17 +96,19 @@ export function ReviewsSlider() {
         {/* Custom Navigation Button - Right */}
         <button
           ref={nextRef}
-          className="absolute right-8 top-[110px] sm:top-[120px] -translate-y-1/2 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white hover:border-wbk-black transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+          aria-label="Next reviews"
+          className="absolute right-2 sm:right-4 md:right-8 top-[90px] sm:top-[110px] md:top-[120px] -translate-y-1/2 z-30 flex h-9 w-9 sm:h-11 sm:w-11 md:h-14 md:w-14 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white hover:border-wbk-black transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
         >
-          <IconChevronRight size={24} />
+          <IconChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
         </button>
 
         {/* Custom Navigation Button - Left */}
         <button
           ref={prevRef}
-          className="absolute left-8 top-[110px] sm:top-[120px] -translate-y-1/2 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white hover:border-wbk-black transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+          aria-label="Previous reviews"
+          className="absolute left-2 sm:left-4 md:left-8 top-[90px] sm:top-[110px] md:top-[120px] -translate-y-1/2 z-30 flex h-9 w-9 sm:h-11 sm:w-11 md:h-14 md:w-14 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white hover:border-wbk-black transition-all duration-300 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
         >
-          <IconChevronLeft size={24} />
+          <IconChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
         </button>
 
         <Swiper
@@ -113,29 +121,47 @@ export function ReviewsSlider() {
           }}
           slidesOffsetBefore={offset}
           slidesOffsetAfter={offset}
-          slidesPerView="auto"
-          spaceBetween={4}
+          slidesPerView={1.25}
+          spaceBetween={16}
+          breakpoints={{
+            480: {
+              slidesPerView: 1.35,
+              spaceBetween: 16,
+            },
+            640: {
+              slidesPerView: 2.1,
+              spaceBetween: 20,
+            },
+            1024: {
+              slidesPerView: 2.8,
+              spaceBetween: 24,
+            },
+            1280: {
+              slidesPerView: 3.5,
+              spaceBetween: 24,
+            },
+          }}
           className="reviews-swiper overflow-visible"
         >
           {reviews.map((rev, idx) => (
             <SwiperSlide
               key={idx}
-              className="!w-[420px] !sm:w-[340px] !md:w-[400px] select-none group"
+              className="select-none group h-auto"
             >
-              <div className="flex flex-col">
+              <div className="flex flex-col h-full">
                 {/* Review Text Card Block */}
-                <div className="relative w-full h-[220px] sm:h-[240px] bg-[#F4F2F0]/60 p-8 md:p-10 flex items-center justify-center text-center transition-all duration-300 group-hover:bg-[#F4F2F0]/80">
-                  <p className="font-poppins font-normal text-sm md:text-base text-wbk-black leading-relaxed">
-                    {rev.text}
+                <div className="relative w-full h-[200px] sm:h-[220px] md:h-[240px] bg-[#F4F2F0]/60 p-6 sm:p-8 md:p-10 flex items-center justify-center text-center transition-all duration-300 group-hover:bg-[#F4F2F0]/80 border border-wbk-lightgrey/30 rounded-none">
+                  <p className="font-poppins font-normal text-xs sm:text-sm md:text-base text-wbk-black leading-relaxed line-clamp-6">
+                    "{rev.text}"
                   </p>
                 </div>
 
                 {/* Author and Platform Details */}
-                <div className="mt-5 px-1">
-                  <span className="font-poppins font-medium text-sm md:text-base text-wbk-black">
+                <div className="mt-4 sm:mt-5 px-1">
+                  <span className="font-poppins font-medium text-xs sm:text-sm md:text-base text-wbk-black">
                     {rev.author}
                   </span>
-                  <span className="font-poppins font-normal text-sm md:text-base text-wbk-brown">
+                  <span className="font-poppins font-normal text-xs sm:text-sm md:text-base text-wbk-brown">
                     , {rev.platform}
                   </span>
                 </div>

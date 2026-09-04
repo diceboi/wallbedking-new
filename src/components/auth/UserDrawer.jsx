@@ -203,10 +203,10 @@ export function UserDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative z-10 w-full max-w-md bg-wbk-white h-full shadow-2xl flex flex-col font-poppins"
+            className="relative z-10 w-full max-w-[340px] sm:max-w-[380px] md:max-w-md bg-wbk-white h-full shadow-2xl flex flex-col font-poppins"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-wbk-lightgrey">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-wbk-lightgrey">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 flex items-center justify-center text-wbk-black">
                   <IconUser size={18} strokeWidth={1.5} />
@@ -232,7 +232,7 @@ export function UserDrawer() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
               {user ? (
                 /* ── Authenticated User State ── */
                 <div className="space-y-6">
@@ -576,54 +576,89 @@ export function UserDrawer() {
 
                   {/* ── Forgot Password Form ── */}
                   {drawerTab === "forgot" && (
-                    <form onSubmit={handleForgotPassword} className="space-y-4">
-                      <div className="text-xs text-wbk-brown leading-relaxed">
-                        Enter the email associated with your account and we&apos;ll send you a password reset link.
-                      </div>
+                    <div className="space-y-4">
+                      {successMsg ? (
+                        <div className="space-y-4 py-2">
+                          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2">
+                            <div className="flex items-center gap-2 font-semibold">
+                              <IconCheck size={18} className="text-emerald-600 shrink-0" />
+                              <span>Reset Link Dispatched</span>
+                            </div>
+                            <p className="text-[11px] text-emerald-800 leading-relaxed">
+                              We&apos;ve sent a password reset link to <strong className="font-semibold">{email}</strong>. Please check your inbox (and spam folder) and click the link to set a new password.
+                            </p>
+                          </div>
 
-                      <div>
-                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                          Email Address
-                        </label>
-                        <div className="relative">
-                          <IconMail
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-wbk-brown pointer-events-none"
-                          />
-                          <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="name@example.com"
-                            className="w-full h-10 pl-9 pr-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors"
-                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSuccessMsg("");
+                              handleTabChange("login");
+                            }}
+                            className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full cursor-pointer shadow-sm text-center block"
+                          >
+                            Return to Sign In
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSuccessMsg("")}
+                            className="w-full text-center text-[11px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
+                          >
+                            Didn&apos;t receive the email? Try again
+                          </button>
                         </div>
-                      </div>
+                      ) : (
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <div className="text-xs text-wbk-brown leading-relaxed">
+                            Enter the email associated with your account and we&apos;ll send you a password reset link to create a new password.
+                          </div>
 
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-sm"
-                      >
-                        {isLoading ? (
-                          <>
-                            <IconLoader2 size={16} className="animate-spin" />
-                            <span>Sending Link...</span>
-                          </>
-                        ) : (
-                          <span>Send Reset Link</span>
-                        )}
-                      </button>
+                          <div>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
+                              Email Address
+                            </label>
+                            <div className="relative">
+                              <IconMail
+                                size={16}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-wbk-brown pointer-events-none"
+                              />
+                              <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                className="w-full h-10 pl-9 pr-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors"
+                              />
+                            </div>
+                          </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleTabChange("login")}
-                        className="w-full text-center text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer pt-2 block"
-                      >
-                        Return to Sign In
-                      </button>
-                    </form>
+                          <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-sm"
+                          >
+                            {isLoading ? (
+                              <>
+                                <IconLoader2 size={16} className="animate-spin" />
+                                <span>Sending Link...</span>
+                              </>
+                            ) : (
+                              <span>Send Reset Link</span>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleTabChange("login")}
+                            className="w-full text-center text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer pt-2 block"
+                          >
+                            Return to Sign In
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
