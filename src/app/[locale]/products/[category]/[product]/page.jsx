@@ -558,8 +558,8 @@ export default function ProductDetailPage() {
   return (
     <div className="relative min-h-screen flex flex-col bg-white pt-4 sm:pt-8 pb-32 sm:pb-36">
       {/* ── MAIN PRODUCT SECTION ── */}
-      <section className="relative z-10 w-full pb-8">
-        <Container size="xl" className="w-full">
+      <section className="relative z-10 w-full min-h-0 lg:min-h-[620px] lg:h-[86vh] flex items-center pb-8 lg:pb-0">
+        <Container size="xl" className="w-full h-full relative z-10 flex flex-col justify-between py-1">
           {/* Mobile Top Header (Breadcrumbs + Title) visible only on < lg */}
           <div className="lg:hidden mb-4 space-y-2">
             {/* Breadcrumbs */}
@@ -595,9 +595,9 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:items-stretch h-full">
             {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS (Order 2 on mobile, Column 1 on desktop) ── */}
-            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start space-y-5">
+            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start lg:justify-between space-y-5 lg:h-full lg:overflow-y-auto custom-scrollbar pr-1 pointer-events-auto">
               {/* Desktop Breadcrumbs & Title (hidden on mobile) */}
               <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
@@ -652,7 +652,7 @@ export default function ProductDetailPage() {
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {formatOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs py-1">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
                         {availableFormats.map((item) => (
                           <button
                             key={item}
@@ -694,7 +694,7 @@ export default function ProductDetailPage() {
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {styleOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-hidden text-xs py-1">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
                         {availableStyles.map((item) => (
                           <button
                             key={item}
@@ -741,7 +741,7 @@ export default function ProductDetailPage() {
                       />
                     </button>
                     {sizeOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl shadow-lg z-50 overflow-y-auto max-h-56 text-xs py-1">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-y-auto max-h-56 text-xs py-1">
                         {availableSizes.map((item, idx) => (
                           <button
                             key={idx}
@@ -845,10 +845,10 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── CENTER COLUMN: 3D VIEWER OR 2D MAIN IMAGE (Order 1 on mobile, Column 2 on desktop) ── */}
-            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full">
+            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full lg:h-full relative pointer-events-none">
               {has3D ? (
-                /* 3D Mode Canvas Container */
-                <div className="relative w-full h-[360px] sm:h-[450px] lg:h-[580px] xl:h-[620px] bg-[#F8F7F5] border border-wbk-lightgrey/50 rounded-2xl overflow-hidden flex items-center justify-center shadow-xs">
+                /* 3D Mode Canvas Container - Mobilon keretes kártya, Asztalin keret nélküli tiszta háttér */
+                <div className="relative w-full h-[360px] sm:h-[450px] lg:h-full bg-[#F8F7F5] lg:bg-transparent border border-wbk-lightgrey/50 lg:border-none rounded-2xl lg:rounded-none overflow-hidden lg:overflow-visible flex items-center justify-center shadow-xs lg:shadow-none pointer-events-auto">
                   {mounted && ready && (
                     <ConfiguratorCanvas
                       key={`${categorySlug}-${productSlug}-${displayProduct.slug}`}
@@ -858,7 +858,7 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* 3D Mode Top Controls */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
+                  <div className="absolute top-4 lg:top-2 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
                     <button
                       type="button"
                       onClick={() => setIsFolded(!isFolded)}
@@ -874,10 +874,10 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 /* Non-3D Mode: High-Impact Center Main Image */
-                <div className="relative w-full flex flex-col items-center justify-center">
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-0 lg:p-2 sm:p-4 pointer-events-auto">
                   <div
                     onClick={() => setLightboxIndex(selectedImageIndex)}
-                    className="relative group w-full max-w-[620px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-2xl border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-xs hover:shadow-md transition-all duration-300"
+                    className="relative group w-full max-w-[620px] lg:max-w-[560px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-2xl lg:rounded-none border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-xs lg:shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -908,7 +908,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* ── MOBILE GALLERY HORIZONTAL ROW (visible on < lg) ── */}
-              <div className="w-full lg:hidden mt-3">
+              <div className="w-full lg:hidden mt-3 pointer-events-auto">
                 <div className="flex items-center justify-between pb-1.5">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
                     Gallery ({galleryImages.length})
@@ -953,7 +953,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY (Desktop Only, hidden on mobile) ── */}
-            <div className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between h-[580px] xl:h-[620px] overflow-hidden">
+            <div className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between h-full overflow-hidden pointer-events-auto">
               <div className="flex flex-col h-full overflow-hidden">
                 <div className="flex items-center justify-between pb-2 shrink-0 border-b border-wbk-lightgrey/40">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
@@ -999,7 +999,7 @@ export default function ProductDetailPage() {
                                 setSelectedImageIndex(idx);
                               }
                             }}
-                            className={`relative w-full h-full aspect-square rounded-xl overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
+                            className={`relative w-full h-full aspect-square rounded-none overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
                               isSelected
                                 ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs opacity-100 scale-[0.98]"
                                 : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
@@ -1008,7 +1008,7 @@ export default function ProductDetailPage() {
                             <img
                               src={img.src}
                               alt={img.alt}
-                              className="w-full h-full object-cover object-center rounded-lg group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover object-center rounded-none group-hover:scale-105 transition-transform duration-300"
                               onLoad={updateScrollButtons}
                             />
                             {isSelected && (
