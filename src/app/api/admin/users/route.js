@@ -142,7 +142,12 @@ export async function PATCH(request) {
 
     const currentMeta = userCurrent.user.user_metadata || {};
     const updatedMeta = { ...currentMeta };
-    const profileUpdates = { id: userId, updated_at: new Date().toISOString() };
+    const profileUpdates = {
+      id: userId,
+      email: userCurrent.user.email,
+      full_name: currentMeta.full_name || userCurrent.user.email?.split("@")[0] || "User",
+      updated_at: new Date().toISOString(),
+    };
 
     // 1. If role is being updated
     if (role !== undefined) {

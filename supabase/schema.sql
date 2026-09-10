@@ -5,6 +5,7 @@
 
 CREATE TABLE IF NOT EXISTS public.products (
   id INT PRIMARY KEY,
+  sku VARCHAR(100),
   ean VARCHAR(50),
   ean_uk VARCHAR(50),
   ean_us VARCHAR(50),
@@ -35,6 +36,10 @@ CREATE TABLE IF NOT EXISTS public.products (
   weight NUMERIC,
   stock INT DEFAULT 100,
   package_dimensions TEXT,
+  pack_1 TEXT,
+  pack_2 TEXT,
+  pack_3 TEXT,
+  pack_4 TEXT,
   
   -- Pricing & Sales
   price_gbp NUMERIC,

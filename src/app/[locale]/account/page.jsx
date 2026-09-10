@@ -89,6 +89,30 @@ export default function AccountPage() {
   } = useAuth();
   const [activeTab, setActiveTab] = useState("orders"); // 'orders' | 'configs' | 'addresses' | 'profile'
   const [recoveryFromUrl, setRecoveryFromUrl] = useState(false);
+  const [userOrders, setUserOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  // Fetch real customer orders from Supabase
+  useEffect(() => {
+    async function fetchUserOrders() {
+      if (!user?.email && !user?.id) return;
+      try {
+        setOrdersLoading(true);
+        const res = await fetch(
+          `/api/account/orders?email=${encodeURIComponent(user.email || "")}&userId=${encodeURIComponent(user.id || "")}`
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          setUserOrders(data.orders);
+        }
+      } catch (err) {
+        console.warn("Could not fetch user orders", err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    }
+    fetchUserOrders();
+  }, [user]);
 
   // Detect tab or recovery mode from URL or AuthContext
   useEffect(() => {
@@ -610,98 +634,214 @@ export default function AccountPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {SAMPLE_ORDERS.map((order) => (
-                    <div
-                      key={order.id}
-                      className="border border-wbk-lightgrey bg-wbk-white overflow-hidden shadow-2xs"
-                    >
-                      {/* Order Header */}
-                      <div className="p-4 sm:p-5 bg-[#FBF9F8] border-b border-wbk-lightgrey flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                              Order ID
-                            </span>
-                            <span className="text-xs font-bold text-wbk-black">
-                              #{order.id}
-                            </span>
-                          </div>
-                          <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
-                          <div>
-                            <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                              Date Placed
-                            </span>
-                            <span className="text-xs text-wbk-black">
-                              {order.date}
-                            </span>
-                          </div>
-                          <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
-                          <div>
-                            <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                              Total Amount
-                            </span>
-                            <span className="text-xs font-bold text-wbk-black">
-                              {order.total}
-                            </span>
-                          </div>
-                        </div>
+                  {ordersLoading ? (
+                    <div className="py-12 text-center text-xs text-wbk-brown flex flex-col items-center justify-center gap-2">
+                      <IconLoader2 size={24} className="animate-spin text-wbk-gold" />
+                      <span>Loading your purchase history...</span>
+                    </div>
+                  ) : userOrders.length > 0 ? (
+                    userOrders.map((order) => {
+                      const formattedDate = new Date(order.created_at).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      });
 
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${order.statusColor}`}
-                          >
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
+                      const statusColor =
+                        order.status === "paid" || order.status === "completed"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                          : order.status === "shipped"
+                          ? "bg-purple-100 text-purple-800 border-purple-200"
+                          : order.status === "cancelled"
+                          ? "bg-red-100 text-red-800 border-red-200"
+                          : "bg-amber-100 text-amber-800 border-amber-200";
 
-                      {/* Order Item */}
-                      <div className="p-4 sm:p-5 divide-y divide-wbk-lightgrey/50">
-                        {order.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-4 sm:gap-6 py-2"
-                          >
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-2 shrink-0 flex items-center justify-center">
-                              <Image
-                                src={item.image}
-                                alt={item.name}
-                                width={64}
-                                height={64}
-                                className="object-contain"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-semibold text-wbk-black">
-                                {item.name}
-                              </h3>
-                              <p className="text-xs text-wbk-brown mt-0.5">
-                                {item.size} • {item.finish}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
-                                <IconTruck size={14} />
-                                <span>{order.estimatedDelivery}</span>
+                      return (
+                        <div
+                          key={order.id}
+                          className="border border-wbk-lightgrey bg-wbk-white overflow-hidden shadow-2xs"
+                        >
+                          {/* Order Header */}
+                          <div className="p-4 sm:p-5 bg-[#FBF9F8] border-b border-wbk-lightgrey flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div>
+                                <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                  Order ID
+                                </span>
+                                <span className="text-xs font-bold text-wbk-black">
+                                  #{order.id}
+                                </span>
+                              </div>
+                              <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
+                              <div>
+                                <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                  Date Placed
+                                </span>
+                                <span className="text-xs text-wbk-black">{formattedDate}</span>
+                              </div>
+                              <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
+                              <div>
+                                <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                  Total Amount
+                                </span>
+                                <span className="text-xs font-bold text-wbk-black">
+                                  £{Number(order.total_amount).toFixed(2)}
+                                </span>
                               </div>
                             </div>
-                            <div className="text-sm font-bold text-wbk-black">
-                              {item.price}
+
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${statusColor}`}
+                              >
+                                {order.status}
+                              </span>
                             </div>
                           </div>
-                        ))}
-                      </div>
 
-                      {/* Order Actions */}
-                      <div className="px-4 sm:px-5 py-3 bg-[#F4F2F0]/40 border-t border-wbk-lightgrey/60 flex items-center justify-between text-xs text-wbk-brown">
-                        <span>Tracking: <strong className="text-wbk-black">{order.trackingNumber}</strong></span>
-                        <Link
-                          href="/support/contact"
-                          className="text-wbk-black hover:text-wbk-green underline font-medium"
-                        >
-                          Request Support
-                        </Link>
+                          {/* Order Items */}
+                          <div className="p-4 sm:p-5 divide-y divide-wbk-lightgrey/50">
+                            {order.items?.map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-4 sm:gap-6 py-2">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-2 shrink-0 flex items-center justify-center relative overflow-hidden">
+                                  <Image
+                                    src={item.image || "/sofa1.webp"}
+                                    alt={item.title || "Wall Bed Item"}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-wbk-black">
+                                    {item.title}
+                                  </h3>
+                                  <p className="text-xs text-wbk-brown mt-0.5">
+                                    {item.options?.size} {item.options?.orientation && `• ${item.options.orientation}`}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
+                                    <IconTruck size={14} />
+                                    <span>
+                                      {order.tracking_carrier
+                                        ? `${order.tracking_carrier} (${order.status})`
+                                        : order.delivery_label || "Standard UK Delivery"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-sm font-bold text-wbk-black">
+                                  £{(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Order Actions */}
+                          <div className="px-4 sm:px-5 py-3 bg-[#F4F2F0]/40 border-t border-wbk-lightgrey/60 flex items-center justify-between text-xs text-wbk-brown">
+                            <span>
+                              Tracking:{" "}
+                              <strong className="text-wbk-black">
+                                {order.tracking_number || "To be assigned upon dispatch"}
+                              </strong>
+                            </span>
+                            <Link
+                              href="/contact"
+                              className="text-wbk-black hover:text-wbk-green underline font-medium"
+                            >
+                              Request Order Support
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    /* Sample demonstration orders when account has no purchases yet */
+                    SAMPLE_ORDERS.map((order) => (
+                      <div
+                        key={order.id}
+                        className="border border-wbk-lightgrey bg-wbk-white overflow-hidden shadow-2xs"
+                      >
+                        {/* Order Header */}
+                        <div className="p-4 sm:p-5 bg-[#FBF9F8] border-b border-wbk-lightgrey flex flex-wrap items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                Order ID (Sample)
+                              </span>
+                              <span className="text-xs font-bold text-wbk-black">
+                                #{order.id}
+                              </span>
+                            </div>
+                            <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
+                            <div>
+                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                Date Placed
+                              </span>
+                              <span className="text-xs text-wbk-black">{order.date}</span>
+                            </div>
+                            <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
+                            <div>
+                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
+                                Total Amount
+                              </span>
+                              <span className="text-xs font-bold text-wbk-black">{order.total}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${order.statusColor}`}
+                            >
+                              {order.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order Item */}
+                        <div className="p-4 sm:p-5 divide-y divide-wbk-lightgrey/50">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-4 sm:gap-6 py-2">
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-2 shrink-0 flex items-center justify-center">
+                                <Image
+                                  src={item.image}
+                                  alt={item.name}
+                                  width={64}
+                                  height={64}
+                                  className="object-contain"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-wbk-black">
+                                  {item.name}
+                                </h3>
+                                <p className="text-xs text-wbk-brown mt-0.5">
+                                  {item.size} • {item.finish}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
+                                  <IconTruck size={14} />
+                                  <span>{order.estimatedDelivery}</span>
+                                </div>
+                              </div>
+                              <div className="text-sm font-bold text-wbk-black">
+                                {item.price}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Order Actions */}
+                        <div className="px-4 sm:px-5 py-3 bg-[#F4F2F0]/40 border-t border-wbk-lightgrey/60 flex items-center justify-between text-xs text-wbk-brown">
+                          <span>
+                            Tracking: <strong className="text-wbk-black">{order.trackingNumber}</strong>
+                          </span>
+                          <Link
+                            href="/contact"
+                            className="text-wbk-black hover:text-wbk-green underline font-medium"
+                          >
+                            Request Support
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             )}

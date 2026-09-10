@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import catalog from "@/data/products-catalog.json";
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -41,10 +43,15 @@ export async function GET(request) {
     }
 
     const products = await res.json();
+    const enrichedProducts = products.map((item) => {
+      const local = catalog.find((c) => c.id === item.id || c.slug === item.slug) || {};
+      return { ...local, ...item };
+    });
+
     return NextResponse.json({
       success: true,
-      count: products.length,
-      products,
+      count: enrichedProducts.length,
+      products: enrichedProducts,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -65,7 +65,19 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <Link
+            href="/admin/feeds"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors border border-white/20 shadow-sm"
+          >
+            <span>Marketplace Feeds</span>
+          </Link>
+          <Link
+            href="/admin/orders"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors border border-white/20 shadow-sm"
+          >
+            <span>View Orders</span>
+          </Link>
           <Link
             href="/admin/products"
             className="flex items-center gap-2 px-5 py-2.5 bg-wbk-gold hover:bg-white text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-sm"

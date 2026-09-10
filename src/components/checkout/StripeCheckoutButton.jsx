@@ -4,7 +4,7 @@ import { useState } from "react";
 import { IconLock, IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 
-export function StripeCheckoutButton({ className = "", label = "Pay with Card / Stripe", disabled = false }) {
+export function StripeCheckoutButton({ className = "", label = "Pay with Card / Stripe", disabled = false, customerDetails = null }) {
   const {
     items,
     subtotal,
@@ -12,6 +12,8 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
     shipping,
     total,
     customCartId,
+    deliveryOption,
+    promoCode,
     selectedDeliveryDetails,
   } = useCart();
 
@@ -28,6 +30,36 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
     setErrorMessage("");
 
     try {
+      let activeOrderId = null;
+
+      // 1. If customer details are provided, pre-create the order in database
+      if (customerDetails?.email && customerDetails?.address1) {
+        try {
+          const orderRes = await fetch("/api/checkout/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items,
+              customer: {
+                email: customerDetails.email,
+                phone: customerDetails.phone,
+                name: `${customerDetails.firstName || ""} ${customerDetails.lastName || ""}`.trim(),
+              },
+              shippingAddress: customerDetails,
+              deliveryOption,
+              promoCode,
+              paymentMethod: "stripe",
+            }),
+          });
+          const orderData = await orderRes.json();
+          if (orderData.success && orderData.orderId) {
+            activeOrderId = orderData.orderId;
+          }
+        } catch (e) {
+          console.warn("Pre-order creation notice:", e);
+        }
+      }
+
       // Calculate discount multiplier if promo applied
       const discountMultiplier = subtotal > 0 ? Math.max(0, (subtotal - discount) / subtotal) : 1;
 
@@ -74,7 +106,8 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
         });
       }
 
-      const successUrl = `${window.location.origin}/thanks?session_id={CHECKOUT_SESSION_ID}&cart_id=${encodeURIComponent(customCartId)}`;
+      const orderRef = activeOrderId || customCartId;
+      const successUrl = `${window.location.origin}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(orderRef)}&cart_id=${encodeURIComponent(customCartId)}`;
       const cancelUrl = `${window.location.origin}/cart`;
 
       const response = await fetch("/api/checkout/stripe", {
@@ -85,6 +118,7 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
           success_url: successUrl,
           cancel_url: cancelUrl,
           cartId: customCartId,
+          orderId: activeOrderId,
           collect_phone: true,
         }),
       });

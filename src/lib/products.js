@@ -29,7 +29,10 @@ export async function getProducts({
 
     const { data, error } = await query;
     if (!error && data && data.length > 0) {
-      return data;
+      return data.map((item) => {
+        const local = RAW_CATALOG.find((p) => p.id === item.id || p.slug === item.slug) || {};
+        return { ...local, ...item };
+      });
     }
   } catch (err) {
     // Supabase query fallback
@@ -55,6 +58,7 @@ export async function getProducts({
  * Fetch a single product by slug
  */
 export async function getProduct(categorySlug, productSlug) {
+  const localFallback = findProductBySlug(categorySlug, productSlug);
   try {
     const { data, error } = await supabase
       .from('products')
@@ -63,13 +67,13 @@ export async function getProduct(categorySlug, productSlug) {
       .single();
 
     if (!error && data) {
-      return data;
+      return { ...localFallback, ...data };
     }
   } catch (err) {
     // fallback
   }
 
-  return findProductBySlug(categorySlug, productSlug);
+  return localFallback;
 }
 
 export { findProductBySlug, getProductVariants };

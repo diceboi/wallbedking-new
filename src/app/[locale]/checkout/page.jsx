@@ -68,7 +68,7 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmitOrder = (e) => {
+  const handleSubmitOrder = async (e) => {
     e.preventDefault();
     setErrorMessage("");
 
@@ -78,24 +78,41 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (formData.paymentMethod === "card") {
-      if (!formData.cardNumber || !formData.cardExpiry || !formData.cardCvc) {
-        setErrorMessage("Please enter your card details to complete payment.");
-        return;
-      }
-    }
-
     setIsSubmitting(true);
 
-    // Simulate order payment processing
-    setTimeout(() => {
-      const generatedOrderNum = "WBK-" + Math.floor(100000 + Math.random() * 900000);
-      setOrderNumber(generatedOrderNum);
+    try {
+      const res = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          customer: {
+            email: formData.email,
+            phone: formData.phone,
+            name: `${formData.firstName} ${formData.lastName}`.trim(),
+          },
+          shippingAddress: formData,
+          deliveryOption,
+          promoCode,
+          paymentMethod: formData.paymentMethod,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.orderId) {
+        setOrderNumber(data.orderId);
+        setIsSubmitting(false);
+        setOrderComplete(true);
+        clearCart();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        throw new Error(data.error || "Failed to process order.");
+      }
+    } catch (err) {
+      console.error("Submit order error:", err);
+      setErrorMessage(err.message || "There was an error creating your order. Please try again.");
       setIsSubmitting(false);
-      setOrderComplete(true);
-      clearCart();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 1200);
+    }
   };
 
   if (!isMounted) {
@@ -170,9 +187,7 @@ export default function CheckoutPage() {
                   Shipping & Service
                 </h4>
                 <p className="text-wbk-black font-medium">
-                  {shippingMethod === "white-glove"
-                    ? "White Glove Room of Choice Delivery"
-                    : "Standard UK Mainland Delivery (3–5 days)"}
+                  {selectedDeliveryDetails?.label || "Standard UK Mainland Delivery"}
                 </p>
                 <p className="pt-2 text-[11px] leading-relaxed">
                   Our courier will contact you 24 hours prior to dispatch with an exact 2-hour delivery window.
@@ -571,7 +586,10 @@ export default function CheckoutPage() {
                       </p>
 
                       <div className="pt-2">
-                        <StripeCheckoutButton label={`Pay £${finalTotal.toLocaleString()} with Stripe`} />
+                        <StripeCheckoutButton
+                          label={`Pay £${finalTotal.toLocaleString()} with Stripe`}
+                          customerDetails={formData}
+                        />
                       </div>
                     </div>
                   )}

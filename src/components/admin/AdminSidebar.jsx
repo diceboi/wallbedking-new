@@ -13,6 +13,8 @@ import {
   IconExternalLink,
   IconX,
   IconUsers,
+  IconReceipt,
+  IconBuildingStore,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -23,11 +25,23 @@ export const ADMIN_NAV_ITEMS = [
     icon: IconDashboard,
   },
   {
+    id: "orders",
+    label: "Orders",
+    href: "/admin/orders",
+    icon: IconReceipt,
+  },
+  {
     id: "products",
     label: "Products",
     href: "/admin/products",
     icon: IconPackage,
     hasCount: true,
+  },
+  {
+    id: "feeds",
+    label: "Marketplace Feeds",
+    href: "/admin/feeds",
+    icon: IconBuildingStore,
   },
   {
     id: "pricing",

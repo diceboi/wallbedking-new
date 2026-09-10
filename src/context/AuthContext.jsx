@@ -7,6 +7,9 @@ export const AuthContext = createContext({
   user: null,
   session: null,
   loading: true,
+  role: null,
+  roleLoading: true,
+  isAdmin: false,
   isUserDrawerOpen: false,
   drawerTab: "login", // 'login' | 'register' | 'forgot'
   isPasswordRecovery: false,
@@ -30,9 +33,69 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState("login"); // 'login' | 'register' | 'forgot'
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  // Fetch authoritative role from Supabase DB or API
+  const fetchUserRole = useCallback(async (currentUser, currentSession) => {
+    if (!currentUser) {
+      setRole(null);
+      setRoleLoading(false);
+      return;
+    }
+
+    setRoleLoading(true);
+    let resolvedRole = null;
+
+    // 1. Check Supabase profiles table directly
+    try {
+      if (supabase) {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (!error && profile?.role) {
+          resolvedRole = profile.role;
+        }
+      }
+    } catch (err) {
+      console.warn("[Auth] Failed to query profiles table:", err);
+    }
+
+    // 2. If not found in profiles, verify with server-side check-auth endpoint
+    if (!resolvedRole && currentSession?.access_token) {
+      try {
+        const res = await fetch("/api/admin/check-auth", {
+          headers: {
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.role) resolvedRole = data.role;
+        }
+      } catch (err) {
+        console.warn("[Auth] check-auth failed:", err);
+      }
+    }
+
+    // 3. Fallback to user_metadata or initial admin email
+    if (!resolvedRole) {
+      resolvedRole =
+        currentUser.user_metadata?.role ||
+        (currentUser.email?.toLowerCase() === "diceboii13@gmail.com"
+          ? "admin"
+          : "customer");
+    }
+
+    setRole(resolvedRole);
+    setRoleLoading(false);
+  }, []);
 
   // Initialize session and listen for auth state changes
   useEffect(() => {
@@ -42,6 +105,7 @@ export function AuthProvider({ children }) {
       try {
         if (!supabase) {
           setLoading(false);
+          setRoleLoading(false);
           return;
         }
 
@@ -52,12 +116,23 @@ export function AuthProvider({ children }) {
 
         if (mounted) {
           setSession(initialSession);
-          setUser(initialSession?.user ?? null);
+          const currentUser = initialSession?.user ?? null;
+          setUser(currentUser);
           setLoading(false);
+
+          if (currentUser) {
+            fetchUserRole(currentUser, initialSession);
+          } else {
+            setRole(null);
+            setRoleLoading(false);
+          }
         }
       } catch (err) {
         console.warn("[Auth] Init error:", err);
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          setRoleLoading(false);
+        }
       }
     }
 
@@ -66,8 +141,16 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (mounted) {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        const currentUser = currentSession?.user ?? null;
+        setUser(currentUser);
         setLoading(false);
+
+        if (currentUser) {
+          fetchUserRole(currentUser, currentSession);
+        } else {
+          setRole(null);
+          setRoleLoading(false);
+        }
 
         if (event === "PASSWORD_RECOVERY") {
           setIsPasswordRecovery(true);
@@ -79,7 +162,7 @@ export function AuthProvider({ children }) {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchUserRole]);
 
   const openUserDrawer = useCallback((tab = "login") => {
     setDrawerTab(tab);
@@ -293,12 +376,20 @@ export function AuthProvider({ children }) {
     return await updateProfile({ saved_configs: updatedConfigs });
   }, [user, updateProfile]);
 
+  const isAdmin =
+    role === "admin" ||
+    user?.user_metadata?.role === "admin" ||
+    user?.email?.toLowerCase() === "diceboii13@gmail.com";
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         loading,
+        role,
+        roleLoading,
+        isAdmin,
         isUserDrawerOpen,
         drawerTab,
         isPasswordRecovery,

@@ -98,12 +98,22 @@ export function ProductCard({ product, className = "" }) {
 
         {/* Specs */}
         <div className="text-xs text-wbk-black space-y-0.5 font-poppins">
+          {product.sku && (
+            <div className="text-[11px] text-wbk-brown font-mono font-medium tracking-tight">
+              SKU: {product.sku}
+            </div>
+          )}
           {orientation &&
             product.parent_category !== "mattresses" &&
             product.parent_category !== "sofas" && (
               <div>Orientation: {orientation}</div>
             )}
           <div>Size: {size}</div>
+          {product.weight && (
+            <div className="text-[11px] text-wbk-brown">
+              Weight: {product.weight} kg
+            </div>
+          )}
           {colors && colors.length > 0 && (
             <div className="flex items-center gap-1.5 pt-1">
               <span>Colors:</span>

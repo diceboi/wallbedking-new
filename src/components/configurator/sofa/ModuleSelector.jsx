@@ -167,6 +167,7 @@ export function ModuleSelector() {
           <div
             key={moduleDef.id}
             onPointerDown={(e) => handlePointerDown(e, moduleDef)}
+            title="Click to add or drag into 3D scene"
             className="group w-full bg-[#FBF9F8] hover:bg-white border border-wbk-lightgrey/70 hover:border-wbk-green p-2 rounded-none cursor-grab active:cursor-grabbing transition-all duration-150 shadow-2xs hover:shadow-sm select-none flex flex-row items-center gap-2.5"
           >
             {/* Thumbnail */}

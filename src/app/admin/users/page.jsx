@@ -302,76 +302,123 @@ export default function AdminUsersPage() {
   const customerCount = users.filter((u) => u.role === "customer").length;
   const verifiedCount = users.filter((u) => u.emailConfirmed).length;
 
-  const sqlSchema = `-- WallBedKing: Supabase Profiles Table Schema & Trigger
--- Run this in your Supabase SQL Editor to make users, addresses, and 3D configs visible in Table Editor!
+  const sqlSchema = `-- ============================================================
+-- WALLBEDKING SUPABASE RBAC & USER ROLES SCHEMA
+-- Table: public.profiles
+-- Run this in Supabase SQL Editor to enable database-enforced roles
+-- ============================================================
 
-create table if not exists public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  email text,
-  full_name text,
-  role text default 'customer' check (role in ('admin', 'customer')),
-  phone text,
-  addresses jsonb default '[]'::jsonb,
-  saved_configs jsonb default '[]'::jsonb,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  phone TEXT,
+  role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('admin', 'customer', 'staff')),
+  avatar_url TEXT,
+  addresses JSONB DEFAULT '[]'::jsonb,
+  saved_configs JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable Row Level Security (RLS)
-alter table public.profiles enable row level security;
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles (email);
 
--- Policies
-create policy "Users can view own profile" on public.profiles
-  for select using (auth.uid() = id);
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-create policy "Users can update own profile" on public.profiles
-  for update using (auth.uid() = id);
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
-create policy "Service role full access" on public.profiles
-  for all using (true);
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+CREATE POLICY "Users can read own profile"
+  ON public.profiles FOR SELECT TO authenticated
+  USING (id = auth.uid());
 
--- Auto sync trigger from auth.users
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, email, full_name, role, addresses, saved_configs)
-  values (
-    new.id,
-    new.email,
-    coalesce(new.raw_user_meta_data->>'full_name', ''),
-    coalesce(new.raw_user_meta_data->>'role', 'customer'),
-    coalesce(new.raw_user_meta_data->'addresses', '[]'::jsonb),
-    coalesce(new.raw_user_meta_data->'saved_configs', '[]'::jsonb)
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+CREATE POLICY "Admins can view all profiles"
+  ON public.profiles FOR SELECT TO authenticated
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Users can update own details" ON public.profiles;
+CREATE POLICY "Users can update own details"
+  ON public.profiles FOR UPDATE TO authenticated
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid() AND role = (SELECT role FROM public.profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
+CREATE POLICY "Admins can update any profile"
+  ON public.profiles FOR UPDATE TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Service role full access on profiles" ON public.profiles;
+CREATE POLICY "Service role full access on profiles"
+  ON public.profiles FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  assigned_role TEXT := 'customer';
+BEGIN
+  IF NEW.email = 'diceboii13@gmail.com' OR (NEW.raw_user_meta_data->>'role') = 'admin' THEN
+    assigned_role := 'admin';
+  END IF;
+
+  INSERT INTO public.profiles (
+    id, email, full_name, role, addresses, saved_configs, created_at, updated_at
   )
-  on conflict (id) do update
-  set email = excluded.email,
-      full_name = coalesce(excluded.full_name, profiles.full_name),
-      addresses = coalesce(excluded.addresses, profiles.addresses),
-      saved_configs = coalesce(excluded.saved_configs, profiles.saved_configs);
-  return new;
-end;
-$$ language plpgsql security definer;
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    assigned_role,
+    COALESCE(NEW.raw_user_meta_data->'addresses', '[]'::jsonb),
+    COALESCE(NEW.raw_user_meta_data->'saved_configs', '[]'::jsonb),
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+    role = CASE WHEN EXCLUDED.role = 'admin' THEN 'admin' ELSE public.profiles.role END,
+    updated_at = NOW();
 
-create or replace trigger on_auth_user_created
-  after insert or update on auth.users
-  for each row execute procedure public.handle_new_user();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Backfill existing users into profiles
-insert into public.profiles (id, email, full_name, role, addresses, saved_configs)
-select 
-  id, 
-  email, 
-  coalesce(raw_user_meta_data->>'full_name', ''), 
-  coalesce(raw_user_meta_data->>'role', 'customer'),
-  coalesce(raw_user_meta_data->'addresses', '[]'::jsonb),
-  coalesce(raw_user_meta_data->'saved_configs', '[]'::jsonb)
-from auth.users
-on conflict (id) do update
-set email = excluded.email,
-    full_name = excluded.full_name,
-    role = excluded.role,
-    addresses = excluded.addresses,
-    saved_configs = excluded.saved_configs;`;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT OR UPDATE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+INSERT INTO public.profiles (
+  id, email, full_name, role, addresses, saved_configs, created_at, updated_at
+)
+SELECT
+  u.id,
+  u.email,
+  COALESCE(u.raw_user_meta_data->>'full_name', split_part(u.email, '@', 1)),
+  CASE
+    WHEN u.email = 'diceboii13@gmail.com' THEN 'admin'
+    WHEN (u.raw_user_meta_data->>'role') = 'admin' THEN 'admin'
+    ELSE 'customer'
+  END AS role,
+  COALESCE(u.raw_user_meta_data->'addresses', '[]'::jsonb),
+  COALESCE(u.raw_user_meta_data->'saved_configs', '[]'::jsonb),
+  u.created_at,
+  NOW()
+FROM auth.users u
+ON CONFLICT (id) DO UPDATE
+SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(sqlSchema);

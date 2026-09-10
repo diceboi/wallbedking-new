@@ -161,6 +161,19 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-wbk-black mb-1">
+                  SKU (Stock Keeping Unit)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. MORPHY-V-D"
+                  value={formData.sku || ""}
+                  onChange={(e) => handleChange("sku", e.target.value)}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono font-medium"
+                />
+              </div>
+
               {/* Country-Specific EAN Barcodes */}
               <div className="md:col-span-2 p-3.5 bg-[#F4F2F0]/60 border border-wbk-lightgrey/60 space-y-3">
                 <div className="flex items-center justify-between">
@@ -558,6 +571,87 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   value={formData.maximum_mattress_depth ?? 300}
                   onChange={(e) => handleNumberChange("maximum_mattress_depth", e.target.value)}
                   className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-wbk-brown mb-1">
+                  Net Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g. 52.5"
+                  value={formData.weight ?? ""}
+                  onChange={(e) => handleNumberChange("weight", e.target.value)}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
+                />
+              </div>
+            </div>
+
+            {/* Box Packaging Breakdown */}
+            <div className="pt-3 border-t border-wbk-lightgrey/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider">
+                  Box Packaging Dimensions (cm, e.g. 215x30x12)
+                </span>
+                <span className="text-[10px] text-wbk-brown">
+                  Used for freight logistics & package display
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 1</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 215x30x12"
+                    value={formData.pack_1 || ""}
+                    onChange={(e) => handleChange("pack_1", e.target.value)}
+                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 2</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 150x25x10"
+                    value={formData.pack_2 || ""}
+                    onChange={(e) => handleChange("pack_2", e.target.value)}
+                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 3</label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={formData.pack_3 || ""}
+                    onChange={(e) => handleChange("pack_3", e.target.value)}
+                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 4</label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={formData.pack_4 || ""}
+                    onChange={(e) => handleChange("pack_4", e.target.value)}
+                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
+                  Composite Package Summary (package_dimensions)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Box 1: 215x30x12 | Box 2: 150x25x10"
+                  value={formData.package_dimensions || ""}
+                  onChange={(e) => handleChange("package_dimensions", e.target.value)}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
                 />
               </div>
             </div>

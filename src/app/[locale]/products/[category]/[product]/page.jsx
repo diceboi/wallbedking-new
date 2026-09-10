@@ -7,11 +7,12 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Mousewheel } from "swiper/modules";
+import { Navigation, Mousewheel, FreeMode } from "swiper/modules";
 
 // Swiper CSS
 import "swiper/css";
 import "swiper/css/navigation";
+import "swiper/css/free-mode";
 
 import {
   IconChevronDown,
@@ -85,6 +86,17 @@ export default function ProductDetailPage() {
   const galleryContainerRef = useRef(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(true);
+
+  // Mobile horizontal gallery Swiper state
+  const [mobileGallerySwiper, setMobileGallerySwiper] = useState(null);
+  const [isMobileGalleryBeginning, setIsMobileGalleryBeginning] =
+    useState(true);
+  const [isMobileGalleryEnd, setIsMobileGalleryEnd] = useState(false);
+
+  // Tabs Swiper state for mobile
+  const [tabsSwiper, setTabsSwiper] = useState(null);
+  const [isTabsBeginning, setIsTabsBeginning] = useState(true);
+  const [isTabsEnd, setIsTabsEnd] = useState(false);
 
   const updateScrollButtons = useCallback(() => {
     const el = galleryContainerRef.current;
@@ -194,9 +206,12 @@ export default function ProductDetailPage() {
     }
 
     if (cat === "cabinets") {
-      if (s.includes("side") || s.includes("unit")) return "side-storage-wardrobe-cabinet";
-      if (s.includes("ext") || s.includes("overhead") || s.includes("bridge")) return "overhead-storage-extension-cabinet";
-      if (s.includes("horiz") || o === "horizontal") return "horizontal-wall-bed-cabinet";
+      if (s.includes("side") || s.includes("unit"))
+        return "side-storage-wardrobe-cabinet";
+      if (s.includes("ext") || s.includes("overhead") || s.includes("bridge"))
+        return "overhead-storage-extension-cabinet";
+      if (s.includes("horiz") || o === "horizontal")
+        return "horizontal-wall-bed-cabinet";
       return "vertical-wall-bed-cabinet";
     }
 
@@ -210,7 +225,7 @@ export default function ProductDetailPage() {
 
     // 1. Exact sizeSlug match (e.g. "135x190")
     const matchSlug = variants.find(
-      (v) => (v.sizeSlug || "").replace(/[^a-z0-9]/g, "") === clean
+      (v) => (v.sizeSlug || "").replace(/[^a-z0-9]/g, "") === clean,
     );
     if (matchSlug) return matchSlug;
 
@@ -276,7 +291,12 @@ export default function ProductDetailPage() {
 
   const availableSizes = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
-      return [{ label: activeProduct.sizeLabel || "Standard", product: activeProduct }];
+      return [
+        {
+          label: activeProduct.sizeLabel || "Standard",
+          product: activeProduct,
+        },
+      ];
     }
 
     const seen = new Set();
@@ -326,7 +346,7 @@ export default function ProductDetailPage() {
       if (!targetVariant && activeProduct.defaultSizeSlug) {
         targetVariant = findMatchingVariant(
           familyVariants,
-          activeProduct.defaultSizeSlug
+          activeProduct.defaultSizeSlug,
         );
       }
       if (!targetVariant && familyVariants.length > 0) {
@@ -342,7 +362,7 @@ export default function ProductDetailPage() {
           targetVariant.sizeLabel ||
             targetVariant.size ||
             targetVariant.name ||
-            "Standard"
+            "Standard",
         );
       } else {
         setSelectedVariant(activeProduct);
@@ -350,7 +370,7 @@ export default function ProductDetailPage() {
           activeProduct.sizeLabel ||
             activeProduct.size ||
             activeProduct.name ||
-            "Standard"
+            "Standard",
         );
       }
 
@@ -411,7 +431,7 @@ export default function ProductDetailPage() {
       const sameSize = candidates.find(
         (v) =>
           (v.sizeLabel && v.sizeLabel === productSize) ||
-          (v.size && v.size === selectedVariant?.size)
+          (v.size && v.size === selectedVariant?.size),
       );
       const nextVariant = sameSize || candidates[0];
       if (nextVariant) {
@@ -420,7 +440,7 @@ export default function ProductDetailPage() {
           nextVariant.sizeLabel ||
             nextVariant.size ||
             nextVariant.name ||
-            "Standard"
+            "Standard",
         );
       }
     }
@@ -429,11 +449,8 @@ export default function ProductDetailPage() {
       setProductSize(newSizeLabel);
       const match =
         familyVariants.find(
-          (v) => v.sizeLabel === newSizeLabel || v.name === newSizeLabel
-        ) ||
-        familyVariants.find(
-          (v) => v.size === newSizeLabel
-        );
+          (v) => v.sizeLabel === newSizeLabel || v.name === newSizeLabel,
+        ) || familyVariants.find((v) => v.size === newSizeLabel);
       if (match) {
         setSelectedVariant(match);
         if (match.sizeLabel) setProductSize(match.sizeLabel);
@@ -473,6 +490,25 @@ export default function ProductDetailPage() {
   const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
 
+  const currentEan =
+    (locale === "uk" || locale === "en"
+      ? displayProduct?.ean_uk
+      : locale === "de"
+        ? displayProduct?.ean_de
+        : locale === "fr"
+          ? displayProduct?.ean_fr
+          : locale === "it"
+            ? displayProduct?.ean_it
+            : locale === "es"
+              ? displayProduct?.ean_es
+              : locale === "pt"
+                ? displayProduct?.ean_pt
+                : locale === "us"
+                  ? displayProduct?.ean_us
+                  : null) ||
+    displayProduct?.ean ||
+    displayProduct?.ean_uk;
+
   // ── CART INTEGRATION ──
   const { addItem } = useCart();
   const [isAdded, setIsAdded] = useState(false);
@@ -482,7 +518,10 @@ export default function ProductDetailPage() {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
       title: displayProduct?.title || displayProduct?.name || "Wall Bed",
-      image: currentMainImage?.src || displayProduct?.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+      image:
+        currentMainImage?.src ||
+        displayProduct?.image ||
+        "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       price: totalDecimal,
       options: {
         size: productSize || "Standard",
@@ -522,14 +561,14 @@ export default function ProductDetailPage() {
     galleryImages[selectedImageIndex] || galleryImages[0];
 
   const handlePrevImage = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     setLightboxIndex((prev) =>
       prev === 0 ? galleryImages.length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     setLightboxIndex((prev) =>
       prev === galleryImages.length - 1 ? 0 : prev + 1,
     );
@@ -559,7 +598,10 @@ export default function ProductDetailPage() {
     <div className="relative min-h-screen flex flex-col bg-white pt-4 sm:pt-8 pb-32 sm:pb-36">
       {/* ── MAIN PRODUCT SECTION ── */}
       <section className="relative z-10 w-full min-h-0 lg:min-h-[620px] lg:h-[86vh] flex items-center pb-8 lg:pb-0">
-        <Container size="xl" className="w-full h-full relative z-10 flex flex-col justify-between py-1">
+        <Container
+          size="xl"
+          className="w-full h-full relative z-10 flex flex-col justify-between py-1"
+        >
           {/* Mobile Top Header (Breadcrumbs + Title) visible only on < lg */}
           <div className="lg:hidden mb-4 space-y-2">
             {/* Breadcrumbs */}
@@ -584,8 +626,18 @@ export default function ProductDetailPage() {
               <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black leading-tight tracking-tight">
                 {displayProduct.title || displayProduct.name}
               </h1>
-              <div className="flex items-center gap-2 text-xs font-poppins text-wbk-brown">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
                 <span>{productSize}</span>
+                {displayProduct?.sku && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                    SKU: {displayProduct.sku}
+                  </span>
+                )}
+                {displayProduct?.weight && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                    {displayProduct.weight} kg
+                  </span>
+                )}
                 {has3D && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wbk-green/30 text-wbk-black font-semibold text-[10px]">
                     3D View
@@ -597,7 +649,7 @@ export default function ProductDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:items-stretch h-full">
             {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS (Order 2 on mobile, Column 1 on desktop) ── */}
-            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start lg:justify-between space-y-5 lg:h-full lg:overflow-y-auto custom-scrollbar pr-1 pointer-events-auto">
+            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start lg:justify-start space-y-8 lg:h-full lg:overflow-y-auto custom-scrollbar pr-1 pointer-events-auto">
               {/* Desktop Breadcrumbs & Title (hidden on mobile) */}
               <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
@@ -620,8 +672,18 @@ export default function ProductDetailPage() {
                   <h1 className="font-new-york text-3xl xl:text-4xl text-wbk-black leading-tight tracking-tight">
                     {displayProduct.title || displayProduct.name}
                   </h1>
-                  <div className="flex items-center gap-2 text-xs font-poppins text-wbk-brown">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
                     <span>{productSize}</span>
+                    {displayProduct?.sku && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                        SKU: {displayProduct.sku}
+                      </span>
+                    )}
+                    {displayProduct?.weight && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                        {displayProduct.weight} kg
+                      </span>
+                    )}
                     {has3D && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wbk-green/30 text-wbk-black font-semibold text-[10px]">
                         3D View
@@ -652,7 +714,7 @@ export default function ProductDetailPage() {
                       <IconChevronDown size={14} className="text-wbk-brown" />
                     </button>
                     {formatOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none  z-50 overflow-hidden text-xs py-1">
                         {availableFormats.map((item) => (
                           <button
                             key={item}
@@ -874,10 +936,10 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 /* Non-3D Mode: High-Impact Center Main Image */
-                <div className="relative w-full h-full flex flex-col items-center justify-center p-0 lg:p-2 sm:p-4 pointer-events-auto">
+                <div className="relative w-full h-full flex flex-col items-center justify-start p-0 lg:p-2 sm:p-4 pointer-events-auto">
                   <div
                     onClick={() => setLightboxIndex(selectedImageIndex)}
-                    className="relative group w-full max-w-[620px] lg:max-w-[560px] aspect-[4/3] sm:aspect-[16/11] bg-[#F4F2F0]/80 rounded-2xl lg:rounded-none border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in shadow-xs lg:shadow-sm hover:shadow-md transition-all duration-300"
+                    className="relative group w-full aspect-[4/3] sm:aspect-[16/11] lg:bg-white bg-[#F4F2F0]/80  lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -888,16 +950,16 @@ export default function ProductDetailPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="max-h-full max-w-full object-contain filter drop-shadow-xs select-none"
+                        className="max-h-full max-w-full object-cover filter drop-shadow-xs select-none"
                       />
                     </AnimatePresence>
 
-                    <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs shadow-md">
+                    <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs lg:shadow-none shadow-md">
                       <IconZoomIn size={13} />
                       <span>Click to zoom</span>
                     </div>
 
-                    <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs">
+                    <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs lg:shadow-none shadow-md">
                       <IconPhoto size={12} className="text-wbk-brown" />
                       <span>
                         {selectedImageIndex + 1} / {galleryImages.length}
@@ -917,37 +979,130 @@ export default function ProductDetailPage() {
                     {has3D ? "Tap photo to zoom" : "Select view"}
                   </span>
                 </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none py-1">
-                  {galleryImages.map((img, idx) => {
-                    const isSelected = !has3D && idx === selectedImageIndex;
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          if (has3D) {
-                            setLightboxIndex(idx);
-                          } else {
-                            setSelectedImageIndex(idx);
-                          }
-                        }}
-                        className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden bg-[#F4F2F0] border transition-all duration-200 cursor-pointer p-1 ${
-                          isSelected
-                            ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs scale-[0.98]"
-                            : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
-                        }`}
-                      >
-                        <img
-                          src={img.src}
-                          alt={img.alt}
-                          className="w-full h-full object-cover object-center rounded-lg"
-                        />
-                        {isSelected && (
-                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
-                        )}
-                      </button>
-                    );
-                  })}
+
+                <div className="relative w-full">
+                  {/* Left Arrow Button */}
+                  <div
+                    className={`absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
+                      isMobileGalleryBeginning
+                        ? "opacity-0 pointer-events-none scale-90"
+                        : "opacity-100 scale-100"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        mobileGallerySwiper?.slidePrev();
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer"
+                      aria-label="Previous gallery image"
+                    >
+                      <IconChevronLeft size={15} stroke={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Left gradient fade - extends to screen edge */}
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(to right, #FFFFFF 0%, #FFFFFF 40%, rgba(255, 255, 255, 0.85) 70%, rgba(255, 255, 255, 0) 100%)",
+                    }}
+                    className={`absolute -left-4 sm:-left-6 lg:-left-8 -top-1 -bottom-1 w-24 sm:w-28 pointer-events-none z-20 transition-opacity duration-200 ${
+                      isMobileGalleryBeginning ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+
+                  <Swiper
+                    modules={[FreeMode]}
+                    slidesPerView="auto"
+                    spaceBetween={10}
+                    freeMode={{ enabled: true, momentumRatio: 0.75 }}
+                    onSwiper={(swiper) => {
+                      setMobileGallerySwiper(swiper);
+                      setIsMobileGalleryBeginning(swiper.isBeginning);
+                      setIsMobileGalleryEnd(swiper.isEnd);
+                    }}
+                    onSlideChange={(swiper) => {
+                      setIsMobileGalleryBeginning(swiper.isBeginning);
+                      setIsMobileGalleryEnd(swiper.isEnd);
+                    }}
+                    onReachBeginning={() => setIsMobileGalleryBeginning(true)}
+                    onReachEnd={() => setIsMobileGalleryEnd(true)}
+                    onFromEdge={() => {
+                      if (mobileGallerySwiper) {
+                        setIsMobileGalleryBeginning(
+                          mobileGallerySwiper.isBeginning,
+                        );
+                        setIsMobileGalleryEnd(mobileGallerySwiper.isEnd);
+                      }
+                    }}
+                    className="w-full !overflow-visible py-1"
+                  >
+                    {galleryImages.map((img, idx) => {
+                      const isSelected = !has3D && idx === selectedImageIndex;
+                      return (
+                        <SwiperSlide key={idx} className="!w-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (has3D) {
+                                setLightboxIndex(idx);
+                              } else {
+                                setSelectedImageIndex(idx);
+                              }
+                            }}
+                            className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 overflow-hidden bg-[#F4F2F0] border transition-all duration-200 cursor-pointer p-1 block ${
+                              isSelected
+                                ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs scale-[0.98]"
+                                : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={img.src}
+                              alt={img.alt}
+                              className="w-full h-full object-cover object-center rounded-none"
+                            />
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
+                            )}
+                          </button>
+                        </SwiperSlide>
+                      );
+                    })}
+                  </Swiper>
+
+                  {/* Right gradient fade - extends to screen edge */}
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(to left, #FFFFFF 0%, #FFFFFF 40%, rgba(255, 255, 255, 0.85) 70%, rgba(255, 255, 255, 0) 100%)",
+                    }}
+                    className={`absolute -right-4 sm:-right-6 lg:-right-8 -top-1 -bottom-1 w-24 sm:w-28 pointer-events-none z-20 transition-opacity duration-200 ${
+                      isMobileGalleryEnd ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+
+                  {/* Right Arrow Button */}
+                  <div
+                    className={`absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
+                      isMobileGalleryEnd
+                        ? "opacity-0 pointer-events-none scale-90"
+                        : "opacity-100 scale-100"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        mobileGallerySwiper?.slideNext();
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer"
+                      aria-label="Next gallery image"
+                    >
+                      <IconChevronRight size={15} stroke={2.5} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -966,70 +1121,110 @@ export default function ProductDetailPage() {
 
                 <div className="relative flex-1 flex flex-col items-center justify-between py-2 min-h-0">
                   {/* Up Arrow */}
-                  <button
-                    type="button"
-                    onClick={() => handleScrollGallery("up")}
-                    disabled={!canScrollUp}
-                    className="w-full flex items-center justify-center py-1.5 text-wbk-brown hover:text-wbk-black transition-colors shrink-0 cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
-                    aria-label="Previous gallery image"
-                  >
-                    <IconChevronUp size={18} />
-                  </button>
-
-                  {/* Vertical Scroll Container */}
                   <div
-                    ref={galleryContainerRef}
-                    onScroll={updateScrollButtons}
-                    className="w-full flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center gap-2.5 my-1 pr-0.5"
+                    className={`transition-all duration-200 py-1 shrink-0 flex items-center justify-center w-full ${
+                      !canScrollUp
+                        ? "opacity-0 pointer-events-none scale-90"
+                        : "opacity-100 scale-100"
+                    }`}
                   >
-                    {galleryImages.map((img, idx) => {
-                      const isSelected = !has3D && idx === selectedImageIndex;
-                      return (
-                        <div
-                          key={idx}
-                          data-gallery-card
-                          className="w-full max-w-[140px] xl:max-w-[150px] aspect-square shrink-0 mx-auto"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (has3D) {
-                                setLightboxIndex(idx);
-                              } else {
-                                setSelectedImageIndex(idx);
-                              }
-                            }}
-                            className={`relative w-full h-full aspect-square rounded-none overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
-                              isSelected
-                                ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs opacity-100 scale-[0.98]"
-                                : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
-                            }`}
+                    <button
+                      type="button"
+                      onClick={() => handleScrollGallery("up")}
+                      disabled={!canScrollUp}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                      aria-label="Previous gallery image"
+                    >
+                      <IconChevronUp size={15} stroke={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Vertical Scroll Container with top & bottom fade gradients */}
+                  <div className="relative w-full flex-1 min-h-0 overflow-hidden">
+                    {/* Top gradient fade */}
+                    <div
+                      style={{
+                        background:
+                          "linear-gradient(to bottom, #FFFFFF 0%, #FFFFFF 35%, rgba(255, 255, 255, 0) 100%)",
+                      }}
+                      className={`absolute left-0 right-0 top-0 h-6 pointer-events-none z-10 transition-opacity duration-200 ${
+                        canScrollUp ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+
+                    <div
+                      ref={galleryContainerRef}
+                      onScroll={updateScrollButtons}
+                      className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col items-center gap-2.5 py-1 pr-0.5"
+                    >
+                      {galleryImages.map((img, idx) => {
+                        const isSelected = !has3D && idx === selectedImageIndex;
+                        return (
+                          <div
+                            key={idx}
+                            data-gallery-card
+                            className="w-full max-w-[140px] xl:max-w-[150px] aspect-square shrink-0 mx-auto"
                           >
-                            <img
-                              src={img.src}
-                              alt={img.alt}
-                              className="w-full h-full object-cover object-center rounded-none group-hover:scale-105 transition-transform duration-300"
-                              onLoad={updateScrollButtons}
-                            />
-                            {isSelected && (
-                              <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (has3D) {
+                                  setLightboxIndex(idx);
+                                } else {
+                                  setSelectedImageIndex(idx);
+                                }
+                              }}
+                              className={`relative w-full h-full aspect-square rounded-none overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
+                                isSelected
+                                  ? "border-wbk-black ring-2 ring-wbk-black/80 shadow-xs opacity-100 scale-[0.98]"
+                                  : "border-wbk-lightgrey/80 hover:border-wbk-black/60 opacity-85 hover:opacity-100"
+                              }`}
+                            >
+                              <img
+                                src={img.src}
+                                alt={img.alt}
+                                className="w-full h-full object-cover object-center rounded-none group-hover:scale-105 transition-transform duration-300"
+                                onLoad={updateScrollButtons}
+                              />
+                              {isSelected && (
+                                <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Bottom gradient fade */}
+                    <div
+                      style={{
+                        background:
+                          "linear-gradient(to top, #FFFFFF 0%, #FFFFFF 35%, rgba(255, 255, 255, 0) 100%)",
+                      }}
+                      className={`absolute left-0 right-0 bottom-0 h-6 pointer-events-none z-10 transition-opacity duration-200 ${
+                        canScrollDown ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
                   </div>
 
                   {/* Down Arrow */}
-                  <button
-                    type="button"
-                    onClick={() => handleScrollGallery("down")}
-                    disabled={!canScrollDown}
-                    className="w-full flex items-center justify-center py-1.5 text-wbk-brown hover:text-wbk-black transition-colors shrink-0 cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
-                    aria-label="Next gallery image"
+                  <div
+                    className={`transition-all duration-200 py-1 shrink-0 flex items-center justify-center w-full ${
+                      !canScrollDown
+                        ? "opacity-0 pointer-events-none scale-90"
+                        : "opacity-100 scale-100"
+                    }`}
                   >
-                    <IconChevronDown size={18} />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleScrollGallery("down")}
+                      disabled={!canScrollDown}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
+                      aria-label="Next gallery image"
+                    >
+                      <IconChevronDown size={15} stroke={2.5} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1132,32 +1327,125 @@ export default function ProductDetailPage() {
       {/* ── TABS NAVIGATION SECTION ── */}
       <section className="relative z-20 bg-white py-16">
         <Container size="xl">
-          <div className="flex border-b border-wbk-lightgrey/40 mb-12 overflow-x-auto scrollbar-none whitespace-nowrap">
-            {[
-              { id: "description", label: "Description" },
-              { id: "media", label: "Photos & Videos" },
-              { id: "support", label: "Support & Guides" },
-              { id: "reviews", label: "Reviews" },
-            ].map((tab) => (
+          <div className="relative border-b border-wbk-lightgrey/40 mb-12">
+            {/* Left Arrow (visible on mobile when scrolled) */}
+            <div
+              className={`md:hidden absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
+                isTabsBeginning
+                  ? "opacity-0 pointer-events-none scale-90"
+                  : "opacity-100 scale-100"
+              }`}
+            >
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative py-4 px-6 font-poppins text-sm font-medium tracking-wide uppercase transition-all duration-300 cursor-pointer ${
-                  activeTab === tab.id
-                    ? "text-wbk-gold font-semibold"
-                    : "text-wbk-brown hover:text-wbk-black"
-                }`}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  tabsSwiper?.slidePrev();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer"
+                aria-label="Scroll tabs left"
               >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="activeTabUnderbar"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wbk-gold"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
+                <IconChevronLeft size={15} stroke={2.5} />
               </button>
-            ))}
+            </div>
+
+            {/* Left gradient fade (mobile) - extends to screen edge */}
+            <div
+              style={{
+                background:
+                  "linear-gradient(to right, #FFFFFF 0%, #FFFFFF 40%, rgba(255, 255, 255, 0.85) 70%, rgba(255, 255, 255, 0) 100%)",
+              }}
+              className={`md:hidden absolute -left-4 sm:-left-6 top-0 bottom-0 w-12 sm:w-12 pointer-events-none z-20 transition-opacity duration-200 ${
+                isTabsBeginning ? "opacity-0" : "opacity-100"
+              }`}
+            />
+
+            <Swiper
+              modules={[FreeMode]}
+              slidesPerView="auto"
+              freeMode={{ enabled: true, momentumRatio: 0.75 }}
+              onSwiper={(swiper) => {
+                setTabsSwiper(swiper);
+                setIsTabsBeginning(swiper.isBeginning);
+                setIsTabsEnd(swiper.isEnd);
+              }}
+              onSlideChange={(swiper) => {
+                setIsTabsBeginning(swiper.isBeginning);
+                setIsTabsEnd(swiper.isEnd);
+              }}
+              onReachBeginning={() => setIsTabsBeginning(true)}
+              onReachEnd={() => setIsTabsEnd(true)}
+              onFromEdge={() => {
+                if (tabsSwiper) {
+                  setIsTabsBeginning(tabsSwiper.isBeginning);
+                  setIsTabsEnd(tabsSwiper.isEnd);
+                }
+              }}
+              className="tabs-swiper w-full !overflow-visible flex items-center"
+            >
+              {[
+                { id: "description", label: "Description" },
+                { id: "media", label: "Photos & Videos" },
+                { id: "support", label: "Support & Guides" },
+                { id: "reviews", label: "Reviews" },
+              ].map((tab) => (
+                <SwiperSlide key={tab.id} className="!w-auto">
+                  <button
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative py-4 px-4 sm:px-6 font-poppins text-xs sm:text-sm font-medium tracking-wide uppercase transition-all duration-300 cursor-pointer whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "text-wbk-gold font-semibold"
+                        : "text-wbk-brown hover:text-wbk-black"
+                    }`}
+                  >
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTabUnderbar"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-wbk-gold"
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                  </button>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            {/* Right gradient fade (mobile) - extends to screen edge */}
+            <div
+              style={{
+                background:
+                  "linear-gradient(to left, #FFFFFF 0%, #FFFFFF 40%, rgba(255, 255, 255, 0.85) 70%, rgba(255, 255, 255, 0) 100%)",
+              }}
+              className={`md:hidden absolute -right-4 sm:-right-6 top-0 bottom-0 w-12 sm:w-12 pointer-events-none z-20 transition-opacity duration-200 ${
+                isTabsEnd ? "opacity-0" : "opacity-100"
+              }`}
+            />
+
+            {/* Right Arrow (visible on mobile when not at end) */}
+            <div
+              className={`md:hidden absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 z-30 w-12 sm:w-12 transition-all duration-200 ${
+                isTabsEnd
+                  ? "opacity-0 pointer-events-none scale-90"
+                  : "opacity-100 scale-100"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  tabsSwiper?.slideNext();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-wbk-green text-wbk-black shadow-md hover:bg-wbk-black hover:text-wbk-white transition-all duration-200 cursor-pointer"
+                aria-label="Scroll tabs right"
+              >
+                <IconChevronRight size={15} stroke={2.5} />
+              </button>
+            </div>
           </div>
 
           <div className="min-h-[250px]">
@@ -1198,6 +1486,56 @@ export default function ProductDetailPage() {
                   </h4>
                   <table className="w-full text-xs font-poppins text-wbk-black/80 space-y-3">
                     <tbody>
+                      {displayProduct.sku && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">SKU / Model</td>
+                          <td className="py-2.5 text-right font-mono font-medium text-wbk-black">
+                            {displayProduct.sku}
+                          </td>
+                        </tr>
+                      )}
+                      {currentEan && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">Barcode (EAN)</td>
+                          <td className="py-2.5 text-right font-mono text-wbk-brown">
+                            {currentEan}
+                          </td>
+                        </tr>
+                      )}
+                      {displayProduct.weight && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">Net Weight</td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.weight} kg
+                          </td>
+                        </tr>
+                      )}
+                      {(displayProduct.pack_1 ||
+                        displayProduct.package_dimensions) && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium align-top">
+                            Packaging (Boxes)
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {displayProduct.pack_1 ? (
+                              <div className="space-y-0.5 text-xs font-mono">
+                                <div>Box 1: {displayProduct.pack_1}</div>
+                                {displayProduct.pack_2 && (
+                                  <div>Box 2: {displayProduct.pack_2}</div>
+                                )}
+                                {displayProduct.pack_3 && (
+                                  <div>Box 3: {displayProduct.pack_3}</div>
+                                )}
+                                {displayProduct.pack_4 && (
+                                  <div>Box 4: {displayProduct.pack_4}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{displayProduct.package_dimensions}</span>
+                            )}
+                          </td>
+                        </tr>
+                      )}
                       <tr className="border-b border-wbk-lightgrey/40">
                         <td className="py-2.5 font-medium">Mechanism</td>
                         <td className="py-2.5 text-right text-wbk-brown">
@@ -1785,7 +2123,7 @@ export default function ProductDetailPage() {
 
             {/* Morphy FAQ Accordion Section (Clean background-less) */}
             <div className="pt-8 border-t border-wbk-lightgrey/40 space-y-8">
-              <div className="space-y-2 text-center max-w-xl mx-auto">
+              <div className="space-y-2 text-center mx-auto">
                 <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
                   Got Questions?
                 </span>
@@ -1794,7 +2132,7 @@ export default function ProductDetailPage() {
                 </h3>
               </div>
 
-              <div className="divide-y divide-wbk-lightgrey/40 max-w-3xl mx-auto">
+              <div className="divide-y divide-wbk-lightgrey/40 mx-auto">
                 {[
                   {
                     q: "What is Morphy?",
@@ -1906,47 +2244,85 @@ export default function ProductDetailPage() {
       )}
 
       {/* ── LIGHTBOX MODAL OVERLAY ── */}
-      {lightboxIndex !== -1 && (
-        <div
-          onClick={() => setLightboxIndex(-1)}
-          className="fixed inset-0 z-[999] bg-wbk-black/95 backdrop-blur-md flex items-center justify-center p-4"
-        >
-          <button
+      <AnimatePresence>
+        {lightboxIndex !== -1 && (
+          <motion.div
+            key="product-lightbox-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setLightboxIndex(-1)}
-            className="absolute top-6 right-6 text-wbk-white hover:text-wbk-green p-2 rounded-full hover:bg-white/10 transition-all cursor-pointer z-20"
-            aria-label="Close lightbox"
+            className="fixed inset-0 z-[999] bg-wbk-black/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
           >
-            <IconX size={24} />
-          </button>
-          <button
-            onClick={handlePrevImage}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer z-20"
-            aria-label="Previous image"
-          >
-            <IconChevronLeft size={28} />
-          </button>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-4xl max-h-[80vh] w-full flex flex-col items-center justify-center"
-          >
-            <img
-              src={galleryImages[lightboxIndex]?.src}
-              alt={galleryImages[lightboxIndex]?.alt}
-              className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-none"
-            />
-            <p className="mt-4 font-poppins text-xs text-wbk-white/80 text-center tracking-wide px-4">
-              {galleryImages[lightboxIndex]?.alt}
-            </p>
-          </div>
-          <button
-            onClick={handleNextImage}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-wbk-white hover:text-wbk-green bg-white/5 hover:bg-white/15 h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer z-20"
-            aria-label="Next image"
-          >
-            <IconChevronRight size={28} />
-          </button>
-        </div>
-      )}
+            {/* Close button */}
+            <button
+              onClick={() => setLightboxIndex(-1)}
+              className="absolute top-3 sm:top-6 right-3 sm:right-6 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+              aria-label="Close lightbox"
+            >
+              <IconX size={20} />
+            </button>
+
+            {/* Navigation buttons */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                  aria-label="Previous image"
+                >
+                  <IconChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                  aria-label="Next image"
+                >
+                  <IconChevronRight size={24} />
+                </button>
+              </>
+            )}
+
+            {/* Modal Image Card with White Background */}
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
+            >
+              <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={galleryImages[lightboxIndex]?.src || lightboxIndex}
+                    src={galleryImages[lightboxIndex]?.src}
+                    alt={galleryImages[lightboxIndex]?.alt}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
+                  />
+                </AnimatePresence>
+              </div>
+
+              {(galleryImages[lightboxIndex]?.alt ||
+                galleryImages.length > 1) && (
+                <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 w-full flex items-center justify-between text-xs text-wbk-brown font-poppins px-1">
+                  <p className="font-medium text-wbk-black truncate pr-4 text-xs">
+                    {galleryImages[lightboxIndex]?.alt}
+                  </p>
+                  <span className="font-semibold text-wbk-black/70 shrink-0 text-[11px] tracking-wider">
+                    {lightboxIndex + 1} / {galleryImages.length}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── PERSISTENT STICKY BOTTOM BAR: PRODUCT TITLE, SIZE, TOTAL PRICE & ADD TO CART ── */}
       <motion.div
@@ -1957,7 +2333,7 @@ export default function ProductDetailPage() {
       >
         <Container
           size="xl"
-          className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md rounded-2xl shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
+          className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
         >
           {/* Left: Product Name & Selected Size */}
           <div className="flex flex-col min-w-0 max-w-[130px] sm:max-w-xs md:max-w-sm">
@@ -1981,7 +2357,10 @@ export default function ProductDetailPage() {
                 </span>
                 {productPricing.isOnSale && (
                   <span className="text-[10px] sm:text-xs text-wbk-black/60 line-through font-normal hidden sm:inline">
-                    {formatPrice(productPricing.regularRaw + sofaSurcharge, locale)}
+                    {formatPrice(
+                      productPricing.regularRaw + sofaSurcharge,
+                      locale,
+                    )}
                   </span>
                 )}
               </div>

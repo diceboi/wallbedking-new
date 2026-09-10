@@ -55,6 +55,7 @@ export default function AdminPricingPage() {
     return products.filter(
       (p) =>
         String(p.id).includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q)) ||
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.slug && p.slug.toLowerCase().includes(q))
     );
@@ -303,8 +304,13 @@ export default function AdminPricingPage() {
                       #{p.id}
                     </td>
 
-                    <td className="py-3 px-4 font-medium text-wbk-black max-w-xs truncate">
-                      {p.name}
+                    <td className="py-3 px-4 font-medium text-wbk-black max-w-xs">
+                      <div className="truncate">{p.name}</div>
+                      {p.sku && (
+                        <div className="text-[10px] font-mono text-wbk-brown mt-0.5">
+                          SKU: {p.sku}
+                        </div>
+                      )}
                     </td>
 
                     {/* GBP */}

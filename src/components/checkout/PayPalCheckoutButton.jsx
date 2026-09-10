@@ -134,31 +134,46 @@ export function PayPalCheckoutButton({ disabled = false }) {
               const shipping = pu.shipping || {};
               const current = cartRef.current;
 
-              // Optional: notify legacy email handler or logging
+              // Save order and capture payment in Supabase database
+              let confirmedOrderId = null;
               try {
-                await fetch("https://www.wallbedking.co.uk/inc/email_en_uk_v5.php", {
+                const orderRes = await fetch("/api/checkout/create-order", {
                   method: "POST",
-                  mode: "no-cors",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: new URLSearchParams({
-                    address_name: shipping.name?.full_name || "",
-                    address_street: shipping.address?.address_line_1 || "",
-                    address_city: shipping.address?.admin_area_2 || "",
-                    address_country: shipping.address?.country_code || "GB",
-                    address_zip: shipping.address?.postal_code || "",
-                    contact_phone: payer.phone?.phone_number?.national_number || "",
-                    first_name: payer.name?.given_name || "",
-                    last_name: payer.name?.surname || "",
-                    payment_status: pu.payments?.captures?.[0]?.status || "COMPLETED",
-                    cart_id: current.customCartId,
-                    mc_gross: pu.amount?.value || finalTotal,
-                    mc_currency: "GBP",
-                    txn_id: orderData.id,
-                    payer_email: payer.email_address || "",
-                  }).toString(),
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    items: current.items,
+                    customer: {
+                      email: payer.email_address || "",
+                      phone: payer.phone?.phone_number?.national_number || "",
+                      name: `${payer.name?.given_name || ""} ${payer.name?.surname || ""}`.trim(),
+                    },
+                    shippingAddress: {
+                      firstName: payer.name?.given_name || "",
+                      lastName: payer.name?.surname || "",
+                      address1: shipping.address?.address_line_1 || "",
+                      city: shipping.address?.admin_area_2 || "",
+                      postcode: shipping.address?.postal_code || "",
+                      country: shipping.address?.country_code || "United Kingdom",
+                    },
+                    deliveryOption: current.deliveryOption,
+                    paymentMethod: "paypal",
+                  }),
                 });
-              } catch (e) {
-                console.warn("Background notification notice:", e);
+                const orderJson = await orderRes.json();
+                if (orderJson.success && orderJson.orderId) {
+                  confirmedOrderId = orderJson.orderId;
+                  await fetch("/api/checkout/paypal/capture", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      orderId: confirmedOrderId,
+                      paypalOrderId: orderData.id,
+                      captureData: pu.payments?.captures?.[0],
+                    }),
+                  });
+                }
+              } catch (errDb) {
+                console.warn("PayPal database order sync notice:", errDb);
               }
 
               // Redirect to thank you page

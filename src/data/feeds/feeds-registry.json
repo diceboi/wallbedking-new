@@ -1,0 +1,51 @@
+[
+  {
+    "id": "amazon-fr-classic",
+    "name": "Amazon France – Morphy Classic Bedframes",
+    "marketplace": "Amazon",
+    "country": "France",
+    "countryCode": "fr",
+    "flag": "fr",
+    "currency": "EUR",
+    "targetCategory": "bed_frame",
+    "status": "Active",
+    "itemCount": 38,
+    "parentCount": 2,
+    "childCount": 36,
+    "feedUrl": "/api/feeds/amazon-fr-classic",
+    "templateFile": "amazon-bedframe-classic-fr-fullcontent-processing-summary.xlsx",
+    "updatedAt": "2026-09-07T09:02:14.615Z"
+  },
+  {
+    "id": "otto-de",
+    "name": "OTTO Germany – Wall Beds",
+    "marketplace": "OTTO",
+    "country": "Germany",
+    "countryCode": "de",
+    "flag": "de",
+    "currency": "EUR",
+    "targetCategory": "Schrankbetten",
+    "status": "Draft",
+    "itemCount": 0,
+    "parentCount": 0,
+    "childCount": 0,
+    "feedUrl": "/api/feeds/otto-de",
+    "updatedAt": "2026-09-07T09:02:14.615Z"
+  },
+  {
+    "id": "mirakl-fr",
+    "name": "Mirakl FR (Leroy Merlin / Conforama)",
+    "marketplace": "Mirakl",
+    "country": "France",
+    "countryCode": "fr",
+    "flag": "fr",
+    "currency": "EUR",
+    "targetCategory": "Lit escamotable",
+    "status": "Draft",
+    "itemCount": 0,
+    "parentCount": 0,
+    "childCount": 0,
+    "feedUrl": "/api/feeds/mirakl-fr",
+    "updatedAt": "2026-09-07T09:02:14.615Z"
+  }
+]

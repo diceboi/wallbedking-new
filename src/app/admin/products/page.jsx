@@ -43,6 +43,9 @@ export default function AdminProductsPage() {
   const [newProductName, setNewProductName] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("beds");
   const [newProductPrice, setNewProductPrice] = useState(799);
+  const [newProductSku, setNewProductSku] = useState("");
+  const [newProductWeight, setNewProductWeight] = useState("");
+  const [newProductEan, setNewProductEan] = useState("");
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -76,6 +79,7 @@ export default function AdminProductsPage() {
 
       const matchesSearch =
         String(p.id).includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q)) ||
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.slug && p.slug.toLowerCase().includes(q)) ||
         (p.ean && p.ean.toLowerCase().includes(q)) ||
@@ -150,6 +154,9 @@ export default function AdminProductsPage() {
     const newProduct = {
       name: newProductName.trim(),
       slug,
+      sku: newProductSku.trim() || null,
+      weight: newProductWeight ? Number(newProductWeight) : null,
+      ean: newProductEan.trim() || null,
       parent_category: newProductCategory,
       price_gbp: Number(newProductPrice),
       price_euro: Number(newProductPrice),
@@ -171,6 +178,9 @@ export default function AdminProductsPage() {
         setProducts((prev) => [data.product, ...prev]);
         setIsAddOpen(false);
         setNewProductName("");
+        setNewProductSku("");
+        setNewProductWeight("");
+        setNewProductEan("");
         setMessage({ type: "success", text: "Product created successfully in Supabase!" });
         setTimeout(() => setMessage(null), 3000);
       } else {
@@ -377,10 +387,24 @@ export default function AdminProductsPage() {
                       <div className="font-medium text-wbk-black line-clamp-1 max-w-xs">
                         {p.name}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-wbk-brown">
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-wbk-brown flex-wrap">
+                        {p.sku && (
+                          <>
+                            <span className="font-mono text-wbk-black font-semibold bg-[#F4F2F0] px-1">
+                              {p.sku}
+                            </span>
+                            <span>&bull;</span>
+                          </>
+                        )}
                         <span>{p.type || "Classic"}</span>
                         <span>&bull;</span>
                         <span>{p.orientation || "Vertical"}</span>
+                        {p.weight && (
+                          <>
+                            <span>&bull;</span>
+                            <span>{p.weight} kg</span>
+                          </>
+                        )}
                       </div>
                     </td>
 
@@ -555,17 +579,61 @@ export default function AdminProductsPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
-                  Base Price (GBP / EUR / USD)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={newProductPrice}
-                  onChange={(e) => setNewProductPrice(e.target.value)}
-                  className="w-full p-2.5 text-xs border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-semibold"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Base Price (£ / € / $)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={newProductPrice}
+                    onChange={(e) => setNewProductPrice(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    SKU Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. MORPHY-V-D"
+                    value={newProductSku}
+                    onChange={(e) => setNewProductSku(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Net Weight (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="e.g. 52.5"
+                    value={newProductWeight}
+                    onChange={(e) => setNewProductWeight(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Barcode (EAN)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5070502507993"
+                    value={newProductEan}
+                    onChange={(e) => setNewProductEan(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3">

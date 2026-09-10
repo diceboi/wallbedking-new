@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
+import { CookieConsent } from "@/components/ui/CookieConsent";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
                 <Footer />
                 <CartDrawer />
                 <UserDrawer />
+                <CookieConsent />
               </MenuContextProvider>
             </CartProvider>
           </LocaleProvider>

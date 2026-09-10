@@ -6,6 +6,7 @@ import { SofaScene } from "./SofaScene";
 import { ModuleSelector } from "./ModuleSelector";
 import { FabricSelector } from "./FabricSelector";
 import { ConfigSummary } from "./ConfigSummary";
+import { QuickStartGuideModal } from "./QuickStartGuideModal";
 import { useSofaConfiguratorStore } from "./store/useSofaConfiguratorStore";
 import {
   TbLayoutSidebarRightCollapse,
@@ -13,6 +14,7 @@ import {
   TbPlus,
   TbMaximize,
   TbMinimize,
+  TbHelp,
 } from "react-icons/tb";
 
 export function SofaConfigurator() {
@@ -21,6 +23,7 @@ export function SofaConfigurator() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
     const configParam = searchParams?.get("config");
@@ -28,6 +31,19 @@ export function SofaConfigurator() {
       loadConfiguration(configParam);
     }
     setIsLoaded(true);
+
+    // Auto-open Quick Start Guide on first visit
+    if (typeof window !== "undefined") {
+      try {
+        const seen = localStorage.getItem("wbk_3d_guide_seen");
+        if (!seen) {
+          const t = setTimeout(() => setIsGuideOpen(true), 450);
+          return () => clearTimeout(t);
+        }
+      } catch (e) {
+        // Ignore localStorage access restrictions
+      }
+    }
   }, [searchParams, loadConfiguration]);
 
   useEffect(() => {
@@ -55,8 +71,18 @@ export function SofaConfigurator() {
         <SofaScene />
       </div>
 
-      {/* Floating Top Right Utility Button (Fullscreen Toggle) */}
+      {/* Floating Top Right Utility Buttons (Quick Guide & Fullscreen) */}
       <div className="absolute top-3 right-3 sm:right-6 z-25 flex items-center gap-2 pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => setIsGuideOpen(true)}
+          className="h-10 px-3.5 flex items-center gap-1.5 bg-white/90 hover:bg-white text-wbk-black border border-wbk-lightgrey/80 backdrop-blur-md rounded-full shadow-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer group"
+          title="Open Quick Start Guide"
+        >
+          <TbHelp size={17} className="text-wbk-gold group-hover:scale-110 transition-transform" />
+          <span className="hidden sm:inline">Guide</span>
+        </button>
+
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -67,6 +93,12 @@ export function SofaConfigurator() {
           <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
         </button>
       </div>
+
+      {/* Quick Start Guide Modal with dimmed blurred backdrop */}
+      <QuickStartGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
 
       {/* Floating Right Palette (Modules & Fabrics) */}
       {isPaletteOpen ? (
