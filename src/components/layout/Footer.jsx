@@ -10,8 +10,9 @@ const FOOTER_LINKS = {
   Products: [
     { label: "Murphy Beds",  href: "/products/beds", id: "beds" },
     { label: "Sofas",        href: "/products/sofas", id: "sofas" },
-    { label: "Mattresses",   href: "/products/mattresses", id: "mattresses" },
+    { label: "Smart Tables", href: "/products/tables", id: "tables" },
     { label: "Cabinets",     href: "/products/cabinets", id: "cabinets" },
+    { label: "Mattresses",   href: "/products/mattresses", id: "mattresses" },
     { label: "Configurator", href: "/configurator", id: "configurator" },
   ],
   Support: [
@@ -65,7 +66,7 @@ export function Footer() {
                       href={localizedHref(link.href)}
                       className="text-sm text-wbk-lightgrey/80 transition-colors duration-150 hover:text-wbk-white font-poppins"
                     >
-                      {link.id && link.id in { beds: 1, sofas: 1, mattresses: 1, cabinets: 1, configurator: 1, about: 1, contact: 1, reviews: 1 }
+                      {link.id && link.id in { beds: 1, sofas: 1, tables: 1, mattresses: 1, cabinets: 1, configurator: 1, about: 1, contact: 1, reviews: 1 }
                         ? t(`nav.${link.id}`, link.label)
                         : link.label}
                     </Link>

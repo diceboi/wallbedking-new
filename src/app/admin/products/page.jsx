@@ -21,6 +21,7 @@ const CATEGORIES = [
   { id: "all", label: "All Categories" },
   { id: "beds", label: "Murphy Beds" },
   { id: "sofas", label: "Sofas" },
+  { id: "tables", label: "Tables & Desks" },
   { id: "mattresses", label: "Mattresses" },
   { id: "cabinets", label: "Cabinets" },
   { id: "extras", label: "Extras & Accessories" },
@@ -573,6 +574,7 @@ export default function AdminProductsPage() {
                 >
                   <option value="beds">Murphy Beds</option>
                   <option value="sofas">Sofas</option>
+                  <option value="tables">Tables & Desks</option>
                   <option value="mattresses">Mattresses</option>
                   <option value="cabinets">Cabinets</option>
                   <option value="extras">Extras & Accessories</option>

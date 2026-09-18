@@ -84,7 +84,7 @@ export function ProductCard({ product, className = "" }) {
         {/* Sale badge */}
         {pricing.isOnSale && (
           <span className="absolute top-0 left-0 px-6 py-3 bg-wbk-green text-white text-xs sm:text-[13px] font-bold uppercase tracking-wider z-10 border-0 select-none">
-            Sale {pricing.discountLabel || (pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : "")}
+            {t("product.sale", "Sale")} {pricing.discountLabel || (pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : "")}
           </span>
         )}
       </div>
@@ -106,17 +106,17 @@ export function ProductCard({ product, className = "" }) {
           {orientation &&
             product.parent_category !== "mattresses" &&
             product.parent_category !== "sofas" && (
-              <div>Orientation: {orientation}</div>
+              <div>{t("product.orientation", "Orientation")}: {orientation}</div>
             )}
-          <div>Size: {size}</div>
+          <div>{t("product.size", "Size")}: {size}</div>
           {product.weight && (
             <div className="text-[11px] text-wbk-brown">
-              Weight: {product.weight} kg
+              {t("product.weight", "Weight")}: {product.weight} kg
             </div>
           )}
           {colors && colors.length > 0 && (
             <div className="flex items-center gap-1.5 pt-1">
-              <span>Colors:</span>
+              <span>{t("product.colors", "Colors")}:</span>
               <div className="flex items-center">
                 {colors.map((color, cIdx) => (
                   <span

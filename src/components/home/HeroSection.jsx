@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Hero3DCanvas } from "@/components/home/Hero3DCanvas";
 import { Hero3DLoader } from "@/components/home/Hero3DLoader";
 import { IconChevronDown } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 export function HeroSection() {
   const containerRef = useRef(null);
@@ -44,6 +45,8 @@ export function HeroSection() {
     [0.35, 0.25, 0.2],
   );
 
+  const { t, localizedHref } = useLocale();
+
   return (
     <>
       {/* Full-screen Loading Overlay covering the entire page immediately from first paint */}
@@ -71,30 +74,29 @@ export function HeroSection() {
           className="flex flex-col items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center pointer-events-none w-full max-w-2xl px-4"
         >
           <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl leading-[1.05] text-wbk-white drop-shadow-md">
-            Modular Murphy Beds
+            {t("home.heroTitle", "Modular Murphy Beds")}
           </h1>
           <p className="mt-2 text-xs sm:text-sm md:text-base text-wbk-white leading-relaxed drop-shadow-sm">
-            Space-saving, handcrafted wall beds engineered for seamless everyday
-            living.
+            {t("home.heroSubtitle", "Space-saving, handcrafted wall beds engineered for seamless everyday living.")}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 pointer-events-auto">
             <Button
               as="link"
-              href="/products/beds"
+              href={localizedHref("/products/beds")}
               variant="primary"
               size="lg"
               className=""
             >
-              Shop Collection
+              {t("home.shopCollection", "Shop Collection")}
             </Button>
             <Button
               as="link"
-              href="/about"
+              href={localizedHref("/about")}
               variant="secondary"
               size="lg"
               className="bg-wbk-white/80 backdrop-blur-md border-0"
             >
-              Explore Models
+              {t("home.exploreModels", "Explore Models")}
             </Button>
           </div>
         </div>

@@ -699,7 +699,7 @@ export default function ProductDetailPage() {
                 {availableFormats.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      Format:
+                      {t("product.formatLabel", "Format:")}
                     </label>
                     <button
                       type="button"
@@ -741,7 +741,7 @@ export default function ProductDetailPage() {
                 {availableStyles.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      Style:
+                      {t("product.styleLabel", "Style:")}
                     </label>
                     <button
                       type="button"
@@ -927,10 +927,10 @@ export default function ProductDetailPage() {
                       className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
                     >
                       <IconArrowsUpDown size={13} className="animate-pulse" />
-                      {isFolded ? "Open Bed" : "Close Bed"}
+                      {isFolded ? t("home.openBed", "Open Bed") : t("home.closeBed", "Close Bed")}
                     </button>
                     <p className="text-[10px] text-wbk-brown/70 font-poppins select-none pointer-events-none">
-                      ← Drag to rotate 3D view →
+                      {t("home.dragToRotate", "← Drag to rotate 3D view →")}
                     </p>
                   </div>
                 </div>
@@ -956,7 +956,7 @@ export default function ProductDetailPage() {
 
                     <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs lg:shadow-none shadow-md">
                       <IconZoomIn size={13} />
-                      <span>Click to zoom</span>
+                      <span>{t("product.clickToZoom", "Click to zoom")}</span>
                     </div>
 
                     <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs lg:shadow-none shadow-md">
@@ -973,10 +973,10 @@ export default function ProductDetailPage() {
               <div className="w-full lg:hidden mt-3 pointer-events-auto">
                 <div className="flex items-center justify-between pb-1.5">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
-                    Gallery ({galleryImages.length})
+                    {t("product.gallery", "Gallery")} ({galleryImages.length})
                   </p>
                   <span className="text-[10px] text-wbk-brown/70 font-poppins">
-                    {has3D ? "Tap photo to zoom" : "Select view"}
+                    {has3D ? t("product.clickToZoom", "Tap photo to zoom") : t("product.selectView", "Select view")}
                   </span>
                 </div>
 
@@ -1384,10 +1384,10 @@ export default function ProductDetailPage() {
               className="tabs-swiper w-full !overflow-visible flex items-center"
             >
               {[
-                { id: "description", label: "Description" },
-                { id: "media", label: "Photos & Videos" },
-                { id: "support", label: "Support & Guides" },
-                { id: "reviews", label: "Reviews" },
+                { id: "description", label: t("product.tab_description", "Description") },
+                { id: "media", label: t("product.tab_media", "Photos & Videos") },
+                { id: "support", label: t("product.tab_support", "Support & Guides") },
+                { id: "reviews", label: t("product.tab_reviews", "Reviews") },
               ].map((tab) => (
                 <SwiperSlide key={tab.id} className="!w-auto">
                   <button

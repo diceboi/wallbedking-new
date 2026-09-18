@@ -1,35 +1,43 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "@/context/LocaleContext";
 
 export function CategoryGrid() {
+  const { t, localizedHref } = useLocale();
+
   const categories = [
     // Top Row (col-span-3)
     {
+      key: "classicBeds",
       title: "Classic beds",
-      link: "/products/classic-beds",
+      link: "/products/beds",
       gridClass:
         "col-span-6 md:col-span-3 border-b md:border-r border-wbk-lightgrey/40",
     },
     {
+      key: "studioBeds",
       title: "Studio Beds",
-      link: "/products/studio-beds",
+      link: "/products/beds",
       gridClass: "col-span-6 md:col-span-3 border-b border-wbk-lightgrey/40",
     },
     // Bottom Row (col-span-2)
     {
+      key: "sofas",
       title: "Sofas",
       link: "/products/sofas",
       gridClass:
         "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
     },
     {
+      key: "integratedBeds",
       title: "Integrated Beds",
-      link: "/products/integrated-beds",
+      link: "/products/beds",
       gridClass:
         "col-span-6 md:col-span-2 border-b md:border-b-0 md:border-r border-wbk-lightgrey/40",
     },
     {
+      key: "extras",
       title: "Other extras",
       link: "/products/extras",
       gridClass: "col-span-6 md:col-span-2",
@@ -42,13 +50,13 @@ export function CategoryGrid() {
         {categories.map((cat, idx) => (
           <Link
             key={idx}
-            href={cat.link}
+            href={localizedHref(cat.link)}
             className={`group relative block w-full overflow-hidden h-[340px] md:h-[420px] bg-[#F4F2F0] ${cat.gridClass}`}
           >
             {/* Background Image */}
             <img
               src="/category-images/integrated-beds.webp"
-              alt={cat.title}
+              alt={t(`categories.${cat.key}`, cat.title)}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
 
@@ -58,7 +66,7 @@ export function CategoryGrid() {
             {/* Text Overlay */}
             <div className="relative z-20 h-full w-full p-10 md:p-12 flex flex-col justify-start items-start">
               <h3 className="font-new-york text-3xl md:text-4xl text-wbk-black leading-tight tracking-wide transition-colors duration-300">
-                {cat.title}
+                {t(`categories.${cat.key}`, cat.title)}
               </h3>
             </div>
           </Link>

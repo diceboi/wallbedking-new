@@ -35,6 +35,14 @@ export const CATEGORIES_INFO = {
     image: "/sofa1.webp",
     subcategories: ["Bed Front", "Free Standing"]
   },
+  tables: {
+    label: "Tables & Desks",
+    title: "Smart & Transforming Tables",
+    slug: "tables",
+    description: "Multifunctional, height-adjustable, wall-mounted and transforming tables engineered for compact spaces.",
+    image: "/sofa1.webp",
+    subcategories: ["Transforming", "Wall-Mounted", "Extending", "Coffee & Side"]
+  },
   mattresses: {
     label: "Mattresses",
     title: "Comfort, Luxury & Supreme Mattresses",
@@ -64,6 +72,7 @@ export const CATEGORIES_INFO = {
 export const OTHER_CATEGORIES_LIST = [
   { slug: "beds", label: "Murphy Beds", image: "/product-images/morphy-integrated/160x200.jpg" },
   { slug: "sofas", label: "Sofas", image: "/sofa1.webp" },
+  { slug: "tables", label: "Smart Tables", image: "/sofa1.webp" },
   { slug: "mattresses", label: "Mattresses", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp" },
   { slug: "cabinets", label: "Cabinets", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
   { slug: "extras", label: "Extras", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
@@ -819,14 +828,123 @@ export function getDynamicFlagshipCabinets(rawItems = RAW_CATALOG) {
   return getDynamicFlagships(FLAGSHIP_CABINETS, rawItems, "cabinets");
 }
 
+export const FLAGSHIP_TABLES = [
+  {
+    id: "flagship-coffee-dining-table",
+    rawId: "table-01",
+    title: "Transforming Coffee-to-Dining Table",
+    slug: "transforming-coffee-dining-table",
+    parent_category: "tables",
+    type: "Transforming",
+    categoryKey: "tables",
+    image: "/sofa1.webp",
+    hoverImage: "/sofa2.webp",
+    gallery: [
+      { src: "/sofa1.webp", alt: "Transforming Coffee-to-Dining Table - Compact Position" },
+      { src: "/sofa2.webp", alt: "Transforming Coffee-to-Dining Table - Dining Position" },
+    ],
+    price: "from £449",
+    price_gbp: 449,
+    price_euro: 519,
+    price_usd: 579,
+    numericPrice: 449,
+    size: "Adjustable 70x120 – 140x120 cm",
+    sizeLabel: "Adjustable 70x120 – 140x120 cm",
+    badge: "Space Saver",
+    description: "Effortless gas-lift mechanism converts from a stylish living room coffee table to a full 6-person dining table.",
+    link: "/products/tables/transforming-coffee-dining-table",
+  },
+  {
+    id: "flagship-wall-mounted-folding-table",
+    rawId: "table-02",
+    title: "Wall-Mounted Drop-Leaf Folding Table",
+    slug: "wall-mounted-folding-table",
+    parent_category: "tables",
+    type: "Wall-Mounted",
+    categoryKey: "tables",
+    image: "/sofa2.webp",
+    hoverImage: "/sofa1.webp",
+    gallery: [
+      { src: "/sofa2.webp", alt: "Wall-Mounted Drop-Leaf Table - Folded Position" },
+      { src: "/sofa1.webp", alt: "Wall-Mounted Drop-Leaf Table - Opened Position" },
+    ],
+    price: "from £299",
+    price_gbp: 299,
+    price_euro: 349,
+    price_usd: 389,
+    numericPrice: 299,
+    size: "80x60 cm folded to 10 cm",
+    sizeLabel: "80x60 cm folded to 10 cm",
+    badge: "Compact Living",
+    description: "Precision engineered wall-mounted folding drop-leaf desk and dining table with heavy-duty locking hinges.",
+    link: "/products/tables/wall-mounted-folding-table",
+  },
+  {
+    id: "flagship-extending-console-table",
+    rawId: "table-03",
+    title: "Extending Console-to-Dining Table",
+    slug: "extending-console-dining-table",
+    parent_category: "tables",
+    type: "Extending",
+    categoryKey: "tables",
+    image: "/sofa1.webp",
+    hoverImage: "/sofa2.webp",
+    gallery: [
+      { src: "/sofa1.webp", alt: "Extending Console Table - Console Position" },
+      { src: "/sofa2.webp", alt: "Extending Console Table - Extended Dining Position" },
+    ],
+    price: "from £599",
+    price_gbp: 599,
+    price_euro: 689,
+    price_usd: 769,
+    numericPrice: 599,
+    size: "45x90 to 200x90 cm",
+    sizeLabel: "45x90 to 200x90 cm",
+    badge: "Extends to 10 seats",
+    description: "Compact hallway console table that seamlessly telescopes into an expansive dining table seating up to 10 guests.",
+    link: "/products/tables/extending-console-dining-table",
+  },
+  {
+    id: "flagship-bed-front-side-table",
+    rawId: "table-04",
+    title: "Compact Bed-Front Side Table",
+    slug: "bed-front-side-table",
+    parent_category: "tables",
+    type: "Coffee & Side",
+    categoryKey: "tables",
+    image: "/sofa2.webp",
+    hoverImage: "/sofa1.webp",
+    gallery: [
+      { src: "/sofa2.webp", alt: "Compact Bed-Front Side Table" },
+      { src: "/sofa1.webp", alt: "Compact Bed-Front Side Table Detail" },
+    ],
+    price: "from £199",
+    price_gbp: 199,
+    price_euro: 229,
+    price_usd: 259,
+    numericPrice: 199,
+    size: "45x45x50 cm",
+    sizeLabel: "45x45x50 cm",
+    badge: "Bed Compatible",
+    description: "Minimalist mobile nesting side table designed to tuck smoothly beside or under wall bed front arrangements.",
+    link: "/products/tables/bed-front-side-table",
+  },
+];
+
+export function getDynamicFlagshipTables(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_TABLES, rawItems, "tables");
+}
+
 export const DYNAMIC_FLAGSHIP_BEDS = getDynamicFlagshipBeds(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_SOFAS = getDynamicFlagshipSofas(RAW_CATALOG);
+export const DYNAMIC_FLAGSHIP_TABLES = getDynamicFlagshipTables(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_MATTRESSES = getDynamicFlagshipMattresses(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_CABINETS = getDynamicFlagshipCabinets(RAW_CATALOG);
 
 export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_BEDS,
   ...DYNAMIC_FLAGSHIP_SOFAS,
+  ...DYNAMIC_FLAGSHIP_TABLES,
   ...DYNAMIC_FLAGSHIP_MATTRESSES,
   ...DYNAMIC_FLAGSHIP_CABINETS,
 ];
@@ -840,6 +958,7 @@ export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
 export const ALL_PRODUCTS = {
   beds: DYNAMIC_FLAGSHIP_BEDS,
   sofas: DYNAMIC_FLAGSHIP_SOFAS,
+  tables: DYNAMIC_FLAGSHIP_TABLES,
   mattresses: DYNAMIC_FLAGSHIP_MATTRESSES,
   cabinets: DYNAMIC_FLAGSHIP_CABINETS,
   extras: RAW_CATALOG.filter((p) => p.parent_category === "extras").map(formatCatalogItem),

@@ -14,8 +14,10 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import { POPULAR_PRODUCTS_OVERVIEW } from "@/data/products";
+import { useLocale } from "@/context/LocaleContext";
 
 export function ProductSlider() {
+  const { t, localizedHref } = useLocale();
   const [offset, setOffset] = useState(32);
   const prevRef = useRef(null);
   const nextRef = useRef(null);
@@ -48,17 +50,17 @@ export function ProductSlider() {
       <Container className="mb-8 md:mb-12">
         <div className="flex flex-col gap-2">
           <h2 className="font-new-york text-3xl sm:text-4xl md:text-5xl text-wbk-black leading-tight">
-            Popular products
+            {t("home.popularTitle", "Popular products")}
           </h2>
           <div className="flex justify-end w-full">
             <Button
               as="link"
-              href="/products"
+              href={localizedHref("/products")}
               variant="secondary"
               size="md"
               className="whitespace-nowrap"
             >
-              All products
+              {t("home.allProducts", "All products")}
             </Button>
           </div>
         </div>

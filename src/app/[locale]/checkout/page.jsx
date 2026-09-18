@@ -17,10 +17,12 @@ import {
   IconBrandPaypal,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 
 export default function CheckoutPage() {
+  const { t, formatPrice, localizedHref } = useLocale();
   const {
     items,
     subtotal,
@@ -74,7 +76,7 @@ export default function CheckoutPage() {
 
     // Basic validation
     if (!formData.email || !formData.firstName || !formData.lastName || !formData.address1 || !formData.city || !formData.postcode) {
-      setErrorMessage("Please complete all required shipping address fields.");
+      setErrorMessage(t("checkout.requiredFieldsError", "Please complete all required shipping address fields."));
       return;
     }
 
@@ -134,10 +136,10 @@ export default function CheckoutPage() {
 
           <div className="space-y-2">
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold block">
-              Order Confirmed
+              {t("checkout.orderConfirmed", "Order Confirmed")}
             </span>
             <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-              Thank you for your order, {formData.firstName}!
+              {t("checkout.thankYouOrder", "Thank you for your order")}, {formData.firstName}!
             </h1>
             <p className="text-sm text-wbk-brown max-w-md mx-auto leading-relaxed">
               We have received your order and our dispatch team is preparing your precision-engineered wall bed.
@@ -149,7 +151,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-wbk-lightgrey">
               <div>
                 <span className="text-[11px] text-wbk-brown uppercase tracking-wider block">
-                  Order Reference
+                  {t("checkout.orderReference", "Order Reference")}
                 </span>
                 <span className="font-bold text-lg text-wbk-black font-poppins">
                   {orderNumber}
@@ -157,7 +159,7 @@ export default function CheckoutPage() {
               </div>
               <div className="sm:text-right">
                 <span className="text-[11px] text-wbk-brown uppercase tracking-wider block">
-                  Confirmation Sent To
+                  {t("checkout.confirmationSentTo", "Confirmation Sent To")}
                 </span>
                 <span className="text-xs font-medium text-wbk-black">
                   {formData.email}
@@ -168,7 +170,7 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-wbk-brown">
               <div>
                 <h4 className="font-semibold uppercase tracking-wider text-wbk-black text-[11px] mb-1.5">
-                  Delivery Address
+                  {t("checkout.shippingAddress", "Delivery Address")}
                 </h4>
                 <p className="text-wbk-black font-medium">
                   {formData.firstName} {formData.lastName}
@@ -184,7 +186,7 @@ export default function CheckoutPage() {
 
               <div>
                 <h4 className="font-semibold uppercase tracking-wider text-wbk-black text-[11px] mb-1.5">
-                  Shipping & Service
+                  {t("checkout.shippingMethod", "Shipping & Service")}
                 </h4>
                 <p className="text-wbk-black font-medium">
                   {selectedDeliveryDetails?.label || "Standard UK Mainland Delivery"}
@@ -197,10 +199,10 @@ export default function CheckoutPage() {
 
             <div className="pt-4 border-t border-wbk-lightgrey flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                Total Paid
+                {t("checkout.totalPaid", "Total Paid")}
               </span>
               <span className="font-bold text-xl text-wbk-black font-poppins">
-                £{finalTotal.toLocaleString()}
+                {formatPrice(finalTotal)}
               </span>
             </div>
           </div>
@@ -213,13 +215,13 @@ export default function CheckoutPage() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 border border-wbk-lightgrey bg-white text-xs font-medium uppercase tracking-wider text-wbk-black hover:border-wbk-black transition-colors"
             >
               <IconPrinter size={15} />
-              <span>Print Receipt</span>
+              <span>{t("checkout.printReceipt", "Print Receipt")}</span>
             </button>
             <Link
-              href="/"
+              href={localizedHref("/")}
               className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors"
             >
-              Return to Homepage
+              {t("checkout.returnHome", "Return to Homepage")}
             </Link>
           </div>
         </Container>
@@ -232,16 +234,16 @@ export default function CheckoutPage() {
     return (
       <div className="bg-wbk-white min-h-[60vh] flex flex-col items-center justify-center text-center font-poppins py-20 px-4">
         <h2 className="font-new-york text-2xl text-wbk-black mb-2">
-          Your basket is empty
+          {t("cart.empty", "Your basket is empty")}
         </h2>
         <p className="text-xs text-wbk-brown max-w-sm mb-6">
-          Please add a wall bed or accessory to your basket before proceeding to checkout.
+          {t("cart.emptyDesc", "Please add a wall bed or accessory to your basket before proceeding to checkout.")}
         </p>
         <Link
-          href="/products/beds"
+          href={localizedHref("/products/beds")}
           className="px-6 py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors"
         >
-          Browse Products
+          {t("categories.classicBeds", "Browse Products")}
         </Link>
       </div>
     );
@@ -253,20 +255,20 @@ export default function CheckoutPage() {
       <header className="border-b border-wbk-lightgrey bg-[#FBF9F8] py-4">
         <Container size="xl" className="flex items-center justify-between">
           <Link
-            href="/cart"
+            href={localizedHref("/cart")}
             className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black transition-colors"
           >
             <IconArrowLeft size={16} />
-            <span>Return to Basket</span>
+            <span>{t("checkout.returnToBasket", "Return to Basket")}</span>
           </Link>
 
-          <Link href="/" className="font-new-york text-xl sm:text-2xl text-wbk-black">
+          <Link href={localizedHref("/")} className="font-new-york text-xl sm:text-2xl text-wbk-black">
             WallBedKing
           </Link>
 
           <div className="flex items-center gap-1.5 text-xs text-wbk-brown">
             <IconLock size={14} className="text-wbk-green" />
-            <span className="hidden sm:inline font-medium">256-Bit SSL Secure Checkout</span>
+            <span className="hidden sm:inline font-medium">{t("checkout.secureBadge", "256-Bit SSL Secure Checkout")}</span>
           </div>
         </Container>
       </header>
@@ -284,7 +286,7 @@ export default function CheckoutPage() {
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
                       1
                     </span>
-                    <span>Contact Information</span>
+                    <span>{t("checkout.contactInfo", "Contact Information")}</span>
                   </h2>
                 </div>
 
@@ -294,7 +296,7 @@ export default function CheckoutPage() {
                       htmlFor="email"
                       className="block text-xs font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Email Address *
+                      {t("checkout.email", "Email Address")} *
                     </label>
                     <input
                       id="email"
@@ -315,7 +317,7 @@ export default function CheckoutPage() {
                       htmlFor="phone"
                       className="block text-xs font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Mobile Phone Number *
+                      {t("checkout.phone", "Mobile Phone Number")} *
                     </label>
                     <input
                       id="phone"
@@ -340,7 +342,7 @@ export default function CheckoutPage() {
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
                       2
                     </span>
-                    <span>Delivery Address</span>
+                    <span>{t("checkout.shippingAddress", "Delivery Address")}</span>
                   </h2>
                 </div>
 
@@ -350,7 +352,7 @@ export default function CheckoutPage() {
                       htmlFor="firstName"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      First Name *
+                      {t("checkout.firstName", "First Name")} *
                     </label>
                     <input
                       id="firstName"
@@ -367,7 +369,7 @@ export default function CheckoutPage() {
                       htmlFor="lastName"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Last Name *
+                      {t("checkout.lastName", "Last Name")} *
                     </label>
                     <input
                       id="lastName"
@@ -384,7 +386,7 @@ export default function CheckoutPage() {
                       htmlFor="address1"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Address Line 1 *
+                      {t("checkout.address", "Address Line 1")} *
                     </label>
                     <input
                       id="address1"
@@ -402,7 +404,7 @@ export default function CheckoutPage() {
                       htmlFor="address2"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Address Line 2 (Optional)
+                      {t("checkout.address2", "Address Line 2 (Optional)")}
                     </label>
                     <input
                       id="address2"
@@ -419,7 +421,7 @@ export default function CheckoutPage() {
                       htmlFor="city"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Town / City *
+                      {t("checkout.city", "Town / City")} *
                     </label>
                     <input
                       id="city"
@@ -436,7 +438,7 @@ export default function CheckoutPage() {
                       htmlFor="postcode"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Postcode *
+                      {t("checkout.postalCode", "Postcode")} *
                     </label>
                     <input
                       id="postcode"
@@ -454,7 +456,7 @@ export default function CheckoutPage() {
                       htmlFor="country"
                       className="block font-medium uppercase tracking-wider text-wbk-black mb-1"
                     >
-                      Country
+                      {t("checkout.country", "Country")}
                     </label>
                     <select
                       id="country"
@@ -469,14 +471,16 @@ export default function CheckoutPage() {
                     </select>
                   </div>
                 </div>
-              </div>              {/* Step 3: Shipping Method Selection */}
+              </div>
+
+              {/* Step 3: Shipping Method Selection */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-wbk-lightgrey/80">
                   <h2 className="font-new-york text-xl text-wbk-black flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
                       3
                     </span>
-                    <span>Shipping Method</span>
+                    <span>{t("checkout.shippingMethod", "Shipping Method")}</span>
                   </h2>
                 </div>
 
@@ -515,7 +519,7 @@ export default function CheckoutPage() {
                             opt.cost === 0 ? "text-wbk-green" : "text-wbk-black font-poppins"
                           }`}
                         >
-                          {opt.cost === 0 ? "Free" : `£${opt.cost}.00`}
+                          {opt.cost === 0 ? t("cart.shippingFree", "Free") : formatPrice(opt.cost)}
                         </span>
                       </label>
                     );
@@ -530,7 +534,7 @@ export default function CheckoutPage() {
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
                       4
                     </span>
-                    <span>Secure Payment</span>
+                    <span>{t("checkout.payment", "Secure Payment")}</span>
                   </h2>
                 </div>
 
@@ -547,7 +551,7 @@ export default function CheckoutPage() {
                       }`}
                     >
                       <IconCreditCard size={20} className="mx-auto mb-1 text-wbk-black" />
-                      <span className="block">Credit / Debit Card</span>
+                      <span className="block">{t("checkout.paymentCard", "Credit / Debit Card")}</span>
                       <span className="text-[10px] text-wbk-brown font-normal">Stripe & Apple Pay</span>
                     </button>
 
@@ -561,7 +565,7 @@ export default function CheckoutPage() {
                       }`}
                     >
                       <IconBrandPaypal size={20} className="mx-auto mb-1 text-[#003087]" />
-                      <span className="block font-semibold text-[#003087]">PayPal</span>
+                      <span className="block font-semibold text-[#003087]">{t("checkout.paymentPaypal", "PayPal")}</span>
                       <span className="text-[10px] text-wbk-brown font-normal">Express & Pay in 3</span>
                     </button>
                   </div>
@@ -572,7 +576,7 @@ export default function CheckoutPage() {
                       <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
                         <div className="flex items-center gap-2 font-semibold">
                           <IconLock size={16} className="text-wbk-green" />
-                          <span>Direct Stripe Checkout</span>
+                          <span>{t("checkout.directStripe", "Direct Stripe Checkout")}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] text-wbk-brown font-mono">
                           <span className="px-1.5 py-0.5 bg-white border border-wbk-lightgrey">VISA</span>
@@ -587,7 +591,7 @@ export default function CheckoutPage() {
 
                       <div className="pt-2">
                         <StripeCheckoutButton
-                          label={`Pay £${finalTotal.toLocaleString()} with Stripe`}
+                          label={`Pay ${formatPrice(finalTotal)} with Stripe`}
                           customerDetails={formData}
                         />
                       </div>
@@ -615,12 +619,12 @@ export default function CheckoutPage() {
 
                 {/* Terms agreement */}
                 <div className="pt-3 text-[11px] text-wbk-brown leading-relaxed">
-                  By confirming payment, you agree to the Wall Bed King{" "}
-                  <Link href="/terms" className="text-wbk-black underline hover:text-wbk-green">
+                  {t("checkout.agreeTerms", "By confirming payment, you agree to the Wall Bed King")}{" "}
+                  <Link href={localizedHref("/terms")} className="text-wbk-black underline hover:text-wbk-green">
                     Terms & Conditions
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-wbk-black underline hover:text-wbk-green">
+                  <Link href={localizedHref("/privacy")} className="text-wbk-black underline hover:text-wbk-green">
                     Privacy Policy
                   </Link>
                   .
@@ -632,7 +636,7 @@ export default function CheckoutPage() {
             <div className="lg:col-span-5 sticky top-20 space-y-6">
               <div className="bg-[#FBF9F8] border border-wbk-lightgrey p-6 sm:p-8 space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-wbk-lightgrey">
-                  <h2 className="font-new-york text-xl text-wbk-black">Your Order</h2>
+                  <h2 className="font-new-york text-xl text-wbk-black">{t("checkout.yourOrder", "Your Order")}</h2>
                   <span className="text-xs text-wbk-brown font-poppins">
                     {items.length} {items.length === 1 ? "item" : "items"}
                   </span>
@@ -664,7 +668,7 @@ export default function CheckoutPage() {
                       </div>
 
                       <div className="text-xs font-bold text-wbk-black font-poppins">
-                        £{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString()}
+                        {formatPrice(Number(item.price || 0) * Number(item.quantity || 1))}
                       </div>
                     </div>
                   ))}
@@ -673,39 +677,39 @@ export default function CheckoutPage() {
                 {/* Breakdown */}
                 <div className="space-y-2.5 pt-4 border-t border-wbk-lightgrey text-xs text-wbk-brown font-poppins">
                   <div className="flex items-center justify-between">
-                    <span>Items Subtotal</span>
+                    <span>{t("checkout.subtotal", "Items Subtotal")}</span>
                     <span className="font-semibold text-wbk-black">
-                      £{subtotal.toLocaleString()}
+                      {formatPrice(subtotal)}
                     </span>
                   </div>
 
                   {discount > 0 && (
                     <div className="flex items-center justify-between text-wbk-green font-medium">
-                      <span>Promo Discount ({activePromoDetails?.code})</span>
-                      <span>-£{discount.toLocaleString()}</span>
+                      <span>{t("checkout.discount", "Promo Discount")} ({activePromoDetails?.code})</span>
+                      <span>-{formatPrice(discount)}</span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span>Delivery Option</span>
+                    <span>{t("checkout.shipping", "Delivery Option")}</span>
                     <span className="font-semibold text-wbk-black">
-                      {shipping === 0 ? "Free Delivery" : `£${shipping}.00 (${selectedDeliveryDetails?.label})`}
+                      {shipping === 0 ? t("cart.shippingFree", "Free Delivery") : `${formatPrice(shipping)} (${selectedDeliveryDetails?.label})`}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-wbk-brown/80 pt-1">
                     <span>Includes 20% UK VAT</span>
-                    <span>£{vatIncluded.toLocaleString()}</span>
+                    <span>{formatPrice(vatIncluded)}</span>
                   </div>
                 </div>
 
                 {/* Total */}
                 <div className="pt-4 border-t border-wbk-lightgrey flex items-baseline justify-between">
                   <span className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                    Total Due
+                    {t("checkout.total", "Total Due")}
                   </span>
                   <span className="font-bold text-2xl text-wbk-black font-poppins">
-                    £{finalTotal.toLocaleString()}
+                    {formatPrice(finalTotal)}
                   </span>
                 </div>
               </div>
@@ -714,15 +718,15 @@ export default function CheckoutPage() {
               <div className="p-6 bg-white border border-wbk-lightgrey space-y-3 text-xs text-wbk-brown">
                 <div className="flex items-center gap-2.5">
                   <IconShieldCheck size={18} className="text-wbk-gold shrink-0" />
-                  <span className="text-wbk-black font-medium">30-Year Mechanism Guarantee</span>
+                  <span className="text-wbk-black font-medium">{t("product.warrantyInfo", "30-Year Mechanism Guarantee")}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <IconTruck size={18} className="text-wbk-green shrink-0" />
-                  <span className="text-wbk-black font-medium">Precision Packed & Insured Dispatch</span>
+                  <span className="text-wbk-black font-medium">{t("checkout.guaranteeDispatch", "Precision Packed & Insured Dispatch")}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <IconLock size={16} className="text-wbk-black shrink-0" />
-                  <span className="text-wbk-black font-medium">Safe 256-Bit Encrypted Checkout</span>
+                  <span className="text-wbk-black font-medium">{t("checkout.guaranteeSecure", "Safe 256-Bit Encrypted Checkout")}</span>
                 </div>
               </div>
             </div>

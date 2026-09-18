@@ -287,7 +287,25 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
               <div>
                 <label className="block text-xs font-medium text-wbk-black mb-1">
-                  Bed Type
+                  Primary Category
+                </label>
+                <select
+                  value={formData.parent_category || "beds"}
+                  onChange={(e) => handleChange("parent_category", e.target.value)}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none font-medium text-wbk-black"
+                >
+                  <option value="beds">Murphy Beds (beds)</option>
+                  <option value="sofas">Sofas & Seating (sofas)</option>
+                  <option value="tables">Tables & Desks (tables)</option>
+                  <option value="mattresses">Mattresses (mattresses)</option>
+                  <option value="cabinets">Cabinets & Storage (cabinets)</option>
+                  <option value="extras">Extras & Accessories (extras)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-wbk-black mb-1">
+                  Bed / Furniture Type
                 </label>
                 <select
                   value={formData.type || "Classic"}
@@ -297,6 +315,11 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   <option value="Classic">Classic</option>
                   <option value="Studio">Studio</option>
                   <option value="Integrated">Integrated</option>
+                  <option value="Transforming">Transforming</option>
+                  <option value="Wall-Mounted">Wall-Mounted</option>
+                  <option value="Extending">Extending</option>
+                  <option value="Coffee & Side">Coffee & Side</option>
+                  <option value="Modular">Modular</option>
                 </select>
               </div>
 

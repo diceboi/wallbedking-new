@@ -16,8 +16,9 @@ import "swiper/css/navigation";
 const NAV_ORDER = [
   "beds",
   "sofas",
-  "mattresses",
+  "tables",
   "cabinets",
+  "mattresses",
   "extras",
   "support",
 ];

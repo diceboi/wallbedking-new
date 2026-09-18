@@ -35,6 +35,18 @@ const CATEGORY_DATA = [
     ],
   },
   {
+    id: "tables",
+    title: "Smart & Transforming Tables",
+    description: "Multifunctional, height-adjustable, drop-leaf and extending tables engineered for compact living and seamless bed pairing.",
+    count: 12,
+    subcategories: [
+      "Transforming Coffee-to-Dining Table",
+      "Wall-Mounted Drop-Leaf Folding Table",
+      "Extending Console-to-Dining Table",
+      "Compact Bed-Front Side Table",
+    ],
+  },
+  {
     id: "mattresses",
     title: "Mattresses",
     description: "Rigorously tested, max. 30 cm depth orthopaedic memory foam and pocket sprung mattresses crafted for vertical storage.",

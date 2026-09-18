@@ -61,6 +61,13 @@ export function TopMenu() {
           </Link>
           <span className="text-white/20">|</span>
           <Link
+            href="/reviews"
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
+          >
+            Reviews
+          </Link>
+          <span className="text-white/20">|</span>
+          <Link
             href="/about"
             className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
           >
