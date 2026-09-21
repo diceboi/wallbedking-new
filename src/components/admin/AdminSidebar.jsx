@@ -15,6 +15,8 @@ import {
   IconUsers,
   IconReceipt,
   IconBuildingStore,
+  IconMail,
+  IconStar,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -67,6 +69,18 @@ export const ADMIN_NAV_ITEMS = [
     label: "Translations",
     href: "/admin/translations",
     icon: IconLanguage,
+  },
+  {
+    id: "emails",
+    label: "Email Templates",
+    href: "/admin/emails",
+    icon: IconMail,
+  },
+  {
+    id: "reviews",
+    label: "Reviews",
+    href: "/admin/reviews",
+    icon: IconStar,
   },
   {
     id: "settings",

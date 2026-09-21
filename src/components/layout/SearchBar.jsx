@@ -15,7 +15,7 @@ const normalizeStr = (s) =>
 
 export function SearchBar() {
   const router = useRouter();
-  const { t, localizedHref, formatPrice } = useLocale();
+  const { t, localizedHref, formatPrice, locale } = useLocale();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -214,7 +214,9 @@ export function SearchBar() {
                           <>
                             <span className="text-[10px] text-wbk-brown/50">•</span>
                             <span className="text-[10px] font-medium text-wbk-brown">
-                              {Math.round(item.width / 10)}x{Math.round(item.length / 10)} cm
+                              {locale === "us"
+                                ? `${Math.round(item.width / 25.4)}" x ${Math.round(item.length / 25.4)}" (${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm)`
+                                : `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`}
                             </span>
                           </>
                         )}

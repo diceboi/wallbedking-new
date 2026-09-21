@@ -90,7 +90,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 {formData.parent_category || "beds"}
               </span>
             </div>
-            <h2 className="font-new-york text-lg text-white font-medium truncate max-w-md mt-0.5">
+            <h2 className="font-poppins text-lg text-white font-semibold truncate max-w-md mt-0.5">
               {formData.name}
             </h2>
           </div>

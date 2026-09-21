@@ -13,6 +13,7 @@ import {
   IconArrowRight,
   IconPhoneCall,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const REQUIRED_TOOLS = [
   { name: "Power Drill & Drill Bits", spec: "10mm masonry or wood bit" },
@@ -75,6 +76,8 @@ const GUIDE_SECTIONS = [
 ];
 
 export default function InstallationGuidesPage() {
+  const { t, localizedHref } = useLocale();
+
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
       {/* Header */}
@@ -82,40 +85,39 @@ export default function InstallationGuidesPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-brown/80">Support</span>
+              <span className="text-wbk-brown/80">{t("nav.support", "Support")}</span>
               <span>/</span>
-              <span className="text-wbk-black font-medium">Installation Guides</span>
+              <span className="text-wbk-black font-medium">{t("support.guidesTitle", "Installation Guides")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              Step-by-Step Technical Instructions
+              {t("support.stepByStepBadge", "Step-by-Step Technical Instructions")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Wall Bed Assembly & Installation Guide
+              {t("support.guidesTitle", "Wall Bed Assembly & Installation Guide")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              Wall Bed King systems are precision-engineered for straightforward DIY assembly.
-              Follow our comprehensive guide below or watch our step-by-step video walkthroughs.
+              {t("support.guidesSubtitle", "Wall Bed King systems are precision-engineered for straightforward DIY assembly. Follow our comprehensive guide below or watch our step-by-step video walkthroughs.")}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
-                href="/support/installation-videos"
+                href={localizedHref("/support/installation-videos")}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
               >
                 <IconVideo size={16} />
-                <span>Watch Video Walkthroughs</span>
+                <span>{t("support.watchVideosBtn", "Watch Video Walkthroughs")}</span>
               </Link>
               <a
-                href="tel:08000288940"
+                href="tel:01928583469"
                 className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-lightgrey bg-white hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
               >
                 <IconPhoneCall size={16} />
-                <span>Technical Assistance Hotline</span>
+                <span>{t("support.techHotlineBtn", "Technical Assistance Hotline")}</span>
               </a>
             </div>
           </div>
@@ -133,9 +135,11 @@ export default function InstallationGuidesPage() {
               </div>
               <div>
                 <h3 className="font-poppins font-semibold text-lg text-wbk-black">
-                  Tools Required For Assembly
+                  {t("support.toolsRequired", "Tools Required For Assembly")}
                 </h3>
-                <p className="text-xs text-wbk-brown">Standard household DIY equipment</p>
+                <p className="text-xs text-wbk-brown">
+                  {t("support.toolsDesc", "Standard household DIY equipment")}
+                </p>
               </div>
             </div>
 

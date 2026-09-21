@@ -4,8 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { IconChevronDown } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
+import { formatSizeLabel } from "@/lib/i18n";
 
 export function NewProductSection() {
+  const { t, localizedHref, locale } = useLocale();
   const containerRef = useRef(null);
   const dotRef = useRef(null);
   const lineAttachRef = useRef(null);
@@ -57,11 +60,11 @@ export function NewProductSection() {
             className="flex whitespace-nowrap text-3xl sm:text-5xl md:text-[5vw] uppercase tracking-[0em] text-wbk-black select-none"
           >
             <span className="mx-8 md:mx-16 font-poppins font-black">
-              NEW PRODUCT
+              {t("home.newProduct", "NEW PRODUCT")}
             </span>
             <span className="mx-8 md:mx-16 font-new-york">Morphy™ Sofa</span>
             <span className="mx-8 md:mx-16 font-poppins font-black">
-              NEW PRODUCT
+              {t("home.newProduct", "NEW PRODUCT")}
             </span>
             <span className="mx-8 md:mx-16 font-new-york">Morphy™ Sofa</span>
           </motion.div>
@@ -71,11 +74,11 @@ export function NewProductSection() {
             className="flex whitespace-nowrap text-3xl sm:text-5xl md:text-[5vw] uppercase tracking-[0em] text-[#E4E0DE]/45 select-none"
           >
             <span className="mx-8 md:mx-16 font-poppins font-black">
-              NEW PRODUCT
+              {t("home.newProduct", "NEW PRODUCT")}
             </span>
             <span className="mx-8 md:mx-16 font-new-york">Morphy™ Sofa</span>
             <span className="mx-8 md:mx-16 font-poppins font-black">
-              NEW PRODUCT
+              {t("home.newProduct", "NEW PRODUCT")}
             </span>
             <span className="mx-8 md:mx-16 font-new-york">Morphy™ Sofa</span>
           </motion.div>
@@ -180,7 +183,7 @@ export function NewProductSection() {
                 onClick={() => setSizeOpen(!sizeOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
               >
-                <span>{selectedSize}</span>
+                <span>{formatSizeLabel(selectedSize, locale)}</span>
                 <IconChevronDown size={14} />
               </button>
 
@@ -196,7 +199,7 @@ export function NewProductSection() {
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-wbk-lightgrey/20 transition-colors cursor-pointer"
                     >
-                      {sz}
+                      {formatSizeLabel(sz, locale)}
                     </button>
                   ))}
                 </div>
@@ -208,7 +211,7 @@ export function NewProductSection() {
               type="button"
               className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
             >
-              <span>Select color</span>
+              <span>{t("product.selectColor", "Select color")}</span>
               <IconChevronDown size={14} />
             </button>
 
@@ -217,7 +220,7 @@ export function NewProductSection() {
               type="button"
               className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
             >
-              <span>Select orientation</span>
+              <span>{t("product.selectOrientation", "Select orientation")}</span>
               <IconChevronDown size={14} />
             </button>
           </motion.div>
@@ -236,11 +239,10 @@ export function NewProductSection() {
 
             <div className="space-y-1 sm:space-y-2">
               <h4 className="text-[11px] sm:text-xs md:text-sm font-medium text-wbk-black leading-snug">
-                Cloth texture in{" "}
-                <span className="font-semibold">multiple colors</span>
+                {t("home.clothTexture", "Cloth texture in multiple colors")}
               </h4>
               <div className="flex items-center gap-1 sm:gap-1.5 pt-0.5">
-                <span className="text-[9px] sm:text-[10px] text-wbk-black">Colors:</span>
+                <span className="text-[9px] sm:text-[10px] text-wbk-black">{t("product.colors", "Colors:")}</span>
                 <div className="flex items-center">
                   {["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"].map(
                     (color, idx) => (
@@ -262,21 +264,21 @@ export function NewProductSection() {
       <div className="relative z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-[320px] sm:max-w-md px-4 mt-8 md:mt-12">
         <Button
           as="link"
-          href="/configurator"
+          href={localizedHref("/configurator")}
           variant="primary"
           size="md"
           className="w-full sm:w-auto text-center justify-center bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-xs font-semibold uppercase tracking-wider py-3.5"
         >
-          Start configurator
+          {t("home.startConfigurator", "Start configurator")}
         </Button>
         <Button
           as="link"
-          href="/products/beds"
+          href={localizedHref("/products/beds")}
           variant="secondary"
           size="md"
           className="w-full sm:w-auto text-center justify-center bg-white/90 backdrop-blur-sm border-wbk-brown/30 text-xs font-semibold uppercase tracking-wider py-3.5"
         >
-          Explore
+          {t("home.explore", "Explore")}
         </Button>
       </div>
     </section>

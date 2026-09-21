@@ -19,10 +19,13 @@ import {
   IconHeadset,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
+import { formatSizeLabel } from "@/lib/i18n";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 
 export default function CartPage() {
+  const { t, formatPrice, localizedHref, locale } = useLocale();
   const {
     items,
     updateQuantity,
@@ -53,7 +56,7 @@ export default function CartPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="animate-pulse text-wbk-brown font-poppins text-sm">
-          Loading your shopping basket...
+          {t("cart.loadingBasket", "Loading your shopping basket...")}
         </div>
       </div>
     );
@@ -72,19 +75,19 @@ export default function CartPage() {
       <div className="bg-[#FBF9F8] border-b border-wbk-lightgrey/60 py-6 sm:py-8">
         <Container size="xl">
           <div className="flex items-center gap-2 text-xs text-wbk-brown mb-2">
-            <Link href="/" className="hover:text-wbk-black transition-colors">
-              Home
+            <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+              {t("nav.home", "Home")}
             </Link>
             <span>/</span>
-            <span className="text-wbk-black font-medium">Shopping Basket</span>
+            <span className="text-wbk-black font-medium">{t("cart.title", "Shopping Basket")}</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-              Shopping Basket
+              {t("cart.title", "Shopping Basket")}
             </h1>
             {items.length > 0 && (
               <span className="text-xs text-wbk-brown font-poppins">
-                {totalItems} {totalItems === 1 ? "item" : "items"} in your order
+                {totalItems} {totalItems === 1 ? t("cart.itemCount", "item in your order") : t("cart.itemsCount", "items in your order")}
               </span>
             )}
           </div>
@@ -99,25 +102,25 @@ export default function CartPage() {
               <IconShoppingBag size={36} strokeWidth={1.5} />
             </div>
             <h2 className="font-new-york text-2xl sm:text-3xl text-wbk-black mb-3">
-              Your basket is currently empty
+              {t("cart.empty", "Your basket is currently empty")}
             </h2>
             <p className="text-sm text-wbk-brown font-poppins leading-relaxed max-w-md mx-auto mb-8">
-              Looks like you haven't added any wall beds or accessories to your basket yet. Explore our space-saving solutions designed for modern living.
+              {t("cart.emptyDesc", "Explore our space-saving solutions designed for modern living.")}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/products/beds"
+                href={localizedHref("/products/beds")}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] hover:bg-wbk-green hover:text-wbk-black transition-all rounded-full shadow-sm"
               >
-                <span>Browse Murphy Beds</span>
+                <span>{t("cart.discoverBeds", "Discover Murphy Beds")}</span>
                 <IconArrowRight size={15} />
               </Link>
               <Link
-                href="/products"
+                href={localizedHref("/products")}
                 className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 border border-wbk-lightgrey text-wbk-black text-xs font-medium uppercase tracking-[0.14em] hover:border-wbk-black transition-all rounded-full"
               >
-                View All Products
+                {t("home.allProducts", "View All Products")}
               </Link>
             </div>
           </div>
@@ -131,7 +134,7 @@ export default function CartPage() {
                 <div className="flex items-center gap-2.5">
                   <IconTruck size={20} className="text-wbk-green shrink-0" />
                   <span className="text-wbk-black">
-                    <strong>Free UK Mainland Delivery</strong> applies to all products in your basket.
+                    <strong>{t("common.freeDelivery", "Free UK Mainland Delivery")}</strong>
                   </span>
                 </div>
                 <span className="hidden sm:inline-block text-[11px] font-semibold text-wbk-gold uppercase tracking-wider shrink-0">
@@ -143,10 +146,10 @@ export default function CartPage() {
               <div className="border border-wbk-lightgrey divide-y divide-wbk-lightgrey bg-white">
                 {/* Table Header (hidden on mobile) */}
                 <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#FBF9F8] text-[11px] font-semibold uppercase tracking-wider text-wbk-brown">
-                  <div className="col-span-6">Product Details</div>
-                  <div className="col-span-2 text-center">Unit Price</div>
-                  <div className="col-span-2 text-center">Quantity</div>
-                  <div className="col-span-2 text-right">Total</div>
+                  <div className="col-span-6">{t("cart.productCol", "Product Details")}</div>
+                  <div className="col-span-2 text-center">{t("cart.priceCol", "Unit Price")}</div>
+                  <div className="col-span-2 text-center">{t("cart.quantityCol", "Quantity")}</div>
+                  <div className="col-span-2 text-right">{t("cart.totalCol", "Total")}</div>
                 </div>
 
                 {/* Rows */}
@@ -169,7 +172,7 @@ export default function CartPage() {
 
                       <div className="min-w-0 space-y-1">
                         <Link
-                          href={item.href || "/products/beds"}
+                          href={item.href ? localizedHref(item.href) : localizedHref("/products/beds")}
                           className="font-medium text-sm text-wbk-black hover:text-wbk-green transition-colors leading-snug line-clamp-2"
                         >
                           {item.title}
@@ -180,7 +183,7 @@ export default function CartPage() {
                           <div className="flex flex-wrap gap-1.5 pt-1">
                             {item.options.size && (
                               <span className="text-[11px] bg-[#F4F2F0] text-wbk-black px-2 py-0.5 border border-wbk-lightgrey/60 font-medium">
-                                {item.options.size}
+                                {formatSizeLabel(item.options.size, locale)}
                               </span>
                             )}
                             {item.options.orientation && (
@@ -195,7 +198,7 @@ export default function CartPage() {
                             )}
                             {item.options.sofaIncluded && (
                               <span className="text-[11px] bg-[#F4F2F0] text-wbk-gold px-2 py-0.5 border border-wbk-lightgrey/60 font-semibold">
-                                + Front Sofa Module
+                                + {t("cart.frontSofa", "Front Sofa Module")}
                               </span>
                             )}
                           </div>
@@ -207,15 +210,15 @@ export default function CartPage() {
                           className="inline-flex items-center gap-1 text-xs text-wbk-brown hover:text-red-600 transition-colors pt-2 cursor-pointer"
                         >
                           <IconTrash size={13} />
-                          <span>Remove</span>
+                          <span>{t("cart.removeItem", "Remove")}</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Unit Price */}
                     <div className="sm:col-span-2 sm:text-center text-xs text-wbk-brown sm:text-wbk-black font-poppins">
-                      <span className="sm:hidden font-medium text-wbk-black mr-1">Price:</span>
-                      £{Number(item.price || 0).toLocaleString()}
+                      <span className="sm:hidden font-medium text-wbk-black mr-1">{t("cart.priceCol", "Price")}:</span>
+                      {formatPrice(Number(item.price || 0))}
                     </div>
 
                     {/* Quantity Stepper */}
@@ -245,8 +248,8 @@ export default function CartPage() {
 
                     {/* Line Total */}
                     <div className="sm:col-span-2 sm:text-right font-bold text-sm text-wbk-black font-poppins">
-                      <span className="sm:hidden font-normal text-xs text-wbk-brown mr-1">Total:</span>
-                      £{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString()}
+                      <span className="sm:hidden font-normal text-xs text-wbk-brown mr-1">{t("cart.totalCol", "Total")}:</span>
+                      {formatPrice(Number(item.price || 0) * Number(item.quantity || 1))}
                     </div>
                   </div>
                 ))}
@@ -255,11 +258,11 @@ export default function CartPage() {
               {/* Bottom Actions Row: Continue Shopping & Clear */}
               <div className="flex items-center justify-between pt-2">
                 <Link
-                  href="/products/beds"
+                  href={localizedHref("/products/beds")}
                   className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green transition-colors"
                 >
                   <IconArrowLeft size={16} />
-                  <span>Continue Shopping</span>
+                  <span>{t("cart.continueShopping", "Continue Shopping")}</span>
                 </Link>
 
                 <button
@@ -267,7 +270,7 @@ export default function CartPage() {
                   onClick={clearCart}
                   className="text-xs text-wbk-brown hover:text-red-600 transition-colors underline cursor-pointer"
                 >
-                  Clear entire basket
+                  {t("cart.clearBasket", "Clear entire basket")}
                 </button>
               </div>
 
@@ -277,11 +280,8 @@ export default function CartPage() {
                   htmlFor="delivery-notes"
                   className="block text-xs font-semibold uppercase tracking-wider text-wbk-black"
                 >
-                  Special Delivery Instructions or Assembly Notes (Optional)
+                  {t("cart.deliveryInstructions", "Special Delivery Instructions or Assembly Notes (Optional)")}
                 </label>
-                <p className="text-xs text-wbk-brown">
-                  If you live in a flat, need specific delivery access, or have questions for our courier team, please leave a note below:
-                </p>
                 <textarea
                   id="delivery-notes"
                   rows={3}
@@ -297,29 +297,29 @@ export default function CartPage() {
             <div className="lg:col-span-4 sticky top-28 space-y-6">
               <div className="bg-[#FBF9F8] border border-wbk-lightgrey p-6 sm:p-8 space-y-6">
                 <h2 className="font-new-york text-xl sm:text-2xl text-wbk-black pb-4 border-b border-wbk-lightgrey">
-                  Order Summary
+                  {t("checkout.orderSummary", "Order Summary")}
                 </h2>
 
                 {/* Price Breakdown */}
                 <div className="space-y-3 text-xs text-wbk-brown font-poppins">
                   <div className="flex items-center justify-between">
-                    <span>Items Subtotal</span>
+                    <span>{t("cart.subtotal", "Items Subtotal")}</span>
                     <span className="font-semibold text-wbk-black text-sm">
-                      £{subtotal.toLocaleString()}
+                      {formatPrice(subtotal)}
                     </span>
                   </div>
 
                   {discount > 0 && (
                     <div className="flex items-center justify-between text-wbk-green font-medium">
-                      <span>Discount ({activePromoDetails?.label})</span>
-                      <span>-£{discount.toLocaleString()}</span>
+                      <span>{t("checkout.discount", "Discount")} ({activePromoDetails?.label})</span>
+                      <span>-{formatPrice(discount)}</span>
                     </div>
                   )}
 
                   {/* Delivery Selection */}
                   <div className="pt-2 border-t border-wbk-lightgrey/60 space-y-2">
                     <span className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
-                      Delivery Option
+                      {t("checkout.deliveryOptionsTitle", "Delivery Option")}
                     </span>
                     <div className="space-y-1.5">
                       {Object.values(deliveryOptions).map((opt) => {
@@ -352,7 +352,7 @@ export default function CartPage() {
                               </div>
                             </div>
                             <span className={`font-semibold text-xs shrink-0 ml-2 ${opt.cost === 0 ? "text-wbk-green" : "text-wbk-black"}`}>
-                              {opt.cost === 0 ? "FREE" : `£${opt.cost}`}
+                              {opt.cost === 0 ? t("cart.shippingFree", "FREE") : formatPrice(opt.cost)}
                             </span>
                           </label>
                         );
@@ -362,17 +362,17 @@ export default function CartPage() {
 
                   <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-1.5">
-                      <span>Selected Delivery</span>
+                      <span>{t("checkout.shippingMethod", "Selected Delivery")}</span>
                       {shipping === 0 && <IconCheck size={14} className="text-wbk-green" />}
                     </div>
                     <span className={`font-semibold text-[11px] uppercase tracking-wider ${shipping === 0 ? "text-wbk-green" : "text-wbk-black"}`}>
-                      {shipping === 0 ? "Free" : `£${shipping}`}
+                      {shipping === 0 ? t("cart.shippingFree", "Free") : formatPrice(shipping)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-wbk-brown/80 pt-1">
-                    <span>Includes 20% UK VAT</span>
-                    <span>£{vatIncluded.toLocaleString()}</span>
+                    <span>Includes VAT</span>
+                    <span>{formatPrice(vatIncluded)}</span>
                   </div>
                 </div>
 
@@ -380,14 +380,14 @@ export default function CartPage() {
                 <div className="pt-4 border-t border-wbk-lightgrey flex items-baseline justify-between">
                   <div>
                     <span className="block text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                      Total
+                      {t("cart.total", "Total")}
                     </span>
                     <span className="text-[10px] text-wbk-brown">
                       No hidden fees or customs duties
                     </span>
                   </div>
                   <span className="font-bold text-2xl text-wbk-black font-poppins">
-                    £{total.toLocaleString()}
+                    {formatPrice(total)}
                   </span>
                 </div>
 
@@ -401,7 +401,7 @@ export default function CartPage() {
                           {promoCode}
                         </span>
                         <span className="text-[11px] text-wbk-brown">
-                          (-£{discount})
+                          (-{formatPrice(discount)})
                         </span>
                       </div>
                       <button
@@ -409,7 +409,7 @@ export default function CartPage() {
                         onClick={removePromoCode}
                         className="text-xs text-red-600 hover:underline cursor-pointer"
                       >
-                        Remove
+                        {t("cart.removeItem", "Remove")}
                       </button>
                     </div>
                   ) : (
@@ -418,7 +418,7 @@ export default function CartPage() {
                         htmlFor="promo-input"
                         className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-brown"
                       >
-                        Discount Code
+                        {t("cart.promoCode", "Discount Code")}
                       </label>
                       <div className="flex gap-2">
                         <input
@@ -433,7 +433,7 @@ export default function CartPage() {
                           type="submit"
                           className="px-4 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-full cursor-pointer"
                         >
-                          Apply
+                          {t("cart.apply", "Apply")}
                         </button>
                       </div>
                       {promoError && (
@@ -446,11 +446,11 @@ export default function CartPage() {
                 {/* Primary Checkout Actions */}
                 <div className="space-y-3 pt-2">
                   <Link
-                    href="/checkout"
+                    href={localizedHref("/checkout")}
                     className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all rounded-full shadow-md group cursor-pointer"
                   >
                     <IconLock size={16} />
-                    <span>Proceed to Checkout</span>
+                    <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
                     <IconArrowRight
                       size={16}
                       className="group-hover:translate-x-1 transition-transform"
@@ -476,7 +476,7 @@ export default function CartPage() {
                 {/* Accepted Payment Icons */}
                 <div className="pt-3 text-center space-y-2 border-t border-wbk-lightgrey/60">
                   <span className="text-[10px] uppercase font-medium tracking-widest text-wbk-brown block">
-                    Guaranteed Safe & Secure Checkout
+                    {t("checkout.guaranteeSecure", "Guaranteed Safe & Secure Checkout")}
                   </span>
                   <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-wbk-brown/70 flex-wrap">
                     <span className="px-2 py-1 bg-white border border-wbk-lightgrey text-[10px]">VISA</span>
@@ -495,7 +495,7 @@ export default function CartPage() {
                   <IconShieldCheck size={20} className="text-wbk-gold shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-wbk-black">
-                      30-Year Mechanism Guarantee
+                      {t("common.warranty30", "Lifetime Mechanism Guarantee")}
                     </h4>
                     <p className="text-[11px] text-wbk-brown leading-relaxed mt-0.5">
                       Piston and steel framework engineered to withstand over 10,000 fold cycles.
@@ -507,11 +507,11 @@ export default function CartPage() {
                   <IconHeadset size={20} className="text-wbk-green shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-wbk-black">
-                      UK Support & Advice
+                      {t("header.specialistAdvice", "UK Support & Advice")}
                     </h4>
                     <p className="text-[11px] text-wbk-brown leading-relaxed mt-0.5">
-                      Need help checking room dimensions? Call our technical specialists free at{" "}
-                      <strong className="text-wbk-black">0800 028 8940</strong>.
+                      {t("header.callSpecialists", "Call our product specialists")}:{" "}
+                      <strong className="text-wbk-black">{t("header.phone", "01928 583 469")}</strong>
                     </p>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminDashboardPage() {
   const [products, setProducts] = useState([]);
@@ -49,44 +50,28 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8 font-poppins">
-      {/* Welcome Banner */}
-      <div className="bg-[#090A0A] text-white p-6 sm:p-8 border border-white/10 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-wbk-gold">
-              WallBedKing Management Suite
-            </span>
-          </div>
-          <h2 className="font-new-york text-2xl sm:text-3xl font-medium tracking-tight text-white">
-            Welcome to the Dashboard
-          </h2>
-          <p className="text-xs text-white/70 max-w-xl leading-relaxed">
-            Manage your catalog of 234 products, multi-currency prices (GBP, EUR, USD), promotional discounts, and 7-market localized dictionaries directly in Supabase.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <Link
-            href="/admin/feeds"
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors border border-white/20 shadow-sm"
-          >
-            <span>Marketplace Feeds</span>
-          </Link>
-          <Link
-            href="/admin/orders"
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors border border-white/20 shadow-sm"
-          >
-            <span>View Orders</span>
-          </Link>
-          <Link
-            href="/admin/products"
-            className="flex items-center gap-2 px-5 py-2.5 bg-wbk-gold hover:bg-white text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-sm"
-          >
-            <span>Manage Products</span>
-            <IconArrowRight size={15} />
-          </Link>
-        </div>
-      </div>
+      {/* Page Header */}
+      <AdminPageHeader
+        badge="WallBedKing Management Suite"
+        title="Dashboard Overview"
+        description="Manage your catalog of 234 products, multi-currency prices (GBP, EUR, USD), promotional discounts, and 7-market localized dictionaries directly in Supabase."
+        actions={
+          <>
+            <Link
+              href="/admin/feeds"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-2xs"
+            >
+              <span>Marketplace Feeds</span>
+            </Link>
+            <Link
+              href="/admin/orders"
+              className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-sm"
+            >
+              <span>View Orders</span>
+            </Link>
+          </>
+        }
+      />
 
       {/* Metric Stat Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -178,7 +163,7 @@ export default function AdminDashboardPage() {
       <div className="bg-white p-6 border border-wbk-lightgrey/60 shadow-xs space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 className="font-new-york text-lg font-medium text-wbk-black">
+            <h3 className="font-poppins text-base font-semibold text-wbk-black">
               Markets & Currency Health
             </h3>
             <p className="text-xs text-wbk-brown">
@@ -248,7 +233,7 @@ export default function AdminDashboardPage() {
       <div className="bg-white border border-wbk-lightgrey/60 shadow-xs overflow-hidden">
         <div className="p-5 border-b border-wbk-lightgrey/60 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="font-new-york text-lg font-medium text-wbk-black">
+            <h3 className="font-poppins text-base font-semibold text-wbk-black">
               Recent Products
             </h3>
             <p className="text-xs text-wbk-brown">

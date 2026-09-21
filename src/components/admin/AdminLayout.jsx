@@ -78,7 +78,7 @@ export function AdminLayout({ children, title }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F8] text-wbk-black flex font-poppins antialiased">
+    <div className="admin-scope min-h-screen bg-[#FBF9F8] text-wbk-black flex font-poppins antialiased">
       {/* Sidebar Navigation */}
       <AdminSidebar
         isMobileOpen={isMobileOpen}

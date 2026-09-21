@@ -95,7 +95,7 @@ export function FeedItemEditDrawer({ feedId, item, isOpen, onClose, onSaveSucces
                 {formData.parent_child || "child"}
               </span>
             </div>
-            <h2 className="font-new-york text-base text-white font-medium truncate max-w-md mt-1">
+            <h2 className="font-poppins text-base text-white font-semibold truncate max-w-md mt-1">
               {formData.item_name}
             </h2>
           </div>

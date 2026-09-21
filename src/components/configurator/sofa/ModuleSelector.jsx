@@ -5,8 +5,10 @@ import Image from "next/image";
 import { modulesData, getAssetUrl } from "./data/modules";
 import { useSofaConfiguratorStore } from "./store/useSofaConfiguratorStore";
 import { TbChevronLeft, TbChevronRight } from "react-icons/tb";
+import { useLocale } from "@/context/LocaleContext";
 
 export function ModuleSelector() {
+  const { t, formatPrice, locale } = useLocale();
   const addModule = useSofaConfiguratorStore((state) => state.addModule);
   const setPreviewModule = useSofaConfiguratorStore(
     (state) => state.setPreviewModule,
@@ -107,10 +109,14 @@ export function ModuleSelector() {
     };
 
     const cleanupDrag = () => {
+      isDragging = false;
       document.body.classList.remove("dragging-module");
       if (ghost && ghost.parentNode) {
         ghost.parentNode.removeChild(ghost);
       }
+      try {
+        targetElement.releasePointerCapture(e.pointerId);
+      } catch (err) {}
       targetElement.removeEventListener("pointermove", onPointerMove);
       targetElement.removeEventListener("pointerup", onPointerUp);
       targetElement.removeEventListener("pointercancel", onPointerCancel);
@@ -122,9 +128,9 @@ export function ModuleSelector() {
       if (isDragging) {
         const dropEvent = new CustomEvent("customDrop", {
           detail: {
-            moduleId: moduleDef.id,
             clientX: upEvent.clientX,
             clientY: upEvent.clientY,
+            moduleId: moduleDef.id,
           },
         });
         window.dispatchEvent(dropEvent);
@@ -148,14 +154,14 @@ export function ModuleSelector() {
       <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-wbk-lightgrey/50">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-wbk-black">
-            Add Modules
+            {t("configurator.addModules", "Add Modules")}
           </h3>
           <p className="text-[11px] text-wbk-brown">
-            Click or drag & drop into 3D scene
+            {t("configurator.addModulesHint", "Click or drag & drop into 3D scene")}
           </p>
         </div>
         <span className="text-[10px] font-semibold bg-[#F4F2F0] text-wbk-brown px-2 py-0.5 rounded-full border border-wbk-lightgrey/60">
-          {modulesData.length} Pieces
+          {t("configurator.piecesCount", "{count} Pieces").replace("{count}", modulesData.length)}
         </span>
       </div>
 
@@ -163,41 +169,47 @@ export function ModuleSelector() {
         ref={sliderRef}
         className="flex flex-col gap-2 overflow-y-auto custom-scrollbar py-1"
       >
-        {modulesData.map((moduleDef) => (
-          <div
-            key={moduleDef.id}
-            onPointerDown={(e) => handlePointerDown(e, moduleDef)}
-            title="Click to add or drag into 3D scene"
-            className="group w-full bg-[#FBF9F8] hover:bg-white border border-wbk-lightgrey/70 hover:border-wbk-green p-2 rounded-none cursor-grab active:cursor-grabbing transition-all duration-150 shadow-2xs hover:shadow-sm select-none flex flex-row items-center gap-2.5"
-          >
-            {/* Thumbnail */}
-            <div className="relative w-12 h-12 shrink-0 flex items-center justify-center bg-white rounded-none border border-wbk-lightgrey/40 overflow-hidden">
-              <Image
-                src={getAssetUrl(moduleDef.thumbnail)}
-                alt={moduleDef.name}
-                width={48}
-                height={48}
-                className="object-contain p-0.5 pointer-events-none transition-transform group-hover:scale-105"
-                unoptimized
-              />
-            </div>
+        {modulesData.map((moduleDef) => {
+          const localizedName = t(`configurator.modules.${moduleDef.id}`, moduleDef.name);
 
-            {/* Info */}
-            <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center justify-between gap-1">
-                <p className="text-xs font-semibold text-wbk-black truncate leading-tight">
-                  {moduleDef.name}
-                </p>
-                <span className="text-xs font-bold text-wbk-black shrink-0">
-                  £{moduleDef.price}
-                </span>
+          return (
+            <div
+              key={moduleDef.id}
+              onPointerDown={(e) => handlePointerDown(e, moduleDef)}
+              title={t("configurator.dragTitle", "Click to add or drag into 3D scene")}
+              className="group w-full bg-[#FBF9F8] hover:bg-white border border-wbk-lightgrey/70 hover:border-wbk-green p-2 rounded-none cursor-grab active:cursor-grabbing transition-all duration-150 shadow-2xs hover:shadow-sm select-none flex flex-row items-center gap-2.5"
+            >
+              {/* Thumbnail */}
+              <div className="relative w-12 h-12 shrink-0 flex items-center justify-center bg-white rounded-none border border-wbk-lightgrey/40 overflow-hidden">
+                <Image
+                  src={getAssetUrl(moduleDef.thumbnail)}
+                  alt={localizedName}
+                  width={48}
+                  height={48}
+                  className="object-contain p-0.5 pointer-events-none transition-transform group-hover:scale-105"
+                  unoptimized
+                />
               </div>
-              <p className="text-[10px] text-wbk-brown mt-0.5">
-                {moduleDef.dimensions.width} × {moduleDef.dimensions.depth} cm
-              </p>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-xs font-semibold text-wbk-black truncate leading-tight">
+                    {localizedName}
+                  </p>
+                  <span className="text-xs font-bold text-wbk-black shrink-0">
+                    {formatPrice(moduleDef.price)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-wbk-brown mt-0.5">
+                  {locale === "us"
+                    ? `${Math.round(moduleDef.dimensions.width / 2.54)} × ${Math.round(moduleDef.dimensions.depth / 2.54)} in (${moduleDef.dimensions.width} × ${moduleDef.dimensions.depth} cm)`
+                    : `${moduleDef.dimensions.width} × ${moduleDef.dimensions.depth} cm`}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

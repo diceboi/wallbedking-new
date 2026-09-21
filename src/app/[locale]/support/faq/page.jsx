@@ -17,15 +17,16 @@ import {
   IconPhoneCall,
   IconMail,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const FAQ_CATEGORIES = [
-  { id: "all", label: "All Questions", icon: IconHelpCircle },
-  { id: "payments", label: "Payments & Refunds", icon: IconCreditCard },
-  { id: "deliveries", label: "Deliveries & Shipping", icon: IconTruck },
-  { id: "mattresses", label: "Mattresses", icon: IconBed },
-  { id: "installation", label: "Installation & Assembly", icon: IconTools },
-  { id: "usage", label: "Everyday Usage", icon: IconSparkles },
-  { id: "warranty", label: "Warranty & Guarantee", icon: IconShieldCheck },
+  { id: "all", label: "All Questions", labelKey: "support.faqCatAll", icon: IconHelpCircle },
+  { id: "payments", label: "Payments & Refunds", labelKey: "support.faqCatPayments", icon: IconCreditCard },
+  { id: "deliveries", label: "Deliveries & Shipping", labelKey: "support.faqCatDeliveries", icon: IconTruck },
+  { id: "mattresses", label: "Mattresses", labelKey: "support.faqCatMattresses", icon: IconBed },
+  { id: "installation", label: "Installation & Assembly", labelKey: "support.faqCatInstallation", icon: IconTools },
+  { id: "usage", label: "Everyday Usage", labelKey: "support.faqCatUsage", icon: IconSparkles },
+  { id: "warranty", label: "Warranty & Guarantee", labelKey: "support.faqCatWarranty", icon: IconShieldCheck },
 ];
 
 const FAQ_ITEMS = [
@@ -145,6 +146,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function FAQPage() {
+  const { t, localizedHref } = useLocale();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [openIndex, setOpenIndex] = useState(0);
@@ -154,8 +156,9 @@ export default function FAQPage() {
       const matchesCategory =
         activeCategory === "all" || item.category === activeCategory;
       const q = searchQuery.toLowerCase().trim();
+      if (!q) return matchesCategory;
+
       const matchesSearch =
-        !q ||
         item.question.toLowerCase().includes(q) ||
         item.answer.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
@@ -169,24 +172,23 @@ export default function FAQPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-brown/80">Support</span>
+              <span className="text-wbk-brown/80">{t("nav.support", "Support")}</span>
               <span>/</span>
-              <span className="text-wbk-black font-medium">FAQ</span>
+              <span className="text-wbk-black font-medium">{t("support.faqTitle", "FAQ")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              Help Center & Answers
+              {t("support.helpCenterBadge", "Help Center & Answers")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Frequently Asked Questions
+              {t("support.faqTitle", "Frequently Asked Questions")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown font-poppins leading-relaxed">
-              Find quick, comprehensive answers regarding our space-saving Murphy
-              beds, installation requirements, delivery timelines, and lifetime warranty.
+              {t("support.faqSubtitle", "Find quick, comprehensive answers regarding our space-saving Murphy beds, installation requirements, delivery timelines, and lifetime warranty.")}
             </p>
 
             {/* Instant search inside FAQ */}
@@ -199,7 +201,7 @@ export default function FAQPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search questions (e.g. wall fixing, mattress thickness, delivery)..."
+                placeholder={t("support.faqSearchPlaceholder", "Search questions (e.g. wall fixing, mattress thickness, delivery)...")}
                 className="w-full h-12 pl-12 pr-4 text-xs sm:text-sm bg-white border border-wbk-lightgrey rounded-none font-poppins text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black shadow-xs transition-colors"
               />
             </div>
@@ -214,7 +216,7 @@ export default function FAQPage() {
           <aside className="lg:col-span-4 space-y-2">
             <div className="sticky top-32 bg-[#FBF9F8] p-3 rounded-none border border-wbk-lightgrey/80">
               <p className="px-3 py-2 text-[10px] uppercase font-semibold tracking-wider text-wbk-brown">
-                Categories
+                {t("categories.title", "Categories")}
               </p>
               <div className="space-y-1">
                 {FAQ_CATEGORIES.map((cat) => {
@@ -241,7 +243,7 @@ export default function FAQPage() {
                     >
                       <span className="flex items-center gap-2.5">
                         <Icon size={16} className={isActive ? "text-wbk-gold" : "text-wbk-brown"} />
-                        <span>{cat.label}</span>
+                        <span>{cat.labelKey ? t(cat.labelKey, cat.label) : cat.label}</span>
                       </span>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full ${
@@ -259,17 +261,19 @@ export default function FAQPage() {
 
               {/* Direct Assistance Box */}
               <div className="mt-6 pt-6 border-t border-wbk-lightgrey/60 p-3 bg-white rounded-none">
-                <p className="text-xs font-semibold text-wbk-black">Still have questions?</p>
+                <p className="text-xs font-semibold text-wbk-black">
+                  {t("support.stillHaveQuestions", "Still have questions?")}
+                </p>
                 <p className="mt-1 text-[11px] text-wbk-brown font-poppins leading-relaxed">
-                  Our UK wall bed specialists are available to assist with room measurements and specifications.
+                  {t("support.stillHaveQuestionsDesc", "Our wall bed specialists are available to assist with room measurements and specifications.")}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
                   <a
-                    href="tel:08000288940"
+                    href="tel:01928583469"
                     className="inline-flex items-center gap-2 text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors"
                   >
                     <IconPhoneCall size={14} className="text-wbk-gold" />
-                    <span>0800 028 8940</span>
+                    <span>01928 583 469</span>
                   </a>
                   <a
                     href="mailto:support@wallbedking.com"

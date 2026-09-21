@@ -16,6 +16,7 @@ import {
   IconRefresh,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const LOCALES = [
   { code: "en", label: "UK", name: "English (UK)", flag: "gb" },
@@ -209,41 +210,37 @@ export default function AdminTranslationsPage() {
   return (
     <div className="space-y-6 font-poppins">
       {/* Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-new-york text-2xl font-medium text-wbk-black">
-            Translation Hub
-          </h2>
-          <p className="text-xs text-wbk-brown">
-            Manage dictionaries and 1-click AI translations across all 7 markets
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {hasChanges && (
-            <span className="text-xs text-wbk-gold font-medium flex items-center gap-1">
-              <IconAlertCircle size={15} /> Unsaved changes
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || !hasChanges}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer ${
-              hasChanges
-                ? "bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            {saving ? (
-              <IconRefresh size={16} className="animate-spin" />
-            ) : (
-              <IconDeviceFloppy size={16} />
+      <AdminPageHeader
+        badge="Localization & Multi-Market"
+        title="Translation Hub"
+        description="Manage dictionaries and 1-click AI translations across all 7 regional markets."
+        actions={
+          <>
+            {hasChanges && (
+              <span className="text-xs text-wbk-gold font-medium flex items-center gap-1">
+                <IconAlertCircle size={15} /> Unsaved changes
+              </span>
             )}
-            <span>{saving ? "Saving..." : "Save Changes"}</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !hasChanges}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer ${
+                hasChanges
+                  ? "bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {saving ? (
+                <IconRefresh size={16} className="animate-spin" />
+              ) : (
+                <IconDeviceFloppy size={16} />
+              )}
+              <span>{saving ? "Saving..." : "Save Changes"}</span>
+            </button>
+          </>
+        }
+      />
         {/* Banner notification */}
         {message && (
           <div
@@ -431,7 +428,7 @@ export default function AdminTranslationsPage() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md p-6 rounded-none border border-wbk-lightgrey shadow-xl space-y-4">
-            <h3 className="font-new-york text-xl text-wbk-black">
+            <h3 className="font-poppins text-lg font-semibold text-wbk-black">
               Add New Translation Key
             </h3>
 

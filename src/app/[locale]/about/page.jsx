@@ -17,6 +17,7 @@ import {
   IconArrowRight,
   IconStarFilled,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const PILLARS = [
   {
@@ -99,6 +100,8 @@ const STATS = [
 ];
 
 export default function AboutPage() {
+  const { t, localizedHref } = useLocale();
+
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
       {/* Hero Section */}
@@ -106,24 +109,21 @@ export default function AboutPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-black font-medium">About Us</span>
+              <span className="text-wbk-black font-medium">{t("nav.about", "About Us")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
               European Engineering & Space-Saving Innovation
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Reclaiming space. Redefining how we live.
+              {t("about.title", "Reclaiming space. Redefining how we live.")}
             </h1>
             <p className="mt-5 text-base sm:text-lg text-wbk-brown leading-relaxed font-light">
-              Founded on the belief that a premium bed should never dominate your living space,
-              Wall Bed King has become the UK and Europe&apos;s leading Murphy bed specialist.
-              We design modular fold-away systems that give you the comfort of a luxury master bedroom
-              by night, and a completely open room by day.
+              {t("about.subtitle", "Founded on the belief that a premium bed should never dominate your living space, Wall Bed King has become the UK and Europe's leading Murphy bed specialist. We design modular fold-away systems that give you the comfort of a luxury master bedroom by night, and a completely open room by day.")}
             </p>
           </div>
         </Container>
@@ -153,7 +153,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-6 space-y-6">
               <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-green">
-                Our Story & Purpose
+                {t("about.storyTitle", "Our Story & Purpose")}
               </span>
               <h2 className="font-new-york text-3xl sm:text-4xl text-wbk-black leading-tight">
                 Designed for everyday living, not just guest rooms.
@@ -171,10 +171,10 @@ export default function AboutPage() {
               </p>
               <div className="pt-2">
                 <Link
-                  href="/products/beds"
+                  href={localizedHref("/products/beds")}
                   className="inline-flex items-center gap-2 px-6 py-3.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-wbk-green transition-colors"
                 >
-                  <span>Explore Bed Collection</span>
+                  <span>{t("home.exploreModels", "Explore Bed Collection")}</span>
                   <IconArrowRight size={16} />
                 </Link>
               </div>
@@ -214,7 +214,7 @@ export default function AboutPage() {
               Why Buy From WallBedKing
             </span>
             <h2 className="mt-2 font-new-york text-3xl sm:text-4xl md:text-5xl text-wbk-black">
-              10 reasons why we lead the market
+              {t("about.pillarsTitle", "Why Homeowners Choose WallBedKing")}
             </h2>
             <p className="mt-3 text-sm text-wbk-brown">
               Precision engineering, factory-direct savings, and customer service you can rely on.
@@ -270,16 +270,16 @@ export default function AboutPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4 shrink-0">
               <Link
-                href="/contact"
+                href={localizedHref("/contact")}
                 className="px-6 py-3.5 bg-wbk-gold text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-white transition-colors text-center"
               >
-                Book Showroom Visit
+                {t("nav.contact", "Contact")}
               </Link>
               <a
-                href="tel:08000288940"
+                href="tel:01928583469"
                 className="px-6 py-3.5 border border-white/30 hover:border-white text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors text-center"
               >
-                Call 0800 028 8940
+                {t("header.callNow", "Call Us")} {t("header.phone", "01928 583 469")}
               </a>
             </div>
           </div>

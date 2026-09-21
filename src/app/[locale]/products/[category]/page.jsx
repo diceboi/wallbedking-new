@@ -30,7 +30,7 @@ import { resolveCategory } from "@/data/slugs";
 
 export default function CategoryArchivePage() {
   const params = useParams();
-  const { localizedHref } = useLocale();
+  const { t, localizedHref, formatPrice } = useLocale();
   const rawCategory = params?.category || "beds";
   const currentCategory = resolveCategory(rawCategory, params?.locale);
 
@@ -57,6 +57,40 @@ export default function CategoryArchivePage() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState(null);
+
+  const formatTypeLabel = useCallback(
+    (opt) => {
+      if (opt === "All") return t("categories.all", "All");
+      if (opt.toLowerCase() === "classic") return t("categories.classicBeds", "Classic");
+      if (opt.toLowerCase() === "studio") return t("categories.studioBeds", "Studio");
+      if (opt.toLowerCase() === "integrated") return t("categories.integratedBeds", "Integrated");
+      if (opt.toLowerCase() === "lighting") return t("categories.lighting", "Lighting");
+      if (opt.toLowerCase() === "hardware") return t("categories.hardware", "Hardware");
+      return opt;
+    },
+    [t],
+  );
+
+  const formatOrientationLabel = useCallback(
+    (opt) => {
+      if (opt === "All") return t("categories.all", "All");
+      if (opt.toLowerCase() === "vertical") return t("product.vertical", "Vertical");
+      if (opt.toLowerCase() === "horizontal") return t("product.horizontal", "Horizontal");
+      return opt;
+    },
+    [t],
+  );
+
+  const formatPriceOption = useCallback(
+    (opt) => {
+      if (opt === "All") return t("categories.all", "All");
+      if (opt === "Under £500") return `< ${formatPrice(500)}`;
+      if (opt === "£500 - £800") return `${formatPrice(500)} - ${formatPrice(800)}`;
+      if (opt === "Over £800") return `> ${formatPrice(800)}`;
+      return opt;
+    },
+    [t, formatPrice],
+  );
 
   const distinctOrientations = useMemo(() => {
     const orients = Array.from(
@@ -319,26 +353,26 @@ export default function CategoryArchivePage() {
                 href={localizedHref("/products")}
                 className="hover:text-wbk-black transition-colors"
               >
-                Products
+                {t("nav.products", "Products")}
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                {catInfo.label}
+                {t(`categories.${currentCategory}`, catInfo.label)}
               </span>
             </nav>
             <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
-              {catInfo.label}
+              {t(`categories.${currentCategory}`, catInfo.label)}
             </h1>
             <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
-              {catInfo.description}
+              {t(`categories.${currentCategory}Desc`, catInfo.description)}
             </p>
           </div>
           <div className="text-xs text-wbk-brown font-poppins">
-            Showing{" "}
+            {t("categories.showing", "Showing")}{" "}
             <span className="font-semibold text-wbk-black">
               {filteredProducts.length}
             </span>{" "}
-            {filteredProducts.length === 1 ? "item" : "items"}
+            {filteredProducts.length === 1 ? t("categories.item", "item") : t("categories.items", "items")}
           </div>
         </div>
 
@@ -390,7 +424,7 @@ export default function CategoryArchivePage() {
                   title="Filters"
                 >
                   <IconFilter size={15} className="text-wbk-gold" />
-                  <span className="hidden sm:inline">Filters</span>
+                  <span className="hidden sm:inline">{t("common.filters", "Filters")}</span>
                 </div>
               </SwiperSlide>
 
@@ -415,9 +449,9 @@ export default function CategoryArchivePage() {
                       }`}
                     >
                       <span>
-                        Type:{" "}
+                        {t("common.style", "Type")}:{" "}
                         <strong className="font-semibold">
-                          {selectedType}
+                          {formatTypeLabel(selectedType)}
                         </strong>
                       </span>
                       <IconChevronDown
@@ -443,7 +477,7 @@ export default function CategoryArchivePage() {
                                 : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                             }`}
                           >
-                            {opt}
+                            {formatTypeLabel(opt)}
                           </button>
                         ))}
                       </div>
@@ -475,9 +509,9 @@ export default function CategoryArchivePage() {
                       }`}
                     >
                       <span>
-                        Orientation:{" "}
+                        {t("product.orientation", "Orientation")}:{" "}
                         <strong className="font-semibold">
-                          {selectedOrientation}
+                          {formatOrientationLabel(selectedOrientation)}
                         </strong>
                       </span>
                       <IconChevronDown
@@ -503,7 +537,7 @@ export default function CategoryArchivePage() {
                                 : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                             }`}
                           >
-                            {opt}
+                            {formatOrientationLabel(opt)}
                           </button>
                         ))}
                       </div>
@@ -532,8 +566,8 @@ export default function CategoryArchivePage() {
                     }`}
                   >
                     <span>
-                      Price:{" "}
-                      <strong className="font-semibold">{selectedPrice}</strong>
+                      {t("categories.filterPrice", "Price")}:{" "}
+                      <strong className="font-semibold">{formatPriceOption(selectedPrice)}</strong>
                     </span>
                     <IconChevronDown
                       size={14}
@@ -558,7 +592,7 @@ export default function CategoryArchivePage() {
                               : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                           }`}
                         >
-                          {opt}
+                          {formatPriceOption(opt)}
                         </button>
                       ))}
                     </div>
@@ -574,7 +608,7 @@ export default function CategoryArchivePage() {
                     onClick={clearAllFilters}
                     className="px-4 h-9 border border-transparent text-xs font-poppins text-wbk-brown hover:text-wbk-black underline cursor-pointer whitespace-nowrap rounded-full hover:bg-[#F4F2F0] transition-colors select-none flex items-center justify-center"
                   >
-                    Reset filters
+                    {t("categories.resetFilters", "Reset filters")}
                   </button>
                 </SwiperSlide>
               )}
@@ -679,7 +713,7 @@ export default function CategoryArchivePage() {
                 onClick={clearAllFilters}
                 className="text-[10px] font-poppins text-wbk-brown hover:text-wbk-black underline ml-1 cursor-pointer py-0.5"
               >
-                Clear all
+                {t("categories.clearAll", "Clear all")}
               </button>
             </div>
           )}
@@ -692,17 +726,17 @@ export default function CategoryArchivePage() {
             className="py-20 text-center space-y-4 bg-[#F4F2F0]/40 rounded-none border border-wbk-lightgrey/60"
           >
             <p className="font-new-york text-2xl text-wbk-black">
-              No products found
+              {t("categories.noProductsFound", "No products found")}
             </p>
             <p className="text-xs font-poppins text-wbk-brown">
-              Try adjusting your filters to see more results.
+              {t("categories.adjustFilters", "Try adjusting your filters to see more results.")}
             </p>
             <button
               type="button"
               onClick={clearAllFilters}
               className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full cursor-pointer hover:bg-wbk-green hover:text-wbk-black transition-colors"
             >
-              Clear all filters
+              {t("categories.clearAllFilters", "Clear all filters")}
             </button>
           </div>
         ) : (
@@ -719,7 +753,7 @@ export default function CategoryArchivePage() {
         {/* Other Categories Section */}
         <div className="mt-20 border-t border-wbk-lightgrey/80 pt-16">
           <h2 className="font-new-york text-3xl md:text-4xl text-wbk-black mb-8">
-            Other categories
+            {t("categories.otherCategories", "Other categories")}
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -728,7 +762,7 @@ export default function CategoryArchivePage() {
             ).map((otherCat) => (
               <Link
                 key={otherCat.slug}
-                href={`/products/${otherCat.slug}`}
+                href={localizedHref(`/products/${otherCat.slug}`)}
                 className="group flex flex-col items-center text-center"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center p-6 transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-none">
@@ -739,7 +773,7 @@ export default function CategoryArchivePage() {
                   />
                 </div>
                 <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
-                  {otherCat.label}
+                  {t(`categories.${otherCat.slug}`, otherCat.label)}
                 </span>
               </Link>
             ))}

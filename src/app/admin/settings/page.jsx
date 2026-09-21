@@ -9,6 +9,7 @@ import {
   IconCheck,
   IconAlertCircle,
 } from "@tabler/icons-react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminSettingsPage() {
   const [syncing, setSyncing] = useState(false);
@@ -55,14 +56,12 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6 font-poppins max-w-4xl">
-      <div>
-        <h2 className="font-new-york text-2xl font-medium text-wbk-black">
-          System Settings
-        </h2>
-        <p className="text-xs text-wbk-brown">
-          Database connection parameters, payment gateways, and global store configurations
-        </p>
-      </div>
+      {/* Page Header */}
+      <AdminPageHeader
+        badge="System Configuration"
+        title="System Settings"
+        description="Database connection parameters, payment gateways, and global store configurations"
+      />
 
       {syncMessage && (
         <div
@@ -88,7 +87,7 @@ export default function AdminSettingsPage() {
             <IconDatabase size={18} />
           </div>
           <div>
-            <h3 className="font-new-york text-base font-semibold">
+            <h3 className="font-poppins text-base font-semibold">
               Supabase Database Connection
             </h3>
             <span className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
@@ -124,7 +123,7 @@ export default function AdminSettingsPage() {
             <IconCreditCard size={18} />
           </div>
           <div>
-            <h3 className="font-new-york text-base font-semibold">
+            <h3 className="font-poppins text-base font-semibold">
               Stripe Payment Gateway
             </h3>
             <span className="text-[11px] text-wbk-brown">
@@ -154,7 +153,7 @@ export default function AdminSettingsPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-new-york text-base font-semibold">
+                <h3 className="font-poppins text-base font-semibold">
                   Amazon Selling Partner API (SP-API)
                 </h3>
                 {spApiConfig?.isConfigured ? (

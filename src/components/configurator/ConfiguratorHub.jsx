@@ -11,6 +11,7 @@ import {
   Icon3dCubeSphere,
   IconSparkles,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 // Dynamically import SofaConfigurator with SSR disabled for Three.js / WebGL compatibility
 const SofaConfigurator = dynamic(
@@ -32,27 +33,28 @@ const SofaConfigurator = dynamic(
 );
 
 export function ConfiguratorHub() {
+  const { t, localizedHref } = useLocale();
   const [activeCategory, setActiveCategory] = useState("sofas");
 
   const categories = [
     {
       id: "sofas",
-      name: "Modular Sofas",
-      badge: "3D",
+      name: t("configurator.modularSofas", "Modular Sofas"),
+      badge: t("configurator.badge3d", "3D"),
       icon: IconSofa,
       available: true,
     },
     {
       id: "beds",
-      name: "Murphy Beds",
-      badge: "Soon",
+      name: t("configurator.murphyBeds", "Murphy Beds"),
+      badge: t("configurator.badgeSoon", "Soon"),
       icon: IconBed,
       available: false,
     },
     {
       id: "cabinets",
-      name: "Cabinets",
-      badge: "Soon",
+      name: t("configurator.cabinets", "Cabinets"),
+      badge: t("configurator.badgeSoon", "Soon"),
       icon: IconArchive,
       available: false,
     },
@@ -66,7 +68,7 @@ export function ConfiguratorHub() {
         <div className="flex items-center gap-1 p-1 bg-white/90 backdrop-blur-md rounded-none border border-wbk-lightgrey/80 shadow-md pointer-events-auto overflow-x-auto scrollbar-none">
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1 border-r border-wbk-lightgrey/70 text-xs font-semibold uppercase tracking-wider text-wbk-black">
             <Icon3dCubeSphere size={16} className="text-wbk-gold" />
-            <span>3D Studio</span>
+            <span>{t("configurator.studioTitle", "3D Studio")}</span>
           </div>
 
           {categories.map((cat) => {
@@ -123,19 +125,22 @@ export function ConfiguratorHub() {
               <IconBed size={32} />
             </div>
             <span className="text-[11px] font-bold tracking-wider uppercase text-wbk-brown mb-1">
-              Coming Soon
+              {t("configurator.comingSoon", "Coming Soon")}
             </span>
             <h2 className="text-2xl sm:text-3xl font-new-york text-wbk-black mb-2">
-              Murphy Bed 3D Studio
+              {t("configurator.bedsStudioTitle", "Murphy Bed 3D Studio")}
             </h2>
             <p className="text-xs sm:text-sm text-wbk-brown max-w-md mb-6 leading-relaxed">
-              We are currently engineering the interactive 3D murphy bed customization experience with fold mechanisms, custom finishes, and modular cabinetry.
+              {t(
+                "configurator.bedsStudioDesc",
+                "We are currently engineering the interactive 3D murphy bed customization experience with fold mechanisms, custom finishes, and modular cabinetry."
+              )}
             </p>
             <Link
-              href="/products/beds"
+              href={localizedHref("/products/beds")}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full shadow-sm"
             >
-              <span>Explore Current Bed Collection</span>
+              <span>{t("configurator.exploreBeds", "Explore Current Bed Collection")}</span>
               <IconArrowUpRight size={16} />
             </Link>
           </div>
@@ -149,19 +154,22 @@ export function ConfiguratorHub() {
               <IconSparkles size={32} className="text-wbk-gold" />
             </div>
             <span className="text-[11px] font-bold tracking-wider uppercase text-wbk-brown mb-1">
-              Coming Soon
+              {t("configurator.comingSoon", "Coming Soon")}
             </span>
             <h2 className="text-2xl sm:text-3xl font-new-york text-wbk-black mb-2">
-              Modular Cabinets & Storage
+              {t("configurator.cabinetsStudioTitle", "Modular Cabinets & Storage")}
             </h2>
             <p className="text-xs sm:text-sm text-wbk-brown max-w-md mb-6 leading-relaxed">
-              We are modeling side storage towers, overhead bookshelves, and coordinated wardrobes for the 3D studio.
+              {t(
+                "configurator.cabinetsStudioDesc",
+                "We are modeling side storage towers, overhead bookshelves, and coordinated wardrobes for the 3D studio."
+              )}
             </p>
             <Link
-              href="/products/cabinets"
+              href={localizedHref("/products/cabinets")}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full shadow-sm"
             >
-              <span>Explore Current Cabinet Collection</span>
+              <span>{t("configurator.exploreCabinets", "Explore Current Cabinet Collection")}</span>
               <IconArrowUpRight size={16} />
             </Link>
           </div>

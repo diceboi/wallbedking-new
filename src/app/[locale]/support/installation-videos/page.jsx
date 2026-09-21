@@ -11,6 +11,7 @@ import {
   IconBrandYoutube,
   IconPhoneCall,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const VIDEOS = [
   {
@@ -65,6 +66,7 @@ const VIDEOS = [
 ];
 
 export default function InstallationVideosPage() {
+  const { t, localizedHref } = useLocale();
   const [activeVideo, setActiveVideo] = useState(VIDEOS[0]);
 
   return (
@@ -74,34 +76,33 @@ export default function InstallationVideosPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <Link href="/support/installation-guides" className="text-wbk-brown/80 hover:text-wbk-black transition-colors">
-                Support
+              <Link href={localizedHref("/support/installation-guides")} className="text-wbk-brown/80 hover:text-wbk-black transition-colors">
+                {t("nav.support", "Support")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-black font-medium">Installation Videos</span>
+              <span className="text-wbk-black font-medium">{t("support.videosTitle", "Installation Videos")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              Official Video Walkthroughs
+              {t("support.videoBadge", "Official Video Walkthroughs")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Watch step-by-step video tutorials
+              {t("support.videosHeading", "Watch step-by-step video tutorials")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              Follow along with our professional assembly engineers as they guide you through unboxing,
-              wall fixing, gas piston mounting, and finishing adjustments.
+              {t("support.videosSubtitle", "Follow along with our professional assembly engineers as they guide you through unboxing, wall fixing, gas piston mounting, and finishing adjustments.")}
             </p>
 
             <div className="mt-6 flex gap-4">
               <Link
-                href="/support/installation-guides"
+                href={localizedHref("/support/installation-guides")}
                 className="inline-flex items-center gap-2 text-xs font-semibold text-wbk-black hover:text-wbk-green underline transition-colors"
               >
-                ← View Step-by-Step Written Guides
+                {t("support.viewWrittenGuides", "← View Step-by-Step Written Guides")}
               </Link>
             </div>
           </div>
@@ -138,25 +139,25 @@ export default function InstallationVideosPage() {
               <p className="mt-2 text-xs sm:text-sm text-wbk-brown leading-relaxed">
                 {activeVideo.description}
               </p>
-            </div>
 
-            {/* Video Timestamps Section */}
-            <div className="bg-[#FBF9F8] p-6 rounded-none border border-wbk-lightgrey/80">
-              <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-black mb-3">
-                Key Video Chapters
-              </h4>
-              <div className="space-y-2">
-                {activeVideo.timestamps.map((chapter) => (
-                  <div
-                    key={chapter.time}
-                    className="flex items-center justify-between text-xs py-1.5 border-b border-wbk-lightgrey/40 last:border-b-0"
-                  >
-                    <span className="text-wbk-black font-medium">{chapter.label}</span>
-                    <span className="font-mono text-[11px] text-wbk-gold font-bold">
-                      {chapter.time}
-                    </span>
-                  </div>
-                ))}
+              {/* Timestamp Chapters */}
+              <div className="mt-6 border-t border-wbk-lightgrey/60 pt-4">
+                <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-brown mb-3">
+                  Key Steps & Timestamps
+                </h4>
+                <div className="space-y-2">
+                  {activeVideo.timestamps.map((chapter) => (
+                    <div
+                      key={chapter.time}
+                      className="flex items-center justify-between text-xs py-1.5 border-b border-wbk-lightgrey/40 last:border-b-0"
+                    >
+                      <span className="text-wbk-black font-medium">{chapter.label}</span>
+                      <span className="font-mono text-[11px] text-wbk-gold font-bold">
+                        {chapter.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -164,7 +165,7 @@ export default function InstallationVideosPage() {
           {/* Video Playlist Sidebar */}
           <div className="lg:col-span-4 space-y-4">
             <p className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-brown px-1">
-              Select Assembly Video
+              {t("support.selectAssemblyVideo", "Select Assembly Video")}
             </p>
             <div className="space-y-3">
               {VIDEOS.map((vid) => {
@@ -201,10 +202,10 @@ export default function InstallationVideosPage() {
             <div className="mt-8 p-6 rounded-none bg-white border border-wbk-lightgrey shadow-xs text-center space-y-3">
               <IconBrandYoutube size={32} className="mx-auto text-red-600" />
               <h4 className="font-poppins font-semibold text-sm text-wbk-black">
-                Official YouTube Channel
+                {t("support.officialYoutube", "Official YouTube Channel")}
               </h4>
               <p className="text-xs text-wbk-brown leading-relaxed">
-                Subscribe to the Wall Bed King YouTube channel for new design releases, tips, and customer room transformations.
+                {t("support.officialYoutubeDesc", "Subscribe to the Wall Bed King YouTube channel for new design releases, tips, and customer room transformations.")}
               </p>
               <a
                 href="https://www.youtube.com/user/WallBedKing"
@@ -212,7 +213,7 @@ export default function InstallationVideosPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-red-600 text-white text-xs font-medium rounded-full transition-colors"
               >
-                <span>Visit YouTube Channel</span>
+                <span>{t("support.visitYoutube", "Visit YouTube Channel")}</span>
               </a>
             </div>
           </div>

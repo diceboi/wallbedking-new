@@ -22,6 +22,7 @@ import {
   IconBolt,
 } from "@tabler/icons-react";
 import { FeedItemEditDrawer } from "@/components/admin/FeedItemEditDrawer";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminFeedDetailPage() {
   const params = useParams();
@@ -147,31 +148,23 @@ export default function AdminFeedDetailPage() {
           <span>Back to All Feeds</span>
         </Link>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-wbk-lightgrey/60 pb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-base">🇫🇷</span>
-              <span className="text-xs uppercase tracking-widest text-wbk-gold font-semibold">
-                Amazon France Syndication
-              </span>
-            </div>
-            <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black tracking-tight font-medium">
-              Morphy Classic Bedframes Feed
-            </h1>
-            <p className="text-xs text-wbk-brown mt-1">
-              Official Flat File inventory feed for Amazon.fr with automated French listing content.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchFeedItems}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black hover:bg-[#FBF9F8] transition-colors cursor-pointer self-start sm:self-auto"
-          >
-            <IconRefresh size={14} className={loading ? "animate-spin" : ""} />
-            <span>Refresh</span>
-          </button>
-        </div>
+        <AdminPageHeader
+          badge="Amazon France Syndication 🇫🇷"
+          title="Morphy Classic Bedframes Feed"
+          count={items.length}
+          description="Official Flat File inventory feed for Amazon.fr with automated French listing content."
+          actions={
+            <button
+              type="button"
+              onClick={fetchFeedItems}
+              disabled={loading}
+              className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
+              title="Refresh feed items"
+            >
+              <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+            </button>
+          }
+        />
       </div>
 
       {/* Status banner */}
@@ -262,7 +255,7 @@ export default function AdminFeedDetailPage() {
               <span className="p-1.5 bg-[#FF9900]/10 text-[#FF9900] rounded-sm font-black text-xs">
                 a
               </span>
-              <h3 className="font-new-york text-base font-semibold text-wbk-black">
+              <h3 className="font-poppins text-base font-semibold text-wbk-black">
                 Amazon Selling Partner API (SP-API) Automation
               </h3>
               {spApiConfig?.isConfigured ? (

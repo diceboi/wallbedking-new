@@ -20,9 +20,10 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
+import { formatSizeLabel } from "@/lib/i18n";
 
 export default function CheckoutPage() {
-  const { t, formatPrice, localizedHref } = useLocale();
+  const { t, formatPrice, localizedHref, locale } = useLocale();
   const {
     items,
     subtotal,
@@ -663,7 +664,7 @@ export default function CheckoutPage() {
                           {item.title}
                         </h4>
                         <span className="text-[11px] text-wbk-brown block truncate">
-                          {item.options?.size} {item.options?.orientation && `(${item.options.orientation})`}
+                          {item.options?.size ? formatSizeLabel(item.options.size, locale) : ""} {item.options?.orientation && `(${item.options.orientation})`}
                         </span>
                       </div>
 
@@ -718,7 +719,7 @@ export default function CheckoutPage() {
               <div className="p-6 bg-white border border-wbk-lightgrey space-y-3 text-xs text-wbk-brown">
                 <div className="flex items-center gap-2.5">
                   <IconShieldCheck size={18} className="text-wbk-gold shrink-0" />
-                  <span className="text-wbk-black font-medium">{t("product.warrantyInfo", "30-Year Mechanism Guarantee")}</span>
+                  <span className="text-wbk-black font-medium">{t("product.warrantyInfo", "Lifetime Mechanism Guarantee")}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <IconTruck size={18} className="text-wbk-green shrink-0" />

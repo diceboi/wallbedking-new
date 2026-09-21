@@ -48,7 +48,27 @@ export async function GET() {
       hasProfilesTable = false;
     }
 
-    // 3. Format unified user list
+    // 3. Fetch past orders to associate delivery addresses with customers
+    let ordersByEmail = {};
+    try {
+      const { data: ordersData } = await supabaseAdmin
+        .from("orders")
+        .select("customer_email, customer_name, customer_phone, shipping_address, created_at");
+
+      if (Array.isArray(ordersData)) {
+        for (const ord of ordersData) {
+          const email = ord.customer_email?.toLowerCase();
+          if (email && ord.shipping_address) {
+            if (!ordersByEmail[email]) ordersByEmail[email] = [];
+            ordersByEmail[email].push(ord);
+          }
+        }
+      }
+    } catch {
+      // orders table not queried or empty
+    }
+
+    // 4. Format unified user list
     const users = authUsers.map((u) => {
       const profile = profilesMap[u.id];
       const isPredefinedAdmin = u.email?.toLowerCase() === "diceboii13@gmail.com";
@@ -63,15 +83,54 @@ export async function GET() {
         u.email?.split("@")[0] ||
         "User";
 
+      const userOrders = ordersByEmail[u.email?.toLowerCase()] || [];
+      const orderPhone = userOrders.find((o) => o.customer_phone)?.customer_phone || "";
+
       const phone =
         profile?.phone ||
         u.user_metadata?.phone ||
+        orderPhone ||
         "";
 
-      const addresses =
-        u.user_metadata?.addresses ||
-        profile?.addresses ||
-        [];
+      const rawAddresses = Array.isArray(u.user_metadata?.addresses)
+        ? u.user_metadata.addresses
+        : Array.isArray(profile?.addresses)
+        ? profile.addresses
+        : [];
+
+      // Extract distinct delivery addresses from customer's orders
+      const orderAddresses = [];
+      userOrders.forEach((ord, i) => {
+        const addr = ord.shipping_address;
+        if (addr && (addr.address || addr.street || addr.city)) {
+          orderAddresses.push({
+            id: `order-shipping-${i}`,
+            name: `Order Delivery Address`,
+            recipient: addr.name || ord.customer_name || fullName,
+            street: addr.address || addr.street || "",
+            apartment: addr.apartment || "",
+            city: addr.city || "",
+            postcode: addr.postal_code || addr.postcode || "",
+            country: addr.country || "United Kingdom",
+            phone: addr.phone || ord.customer_phone || phone,
+            isDefault: rawAddresses.length === 0 && i === 0,
+            source: "order",
+          });
+        }
+      });
+
+      // Deduplicate addresses based on street or postcode
+      const addresses = [...rawAddresses];
+      for (const ordAddr of orderAddresses) {
+        const exists = addresses.some((a) => {
+          const aStreet = (a.street || a.address || "").toLowerCase().trim();
+          const ordStreet = (ordAddr.street || ordAddr.address || "").toLowerCase().trim();
+          return aStreet && ordStreet && aStreet === ordStreet;
+        });
+        if (!exists) {
+          addresses.push(ordAddr);
+        }
+      }
 
       const savedConfigs =
         u.user_metadata?.saved_configs ||

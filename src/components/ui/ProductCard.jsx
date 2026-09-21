@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale } from "@/context/LocaleContext";
-import { getProductPrice } from "@/lib/i18n";
+import { getProductPrice, formatSizeLabel } from "@/lib/i18n";
 
 const DEFAULT_COLORS = ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"];
 
@@ -12,12 +12,14 @@ export function ProductCard({ product, className = "" }) {
 
   const title = product.title || product.name || "Wall Bed";
   const orientation = product.orientation || "Vertical";
-  const size =
+  const rawSize =
     product.sizeLabel ||
     product.size ||
     (product.width && product.length
       ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm`
       : "Standard");
+
+  const size = formatSizeLabel(rawSize, locale);
 
   // Standardize colors
   let colors = product.colors;
@@ -111,7 +113,10 @@ export function ProductCard({ product, className = "" }) {
           <div>{t("product.size", "Size")}: {size}</div>
           {product.weight && (
             <div className="text-[11px] text-wbk-brown">
-              {t("product.weight", "Weight")}: {product.weight} kg
+              {t("product.weight", "Weight")}:{" "}
+              {locale === "us"
+                ? `${Math.round(product.weight * 2.20462)} lbs`
+                : `${product.weight} kg`}
             </div>
           )}
           {colors && colors.length > 0 && (

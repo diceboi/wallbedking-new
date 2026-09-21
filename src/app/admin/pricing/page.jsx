@@ -12,6 +12,7 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminPricingPage() {
   const [products, setProducts] = useState([]);
@@ -139,14 +140,23 @@ export default function AdminPricingPage() {
   return (
     <div className="space-y-6 font-poppins">
       {/* Page Header */}
-      <div>
-        <h2 className="font-new-york text-2xl font-medium text-wbk-black">
-          Pricing & Discounts Manager
-        </h2>
-        <p className="text-xs text-wbk-brown">
-          Manage regular prices, promotional discounts, and multi-currency rates (GBP, EUR, USD)
-        </p>
-      </div>
+      <AdminPageHeader
+        badge="Pricing & Currencies"
+        title="Pricing & Discounts Manager"
+        count={products.length}
+        description="Manage regular prices, promotional discounts, and multi-currency rates (GBP, EUR, USD)"
+        actions={
+          <button
+            type="button"
+            onClick={fetchProducts}
+            disabled={loading}
+            className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
+            title="Refresh database records"
+          >
+            <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+          </button>
+        }
+      />
 
       {/* Status banner */}
       {message && (
@@ -170,7 +180,7 @@ export default function AdminPricingPage() {
       <div className="bg-white p-6 border border-wbk-lightgrey/60 shadow-xs space-y-4">
         <div className="flex items-center gap-2">
           <IconWand size={18} className="text-wbk-gold" />
-          <h3 className="font-new-york text-base font-medium text-wbk-black">
+          <h3 className="font-poppins text-base font-semibold text-wbk-black">
             Bulk Promotional Discounts
           </h3>
         </div>

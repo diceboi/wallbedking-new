@@ -94,66 +94,6 @@ export default async function HomePage({ params }) {
 
         {/* Customer Reviews Section */}
         <ReviewsSlider />
-
-        {/* Design System Preview */}
-        <section className="py-20">
-          <Container className="space-y-12">
-            <div className="text-center">
-              <h2 className="font-new-york text-3xl text-wbk-black">
-                Design System Preview
-              </h2>
-              <p className="mt-2 text-sm text-wbk-brown">
-                Colours, typography and buttons – all reusable via Tailwind
-                tokens.
-              </p>
-            </div>
-
-            {/* Colour swatches */}
-            <div className="flex flex-wrap gap-4 justify-center">
-              {[
-                { name: "wbk-green", hex: "#A3A48C" },
-                { name: "wbk-gold", hex: "#D2AA7C" },
-                { name: "wbk-lightgrey", hex: "#E4E0DE" },
-                { name: "wbk-brown", hex: "#A5988E" },
-                { name: "wbk-black", hex: "#090A0A" },
-              ].map((c) => (
-                <div key={c.name} className="flex flex-col items-center gap-2">
-                  <div
-                    className="h-16 w-28 rounded-none border border-wbk-lightgrey shadow-sm"
-                    style={{ backgroundColor: c.hex }}
-                  />
-                  <span className="text-[10px] font-mono text-wbk-brown">
-                    {c.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Button variants */}
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              <Button>Primary</Button>
-              <Button variant="secondary">Secondary</Button>
-              <Button variant="gold">Gold</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="white" className="border-wbk-lightgrey">
-                White
-              </Button>
-            </div>
-
-            {/* Font specimen */}
-            <div className="space-y-3 text-center pt-4">
-              <p className="font-new-york text-4xl text-wbk-black">
-                NewYork — Aa Bb Cc Dd
-              </p>
-              <p className="font-poppins text-xl text-wbk-black font-light">
-                Poppins Light — The quick brown fox
-              </p>
-              <p className="font-poppins text-xl text-wbk-black font-medium">
-                Poppins Medium — The quick brown fox
-              </p>
-            </div>
-          </Container>
-        </section>
       </div>
     </>
   );

@@ -6,7 +6,7 @@ import { modulesData } from './data/modules';
 import { useSofaConfiguratorStore } from './store/useSofaConfiguratorStore';
 import * as THREE from 'three';
 
-function DimensionLine({ start, end, label, tickSize = 0.05 }) {
+function DimensionLine({ start, end, label, isUS = false, tickSize = 0.05 }) {
   const p1 = start;
   const p2 = end;
   
@@ -44,6 +44,10 @@ function DimensionLine({ start, end, label, tickSize = 0.05 }) {
     }
   };
 
+  const displayText = isUS
+    ? `${Math.round(label / 2.54)} in (${label} cm)`
+    : `${label} cm`;
+
   return (
     <group>
       <Line points={[p1, p2]} color="#090A0A" lineWidth={2} raycast={() => null} />
@@ -55,14 +59,14 @@ function DimensionLine({ start, end, label, tickSize = 0.05 }) {
           ref={labelRef}
           className="bg-wbk-black text-white px-2 py-0.5 rounded-none text-xs font-semibold whitespace-nowrap pointer-events-none shadow-md select-none transition-opacity duration-200"
         >
-          {label} cm
+          {displayText}
         </div>
       </Html>
     </group>
   );
 }
 
-export function DimensionsOverlay() {
+export function DimensionsOverlay({ isUS = false }) {
   const selectedModules = useSofaConfiguratorStore(state => state.selectedModules);
 
   if (!selectedModules || selectedModules.length === 0) return null;
@@ -119,9 +123,9 @@ export function DimensionsOverlay() {
 
   return (
     <group>
-      <DimensionLine start={widthStart} end={widthEnd} label={widthCm} />
-      <DimensionLine start={depthStart} end={depthEnd} label={depthCm} />
-      <DimensionLine start={heightStart} end={heightEnd} label={heightCm} />
+      <DimensionLine start={widthStart} end={widthEnd} label={widthCm} isUS={isUS} />
+      <DimensionLine start={depthStart} end={depthEnd} label={depthCm} isUS={isUS} />
+      <DimensionLine start={heightStart} end={heightEnd} label={heightCm} isUS={isUS} />
     </group>
   );
 }

@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { formatSizeLabel } from "@/lib/i18n";
 
 export function CartDrawer() {
   const {
@@ -29,7 +30,7 @@ export function CartDrawer() {
     subtotal,
     isMounted,
   } = useCart();
-  const { t, formatPrice, localizedHref } = useLocale();
+  const { t, formatPrice, localizedHref, locale } = useLocale();
 
   // Prevent background scrolling when cart drawer is open
   useEffect(() => {
@@ -174,7 +175,7 @@ export function CartDrawer() {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {item.options.size && (
                               <span className="text-[10px] bg-[#F4F2F0] text-wbk-black font-medium px-1.5 py-0.5 border border-wbk-lightgrey/60">
-                                {item.options.size}
+                                {formatSizeLabel(item.options.size, locale)}
                               </span>
                             )}
                             {item.options.orientation && (
@@ -184,7 +185,7 @@ export function CartDrawer() {
                             )}
                             {item.options.sofaIncluded && (
                               <span className="text-[10px] bg-[#F4F2F0] text-wbk-gold font-semibold px-1.5 py-0.5 border border-wbk-lightgrey/60">
-                                + Front Sofa
+                                + {t("cart.frontSofa", "Front Sofa")}
                               </span>
                             )}
                           </div>
@@ -273,15 +274,15 @@ export function CartDrawer() {
                 <div className="pt-2 flex items-center justify-center gap-4 text-[10px] text-wbk-brown border-t border-wbk-lightgrey/40">
                   <div className="flex items-center gap-1">
                     <IconShieldCheck size={13} className="text-wbk-gold" />
-                    <span>30-Yr Warranty</span>
+                    <span>{t("cart.warrantyBadge", "30-Yr Warranty")}</span>
                   </div>
                   <span>•</span>
                   <div className="flex items-center gap-1">
                     <IconLock size={12} className="text-wbk-green" />
-                    <span>SSL Encrypted</span>
+                    <span>{t("cart.sslBadge", "SSL Encrypted")}</span>
                   </div>
                   <span>•</span>
-                  <span>Klarna Available</span>
+                  <span>{t("cart.klarnaBadge", "Klarna Available")}</span>
                 </div>
               </div>
             )}

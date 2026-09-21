@@ -37,6 +37,7 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice, formatPrice } from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
+import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -64,6 +65,63 @@ export default function ProductDetailPage() {
 
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
+
+  // Imperial vs Metric measurement helpers
+  const isUS = locale === "us";
+  const formatWeight = (kg) => (!kg ? "" : isUS ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`);
+  const formatMm = (mm) => {
+    if (!mm) return "";
+    if (isUS) {
+      const inches = (mm / 25.4).toFixed(1);
+      return `${inches}" (${mm} mm)`;
+    }
+    return `${mm} mm`;
+  };
+  const formatCm = (cm) => {
+    if (!cm) return "";
+    if (isUS) {
+      const inches = (cm / 2.54).toFixed(1);
+      return `${inches}" (${cm} cm)`;
+    }
+    return `${cm} cm`;
+  };
+  const formatSizeLabel = (label) => {
+    if (!label || !isUS) return label;
+    if (label.includes('"')) return label;
+
+    if (/\(\s*\d+\s*[xX×]\s*\d+\s*cm\s*\)/i.test(label)) {
+      return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (match, w, l) => {
+        const wIn = Math.round(Number(w) / 2.54);
+        const lIn = Math.round(Number(l) / 2.54);
+        return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
+      });
+    }
+
+    if (/\b\d+\s*[xX×]\s*\d+\s*cm\b/i.test(label)) {
+      return label.replace(/\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi, (match, w, l) => {
+        const wIn = Math.round(Number(w) / 2.54);
+        const lIn = Math.round(Number(l) / 2.54);
+        return `${w}x${l} cm (${wIn}" x ${lIn}")`;
+      });
+    }
+
+    if (/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/.test(label)) {
+      return label.replace(/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g, (match, w, l) => {
+        const wIn = Math.round(Number(w) / 2.54);
+        const lIn = Math.round(Number(l) / 2.54);
+        return `${w}x${l} (${wIn}" x ${lIn}")`;
+      });
+    }
+
+    if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
+      return label.replace(/\b(\d{3,4})\s*mm\b/gi, (match, mm) => {
+        const inches = (Number(mm) / 25.4).toFixed(1);
+        return `${mm} mm (${inches}")`;
+      });
+    }
+
+    return label;
+  };
 
   // ── CUSTOMIZER & GALLERY STATES ──
   const [isFolded, setIsFolded] = useState(false);
@@ -391,6 +449,25 @@ export default function ProductDetailPage() {
     findMatchingVariant,
   ]);
 
+  // Review auto-open trigger from post-purchase emails or direct rating links
+  useEffect(() => {
+    const isReview = searchParams?.get("review");
+    const ratingParam = searchParams?.get("rating");
+    if (isReview === "true" || isReview === "open" || ratingParam) {
+      setActiveTab("reviews");
+      if (tabsSwiper) {
+        tabsSwiper.slideTo(3);
+      }
+      const timer = setTimeout(() => {
+        const el = document.getElementById("reviews-section") || document.getElementById("product-tabs");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, tabsSwiper]);
+
   // When dropdown selections change, pick matching variant or navigate
   const handleOptionChange = (newFormat, newStyle, newSizeLabel) => {
     const fmt = newFormat ?? productFormat;
@@ -524,7 +601,7 @@ export default function ProductDetailPage() {
         "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       price: totalDecimal,
       options: {
-        size: productSize || "Standard",
+        size: formatSizeLabel(productSize, locale) || "Standard",
         orientation: productFormat,
         type: productStyle,
         sofaIncluded: Boolean(sofaIncluded),
@@ -627,7 +704,7 @@ export default function ProductDetailPage() {
                 {displayProduct.title || displayProduct.name}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                <span>{productSize}</span>
+                <span>{formatSizeLabel(productSize)}</span>
                 {displayProduct?.sku && (
                   <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                     SKU: {displayProduct.sku}
@@ -635,7 +712,7 @@ export default function ProductDetailPage() {
                 )}
                 {displayProduct?.weight && (
                   <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
-                    {displayProduct.weight} kg
+                    {formatWeight(displayProduct.weight)}
                   </span>
                 )}
                 {has3D && (
@@ -673,7 +750,7 @@ export default function ProductDetailPage() {
                     {displayProduct.title || displayProduct.name}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                    <span>{productSize}</span>
+                    <span>{formatSizeLabel(productSize)}</span>
                     {displayProduct?.sku && (
                       <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                         SKU: {displayProduct.sku}
@@ -681,7 +758,7 @@ export default function ProductDetailPage() {
                     )}
                     {displayProduct?.weight && (
                       <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
-                        {displayProduct.weight} kg
+                        {formatWeight(displayProduct.weight)}
                       </span>
                     )}
                     {has3D && (
@@ -795,7 +872,7 @@ export default function ProductDetailPage() {
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span className="truncate">
-                        {productSize || availableSizes[0]?.label}
+                        {formatSizeLabel(productSize) || formatSizeLabel(availableSizes[0]?.label)}
                       </span>
                       <IconChevronDown
                         size={14}
@@ -818,13 +895,13 @@ export default function ProductDetailPage() {
                                 setSelectedVariant(item.product);
                               setSizeOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                            className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
                               productSize === item.label
-                                ? "text-wbk-gold font-semibold"
-                                : "text-wbk-black"
+                                ? "font-semibold text-wbk-black bg-[#F4F2F0]/60"
+                                : "text-wbk-brown"
                             }`}
                           >
-                            <span>{item.label}</span>
+                            <span>{formatSizeLabel(item.label)}</span>
                             {item.product && (
                               <span className="text-[11px] text-wbk-brown font-poppins">
                                 {getProductPrice(item.product, locale).display}
@@ -1325,7 +1402,7 @@ export default function ProductDetailPage() {
       </Container>
 
       {/* ── TABS NAVIGATION SECTION ── */}
-      <section className="relative z-20 bg-white py-16">
+      <section id="product-tabs" className="relative z-20 bg-white py-16">
         <Container size="xl">
           <div className="relative border-b border-wbk-lightgrey/40 mb-12">
             {/* Left Arrow (visible on mobile when scrolled) */}
@@ -1504,9 +1581,9 @@ export default function ProductDetailPage() {
                       )}
                       {displayProduct.weight && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">Net Weight</td>
+                          <td className="py-2.5 font-medium">{t("product.weight", "Net Weight")}</td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.weight} kg
+                            {formatWeight(displayProduct.weight)}
                           </td>
                         </tr>
                       )}
@@ -1519,19 +1596,19 @@ export default function ProductDetailPage() {
                           <td className="py-2.5 text-right text-wbk-brown">
                             {displayProduct.pack_1 ? (
                               <div className="space-y-0.5 text-xs font-mono">
-                                <div>Box 1: {displayProduct.pack_1}</div>
+                                <div>Box 1: {formatSizeLabel(displayProduct.pack_1, locale)}</div>
                                 {displayProduct.pack_2 && (
-                                  <div>Box 2: {displayProduct.pack_2}</div>
+                                  <div>Box 2: {formatSizeLabel(displayProduct.pack_2, locale)}</div>
                                 )}
                                 {displayProduct.pack_3 && (
-                                  <div>Box 3: {displayProduct.pack_3}</div>
+                                  <div>Box 3: {formatSizeLabel(displayProduct.pack_3, locale)}</div>
                                 )}
                                 {displayProduct.pack_4 && (
-                                  <div>Box 4: {displayProduct.pack_4}</div>
+                                  <div>Box 4: {formatSizeLabel(displayProduct.pack_4, locale)}</div>
                                 )}
                               </div>
                             ) : (
-                              <span>{displayProduct.package_dimensions}</span>
+                              <span>{formatSizeLabel(displayProduct.package_dimensions, locale)}</span>
                             )}
                           </td>
                         </tr>
@@ -1548,11 +1625,9 @@ export default function ProductDetailPage() {
                             Mattress Size (W x L)
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.width / 10} x{" "}
-                            {displayProduct.length
-                              ? displayProduct.length / 10
-                              : 200}{" "}
-                            cm
+                            {isUS
+                              ? `${Math.round(displayProduct.width / 25.4)}" x ${Math.round((displayProduct.length || 2000) / 25.4)}" (${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm)`
+                              : `${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm`}
                           </td>
                         </tr>
                       )}
@@ -1560,7 +1635,7 @@ export default function ProductDetailPage() {
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">Frame width</td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.frame_width} mm
+                            {formatMm(displayProduct.frame_width)}
                           </td>
                         </tr>
                       )}
@@ -1570,7 +1645,7 @@ export default function ProductDetailPage() {
                             Folded up height
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.folded_up_height} mm
+                            {formatMm(displayProduct.folded_up_height)}
                           </td>
                         </tr>
                       )}
@@ -1580,7 +1655,7 @@ export default function ProductDetailPage() {
                             Bed depth (Folded)
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.folded_up_projection} mm
+                            {formatMm(displayProduct.folded_up_projection)}
                           </td>
                         </tr>
                       )}
@@ -1590,7 +1665,7 @@ export default function ProductDetailPage() {
                             Bed depth (Open)
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.folded_down_projection} mm
+                            {formatMm(displayProduct.folded_down_projection)}
                           </td>
                         </tr>
                       )}
@@ -1600,7 +1675,7 @@ export default function ProductDetailPage() {
                             Mounting frame height
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.mounting_frame_height} mm
+                            {formatMm(displayProduct.mounting_frame_height)}
                           </td>
                         </tr>
                       )}
@@ -1610,8 +1685,9 @@ export default function ProductDetailPage() {
                             Max mattress thickness
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            Up to {displayProduct.maximum_mattress_depth / 10}{" "}
-                            cm
+                            {isUS
+                              ? `Up to ${(displayProduct.maximum_mattress_depth / 25.4).toFixed(1)}" (${displayProduct.maximum_mattress_depth / 10} cm)`
+                              : `Up to ${displayProduct.maximum_mattress_depth / 10} cm`}
                           </td>
                         </tr>
                       )}
@@ -1823,61 +1899,27 @@ export default function ProductDetailPage() {
             {/* Reviews Tab */}
             {activeTab === "reviews" && (
               <motion.div
+                id="reviews-section"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="space-y-12"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    {
-                      author: "Iain Donald",
-                      stars: "★★★★★",
-                      text: "Outstanding quality wall bed and excellent customer service. Straightforward installation instructions. Highly recommended if you want to save space.",
-                      date: "2 weeks ago",
-                    },
-                    {
-                      author: "Roz M",
-                      stars: "★★★★★",
-                      text: "The bed we bought is fantastic, we have a small room and it fits away perfectly. You can use your own mattress. We are really pleased with this product and would definitely recommend Wall Bed King.",
-                      date: "1 month ago",
-                    },
-                    {
-                      author: "Christopher Pettite",
-                      stars: "★★★★★",
-                      text: "I bought a bed from Wall Bed King, I have to say they have been one of the best companies I have dealt with in a long time. Prompt and helpful response to all my inquiries.",
-                      date: "3 months ago",
-                    },
-                    {
-                      author: "Catherine O'Connor",
-                      stars: "★★★★★",
-                      text: "I paid a great price for a small double bed, which made my space much better and useful and I could not be happier and more pleased with my purchase!",
-                      date: "4 months ago",
-                    },
-                  ].map((rev, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-6 rounded-none border border-wbk-lightgrey/50 shadow-xs flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-wbk-gold text-xs font-semibold tracking-wider font-poppins">
-                            {rev.stars}
-                          </span>
-                          <span className="text-[10px] text-wbk-brown font-poppins uppercase">
-                            {rev.date}
-                          </span>
-                        </div>
-                        <p className="text-xs font-poppins leading-relaxed text-wbk-black/90">
-                          "{rev.text}"
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-wbk-lightgrey/20 text-xs font-poppins font-medium text-wbk-black">
-                        {rev.author}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ProductReviewsSection
+                  productSlug={productSlug}
+                  productName={activeProduct?.name || "Wall Bed King Murphy Bed"}
+                  initialOpen={
+                    searchParams?.get("review") === "true" ||
+                    searchParams?.get("review") === "open" ||
+                    Boolean(searchParams?.get("rating"))
+                  }
+                  initialRating={
+                    searchParams?.get("rating")
+                      ? parseInt(searchParams.get("rating"), 10)
+                      : 5
+                  }
+                  initialCustomerName={searchParams?.get("name") || ""}
+                  initialCustomerEmail={searchParams?.get("email") || ""}
+                />
               </motion.div>
             )}
           </div>
@@ -2341,7 +2383,7 @@ export default function ProductDetailPage() {
               {displayProduct.title || displayProduct.name}
             </span>
             <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
-              {productSize || "Standard"}
+              {formatSizeLabel(productSize || "Standard", locale)}
             </span>
           </div>
 

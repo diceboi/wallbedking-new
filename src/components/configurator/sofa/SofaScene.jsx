@@ -20,6 +20,7 @@ import {
 } from "react-icons/pi";
 import { TbHandFinger, TbHandTwoFingers } from "react-icons/tb";
 import { FaRegHandPeace } from "react-icons/fa";
+import { useLocale } from "@/context/LocaleContext";
 
 // Preload all models
 if (typeof window !== "undefined") {
@@ -62,9 +63,7 @@ function DropListener() {
           const x = ((clientX - rect.left) / rect.width) * 2 - 1;
           const y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
-          const pointer = new THREE.Vector2(x, y);
-          raycaster.setFromCamera(pointer, camera);
-
+          raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
           const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
           const intersection = new THREE.Vector3();
           raycaster.ray.intersectPlane(floorPlane, intersection);
@@ -74,16 +73,20 @@ function DropListener() {
               (m) => m.id === currentPreview.moduleId,
             );
             if (moduleDef) {
-              const snap = checkModuleSnap(
+              const snapResult = checkModuleSnap(
                 intersection,
                 currentPreview.rotation || [0, 0, 0],
                 moduleDef,
                 selectedModules,
               );
               setPreviewModule({
-                ...currentPreview,
-                position: [snap.pos.x, 0, snap.pos.z],
-                rotation: snap.rot,
+                moduleId: currentPreview.moduleId,
+                position: [
+                  snapResult.pos.x,
+                  snapResult.pos.y,
+                  snapResult.pos.z,
+                ],
+                rotation: snapResult.rot,
               });
             }
           }
@@ -96,71 +99,52 @@ function DropListener() {
       }
     };
 
-    const handleDrop = (e) => {
-      const moduleId = e.detail.moduleId;
-      if (!moduleId) return;
-      
-      const clientX = e.detail.clientX;
-      const clientY = e.detail.clientY;
-      const rect = canvasEl.getBoundingClientRect();
+    const handleCustomDrop = (e) => {
       const currentPreview = useSofaConfiguratorStore.getState().previewModule;
-      
-      if (
-        clientX >= rect.left &&
-        clientX <= rect.right &&
-        clientY >= rect.top &&
-        clientY <= rect.bottom
-      ) {
-        if (currentPreview && currentPreview.position[1] !== -100) {
-          addModuleAtPosition(
-            moduleId,
-            currentPreview.position,
-            currentPreview.rotation,
-          );
-        } else {
-          const x = ((clientX - rect.left) / rect.width) * 2 - 1;
-          const y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-          const pointer = new THREE.Vector2(x, y);
-          raycaster.setFromCamera(pointer, camera);
-
-          const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-          const intersection = new THREE.Vector3();
-          raycaster.ray.intersectPlane(floorPlane, intersection);
-
-          if (intersection) {
-            addModuleAtPosition(
-              moduleId,
-              [intersection.x, 0, intersection.z],
-              [0, 0, 0],
-            );
-          }
-        }
+      if (currentPreview && currentPreview.position[1] !== -100) {
+        addModuleAtPosition(
+          currentPreview.moduleId,
+          currentPreview.position,
+          currentPreview.rotation,
+        );
       }
       setPreviewModule(null);
     };
 
     window.addEventListener("customDragOver", handleDragOver);
-    window.addEventListener("customDrop", handleDrop);
+    window.addEventListener("customDrop", handleCustomDrop);
+
     return () => {
       window.removeEventListener("customDragOver", handleDragOver);
-      window.removeEventListener("customDrop", handleDrop);
+      window.removeEventListener("customDrop", handleCustomDrop);
     };
-  }, [camera, raycaster, setPreviewModule, addModuleAtPosition, selectedModules]);
+  }, [
+    camera,
+    raycaster,
+    setPreviewModule,
+    addModuleAtPosition,
+    selectedModules,
+  ]);
 
   return null;
 }
 
 export function SofaScene() {
+  const { t, locale } = useLocale();
   const selectedModules = useSofaConfiguratorStore(
     (state) => state.selectedModules,
   );
   const selectedFabric = useSofaConfiguratorStore((state) => state.selectedFabric);
-  const previewModule = useSofaConfiguratorStore((state) => state.previewModule);
   const updateModulePosition = useSofaConfiguratorStore(
     (state) => state.updateModulePosition,
   );
-
+  const updateModuleRotation = useSofaConfiguratorStore(
+    (state) => state.updateModuleRotation,
+  );
+  const cleanUpArmrests = useSofaConfiguratorStore(
+    (state) => state.cleanUpArmrests,
+  );
+  const previewModule = useSofaConfiguratorStore((state) => state.previewModule);
   const activeModuleId = useSofaConfiguratorStore((state) => state.activeModuleId);
   const setActiveModule = useSofaConfiguratorStore(
     (state) => state.setActiveModule,
@@ -169,13 +153,6 @@ export function SofaScene() {
     (state) => state.updateModuleFabric,
   );
   const removeModule = useSofaConfiguratorStore((state) => state.removeModule);
-
-  const updateModuleRotation = useSofaConfiguratorStore(
-    (state) => state.updateModuleRotation,
-  );
-  const cleanUpArmrests = useSofaConfiguratorStore(
-    (state) => state.cleanUpArmrests,
-  );
   const showDimensions = useSofaConfiguratorStore((state) => state.showDimensions);
 
   const [controlsEnabled, setControlsEnabled] = useState(true);
@@ -194,17 +171,23 @@ export function SofaScene() {
         <div className="flex items-center gap-1.5">
           <PiMouseLeftClickFill className="hidden sm:block w-4 h-4 text-wbk-gold" />
           <TbHandFinger className="block sm:hidden w-4 h-4 text-wbk-gold" />
-          <span className="text-[11px] font-medium text-wbk-brown">Rotate & Grab</span>
+          <span className="text-[11px] font-medium text-wbk-brown">
+            {t("configurator.rotateAndGrab", "Rotate & Grab")}
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <PiMouseRightClickFill className="hidden sm:block w-4 h-4 text-wbk-gold" />
           <TbHandTwoFingers className="block sm:hidden w-4 h-4 text-wbk-gold" />
-          <span className="text-[11px] font-medium text-wbk-brown">Move & Pan</span>
+          <span className="text-[11px] font-medium text-wbk-brown">
+            {t("configurator.moveAndPan", "Move & Pan")}
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <PiMouseMiddleClickFill className="hidden sm:block w-4 h-4 text-wbk-gold" />
           <FaRegHandPeace className="block sm:hidden w-4 h-4 text-wbk-gold" />
-          <span className="text-[11px] font-medium text-wbk-brown">Zoom</span>
+          <span className="text-[11px] font-medium text-wbk-brown">
+            {t("configurator.zoom", "Zoom")}
+          </span>
         </div>
       </div>
 
@@ -247,6 +230,7 @@ export function SofaScene() {
                 setActiveModule={setActiveModule}
                 updateModuleFabric={updateModuleFabric}
                 removeModule={removeModule}
+                t={t}
               />
             ))}
             {previewModule && previewModule.position[1] !== -100 && (
@@ -260,9 +244,10 @@ export function SofaScene() {
                 }}
                 fabricId={selectedFabric}
                 isPreview={true}
+                t={t}
               />
             )}
-            {showDimensions && <DimensionsOverlay />}
+            {showDimensions && <DimensionsOverlay isUS={locale === "us"} />}
           </group>
 
           {/* Real shadow receiver plane */}

@@ -38,7 +38,7 @@ export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu } = useContext(MenuContext);
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
-  const { locale, switchLocale, localizedHref, t } = useLocale();
+  const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
   const [level, setLevel] = useState(0);
@@ -100,7 +100,7 @@ export function MobileMenuDrawer() {
             <div className="flex items-center justify-between h-14 px-4 border-b border-wbk-lightgrey bg-[#FBF9F8]">
               {level === 0 ? (
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-wbk-black">
-                  Navigation Menu
+                  {t("nav.menu", "Navigation Menu")}
                 </span>
               ) : (
                 <button
@@ -109,7 +109,7 @@ export function MobileMenuDrawer() {
                   className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green p-1 transition-colors"
                 >
                   <IconChevronLeft size={16} />
-                  <span>Back</span>
+                  <span>{t("common.back", "Back")}</span>
                 </button>
               )}
 
@@ -127,7 +127,7 @@ export function MobileMenuDrawer() {
             <div className="px-4 py-2.5 bg-[#F4F2F0] border-b border-wbk-lightgrey flex flex-col gap-2">
               <span className="text-[10px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center gap-1.5">
                 <IconWorld size={13} className="text-wbk-gold" />
-                Language
+                {t("common.language", "Language")}
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {LANGUAGES.map((lang) => {
@@ -204,7 +204,7 @@ export function MobileMenuDrawer() {
                         className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-wbk-green text-wbk-white hover:bg-wbk-black text-xs font-medium uppercase tracking-[0.14em] shadow-sm transition-colors rounded-full"
                       >
                         <Icon3dCubeSphere size={16} />
-                        <span>Interactive 3D Configurator</span>
+                        <span>{t("header.configuratorCta", "Interactive 3D Configurator")}</span>
                       </Link>
                     </div>
 
@@ -219,7 +219,7 @@ export function MobileMenuDrawer() {
                         className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green cursor-pointer"
                       >
                         <IconShoppingBag size={17} strokeWidth={1.5} />
-                        <span>Cart ({totalItems})</span>
+                        <span>{t("header.cart", "Cart")} ({totalItems})</span>
                       </button>
                       <button
                         type="button"
@@ -237,7 +237,7 @@ export function MobileMenuDrawer() {
                           <IconUser size={17} strokeWidth={1.5} />
                         )}
                         <span className="truncate max-w-[100px]">
-                          {user ? (user.user_metadata?.full_name?.split(" ")[0] || "Account") : "Account"}
+                          {user ? (user.user_metadata?.full_name?.split(" ")[0] || t("header.account", "Account")) : t("header.account", "Account")}
                         </span>
                       </button>
                     </div>
@@ -245,7 +245,7 @@ export function MobileMenuDrawer() {
                     {/* Quick Call */}
                     <div className="p-4 bg-wbk-white">
                       <a
-                        href="tel:08000288940"
+                        href="tel:01928583469"
                         className="flex items-center gap-3 p-3 border border-wbk-lightgrey bg-[#FBF9F8] hover:border-wbk-gold transition-colors"
                       >
                         <div className="w-8 h-8 flex items-center justify-center bg-wbk-black text-white shrink-0">
@@ -253,10 +253,10 @@ export function MobileMenuDrawer() {
                         </div>
                         <div>
                           <div className="text-[10px] uppercase font-semibold tracking-wider text-wbk-brown">
-                            Need Assistance?
+                            {t("support.needHelp", "Need Assistance?")}
                           </div>
                           <div className="text-xs font-medium text-wbk-black">
-                            0800 028 8940 (Mon-Fri 9-17)
+                            {t("header.phone", "01928 583 469")} {t("header.openingHoursParen", "(Mon-Fri 9-20, Sat 9-12)")}
                           </div>
                         </div>
                       </a>
@@ -265,27 +265,27 @@ export function MobileMenuDrawer() {
                     {/* Secondary Information & Support Links */}
                     <div className="px-4 py-3 bg-[#FBF9F8] border-t border-wbk-lightgrey flex items-center justify-around text-xs text-wbk-brown font-medium">
                       <Link
-                        href="/support/faq"
+                        href={localizedHref("/support/faq")}
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >
-                        FAQ
+                        {t("topbar.faq", "FAQ")}
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link
-                        href="/support/installation-guides"
+                        href={localizedHref("/support/installation-guides")}
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >
-                        Installation
+                        {t("topbar.installation", "Installation")}
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link
-                        href="/contact"
+                        href={localizedHref("/contact")}
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >
-                        Contact
+                        {t("topbar.contact", "Contact")}
                       </Link>
                     </div>
 
@@ -293,15 +293,21 @@ export function MobileMenuDrawer() {
                     <div className="p-4 bg-[#F4F2F0] border-t border-wbk-lightgrey/70 space-y-2.5 text-[11px] text-wbk-brown">
                       <div className="flex items-center gap-2">
                         <IconTruck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
-                        <span className="text-wbk-black/80 font-medium">Free UK Mainland Delivery</span>
+                        <span className="text-wbk-black/80 font-medium">
+                          {t("topbar.freeDelivery", "Free UK Mainland Delivery")}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <IconShieldCheck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
-                        <span className="text-wbk-black/80 font-medium">30-Year Mechanism Warranty</span>
+                        <span className="text-wbk-black/80 font-medium">
+                          {t("topbar.warranty", "Lifetime Mechanism Warranty")}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <IconTools size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
-                        <span className="text-wbk-black/80 font-medium">Precision Engineered Mechanisms</span>
+                        <span className="text-wbk-black/80 font-medium">
+                          {t("topbar.precision", "Precision Engineered Mechanisms")}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -327,7 +333,7 @@ export function MobileMenuDrawer() {
                         <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
                           <Image
                             src={activeCategoryData.parent.image}
-                            alt={activeCategoryData.parent.title}
+                            alt={activeCategoryData.parent.titleKey ? t(activeCategoryData.parent.titleKey, activeCategoryData.parent.title) : activeCategoryData.parent.title}
                             width={42}
                             height={42}
                             className="object-contain"
@@ -335,10 +341,10 @@ export function MobileMenuDrawer() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-[10px] uppercase font-semibold tracking-wider text-wbk-gold block">
-                            All Models
+                            {t("common.allModels", "All Models")}
                           </span>
                           <span className="text-xs font-semibold text-wbk-black truncate block">
-                            {activeCategoryData.parent.title}
+                            {activeCategoryData.parent.titleKey ? t(activeCategoryData.parent.titleKey, activeCategoryData.parent.title) : activeCategoryData.parent.title}
                           </span>
                         </div>
                         <IconChevronRight size={16} className="text-wbk-brown" />
@@ -346,48 +352,62 @@ export function MobileMenuDrawer() {
                     )}
 
                     {/* Subcategories list */}
-                    {activeCategoryData?.items?.map((item, idx) => (
-                      <Link
-                        key={idx}
-                        href={localizedHref(item.href)}
-                        onClick={closeMobileMenu}
-                        className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
-                      >
-                        <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/50 p-1 flex items-center justify-center">
-                          <Image
-                            src={item.image}
-                            alt={item.title}
-                            width={42}
-                            height={42}
-                            className="object-contain group-hover:scale-105 transition-transform duration-200"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
-                            {item.title}
+                    {activeCategoryData?.items?.map((item, idx) => {
+                      const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
+                      const itemBadge = item.badgeKey ? t(item.badgeKey, item.badge) : item.badge;
+                      const formattedPrice = item.price && item.price.includes("£")
+                        ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
+                        : item.price;
+
+                      return (
+                        <Link
+                          key={idx}
+                          href={localizedHref(item.href)}
+                          onClick={closeMobileMenu}
+                          className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
+                        >
+                          <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/50 p-1 flex items-center justify-center">
+                            <Image
+                              src={item.image}
+                              alt={itemTitle}
+                              width={42}
+                              height={42}
+                              className="object-contain group-hover:scale-105 transition-transform duration-200"
+                            />
                           </div>
-                          {(item.orientation || item.type || item.price) ? (
-                            <div className="text-[10px] text-wbk-brown flex items-center gap-1.5 mt-0.5 font-poppins flex-wrap">
-                              {item.orientation && <span>{item.orientation}</span>}
-                              {item.type && <span>• {item.type}</span>}
-                              {item.price && (
-                                <span className="font-semibold text-wbk-black">
-                                  • {item.price}
-                                </span>
-                              )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
+                              {itemTitle}
                             </div>
-                          ) : item.badge ? (
-                            <span className="inline-block mt-0.5 text-[9px] uppercase tracking-wider text-wbk-brown">
-                              {item.badge}
-                            </span>
-                          ) : null}
-                        </div>
-                        <IconChevronRight
-                          size={14}
-                          className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-0.5 transition-all"
-                        />
-                      </Link>
-                    ))}
+                            {(item.orientation || item.type || item.price) ? (
+                              <div className="text-[10px] text-wbk-brown flex items-center gap-1.5 mt-0.5 font-poppins flex-wrap">
+                                {item.orientation && (
+                                  <span>
+                                    {item.orientation.toLowerCase() === "vertical"
+                                      ? t("product.vertical", "Vertical")
+                                      : t("product.horizontal", "Horizontal")}
+                                  </span>
+                                )}
+                                {item.type && <span>• {item.type}</span>}
+                                {formattedPrice && (
+                                  <span className="font-semibold text-wbk-black">
+                                    • {formattedPrice}
+                                  </span>
+                                )}
+                              </div>
+                            ) : itemBadge ? (
+                              <span className="inline-block mt-0.5 text-[9px] uppercase tracking-wider text-wbk-brown">
+                                {itemBadge}
+                              </span>
+                            ) : null}
+                          </div>
+                          <IconChevronRight
+                            size={14}
+                            className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-0.5 transition-all"
+                          />
+                        </Link>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>

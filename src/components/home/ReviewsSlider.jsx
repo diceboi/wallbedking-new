@@ -6,12 +6,14 @@ import { Navigation } from "swiper/modules";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 
 export function ReviewsSlider() {
+  const { t, localizedHref } = useLocale();
   const [offset, setOffset] = useState(32);
   const prevRef = useRef(null);
   const nextRef = useRef(null);
@@ -75,17 +77,17 @@ export function ReviewsSlider() {
       <Container className="mb-8 md:mb-12">
         <div className="flex flex-col gap-2">
           <h2 className="font-new-york text-3xl sm:text-4xl md:text-5xl text-wbk-black leading-tight">
-            Reviews
+            {t("reviews.title", "Reviews")}
           </h2>
           <div className="flex justify-end w-full">
             <Button
               as="link"
-              href="/reviews"
+              href={localizedHref("/reviews")}
               variant="secondary"
               size="md"
               className="whitespace-nowrap"
             >
-              All reviews
+              {t("reviews.allReviews", "All reviews")}
             </Button>
           </div>
         </div>

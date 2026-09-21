@@ -70,6 +70,20 @@
     letter-spacing: -0.02em;
   }
 
+  /* Admin dashboard headings default to clean sans-serif Poppins */
+  .admin-scope h1,
+  .admin-scope h2,
+  .admin-scope h3,
+  .admin-scope h4,
+  .admin-scope h5,
+  .admin-scope h6 {
+    font-family: var(--font-poppins);
+  }
+
+  .admin-scope .font-new-york {
+    font-family: var(--font-new-york) !important;
+  }
+
   a {
     color: inherit;
     text-decoration: none;

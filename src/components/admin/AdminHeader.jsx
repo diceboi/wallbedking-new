@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   IconMenu2,
   IconExternalLink,
   IconSparkles,
 } from "@tabler/icons-react";
+import { ADMIN_NAV_ITEMS } from "./AdminSidebar";
 
-export function AdminHeader({ title = "Dashboard", onOpenMobile }) {
+export function AdminHeader({ title, onOpenMobile }) {
+  const pathname = usePathname() || "";
+
+  // Dynamically resolve section title if not explicitly provided
+  const matchedNav = ADMIN_NAV_ITEMS.find((item) =>
+    item.href === "/admin"
+      ? pathname === "/admin"
+      : pathname.startsWith(item.href)
+  );
+
+  const displayTitle = title || matchedNav?.label || "Admin Console";
+
   return (
     <header className="sticky top-0 z-20 h-16 bg-white border-b border-wbk-lightgrey/60 px-4 sm:px-6 flex items-center justify-between shadow-xs font-poppins">
       {/* Left: Mobile Toggle + Page Title */}
@@ -24,9 +37,9 @@ export function AdminHeader({ title = "Dashboard", onOpenMobile }) {
         )}
 
         <div className="flex items-baseline gap-3">
-          <h1 className="font-new-york text-xl sm:text-2xl text-wbk-black tracking-tight font-medium">
-            {title}
-          </h1>
+          <span className="font-new-york text-xl sm:text-2xl text-wbk-black tracking-tight font-medium">
+            {displayTitle}
+          </span>
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Supabase Live

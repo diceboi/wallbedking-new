@@ -13,8 +13,10 @@ import {
   IconBuildingWarehouse,
   IconCalendarEvent,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 export default function ContactPage() {
+  const { t, localizedHref } = useLocale();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -60,22 +62,21 @@ export default function ContactPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-black font-medium">Contact & Showroom</span>
+              <span className="text-wbk-black font-medium">{t("nav.contact", "Contact & Showroom")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
               We&apos;re Here To Help
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Get in touch with our specialists
+              {t("contact.title", "Get in touch with our specialists")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              Have a question about room dimensions, installation requirements, or order delivery?
-              Our UK-based wall bed engineering team is on hand 6 days a week to advise you.
+              {t("contact.subtitle", "Have a question about room dimensions, installation requirements, or order delivery? Our UK-based wall bed engineering team is on hand 6 days a week to advise you.")}
             </p>
           </div>
         </Container>
@@ -102,16 +103,10 @@ export default function ContactPage() {
                     </p>
                     <div className="mt-1 flex flex-col gap-1">
                       <a
-                        href="tel:08000288940"
-                        className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
-                      >
-                        0800 028 8940 <span className="text-xs font-normal text-wbk-brown">(Freephone)</span>
-                      </a>
-                      <a
                         href="tel:01928583469"
                         className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
                       >
-                        01928 583 469 <span className="text-xs font-normal text-wbk-brown">(Sales & Orders)</span>
+                        01928 583 469 <span className="text-xs font-normal text-wbk-brown">(Mon–Fri 9–20, Sat 9–12)</span>
                       </a>
                     </div>
                   </div>
@@ -204,7 +199,7 @@ export default function ContactPage() {
                     <IconCheck size={24} />
                   </div>
                   <h3 className="font-new-york text-2xl text-wbk-black">
-                    Thank you for reaching out!
+                    {t("contact.success", "Thank you! Your message has been sent successfully.")}
                   </h3>
                   <p className="mt-2 text-xs sm:text-sm text-wbk-brown max-w-md mx-auto">
                     Your inquiry has been received. One of our specialists will review your message and reply to{" "}
@@ -231,7 +226,7 @@ export default function ContactPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-medium text-wbk-black mb-1.5">
-                        Full Name *
+                        {t("contact.name", "Full Name")} *
                       </label>
                       <input
                         type="text"
@@ -244,7 +239,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-wbk-black mb-1.5">
-                        Email Address *
+                        {t("contact.email", "Email Address")} *
                       </label>
                       <input
                         type="email"
@@ -260,7 +255,7 @@ export default function ContactPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-medium text-wbk-black mb-1.5">
-                        Phone Number (Optional)
+                        {t("contact.phone", "Phone Number")}
                       </label>
                       <input
                         type="tel"
@@ -272,17 +267,17 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-wbk-black mb-1.5">
-                        Inquiry Topic
+                        {t("contact.subject", "Inquiry Topic")}
                       </label>
                       <select
                         value={formData.subject}
                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         className="w-full h-11 px-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                       >
-                        <option value="general">General Sizing & Product Advice</option>
+                        <option value="general">{t("contact.generalInquiry", "General Inquiry")}</option>
                         <option value="showroom">Showroom Visit Appointment</option>
-                        <option value="order">Order Tracking & Delivery Status</option>
-                        <option value="assembly">Installation & Technical Assembly</option>
+                        <option value="order">{t("contact.orderStatus", "Order Tracking & Delivery Status")}</option>
+                        <option value="assembly">{t("contact.technicalSupport", "Installation & Technical Assembly")}</option>
                         <option value="trade">Trade / Commercial Partnership</option>
                       </select>
                     </div>
@@ -290,7 +285,7 @@ export default function ContactPage() {
 
                   <div>
                     <label className="block text-xs font-medium text-wbk-black mb-1.5">
-                      Your Message *
+                      {t("contact.message", "Your Message")} *
                     </label>
                     <textarea
                       required
@@ -308,7 +303,7 @@ export default function ContactPage() {
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <IconSend size={15} />
-                    <span>{loading ? "Sending..." : "Submit Inquiry"}</span>
+                    <span>{loading ? t("contact.sending", "Sending...") : t("contact.send", "Submit Inquiry")}</span>
                   </button>
                 </form>
               )}

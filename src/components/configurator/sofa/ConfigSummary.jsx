@@ -8,6 +8,7 @@ import { modulesData, getAssetUrl } from "./data/modules";
 import { fabricsData } from "./data/fabrics";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TbListNumbers,
@@ -24,6 +25,7 @@ import {
 } from "react-icons/tb";
 
 export function ConfigSummary() {
+  const { t, formatPrice, localizedHref, locale } = useLocale();
   const { addItem, openCart } = useCart();
   const { user, openUserDrawer, save3DConfiguration } = useAuth();
 
@@ -86,7 +88,12 @@ export function ConfigSummary() {
     if (!acc[key]) {
       const def = modulesData.find((m) => m.id === mod.moduleId);
       const modFabricDef = fabricsData.find((f) => f.id === fabricId);
-      const fabricName = modFabricDef ? modFabricDef.name : "Beige";
+      const fabricName = modFabricDef
+        ? t(`configurator.fabrics.${modFabricDef.id}`, modFabricDef.name)
+        : "Beige";
+      const moduleName = def
+        ? t(`configurator.modules.${def.id}`, def.name)
+        : mod.moduleId;
       const unitPrice = def ? def.price + (modFabricDef?.priceModifier || 0) : 0;
 
       acc[key] = {
@@ -95,7 +102,7 @@ export function ConfigSummary() {
         fabricId,
         count: 0,
         def,
-        name: def ? def.name : mod.moduleId,
+        name: moduleName,
         fabricName,
         price: unitPrice,
         thumbnail: def ? def.thumbnail : null,
@@ -120,7 +127,7 @@ export function ConfigSummary() {
 
   const handleOpenSaveToAccount = () => {
     if (selectedModules.length === 0) {
-      alert("Please add at least one sofa module first.");
+      alert(t("configurator.addAtLeastOne", "Please add at least one sofa module first."));
       return;
     }
 
@@ -129,7 +136,8 @@ export function ConfigSummary() {
       return;
     }
 
-    setDesignTitle(`Custom Sofa (${selectedModules.length} Modules) - ${new Date().toLocaleDateString("en-GB")}`);
+    const defaultTitle = `${t("configurator.designNamePlaceholder", "Living Room Corner Sofa")} (${selectedModules.length} Modules)`;
+    setDesignTitle(defaultTitle);
     setAccountSaveError("");
     setAccountSaveSuccess(false);
     setShowAccountModal(true);
@@ -152,7 +160,7 @@ export function ConfigSummary() {
         configString: configData,
         modulesCount: selectedModules.length,
         totalPrice,
-        summary: `${selectedModules.length} Modules • Fabric: ${groupedList[0]?.fabricName || "Custom"} • £${totalPrice}`,
+        summary: `${selectedModules.length} Modules • ${groupedList[0]?.fabricName || "Custom"} • ${formatPrice(totalPrice)}`,
         thumbnail: firstThumbnail,
       });
 
@@ -176,7 +184,7 @@ export function ConfigSummary() {
 
   const handleAddToCart = () => {
     if (selectedModules.length === 0) {
-      alert("Please add at least one sofa module first.");
+      alert(t("configurator.addAtLeastOne", "Please add at least one sofa module first."));
       return;
     }
 
@@ -195,9 +203,13 @@ export function ConfigSummary() {
           type: "Modular Sofa Component",
           color: group.fabricName,
           fabric: group.fabricName,
-          size: group.def ? `${group.def.dimensions.width}×${group.def.dimensions.depth} cm` : "Modular",
+          size: group.def
+            ? (locale === "us"
+                ? `${Math.round(group.def.dimensions.width / 2.54)}×${Math.round(group.def.dimensions.depth / 2.54)} in (${group.def.dimensions.width}×${group.def.dimensions.depth} cm)`
+                : `${group.def.dimensions.width}×${group.def.dimensions.depth} cm`)
+            : "Modular",
         },
-        href: `/configurator?config=${encodeURIComponent(configData)}`,
+        href: localizedHref(`/configurator?config=${encodeURIComponent(configData)}`),
       };
 
       // Open drawer on the last item added
@@ -223,7 +235,7 @@ export function ConfigSummary() {
               : "bg-white text-wbk-black border-wbk-lightgrey hover:bg-wbk-lightgrey/30"
           }`}
           onClick={toggleDimensions}
-          title={showDimensions ? "Hide 3D Dimensions" : "Show 3D Dimensions"}
+          title={showDimensions ? t("configurator.hideDimensions", "Hide 3D Dimensions") : t("configurator.showDimensions", "Show 3D Dimensions")}
         >
           <TbRulerMeasure className="w-6 h-6" />
         </button>
@@ -246,11 +258,11 @@ export function ConfigSummary() {
               >
                 <div className="p-3.5 max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-2">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-wbk-brown uppercase tracking-wider">
-                    <span>Configured Modules ({selectedModules.length})</span>
+                    <span>{t("configurator.configuredModules", "Configured Modules")} ({selectedModules.length})</span>
                     <button
                       type="button"
                       onClick={() => {
-                        if (confirm("Are you sure you want to reset your configuration?")) {
+                        if (confirm(t("configurator.confirmReset", "Are you sure you want to reset your configuration?"))) {
                           resetConfiguration();
                           setIsExpanded(false);
                         }
@@ -258,13 +270,13 @@ export function ConfigSummary() {
                       className="text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1"
                     >
                       <TbArrowBackUp size={13} />
-                      <span>Reset all</span>
+                      <span>{t("configurator.resetAll", "Reset all")}</span>
                     </button>
                   </div>
 
                   {groupedList.length === 0 ? (
                     <p className="text-xs text-wbk-brown py-4 text-center">
-                      No modules placed in the scene yet.
+                      {t("configurator.noModules", "No modules placed in the scene yet.")}
                     </p>
                   ) : (
                     groupedList.map((item) => (
@@ -290,7 +302,7 @@ export function ConfigSummary() {
                               {item.name}
                             </p>
                             <span className="text-[10px] text-wbk-brown">
-                              Fabric: {item.fabricName}
+                              {t("configurator.fabricLabel", "Fabric")}: {item.fabricName}
                             </span>
                           </div>
                         </div>
@@ -300,7 +312,7 @@ export function ConfigSummary() {
                             ×{item.count}
                           </span>
                           <span className="font-semibold text-wbk-black">
-                            £{item.price * item.count}
+                            {formatPrice(item.price * item.count)}
                           </span>
                         </div>
                       </div>
@@ -319,7 +331,7 @@ export function ConfigSummary() {
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <div className="flex items-center gap-1 text-[11px] font-semibold text-wbk-brown uppercase tracking-wider">
-                <span>Total ({selectedModules.length})</span>
+                <span>{t("configurator.total", "Total")} ({selectedModules.length})</span>
                 {isExpanded ? (
                   <TbChevronDown size={14} className="group-hover:text-wbk-black transition-colors" />
                 ) : (
@@ -327,7 +339,7 @@ export function ConfigSummary() {
                 )}
               </div>
               <span className="text-lg sm:text-xl font-bold text-wbk-black leading-tight">
-                £{totalPrice}
+                {formatPrice(totalPrice)}
               </span>
             </div>
 
@@ -338,7 +350,7 @@ export function ConfigSummary() {
                 type="button"
                 onClick={handleOpenSaveToAccount}
                 disabled={selectedModules.length === 0}
-                title={user ? "Save to My Account" : "Sign in to save design to account"}
+                title={user ? t("configurator.saveToAccount", "Save to My Account") : t("configurator.signInToSave", "Sign in to save design to account")}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-[#F4F2F0] hover:bg-wbk-gold/20 text-wbk-black transition-colors cursor-pointer disabled:opacity-50"
               >
                 <TbBookmark size={18} className="text-wbk-gold" />
@@ -348,7 +360,7 @@ export function ConfigSummary() {
               <button
                 type="button"
                 onClick={handleSave}
-                title="Save & Share Configuration Link"
+                title={t("configurator.shareConfig", "Save & Share Configuration Link")}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-[#F4F2F0] hover:bg-wbk-lightgrey/80 text-wbk-black transition-colors cursor-pointer"
               >
                 <TbShare size={18} />
@@ -370,13 +382,13 @@ export function ConfigSummary() {
                 {justAdded ? (
                   <>
                     <TbCheck size={16} />
-                    <span>Added!</span>
+                    <span>{t("configurator.added", "Added!")}</span>
                   </>
                 ) : (
                   <>
                     <TbShoppingCartPlus size={16} />
-                    <span className="hidden xs:inline">Add to Cart</span>
-                    <span className="xs:hidden">Add</span>
+                    <span className="hidden xs:inline">{t("configurator.addToCart", "Add to Basket")}</span>
+                    <span className="xs:hidden">{t("configurator.addToCart", "Add to Basket")}</span>
                   </>
                 )}
               </button>
@@ -398,10 +410,10 @@ export function ConfigSummary() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-wbk-black">
-                    Share Configuration Link
+                    {t("configurator.shareTitle", "Share Configuration Link")}
                   </h3>
                   <p className="text-xs text-wbk-brown mt-1">
-                    Anyone opening this link will see your exact custom sofa design.
+                    {t("configurator.shareDesc", "Anyone opening this link will see your exact custom sofa design.")}
                   </p>
                 </div>
                 <button
@@ -432,12 +444,12 @@ export function ConfigSummary() {
                   {copySuccess ? (
                     <>
                       <TbCheck size={14} />
-                      <span>Copied!</span>
+                      <span>{t("configurator.copied", "Copied!")}</span>
                     </>
                   ) : (
                     <>
                       <TbCopy size={14} />
-                      <span>Copy</span>
+                      <span>{t("configurator.copy", "Copy")}</span>
                     </>
                   )}
                 </button>
@@ -464,10 +476,10 @@ export function ConfigSummary() {
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-wbk-black">
-                      Save Design to Your Account
+                      {t("configurator.saveAccountTitle", "Save Design to Your Account")}
                     </h3>
                     <p className="text-xs text-wbk-brown">
-                      Access, edit or reload this setup anytime in My Account.
+                      {t("configurator.saveAccountDesc", "Access, edit or reload this setup anytime in My Account.")}
                     </p>
                   </div>
                 </div>
@@ -491,27 +503,27 @@ export function ConfigSummary() {
                   <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1">
                     <div className="flex items-center gap-2 font-semibold">
                       <TbCheck size={18} className="text-emerald-600 shrink-0" />
-                      <span>Design Saved Successfully!</span>
+                      <span>{t("configurator.saveSuccess", "Design Saved Successfully!")}</span>
                     </div>
                     <p className="text-[11px] text-emerald-800">
-                      Your 3D design has been saved to your account and synchronized with your profile.
+                      {t("configurator.saveSuccessDesc", "Your 3D design has been saved to your account and synchronized with your profile.")}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Link
-                      href="/account"
+                      href={localizedHref("/account")}
                       className="flex-1 py-3 text-center bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green transition-colors rounded-full cursor-pointer"
                       onClick={() => setShowAccountModal(false)}
                     >
-                      View in Account
+                      {t("configurator.viewInAccount", "View in Account")}
                     </Link>
                     <button
                       type="button"
                       onClick={() => setShowAccountModal(false)}
                       className="px-4 py-3 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F2F0] transition-colors rounded-full cursor-pointer"
                     >
-                      Close
+                      {t("configurator.close", "Close")}
                     </button>
                   </div>
                 </div>
@@ -519,25 +531,25 @@ export function ConfigSummary() {
                 <form onSubmit={handleConfirmSaveToAccount} className="space-y-4">
                   <div className="p-3 bg-[#FBF9F8] border border-wbk-lightgrey/80 text-xs space-y-1">
                     <div className="flex items-center justify-between text-wbk-brown">
-                      <span>Configured Modules:</span>
+                      <span>{t("configurator.configuredModules", "Configured Modules")}:</span>
                       <strong className="text-wbk-black">{selectedModules.length} pcs</strong>
                     </div>
                     <div className="flex items-center justify-between text-wbk-brown">
-                      <span>Total Value:</span>
-                      <strong className="text-wbk-black">£{totalPrice}</strong>
+                      <span>{t("configurator.totalValue", "Total Value:")}</span>
+                      <strong className="text-wbk-black">{formatPrice(totalPrice)}</strong>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                      Design Name / Project Title
+                      {t("configurator.designNameLabel", "Design Name / Project Title")}
                     </label>
                     <input
                       type="text"
                       required
                       value={designTitle}
                       onChange={(e) => setDesignTitle(e.target.value)}
-                      placeholder="e.g., Living Room Corner Sofa"
+                      placeholder={t("configurator.designNamePlaceholder", "e.g., Living Room Corner Sofa")}
                       className="w-full h-10 px-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                     />
                   </div>
@@ -548,7 +560,7 @@ export function ConfigSummary() {
                       onClick={() => setShowAccountModal(false)}
                       className="px-4 py-2.5 text-xs text-wbk-brown hover:text-wbk-black cursor-pointer font-medium"
                     >
-                      Cancel
+                      {t("configurator.cancel", "Cancel")}
                     </button>
                     <button
                       type="submit"
@@ -556,11 +568,11 @@ export function ConfigSummary() {
                       className="px-6 py-2.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green transition-colors rounded-full cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
                     >
                       {isSaving ? (
-                        <span>Saving...</span>
+                        <span>{t("configurator.saving", "Saving...")}</span>
                       ) : (
                         <>
                           <TbDeviceFloppy size={16} />
-                          <span>Save to Account</span>
+                          <span>{t("configurator.saveButton", "Save to Account")}</span>
                         </>
                       )}
                     </button>

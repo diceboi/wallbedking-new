@@ -11,8 +11,9 @@ import {
   IconCheck,
   IconAlertCircle,
   IconPhoneCall,
-  IconShieldCheck,
 } from "@tabler/icons-react";
+import { IconShieldCheck } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const DELIVERY_TIERS = [
   {
@@ -93,6 +94,8 @@ const PRE_DELIVERY_STEPS = [
 ];
 
 export default function DeliveryPage() {
+  const { t, localizedHref } = useLocale();
+
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
       {/* Header Section */}
@@ -100,24 +103,23 @@ export default function DeliveryPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-brown/80">Support</span>
+              <span className="text-wbk-brown/80">{t("nav.support", "Support")}</span>
               <span>/</span>
-              <span className="text-wbk-black font-medium">Delivery & Logistics</span>
+              <span className="text-wbk-black font-medium">{t("support.deliveryTitle", "Delivery & Logistics")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              Fast, Reliable Mainland UK Delivery
+              {t("support.fastReliableDelivery", "Fast, Reliable Delivery")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Delivery options tailored to your schedule
+              {t("support.deliveryHeading", "Delivery options tailored to your schedule")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              From free economy delivery to rapid 2–5 day express dispatch, we ensure your
-              space-saving wall bed arrives safely, securely, and on time.
+              {t("support.deliverySubtitle", "From free economy delivery to rapid 2–5 day express dispatch, we ensure your space-saving wall bed arrives safely, securely, and on time.")}
             </p>
           </div>
         </Container>
@@ -127,10 +129,10 @@ export default function DeliveryPage() {
       <Container size="xl" className="pt-16 sm:pt-20">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <h2 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-            Choose Your Delivery Speed
+            {t("support.chooseDeliverySpeed", "Choose Your Delivery Speed")}
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-wbk-brown">
-            Select your preferred shipping option during checkout or collect from our Harlow warehouse.
+            {t("support.chooseDeliverySpeedDesc", "Select your preferred shipping option during checkout or collect from our warehouse.")}
           </p>
         </div>
 
@@ -180,31 +182,22 @@ export default function DeliveryPage() {
             <div className="lg:col-span-8 space-y-4">
               <div className="flex items-center gap-2 text-wbk-gold text-xs font-semibold uppercase tracking-wider">
                 <IconWorld size={18} />
-                <span>Deliveries Outside The UK</span>
+                <span>{t("support.internationalBadge", "Deliveries Outside The UK")}</span>
               </div>
               <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                Shipping Across Europe & Worldwide
+                {t("support.internationalTitle", "Shipping Across Europe & Worldwide")}
               </h3>
               <p className="text-xs sm:text-sm text-wbk-brown leading-relaxed">
-                We frequently deliver to customers across the European Union (Germany, France, Spain,
-                Italy, Netherlands, and Scandinavia) as well as the USA. Because overseas freight costs
-                depend on destination country and total package volume, please contact our logistics team
-                before placing your order so we can confirm an accurate, discounted international shipping rate.
+                {t("support.internationalDesc", "We frequently deliver to customers across the European Union as well as the USA. Because overseas freight depends on destination and volume, contact our logistics team before ordering for a custom rate.")}
               </p>
             </div>
             <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 justify-end">
               <Link
                 href="/contact"
-                className="px-6 py-3.5 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full text-center transition-colors"
+                className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors text-center"
               >
-                Request Overseas Quote
+                {t("topbar.contact", "Contact Logistics Team")}
               </Link>
-              <a
-                href="mailto:support@wallbedking.com"
-                className="px-6 py-3.5 border border-wbk-lightgrey bg-white hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full text-center transition-colors"
-              >
-                Email Logistics Team
-              </a>
             </div>
           </div>
         </div>
@@ -214,10 +207,10 @@ export default function DeliveryPage() {
       <Container size="xl" className="pt-20">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold">
-            The Logistics Process
+            {t("support.logisticsProcess", "The Logistics Process")}
           </span>
           <h2 className="mt-1 font-new-york text-3xl sm:text-4xl text-wbk-black">
-            What to expect from dispatch to delivery
+            {t("support.whatToExpect", "What to expect from dispatch to delivery")}
           </h2>
         </div>
 

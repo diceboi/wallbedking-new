@@ -8,6 +8,7 @@ import { FabricSelector } from "./FabricSelector";
 import { ConfigSummary } from "./ConfigSummary";
 import { QuickStartGuideModal } from "./QuickStartGuideModal";
 import { useSofaConfiguratorStore } from "./store/useSofaConfiguratorStore";
+import { useLocale } from "@/context/LocaleContext";
 import {
   TbLayoutSidebarRightCollapse,
   TbLayoutSidebarRightExpand,
@@ -18,6 +19,7 @@ import {
 } from "react-icons/tb";
 
 export function SofaConfigurator() {
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const loadConfiguration = useSofaConfiguratorStore((state) => state.loadConfiguration);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -37,8 +39,8 @@ export function SofaConfigurator() {
       try {
         const seen = localStorage.getItem("wbk_3d_guide_seen");
         if (!seen) {
-          const t = setTimeout(() => setIsGuideOpen(true), 450);
-          return () => clearTimeout(t);
+          const tTimeout = setTimeout(() => setIsGuideOpen(true), 450);
+          return () => clearTimeout(tTimeout);
         }
       } catch (e) {
         // Ignore localStorage access restrictions
@@ -77,20 +79,22 @@ export function SofaConfigurator() {
           type="button"
           onClick={() => setIsGuideOpen(true)}
           className="h-10 px-3.5 flex items-center gap-1.5 bg-white/90 hover:bg-white text-wbk-black border border-wbk-lightgrey/80 backdrop-blur-md rounded-full shadow-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer group"
-          title="Open Quick Start Guide"
+          title={t("configurator.openGuide", "Open Quick Start Guide")}
         >
           <TbHelp size={17} className="text-wbk-gold group-hover:scale-110 transition-transform" />
-          <span className="hidden sm:inline">Guide</span>
+          <span className="hidden sm:inline">{t("configurator.guide", "Guide")}</span>
         </button>
 
         <button
           type="button"
           onClick={toggleFullscreen}
           className="h-10 px-3.5 flex items-center gap-1.5 bg-white/90 hover:bg-white text-wbk-black border border-wbk-lightgrey/80 backdrop-blur-md rounded-full shadow-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
-          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          title={isFullscreen ? t("configurator.exitFullscreen", "Exit Fullscreen") : t("configurator.fullscreen", "Fullscreen")}
         >
           {isFullscreen ? <TbMinimize size={16} /> : <TbMaximize size={16} />}
-          <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+          <span className="hidden sm:inline">
+            {isFullscreen ? t("configurator.exitFullscreen", "Exit Fullscreen") : t("configurator.fullscreen", "Fullscreen")}
+          </span>
         </button>
       </div>
 
@@ -108,17 +112,17 @@ export function SofaConfigurator() {
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-wbk-green" />
               <span className="text-xs font-bold uppercase tracking-wider text-wbk-black">
-                Customize Sofa
+                {t("configurator.customizeSofa", "Customize Sofa")}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setIsPaletteOpen(false)}
               className="flex items-center gap-1 text-[11px] font-semibold text-wbk-brown hover:text-wbk-black px-2.5 py-1 rounded-full hover:bg-wbk-lightgrey/40 transition-colors cursor-pointer"
-              title="Minimize panel for full view"
+              title={t("configurator.minimizePanel", "Minimize panel for full view")}
             >
               <TbLayoutSidebarRightCollapse size={16} />
-              <span className="hidden sm:inline">Hide</span>
+              <span className="hidden sm:inline">{t("configurator.hide", "Hide")}</span>
             </button>
           </div>
 
@@ -141,7 +145,7 @@ export function SofaConfigurator() {
             className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full shadow-xl transition-all cursor-pointer group"
           >
             <TbPlus size={16} className="text-wbk-gold group-hover:scale-110 transition-transform" />
-            <span>Modules & Fabrics</span>
+            <span>{t("configurator.modulesAndFabrics", "Modules & Fabrics")}</span>
             <TbLayoutSidebarRightExpand size={15} />
           </button>
         </div>

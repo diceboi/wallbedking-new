@@ -284,3 +284,127 @@ export function getProductEan(product, locale = DEFAULT_LOCALE) {
       return product.ean_uk || product.ean_gb || product.ean || "";
   }
 }
+
+/**
+ * Imperial vs Metric formatters for US locale
+ */
+export function formatSizeLabel(label, locale = "en") {
+  if (!label || locale !== "us") return label;
+  if (label.includes('"')) return label;
+
+  // 1a. Parenthesized range of 2D sizes, e.g. '(76x190 - 200x200 cm)'
+  if (/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/i.test(label)) {
+    return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (m, w1, l1, w2, l2) => {
+      const w1In = Math.round(Number(w1) / 2.54);
+      const l1In = Math.round(Number(l1) / 2.54);
+      const w2In = Math.round(Number(w2) / 2.54);
+      const l2In = Math.round(Number(l2) / 2.54);
+      return `(${w1}x${l1} – ${w2}x${l2} cm / ${w1In}"x${l1In}" – ${w2In}"x${l2In}")`;
+    });
+  }
+
+  // 1b. Unparenthesized range of 2D sizes, e.g. '76x190 - 200x200 cm' or '76x190 – 200x200 cm'
+  if (/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/i.test(label)) {
+    return label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/gi, (m, w1, l1, w2, l2) => {
+      const w1In = Math.round(Number(w1) / 2.54);
+      const l1In = Math.round(Number(l1) / 2.54);
+      const w2In = Math.round(Number(w2) / 2.54);
+      const l2In = Math.round(Number(l2) / 2.54);
+      return `${w1}x${l1} – ${w2}x${l2} cm (${w1In}"x${l1In}" – ${w2In}"x${l2In}")`;
+    });
+  }
+
+  // 2. 3D dimensions & packaging box sizes, e.g. '45x45x50 cm' or '215x30x12'
+  if (/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/i.test(label)) {
+    let res = label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/gi, (m, w, d, h) => {
+      const wIn = Math.round(Number(w) / 2.54);
+      const dIn = Math.round(Number(d) / 2.54);
+      const hIn = Math.round(Number(h) / 2.54);
+      return `${w}x${d}x${h} cm (${wIn}" x ${dIn}" x ${hIn}")`;
+    });
+    if (/\b(\d+)\s*kg\b/i.test(res)) {
+      res = res.replace(/\b(\d+)\s*kg\b/gi, (m, kg) => {
+        const lbs = Math.round(Number(kg) * 2.20462);
+        return `${kg} kg (${lbs} lbs)`;
+      });
+    }
+    return res;
+  }
+
+  // 3. Single dimension range, e.g. '80 – 140 cm'
+  if (/(\d+)\s*[-–—]\s*(\d+)\s*cm/i.test(label)) {
+    return label.replace(/(\d+)\s*[-–—]\s*(\d+)\s*cm/gi, (m, d1, d2) => {
+      const d1In = (Number(d1) / 2.54).toFixed(Number(d1) % 2.54 === 0 ? 0 : 1);
+      const d2In = (Number(d2) / 2.54).toFixed(Number(d2) % 2.54 === 0 ? 0 : 1);
+      return `${d1} – ${d2} cm (${d1In}" – ${d2In}")`;
+    });
+  }
+
+  // 4. Parenthesized 2D size: '(135x190 cm)'
+  if (/\(\s*\d+\s*[xX×]\s*\d+\s*cm\s*\)/i.test(label)) {
+    return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (m, w, l) => {
+      const wIn = Math.round(Number(w) / 2.54);
+      const lIn = Math.round(Number(l) / 2.54);
+      return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
+    });
+  }
+
+  // 5. Standalone 2D size with cm: '135x190 cm'
+  if (/\b\d+\s*[xX×]\s*(\d+)\s*cm\b/i.test(label)) {
+    return label.replace(/\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi, (m, w, l) => {
+      const wIn = Math.round(Number(w) / 2.54);
+      const lIn = Math.round(Number(l) / 2.54);
+      return `${w}x${l} cm (${wIn}" x ${lIn}")`;
+    });
+  }
+
+  // 6. Just numbers '135x190'
+  if (/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/.test(label)) {
+    return label.replace(/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g, (m, w, l) => {
+      const wIn = Math.round(Number(w) / 2.54);
+      const lIn = Math.round(Number(l) / 2.54);
+      return `${w}x${l} (${wIn}" x ${lIn}")`;
+    });
+  }
+
+  // 7. Millimeters: '800 mm'
+  if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
+    return label.replace(/\b(\d{3,4})\s*mm\b/gi, (m, mm) => {
+      const inches = (Number(mm) / 25.4).toFixed(1);
+      return `${mm} mm (${inches}")`;
+    });
+  }
+
+  // 8. Single cm: '80 cm'
+  if (/\b(\d{2,3})\s*cm\b/i.test(label)) {
+    return label.replace(/\b(\d{2,3})\s*cm\b/gi, (m, cm) => {
+      const inches = (Number(cm) / 2.54).toFixed(1);
+      return `${cm} cm (${inches}")`;
+    });
+  }
+
+  return label;
+}
+
+export function formatWeight(kg, locale = "en") {
+  if (!kg) return "";
+  return locale === "us" ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`;
+}
+
+export function formatDimensionMm(mm, locale = "en") {
+  if (!mm) return "";
+  if (locale === "us") {
+    const inches = (mm / 25.4).toFixed(1);
+    return `${inches}" (${mm} mm)`;
+  }
+  return `${mm} mm`;
+}
+
+export function formatDimensionCm(cm, locale = "en") {
+  if (!cm) return "";
+  if (locale === "us") {
+    const inches = (cm / 2.54).toFixed(1);
+    return `${inches}" (${cm} cm)`;
+  }
+  return `${cm} cm`;
+}

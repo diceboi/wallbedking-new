@@ -10,8 +10,10 @@ import {
   IconRotateClockwise,
   IconPalette,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 export function QuickStartGuideModal({ isOpen, onClose }) {
+  const { t } = useLocale();
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [activeTab, setActiveTab] = useState("click"); // 'click' | 'drag'
   const [autoPlay, setAutoPlay] = useState(true);
@@ -69,7 +71,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                   <Icon3dCubeSphere size={16} />
                 </span>
                 <span className="text-[11px] font-bold uppercase tracking-widest text-wbk-gold">
-                  3D Studio Quick Guide
+                  {t("configurator.guideBadge", "3D Studio Quick Guide")}
                 </span>
               </div>
 
@@ -77,7 +79,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                 type="button"
                 onClick={handleClose}
                 className="w-7 h-7 rounded-full flex items-center justify-center text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/40 transition-colors cursor-pointer"
-                title="Close guide"
+                title={t("configurator.close", "Close")}
               >
                 <IconX size={17} />
               </button>
@@ -86,10 +88,10 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
             {/* Title */}
             <div className="mt-3 mb-4 text-center sm:text-left">
               <h2 className="font-new-york text-2xl sm:text-[26px] font-medium text-wbk-black tracking-tight leading-tight">
-                Add Modules in 3D
+                {t("configurator.guideTitle", "Add Modules in 3D")}
               </h2>
               <p className="text-xs text-wbk-brown mt-0.5">
-                Click any module on the right or drag & drop it directly into the room.
+                {t("configurator.guideSubtitle", "Click any module on the right or drag & drop it directly into the room.")}
               </p>
             </div>
 
@@ -105,7 +107,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                 }`}
               >
                 <IconPointer size={14} className={activeTab === "click" ? "text-wbk-gold" : ""} />
-                <span>1. Click to Add</span>
+                <span>{t("configurator.guideTabClick", "1. Click to Add")}</span>
               </button>
 
               <button
@@ -118,7 +120,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                 }`}
               >
                 <IconHandMove size={14} className={activeTab === "drag" ? "text-wbk-gold" : ""} />
-                <span>2. Drag & Drop</span>
+                <span>{t("configurator.guideTabDrag", "2. Drag & Drop")}</span>
               </button>
             </div>
 
@@ -137,7 +139,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                 />
 
                 <span className="relative z-10 text-[10px] font-bold uppercase tracking-wider text-wbk-brown/70">
-                  3D Scene View
+                  {t("configurator.guideSceneView", "3D Scene View")}
                 </span>
 
                 {/* 3D Center Area with Modules */}
@@ -145,7 +147,9 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                   {/* Base Module (always present) */}
                   <div className="w-16 h-12 bg-white border border-wbk-lightgrey/90 shadow-md flex flex-col items-center justify-center relative rounded-xs">
                     <div className="w-14 h-9 bg-[#7D8A78] rounded-xs shadow-xs" />
-                    <span className="text-[8px] font-semibold text-wbk-black mt-0.5">Seat 1</span>
+                    <span className="text-[8px] font-semibold text-wbk-black mt-0.5">
+                      {t("configurator.guideSeat1", "Seat 1")}
+                    </span>
                   </div>
 
                   {/* Animated Incoming Module */}
@@ -168,10 +172,12 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                         className="w-16 h-12 bg-white border-2 border-wbk-gold shadow-md flex flex-col items-center justify-center relative -ml-1 rounded-xs"
                       >
                         <div className="w-14 h-9 bg-[#7D8A78] rounded-xs shadow-xs" />
-                        <span className="text-[8px] font-bold text-wbk-black mt-0.5">Seat 2</span>
+                        <span className="text-[8px] font-bold text-wbk-black mt-0.5">
+                          {t("configurator.guideSeat2", "Seat 2")}
+                        </span>
                         {/* Snap badge */}
                         <span className="absolute -top-3.5 px-1.5 py-0.2 text-[8px] font-bold bg-wbk-black text-wbk-gold rounded-full shadow-xs">
-                          Snapped!
+                          {t("configurator.guideSnapped", "Snapped!")}
                         </span>
                       </motion.div>
                     ) : (
@@ -193,10 +199,12 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                         className="w-16 h-12 bg-white border-2 border-emerald-500 shadow-lg flex flex-col items-center justify-center relative -ml-1 rounded-xs"
                       >
                         <div className="w-14 h-9 bg-[#7D8A78] rounded-xs shadow-xs" />
-                        <span className="text-[8px] font-bold text-wbk-black mt-0.5">Dropped</span>
+                        <span className="text-[8px] font-bold text-wbk-black mt-0.5">
+                          {t("configurator.guideDropped", "Dropped")}
+                        </span>
                         {/* Drop badge */}
                         <span className="absolute -top-3.5 px-1.5 py-0.2 text-[8px] font-bold bg-emerald-600 text-white rounded-full shadow-xs">
-                          Placed
+                          {t("configurator.guidePlaced", "Placed")}
                         </span>
                       </motion.div>
                     )}
@@ -208,8 +216,8 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                   <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
                   <span>
                     {activeTab === "click"
-                      ? "Click card → auto-snaps into sofa"
-                      : "Drag card → drops into 3D scene"}
+                      ? t("configurator.guideClickHint", "Click card → auto-snaps into sofa")
+                      : t("configurator.guideDragHint", "Drag card → drops into 3D scene")}
                   </span>
                 </div>
               </div>
@@ -218,7 +226,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
               <div className="w-28 sm:w-32 h-full bg-white/95 border-l border-wbk-lightgrey/80 p-2 flex flex-col justify-between shrink-0 relative">
                 <div>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-wbk-brown block mb-1.5">
-                    Right Sidebar
+                    {t("configurator.guideRightSidebar", "Right Sidebar")}
                   </span>
 
                   <div className="space-y-1.5">
@@ -228,7 +236,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                         <div className="w-6 h-4 bg-[#7D8A78] rounded-xs" />
                       </div>
                       <span className="text-[9px] font-semibold text-wbk-black block mt-0.5 truncate">
-                        Seat Base
+                        {t("configurator.guideSeatBase", "Seat Base")}
                       </span>
 
                       {/* Click animation target indicator */}
@@ -252,7 +260,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                     <div className="p-1.5 bg-[#FBF9F8] border border-wbk-lightgrey/50 opacity-60">
                       <div className="w-full h-5 bg-[#EFECE8] border border-wbk-lightgrey/40" />
                       <span className="text-[8px] text-wbk-brown block mt-0.5 truncate">
-                        Armrest
+                        {t("configurator.guideArmrest", "Armrest")}
                       </span>
                     </div>
                   </div>
@@ -322,13 +330,21 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
               <div className="flex items-center gap-2">
                 <IconRotateClockwise size={14} className="text-wbk-black shrink-0" />
                 <span>
-                  <strong>Rotate 3D View:</strong> Left-click and drag anywhere on the scene background to view your sofa from 360°.
+                  <strong>{t("configurator.guideRotateTitle", "Rotate 3D View:")}</strong>{" "}
+                  {t(
+                    "configurator.guideRotateDesc",
+                    "Left-click and drag anywhere on the scene background to view your sofa from 360°."
+                  )}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <IconPalette size={14} className="text-wbk-black shrink-0" />
                 <span>
-                  <strong>Fabrics & Colors:</strong> Select from 12+ luxury fabrics in the bottom right panel anytime.
+                  <strong>{t("configurator.guideFabricsTitle", "Fabrics & Colors:")}</strong>{" "}
+                  {t(
+                    "configurator.guideFabricsDesc",
+                    "Select from luxury fabrics in the bottom right panel anytime."
+                  )}
                 </span>
               </div>
             </div>
@@ -342,7 +358,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                   onChange={(e) => setDontShowAgain(e.target.checked)}
                   className="rounded-none border-wbk-lightgrey text-wbk-black focus:ring-wbk-gold cursor-pointer"
                 />
-                <span>Don't show this guide automatically again</span>
+                <span>{t("configurator.guideDontShow", "Don't show this guide automatically again")}</span>
               </label>
 
               <button
@@ -350,7 +366,7 @@ export function QuickStartGuideModal({ isOpen, onClose }) {
                 onClick={handleClose}
                 className="w-full sm:w-auto px-7 py-2.5 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-[0.14em] transition-colors rounded-full shadow-md flex items-center justify-center cursor-pointer shrink-0"
               >
-                <span>Start Designing</span>
+                <span>{t("configurator.guideStart", "Start Designing")}</span>
               </button>
             </div>
           </motion.div>

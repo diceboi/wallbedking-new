@@ -136,9 +136,11 @@ export function Submenu() {
                         <SubmenuItem
                           isParent
                           title={activeData.parent.title}
+                          titleKey={activeData.parent.titleKey}
                           image={activeData.parent.image}
                           href={activeData.parent.href}
                           tagline={activeData.parent.tagline}
+                          taglineKey={activeData.parent.taglineKey}
                           onClick={() => setSubMenu(null)}
                         />
                       </div>
@@ -176,12 +178,15 @@ export function Submenu() {
                           >
                             <SubmenuItem
                               title={item.title}
+                              titleKey={item.titleKey}
                               image={item.image}
                               href={item.href}
                               orientation={item.orientation}
                               type={item.type}
                               sizeRange={item.sizeRange}
                               price={item.price}
+                              badge={item.badge}
+                              badgeKey={item.badgeKey}
                               onClick={() => setSubMenu(null)}
                             />
                           </SwiperSlide>

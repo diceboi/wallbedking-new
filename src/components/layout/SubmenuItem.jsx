@@ -11,21 +11,30 @@ import {
   Icon3dCubeSphere,
 } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { formatSizeLabel } from "@/lib/i18n";
 
 export function SubmenuItem({
   title,
+  titleKey,
   image,
   href,
   isParent = false,
   tagline,
+  taglineKey,
   orientation,
   type,
   sizeRange,
   price,
+  badge,
+  badgeKey,
   onClick,
 }) {
-  const { localizedHref } = useLocale();
+  const { localizedHref, t, formatPrice, locale } = useLocale();
   const targetLink = localizedHref(href);
+
+  const displayTitle = titleKey ? t(titleKey, title) : title;
+  const displayTagline = taglineKey ? t(taglineKey, tagline) : tagline;
+  const displayBadge = badgeKey ? t(badgeKey, badge) : badge;
 
   if (isParent) {
     return (
@@ -38,7 +47,7 @@ export function SubmenuItem({
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-white border border-wbk-lightgrey/40 mb-3">
             <Image
               src={image}
-              alt={title}
+              alt={displayTitle}
               fill
               sizes="240px"
               className="object-contain p-3 transition-transform duration-500 group-hover:scale-105"
@@ -46,20 +55,20 @@ export function SubmenuItem({
           </div>
           <div className="space-y-2 px-4">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-wbk-gold block mb-1">
-              Category Overview
+              {t("nav.categoryOverview", "Category Overview")}
             </span>
             <h4 className="text-sm font-medium text-wbk-black group-hover:text-wbk-green transition-colors">
-              {title}
+              {displayTitle}
             </h4>
-            {tagline && (
+            {displayTagline && (
               <p className="text-[11px] text-wbk-brown mt-1 line-clamp-2 leading-relaxed">
-                {tagline}
+                {displayTagline}
               </p>
             )}
           </div>
 
           <div className="px-4 py-2 flex items-center gap-1.5 text-xs font-medium text-wbk-black group-hover:text-wbk-green mt-4 border-t border-wbk-lightgrey/60 transition-colors">
-            <span>Explore all models</span>
+            <span>{t("nav.exploreAll", "Explore all models")}</span>
             <IconArrowRight
               size={14}
               className="group-hover:translate-x-1 transition-transform"
@@ -69,6 +78,10 @@ export function SubmenuItem({
       </Link>
     );
   }
+
+  const formattedPrice = price && price.includes("£")
+    ? `${t("common.from", "from")} ${formatPrice(Number(price.replace(/[^0-9]/g, "")))}`
+    : price;
 
   return (
     <Link
@@ -80,7 +93,7 @@ export function SubmenuItem({
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#FBF9F8] border-b border-wbk-lightgrey/30 mb-2.5">
         <Image
           src={image}
-          alt={title}
+          alt={displayTitle}
           fill
           sizes="240px"
           className="object-contain p-2.5 transition-transform duration-500 group-hover:scale-105"
@@ -92,8 +105,17 @@ export function SubmenuItem({
         <div className="space-y-1.5">
           {/* Title */}
           <h4 className="text-sm font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
-            {title}
+            {displayTitle}
           </h4>
+
+          {/* Badge pill */}
+          {displayBadge && (
+            <div className="pt-0.5">
+              <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/60 text-[10px] font-medium text-wbk-brown">
+                {displayBadge}
+              </span>
+            </div>
+          )}
 
           {/* Orientation & Style tag pills with icons */}
           {(orientation || type) && (
@@ -105,7 +127,11 @@ export function SubmenuItem({
                   ) : (
                     <IconArrowsHorizontal size={11} className="text-wbk-green" />
                   )}
-                  <span>{orientation}</span>
+                  <span>
+                    {orientation.toLowerCase() === "vertical"
+                      ? t("product.vertical", "Vertical")
+                      : t("product.horizontal", "Horizontal")}
+                  </span>
                 </span>
               )}
 
@@ -118,7 +144,13 @@ export function SubmenuItem({
                   ) : (
                     <Icon3dCubeSphere size={11} className="text-wbk-green" />
                   )}
-                  <span>{type}</span>
+                  <span>
+                    {type.toLowerCase() === "classic"
+                      ? t("categories.classicBeds", "Classic")
+                      : type.toLowerCase() === "studio"
+                      ? t("categories.studioBeds", "Studio")
+                      : type}
+                  </span>
                 </span>
               )}
             </div>
@@ -127,7 +159,7 @@ export function SubmenuItem({
           {/* Size range */}
           {sizeRange && (
             <div className="text-[10.5px] text-wbk-brown font-poppins leading-tight pt-0.5">
-              <span className="text-wbk-black font-medium">Sizes:</span> {sizeRange}
+              <span className="text-wbk-black font-medium">{t("product.size", "Size")}:</span> {formatSizeLabel(sizeRange, locale)}
             </div>
           )}
         </div>
@@ -135,7 +167,7 @@ export function SubmenuItem({
         {/* Starting Price */}
         {price && (
           <div className="text-xs font-poppins text-wbk-black font-semibold pt-1 border-t border-wbk-lightgrey/40">
-            {price}
+            {formattedPrice}
           </div>
         )}
       </div>

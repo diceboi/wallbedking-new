@@ -935,11 +935,78 @@ export function getDynamicFlagshipTables(rawItems = RAW_CATALOG) {
   return getDynamicFlagships(FLAGSHIP_TABLES, rawItems, "tables");
 }
 
+// ── FLAGSHIP ACCESSORIES & EXTRAS (LIGHTING, HARDWARE) ──
+export const FLAGSHIP_EXTRAS = [
+  {
+    id: "flagship-lighting-system",
+    rawId: "extra-01",
+    title: "LED Bed Lighting System",
+    name: "LED Bed Lighting System",
+    slug: "led-lighting-system",
+    parent_category: "extras",
+    type: "Lighting",
+    sub_category: "Lighting",
+    categoryKey: "extras",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200.jpg",
+    gallery: [
+      { src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp", alt: "LED Bed Lighting System" },
+      { src: "/product-images/morphy-integrated/160x200.jpg", alt: "LED Bed Lighting System Installed" },
+    ],
+    price_gbp: 79,
+    price_euro: 89,
+    price_usd: 99,
+    sale_percent: 0,
+    price: "from £79",
+    numericPrice: 79,
+    size: "Universal Fit",
+    sizeLabel: "Universal Fit",
+    badge: "Integrated LEDs",
+    description: "Touch-activated dimmable LED reading lamps and warm ambient frame illumination with flexible goosenecks and integrated USB charging.",
+    link: "/products/extras/led-lighting-system",
+  },
+  {
+    id: "flagship-hardware-kit",
+    rawId: "extra-02",
+    title: "Heavy-Duty Gas Struts & Hardware Kit",
+    name: "Heavy-Duty Gas Struts & Hardware Kit",
+    slug: "heavy-duty-gas-struts-kit",
+    parent_category: "extras",
+    type: "Hardware",
+    sub_category: "Hardware",
+    categoryKey: "extras",
+    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    hover_image: "/product-images/morphy-integrated/160x200-6.jpg",
+    hoverImage: "/product-images/morphy-integrated/160x200-6.jpg",
+    gallery: [
+      { src: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp", alt: "Gas Struts & Hardware Kit" },
+      { src: "/product-images/morphy-integrated/160x200-6.jpg", alt: "Gas Struts Detail" },
+    ],
+    price_gbp: 89,
+    price_euro: 99,
+    price_usd: 119,
+    sale_percent: 0,
+    price: "from £89",
+    numericPrice: 89,
+    size: "Pair (Left & Right)",
+    sizeLabel: "Pair (Left & Right)",
+    badge: "German Gas Struts",
+    description: "Replacement precision German gas piston cylinders and heavy-gauge pivot hardware calibrated for smooth counterbalance operation.",
+    link: "/products/extras/heavy-duty-gas-struts-kit",
+  },
+];
+
+export function getDynamicFlagshipExtras(rawItems = RAW_CATALOG) {
+  return getDynamicFlagships(FLAGSHIP_EXTRAS, rawItems, "extras");
+}
+
 export const DYNAMIC_FLAGSHIP_BEDS = getDynamicFlagshipBeds(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_SOFAS = getDynamicFlagshipSofas(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_TABLES = getDynamicFlagshipTables(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_MATTRESSES = getDynamicFlagshipMattresses(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_CABINETS = getDynamicFlagshipCabinets(RAW_CATALOG);
+export const DYNAMIC_FLAGSHIP_EXTRAS = getDynamicFlagshipExtras(RAW_CATALOG);
 
 export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_BEDS,
@@ -947,6 +1014,7 @@ export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_TABLES,
   ...DYNAMIC_FLAGSHIP_MATTRESSES,
   ...DYNAMIC_FLAGSHIP_CABINETS,
+  ...DYNAMIC_FLAGSHIP_EXTRAS,
 ];
 
 // All bed variants for internal lookups and configurator sizing
@@ -961,7 +1029,7 @@ export const ALL_PRODUCTS = {
   tables: DYNAMIC_FLAGSHIP_TABLES,
   mattresses: DYNAMIC_FLAGSHIP_MATTRESSES,
   cabinets: DYNAMIC_FLAGSHIP_CABINETS,
-  extras: RAW_CATALOG.filter((p) => p.parent_category === "extras").map(formatCatalogItem),
+  extras: DYNAMIC_FLAGSHIP_EXTRAS,
 };
 
 // Representative popular product models for the overview / home sliders

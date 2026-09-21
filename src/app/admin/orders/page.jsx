@@ -18,6 +18,7 @@ import {
   IconLoader2,
   IconRefresh,
 } from "@tabler/icons-react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const STATUS_BADGES = {
   pending: { label: "Pending Payment", bg: "bg-amber-100 text-amber-900 border-amber-200" },
@@ -139,31 +140,23 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-[#090A0A] text-white p-6 sm:p-8 border border-white/10 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-wbk-gold">
-              Fulfillment & Dispatch
-            </span>
-          </div>
-          <h1 className="font-new-york text-2xl sm:text-3xl font-medium text-white">
-            Orders Management
-          </h1>
-          <p className="text-xs text-white/70 max-w-xl leading-relaxed">
-            Monitor incoming customer purchases, review delivery addresses, update manufacturing statuses, and assign tracking numbers for precision logistics.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={loadOrders}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shrink-0"
-        >
-          <IconRefresh size={15} className={loading ? "animate-spin" : ""} />
-          <span>Refresh Orders</span>
-        </button>
-      </div>
+      {/* Page Header */}
+      <AdminPageHeader
+        badge="Fulfillment & Dispatch"
+        title="Orders Management"
+        count={orders.length}
+        description="Monitor incoming customer purchases, review delivery addresses, update manufacturing statuses, and assign tracking numbers for precision logistics."
+        actions={
+          <button
+            type="button"
+            onClick={loadOrders}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-2xs cursor-pointer"
+          >
+            <IconRefresh size={15} className={loading ? "animate-spin" : ""} />
+            <span>Refresh Orders</span>
+          </button>
+        }
+      />
 
       {/* Metric Tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -257,7 +250,7 @@ export default function AdminOrdersPage() {
         ) : orders.length === 0 ? (
           <div className="py-20 text-center space-y-3">
             <IconPackage size={40} className="mx-auto text-wbk-lightgrey" />
-            <h3 className="font-new-york text-xl text-wbk-black">No orders found</h3>
+            <h3 className="font-poppins text-lg font-semibold text-wbk-black">No orders found</h3>
             <p className="text-xs text-wbk-brown max-w-sm mx-auto">
               No orders matched your active filter or search criteria. When customers complete checkout, their orders will appear here immediately.
             </p>
@@ -384,7 +377,7 @@ export default function AdminOrdersPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-wbk-brown font-poppins">
               {/* Status & Carrier Control Box */}
               <div className="bg-[#FAF8F5] border border-wbk-lightgrey p-5 space-y-4">
-                <h3 className="font-new-york text-base text-wbk-black font-medium">
+                <h3 className="font-poppins text-base text-wbk-black font-semibold">
                   Update Fulfillment & Tracking
                 </h3>
 
@@ -513,7 +506,7 @@ export default function AdminOrdersPage() {
                           />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-wbk-black text-xs">{item.title}</h4>
+                          <h4 className="font-poppins font-semibold text-wbk-black text-xs">{item.title}</h4>
                           <span className="text-[11px] text-wbk-brown block">
                             {item.options?.size} {item.options?.orientation && `(${item.options.orientation})`}
                           </span>

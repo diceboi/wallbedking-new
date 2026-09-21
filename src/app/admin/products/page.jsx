@@ -16,6 +16,7 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const CATEGORIES = [
   { id: "all", label: "All Categories" },
@@ -197,37 +198,34 @@ export default function AdminProductsPage() {
   return (
     <div className="space-y-6 font-poppins">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-new-york text-2xl font-medium text-wbk-black">
-            Product Management
-          </h2>
-          <p className="text-xs text-wbk-brown">
-            Live catalog and inventory management directly synced with Supabase
-          </p>
-        </div>
+      <AdminPageHeader
+        badge="Catalog & Inventory"
+        title="Product Management"
+        count={products.length}
+        description="Live catalog and inventory management directly synced with Supabase"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={fetchProducts}
+              disabled={loading}
+              className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer"
+              title="Refresh database records"
+            >
+              <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+            </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={fetchProducts}
-            disabled={loading}
-            className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer"
-            title="Refresh database records"
-          >
-            <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-sm cursor-pointer"
-          >
-            <IconPlus size={16} />
-            <span>Add Product</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsAddOpen(true)}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-sm cursor-pointer"
+            >
+              <IconPlus size={16} />
+              <span>Add Product</span>
+            </button>
+          </>
+        }
+      />
 
       {/* Status banner */}
       {message && (
@@ -544,7 +542,7 @@ export default function AdminProductsPage() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md p-6 rounded-none border border-wbk-lightgrey shadow-2xl space-y-4 font-poppins">
-            <h3 className="font-new-york text-xl text-wbk-black font-medium">
+            <h3 className="font-poppins text-lg text-wbk-black font-semibold">
               Create New Product
             </h3>
 

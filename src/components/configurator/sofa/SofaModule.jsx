@@ -158,6 +158,7 @@ export function SofaModule({
   updateModuleFabric,
   removeModule,
   isPreview = false,
+  t,
 }) {
   const moduleDef = modulesData.find(m => m.id === moduleData.moduleId);
   const fabricDef = fabricsData.find(f => f.id === fabricId);
@@ -343,25 +344,31 @@ export function SofaModule({
       {isActive && (
         <Html position={[0, height + 0.3, 0]} center zIndexRange={[100, 0]}>
           <div className="bg-white/95 backdrop-blur-md rounded-none shadow-[0_8px_24px_rgba(0,0,0,0.18)] border border-wbk-lightgrey/80 flex items-center py-2 px-3 gap-2.5 pointer-events-auto select-none">
-            <div className="text-xs font-semibold text-wbk-black px-1" title={moduleDef.name}>
-              {moduleDef.name}
+            <div
+              className="text-xs font-semibold text-wbk-black px-1"
+              title={t ? t(`configurator.modules.${moduleDef.id}`, moduleDef.name) : moduleDef.name}
+            >
+              {t ? t(`configurator.modules.${moduleDef.id}`, moduleDef.name) : moduleDef.name}
             </div>
             
             <div className="w-[1px] h-5 bg-wbk-lightgrey"></div>
             
             <div className="flex gap-1.5 items-center">
-              {fabricsData.map(f => (
-                <button 
-                  key={f.id}
-                  className={`w-5 h-5 rounded-full border-2 cursor-pointer p-0 shadow-sm transition-transform duration-150 hover:scale-110 ${fabricId === f.id ? 'border-wbk-black scale-110' : 'border-transparent'}`}
-                  style={{ backgroundColor: f.colorHex }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateModuleFabric(moduleData.instanceId, f.id);
-                  }}
-                  title={f.name}
-                />
-              ))}
+              {fabricsData.map(f => {
+                const localizedFabric = t ? t(`configurator.fabrics.${f.id}`, f.name) : f.name;
+                return (
+                  <button 
+                    key={f.id}
+                    className={`w-5 h-5 rounded-full border-2 cursor-pointer p-0 shadow-sm transition-transform duration-150 hover:scale-110 ${fabricId === f.id ? 'border-wbk-black scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: f.colorHex }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateModuleFabric(moduleData.instanceId, f.id);
+                    }}
+                    title={localizedFabric}
+                  />
+                );
+              })}
             </div>
 
             <div className="w-[1px] h-5 bg-wbk-lightgrey"></div>
@@ -374,7 +381,7 @@ export function SofaModule({
                 const newY = (currentRot[1] + Math.PI / 2) % (Math.PI * 2);
                 updateModuleRotation(moduleData.instanceId, [currentRot[0], newY, currentRot[2]]);
               }}
-              title="Rotate 90°"
+              title={t ? t("configurator.rotate90", "Rotate 90°") : "Rotate 90°"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -389,7 +396,7 @@ export function SofaModule({
                 e.stopPropagation();
                 removeModule(moduleData.instanceId);
               }}
-              title="Remove module"
+              title={t ? t("configurator.removeModule", "Remove module") : "Remove module"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>

@@ -20,8 +20,10 @@ import {
   IconShieldCheck,
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
 
 export function UserDrawer() {
+  const { t, localizedHref } = useLocale();
   const {
     user,
     isUserDrawerOpen,
@@ -213,10 +215,10 @@ export function UserDrawer() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                    {user ? "My Account" : "Welcome"}
+                    {user ? t("auth.customerAccount", "My Account") : t("auth.welcomeBack", "Welcome")}
                   </h2>
                   <p className="text-[10px] text-wbk-brown tracking-wide">
-                    {user ? "WallBedKing Member" : "Sign in or create an account"}
+                    {user ? "WallBedKing Member" : t("auth.signIn", "Sign in or create an account")}
                   </p>
                 </div>
               </div>
@@ -258,7 +260,7 @@ export function UserDrawer() {
                   {/* Navigation Links */}
                   <div className="divide-y divide-wbk-lightgrey/60 border border-wbk-lightgrey/80 bg-wbk-white">
                     <Link
-                      href="/account?tab=orders"
+                      href={localizedHref("/account?tab=orders")}
                       onClick={closeUserDrawer}
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
@@ -268,7 +270,7 @@ export function UserDrawer() {
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-wbk-black">
-                            My Orders & Tracking
+                            {t("auth.myOrders", "My Orders & Tracking")}
                           </div>
                           <div className="text-[10px] text-wbk-brown">
                             Track packages and view order history
@@ -279,7 +281,7 @@ export function UserDrawer() {
                     </Link>
 
                     <Link
-                      href="/configurator"
+                      href={localizedHref("/configurator")}
                       onClick={closeUserDrawer}
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
@@ -289,7 +291,7 @@ export function UserDrawer() {
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-wbk-black">
-                            3D Bed Configurator
+                            {t("auth.savedConfigs", "3D Bed Configurator")}
                           </div>
                           <div className="text-[10px] text-wbk-brown">
                             Customise mechanisms and finishes
@@ -300,7 +302,7 @@ export function UserDrawer() {
                     </Link>
 
                     <Link
-                      href="/account?tab=addresses"
+                      href={localizedHref("/account?tab=addresses")}
                       onClick={closeUserDrawer}
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
@@ -310,7 +312,7 @@ export function UserDrawer() {
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-wbk-black">
-                            Delivery Addresses
+                            {t("auth.deliveryAddresses", "Delivery Addresses")}
                           </div>
                           <div className="text-[10px] text-wbk-brown">
                             Manage default shipping addresses
@@ -321,7 +323,7 @@ export function UserDrawer() {
                     </Link>
 
                     <Link
-                      href="/account?tab=profile"
+                      href={localizedHref("/account?tab=profile")}
                       onClick={closeUserDrawer}
                       className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                     >
@@ -331,7 +333,7 @@ export function UserDrawer() {
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-wbk-black">
-                            Account & Security
+                            {t("auth.accountSettings", "Account & Security")}
                           </div>
                           <div className="text-[10px] text-wbk-brown">
                             Update details and password
@@ -344,11 +346,11 @@ export function UserDrawer() {
 
                   {/* Primary Full Account CTA */}
                   <Link
-                    href="/account"
+                    href={localizedHref("/account")}
                     onClick={closeUserDrawer}
                     className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
                   >
-                    View Account Dashboard
+                    {t("auth.customerAccount", "View Account Dashboard")}
                   </Link>
 
                   {/* Sign Out Button */}
@@ -361,7 +363,7 @@ export function UserDrawer() {
                     className="w-full flex items-center justify-center gap-2 py-2.5 border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black hover:border-wbk-black transition-colors rounded-full cursor-pointer"
                   >
                     <IconLogout size={15} />
-                    <span>Sign Out</span>
+                    <span>{t("auth.signOut", "Sign Out")}</span>
                   </button>
                 </div>
               ) : (
@@ -379,7 +381,7 @@ export function UserDrawer() {
                             : "text-wbk-brown hover:text-wbk-black"
                         }`}
                       >
-                        Sign In
+                        {t("auth.signIn", "Sign In")}
                       </button>
                       <button
                         type="button"
@@ -390,7 +392,7 @@ export function UserDrawer() {
                             : "text-wbk-brown hover:text-wbk-black"
                         }`}
                       >
-                        Create Account
+                        {t("auth.createAccount", "Create Account")}
                       </button>
                     </div>
                   )}
@@ -414,7 +416,7 @@ export function UserDrawer() {
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div>
                         <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                          Email Address
+                          {t("auth.emailLabel", "Email Address")}
                         </label>
                         <div className="relative">
                           <IconMail
@@ -435,14 +437,14 @@ export function UserDrawer() {
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
                           <label className="text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
-                            Password
+                            {t("auth.passwordLabel", "Password")}
                           </label>
                           <button
                             type="button"
                             onClick={() => handleTabChange("forgot")}
                             className="text-[11px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
                           >
-                            Forgot password?
+                            {t("auth.forgotPassword", "Forgot password?")}
                           </button>
                         </div>
                         <div className="relative">
@@ -472,7 +474,7 @@ export function UserDrawer() {
                             <span>Signing In...</span>
                           </>
                         ) : (
-                          <span>Sign In</span>
+                          <span>{t("auth.signInBtn", "Sign In")}</span>
                         )}
                       </button>
 
@@ -495,7 +497,7 @@ export function UserDrawer() {
                     <form onSubmit={handleSignUp} className="space-y-4">
                       <div>
                         <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                          Full Name
+                          {t("auth.fullNameLabel", "Full Name")}
                         </label>
                         <div className="relative">
                           <IconUser
@@ -515,7 +517,7 @@ export function UserDrawer() {
 
                       <div>
                         <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                          Email Address
+                          {t("auth.emailLabel", "Email Address")}
                         </label>
                         <div className="relative">
                           <IconMail
@@ -535,7 +537,7 @@ export function UserDrawer() {
 
                       <div>
                         <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                          Password (min. 6 characters)
+                          {t("auth.passwordLabel", "Password")}
                         </label>
                         <div className="relative">
                           <IconLock
@@ -564,7 +566,7 @@ export function UserDrawer() {
                             <span>Creating Account...</span>
                           </>
                         ) : (
-                          <span>Create Account</span>
+                          <span>{t("auth.createAccountBtn", "Create Account")}</span>
                         )}
                       </button>
 
@@ -597,7 +599,7 @@ export function UserDrawer() {
                             }}
                             className="w-full py-3 bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full cursor-pointer shadow-sm text-center block"
                           >
-                            Return to Sign In
+                            {t("auth.signIn", "Return to Sign In")}
                           </button>
 
                           <button
@@ -616,7 +618,7 @@ export function UserDrawer() {
 
                           <div>
                             <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                              Email Address
+                              {t("auth.emailLabel", "Email Address")}
                             </label>
                             <div className="relative">
                               <IconMail
@@ -645,7 +647,7 @@ export function UserDrawer() {
                                 <span>Sending Link...</span>
                               </>
                             ) : (
-                              <span>Send Reset Link</span>
+                              <span>{t("auth.resetPasswordBtn", "Send Reset Link")}</span>
                             )}
                           </button>
 
@@ -654,7 +656,7 @@ export function UserDrawer() {
                             onClick={() => handleTabChange("login")}
                             className="w-full text-center text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer pt-2 block"
                           >
-                            Return to Sign In
+                            {t("auth.signIn", "Return to Sign In")}
                           </button>
                         </form>
                       )}

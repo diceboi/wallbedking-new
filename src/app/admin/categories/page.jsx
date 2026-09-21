@@ -7,6 +7,7 @@ import {
   IconArrowRight,
 } from "@tabler/icons-react";
 import { CATEGORY_SLUGS } from "@/data/slugs";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const CATEGORY_DATA = [
   {
@@ -84,14 +85,22 @@ const CATEGORY_DATA = [
 export default function AdminCategoriesPage() {
   return (
     <div className="space-y-6 font-poppins">
-      <div>
-        <h2 className="font-new-york text-2xl font-medium text-wbk-black">
-          Categories & Hierarchy
-        </h2>
-        <p className="text-xs text-wbk-brown">
-          Core WallBedKing product families, subcategories, and localized SEO URL slug definitions
-        </p>
-      </div>
+      {/* Page Header */}
+      <AdminPageHeader
+        badge="Store Taxonomy"
+        title="Categories & Hierarchy"
+        count={CATEGORY_DATA.length}
+        description="Core WallBedKing product families, subcategories, and localized SEO URL slug definitions"
+        actions={
+          <Link
+            href="/admin/products"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-sm"
+          >
+            <span>View All Products</span>
+            <IconArrowRight size={14} />
+          </Link>
+        }
+      />
 
       {/* Category Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -112,7 +121,7 @@ export default function AdminCategoriesPage() {
                       <IconFolder size={18} />
                     </div>
                     <div>
-                      <h3 className="font-new-york text-base font-semibold text-wbk-black">
+                      <h3 className="font-poppins text-base font-semibold text-wbk-black">
                         {cat.title}
                       </h3>
                       <span className="text-[11px] font-mono text-wbk-brown">

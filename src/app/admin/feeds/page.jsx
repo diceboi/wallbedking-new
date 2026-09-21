@@ -13,6 +13,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminFeedsPage() {
   const [feeds, setFeeds] = useState([]);
@@ -55,43 +56,36 @@ export default function AdminFeedsPage() {
   return (
     <div className="space-y-8 font-poppins">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-wbk-lightgrey/60 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs uppercase tracking-widest text-wbk-gold font-semibold">
-              Syndication & Export
-            </span>
-          </div>
-          <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black tracking-tight font-medium">
-            Marketplace Product Feeds
-          </h1>
-          <p className="text-xs text-wbk-brown mt-1">
-            Automated live catalog feeds for Amazon, OTTO, Mirakl, and external sales channels.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={fetchFeeds}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black hover:bg-[#FBF9F8] transition-colors cursor-pointer self-start sm:self-auto"
-        >
-          <IconRefresh size={15} className={loading ? "animate-spin" : ""} />
-          <span>Refresh</span>
-        </button>
-      </div>
+      <AdminPageHeader
+        badge="Syndication & Export"
+        title="Marketplace Product Feeds"
+        count={feeds.length}
+        description="Automated live catalog feeds for Amazon, OTTO, Mirakl, and external sales channels."
+        actions={
+          <button
+            type="button"
+            onClick={fetchFeeds}
+            disabled={loading}
+            className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
+            title="Refresh feeds status"
+          >
+            <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+          </button>
+        }
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs">
           <div className="text-xs text-wbk-brown font-medium">Active Feeds</div>
-          <div className="text-2xl font-new-york text-wbk-black mt-1">
+          <div className="text-2xl font-bold font-poppins text-wbk-black mt-1">
             {activeFeeds} <span className="text-xs text-wbk-brown font-normal font-poppins">of {feeds.length} channels</span>
           </div>
         </div>
 
         <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs">
           <div className="text-xs text-wbk-brown font-medium">Syndicated Products</div>
-          <div className="text-2xl font-new-york text-wbk-black mt-1">
+          <div className="text-2xl font-bold font-poppins text-wbk-black mt-1">
             {totalItems} <span className="text-xs text-wbk-brown font-normal font-poppins">SKUs managed</span>
           </div>
         </div>
@@ -107,7 +101,7 @@ export default function AdminFeedsPage() {
       {/* Feeds Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
+          <h2 className="font-poppins text-sm font-semibold uppercase tracking-wider text-wbk-black">
             Available Feed Integrations
           </h2>
         </div>
@@ -129,7 +123,7 @@ export default function AdminFeedsPage() {
                         {feed.flag === "fr" ? "🇫🇷" : feed.flag === "de" ? "🇩🇪" : "🌐"}
                       </span>
                       <div>
-                        <h3 className="font-new-york text-lg text-wbk-black font-medium">
+                        <h3 className="font-poppins text-base text-wbk-black font-semibold">
                           {feed.name}
                         </h3>
                         <div className="flex items-center gap-2 text-[11px] text-wbk-brown">

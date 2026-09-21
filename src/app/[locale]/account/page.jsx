@@ -32,6 +32,8 @@ import {
 } from "@tabler/icons-react";
 import { Container } from "@/components/ui/Container";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
+import { formatSizeLabel } from "@/lib/i18n";
 
 // Sample mock orders for authenticated demonstration
 const SAMPLE_ORDERS = [
@@ -74,6 +76,7 @@ const SAMPLE_ORDERS = [
 ];
 
 export default function AccountPage() {
+  const { locale } = useLocale();
   const {
     user,
     loading,
@@ -164,9 +167,9 @@ export default function AccountPage() {
   };
 
   const userAddresses =
-    Array.isArray(user?.user_metadata?.addresses) && user.user_metadata.addresses.length > 0
+    Array.isArray(user?.user_metadata?.addresses)
       ? user.user_metadata.addresses
-      : [defaultFallbackAddress];
+      : [];
 
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [addressForm, setAddressForm] = useState({
@@ -607,14 +610,14 @@ export default function AccountPage() {
                 Need Help with an Order?
               </div>
               <p className="text-[11px] text-wbk-brown leading-relaxed">
-                Our UK-based wall bed specialists are available Monday to Friday, 9:00 - 17:00.
+                Our UK-based wall bed specialists are available Monday to Friday, 9:00 - 20:00, Saturday 9:00 - 12:00.
               </p>
               <a
-                href="tel:08000288940"
+                href="tel:01928583469"
                 className="inline-flex items-center gap-2 text-xs font-semibold text-wbk-black hover:text-wbk-green transition-colors"
               >
                 <IconPhone size={14} />
-                <span>0800 028 8940</span>
+                <span>01928 583 469</span>
               </a>
             </div>
           </div>
@@ -716,7 +719,7 @@ export default function AccountPage() {
                                     {item.title}
                                   </h3>
                                   <p className="text-xs text-wbk-brown mt-0.5">
-                                    {item.options?.size} {item.options?.orientation && `• ${item.options.orientation}`}
+                                    {item.options?.size ? formatSizeLabel(item.options.size, locale) : ""} {item.options?.orientation && `• ${item.options.orientation}`}
                                   </p>
                                   <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
                                     <IconTruck size={14} />
@@ -813,7 +816,7 @@ export default function AccountPage() {
                                   {item.name}
                                 </h3>
                                 <p className="text-xs text-wbk-brown mt-0.5">
-                                  {item.size} • {item.finish}
+                                  {item.size ? formatSizeLabel(item.size, locale) : ""} • {item.finish}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
                                   <IconTruck size={14} />

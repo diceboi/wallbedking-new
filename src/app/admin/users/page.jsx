@@ -26,6 +26,7 @@ import {
   IconEdit,
   IconExternalLink,
 } from "@tabler/icons-react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -429,42 +430,34 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-wbk-lightgrey/80">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-              Users & Roles / Felhasználók
-            </h1>
-            <span className="px-2 py-0.5 rounded-full bg-wbk-black text-white text-[10px] font-semibold tracking-wider">
-              {totalCount} Total
-            </span>
-          </div>
-          <p className="text-xs text-wbk-brown mt-1">
-            Manage registered store customers, delivery addresses, saved 3D designs, and administrator roles.
-          </p>
-        </div>
+      <AdminPageHeader
+        badge="Customer & Access Management"
+        title="Users & Roles"
+        count={totalCount}
+        description="Manage registered store customers, delivery addresses, saved 3D designs, and administrator roles."
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowSqlModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-medium rounded-full cursor-pointer transition-colors shadow-2xs"
+            >
+              <IconDatabase size={15} className="text-wbk-gold" />
+              <span>Supabase Schema</span>
+            </button>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setShowSqlModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-medium rounded-full cursor-pointer transition-colors shadow-2xs"
-          >
-            <IconDatabase size={15} className="text-wbk-gold" />
-            <span>Supabase Schema</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={fetchUsers}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-wbk-black text-white text-xs font-medium uppercase tracking-wider hover:bg-wbk-green transition-colors rounded-full cursor-pointer shadow-sm disabled:opacity-60"
-          >
-            <IconRefresh size={14} className={loading ? "animate-spin" : ""} />
-            <span>Refresh</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={fetchUsers}
+              disabled={loading}
+              className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
+              title="Refresh users"
+            >
+              <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+            </button>
+          </>
+        }
+      />
 
       {/* Alert message */}
       {message && (
@@ -761,7 +754,7 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
             <IconDatabase size={18} className="text-wbk-gold" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-wbk-black">
+            <h4 className="font-poppins text-xs font-semibold uppercase tracking-wider text-wbk-black">
               Supabase Integration Status:{" "}
               <span className={hasProfilesTable ? "text-emerald-700" : "text-amber-700 font-bold"}>
                 {hasProfilesTable ? "public.profiles Active" : "auth.users metadata Mode"}
@@ -791,7 +784,7 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
               <div>
                 <div className="flex items-center gap-2">
                   <IconHome size={20} className="text-wbk-gold" />
-                  <h3 className="font-new-york text-xl text-wbk-black">
+                  <h3 className="font-poppins text-lg font-semibold text-wbk-black">
                     Delivery Addresses
                   </h3>
                 </div>
@@ -1070,7 +1063,7 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
               <div>
                 <div className="flex items-center gap-2">
                   <IconCube size={20} className="text-wbk-gold" />
-                  <h3 className="font-new-york text-xl text-wbk-black">
+                  <h3 className="font-poppins text-lg font-semibold text-wbk-black">
                     Saved 3D Configurations
                   </h3>
                 </div>
@@ -1122,7 +1115,7 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
                           )}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-semibold text-wbk-black truncate">
+                          <h4 className="font-poppins font-semibold text-wbk-black truncate">
                             {cfg.title || "Custom 3D Setup"}
                           </h4>
                           <span className="text-[11px] text-wbk-brown block">
@@ -1170,7 +1163,7 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
             <div className="flex items-center justify-between pb-3 border-b border-wbk-lightgrey">
               <div className="flex items-center gap-2">
                 <IconDatabase size={20} className="text-wbk-gold" />
-                <h3 className="font-new-york text-xl text-wbk-black">
+                <h3 className="font-poppins text-lg font-semibold text-wbk-black">
                   Supabase Profiles Table SQL
                 </h3>
               </div>

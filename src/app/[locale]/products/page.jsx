@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/Container";
 import Link from "next/link";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { ALL_PRODUCTS, CATEGORIES_INFO } from "@/data/products";
+import { useLocale } from "@/context/LocaleContext";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -14,6 +15,7 @@ import "swiper/css/navigation";
 import { ProductCard } from "@/components/ui/ProductCard";
 
 export default function ProductsPage() {
+  const { t, localizedHref } = useLocale();
   const [offset, setOffset] = useState(32);
 
   // Dynamically calculate left/right offset to align Swiper with viewport boundaries
@@ -58,21 +60,19 @@ export default function ProductsPage() {
         <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80 mb-2">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                Products
+                {t("nav.products", "Products")}
               </span>
             </nav>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
-              All Products
+              {t("categories.allProducts", "All Products")}
             </h1>
             <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
-              Explore our complete collection of modular space-saving Murphy
-              beds, modular sofas, comfort mattresses, and coordinated
-              cabinetry.
+              {t("categories.allProductsDesc", "Explore our complete collection of modular space-saving Murphy beds, modular sofas, comfort mattresses, and coordinated cabinetry.")}
             </p>
           </div>
         </div>
@@ -88,19 +88,17 @@ export default function ProductsPage() {
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
-                    Murphy Beds
+                    {t("categories.beds", "Murphy Beds")}
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Precision-engineered fold-away bed mechanisms with SizeFlex™
-                    and TypeFlex™ modularity. Available in Classic, Studio, and
-                    Integrated models.
+                    {t("categories.bedsDesc", "Precision-engineered fold-away bed mechanisms with SizeFlex™ and TypeFlex™ modularity. Available in Classic, Studio, and Integrated models.")}
                   </p>
                 </div>
                 <Link
-                  href="/products/beds"
+                  href={localizedHref("/products/beds")}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All Murphy Beds
+                  {t("categories.allBeds", "All Murphy Beds")}
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
@@ -152,19 +150,17 @@ export default function ProductsPage() {
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
-                    Sofas
+                    {t("categories.sofas", "Sofas")}
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Adaptable modular sofas designed for front bed attachment or
-                    freestanding living configurations with removable
-                    upholstery.
+                    {t("categories.sofasDesc", "Adaptable modular sofas designed for front bed attachment or freestanding living configurations with removable upholstery.")}
                   </p>
                 </div>
                 <Link
-                  href="/products/sofas"
+                  href={localizedHref("/products/sofas")}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All Sofas
+                  {t("categories.allSofas", "All Sofas")}
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
@@ -216,18 +212,17 @@ export default function ProductsPage() {
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
-                    Mattresses
+                    {t("categories.mattresses", "Mattresses")}
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Comfort, Luxury, and Supreme comfort grades with optimal
-                    thickness specifically rated for wall bed integration.
+                    {t("categories.mattressesDesc", "Comfort, Luxury, and Supreme comfort grades with optimal thickness specifically rated for wall bed integration.")}
                   </p>
                 </div>
                 <Link
-                  href="/products/mattresses"
+                  href={localizedHref("/products/mattresses")}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All Mattresses
+                  {t("categories.allMattresses", "All Mattresses")}
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
@@ -279,19 +274,17 @@ export default function ProductsPage() {
               <div className="lg:col-span-1 flex flex-col justify-between items-start">
                 <div>
                   <h3 className="font-poppins font-semibold text-2xl text-wbk-black">
-                    Cabinets & Storage
+                    {t("categories.cabinets", "Cabinets & Storage")}
                   </h3>
                   <p className="mt-4 text-sm text-wbk-brown font-poppins leading-relaxed max-w-xs opacity-90">
-                    Vertical & Horizontal front enclosures, extensions, and
-                    matching side storage units available in Pine, Beech, Oak,
-                    and White finishes.
+                    {t("categories.cabinetsDesc", "Vertical & Horizontal front enclosures, extensions, and matching side storage units available in Pine, Beech, Oak, and White finishes.")}
                   </p>
                 </div>
                 <Link
-                  href="/products/cabinets"
+                  href={localizedHref("/products/cabinets")}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-black rounded-full text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-black hover:text-wbk-white transition-all duration-300 mt-8 group"
                 >
-                  All Cabinets
+                  {t("categories.allCabinets", "All Cabinets")}
                   <IconChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>

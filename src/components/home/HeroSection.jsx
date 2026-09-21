@@ -108,7 +108,7 @@ export function HeroSection() {
             style={{ opacity: Math.max(0, 1 - scrollProgress * 8) }}
           >
             <span className="text-[10px] uppercase tracking-widest font-medium text-wbk-white/80">
-              Scroll to explore
+              {t("home.scrollToExplore", "Scroll to explore")}
             </span>
             <motion.div
               animate={{ y: [0, 6, 0] }}

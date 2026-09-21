@@ -10,6 +10,7 @@ import {
   IconFilter,
   IconBuildingWarehouse,
 } from "@tabler/icons-react";
+import { useLocale } from "@/context/LocaleContext";
 
 const REVIEWS_DATA = [
   {
@@ -135,6 +136,7 @@ const REVIEWS_DATA = [
 ];
 
 export default function ReviewsPage() {
+  const { t, localizedHref } = useLocale();
   const [selectedFilter, setSelectedFilter] = useState("All");
 
   const filteredReviews = useMemo(() => {
@@ -149,22 +151,21 @@ export default function ReviewsPage() {
         <Container size="xl">
           <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-4">
-              <Link href="/" className="hover:text-wbk-black transition-colors">
-                Home
+              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+                {t("nav.home", "Home")}
               </Link>
               <span>/</span>
-              <span className="text-wbk-black font-medium">Customer Reviews</span>
+              <span className="text-wbk-black font-medium">{t("reviews.title", "Customer Reviews")}</span>
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
               Independent Verified Feedback
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
-              Loved by thousands of homeowners
+              {t("reviews.ratingSummary", "Loved by thousands of homeowners")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              See what genuine customers say about our space-saving Murphy beds,
-              build quality, and customer support across the UK.
+              {t("reviews.subtitle", "See what genuine customers say about our space-saving Murphy beds, build quality, and customer support across the UK.")}
             </p>
 
             {/* Aggregate Trust Badge */}
@@ -198,12 +199,12 @@ export default function ReviewsPage() {
                     : "bg-[#FBF9F8] text-wbk-black hover:bg-[#F4F2F0] border border-wbk-lightgrey/60"
                 }`}
               >
-                {tab === "All" ? "All Reviews" : `${tab} Range`}
+                {tab === "All" ? t("reviews.allReviews", "All Reviews") : `${tab} Range`}
               </button>
             ))}
           </div>
           <span className="text-xs text-wbk-brown">
-            Showing {filteredReviews.length} reviews
+            {t("categories.showing", "Showing")} {filteredReviews.length} {t("reviews.title", "reviews")}
           </span>
         </div>
 
@@ -238,7 +239,7 @@ export default function ReviewsPage() {
                 </div>
                 <span className="text-[10px] text-wbk-green font-medium flex items-center gap-1">
                   <IconShieldCheck size={13} />
-                  <span>Verified</span>
+                  <span>{t("reviews.verifiedCustomer", "Verified")}</span>
                 </span>
               </div>
             </div>
