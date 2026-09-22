@@ -18,6 +18,7 @@ import {
   IconAlertCircle,
   IconLoader2,
   IconShieldCheck,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -26,6 +27,8 @@ export function UserDrawer() {
   const { t, localizedHref } = useLocale();
   const {
     user,
+    role,
+    isAdmin,
     isUserDrawerOpen,
     closeUserDrawer,
     drawerTab,
@@ -244,21 +247,53 @@ export function UserDrawer() {
                       {userInitial}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-wbk-black truncate">
-                        {userDisplayName}
+                      <div className="text-sm font-semibold text-wbk-black truncate flex items-center gap-2">
+                        <span className="truncate">{userDisplayName}</span>
+                        {isAdmin && (
+                          <span className="px-2 py-0.5 rounded-full bg-wbk-black text-wbk-gold border border-wbk-gold/40 text-[9px] font-bold uppercase tracking-wider font-mono shrink-0">
+                            Admin
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-wbk-brown truncate">
                         {user.email}
                       </div>
-                      <div className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-wbk-green font-medium mt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-wbk-green animate-pulse" />
-                        Verified Account
+                      <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-medium mt-1">
+                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAdmin ? "bg-wbk-gold" : "bg-wbk-green"}`} />
+                        <span className={isAdmin ? "text-wbk-black font-semibold" : "text-wbk-green"}>
+                          {isAdmin ? "Administrator Privileges" : "Verified Account"}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Navigation Links */}
                   <div className="divide-y divide-wbk-lightgrey/60 border border-wbk-lightgrey/80 bg-wbk-white">
+                    {/* Dedicated Admin Console item if user has admin privileges */}
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={closeUserDrawer}
+                        className="flex items-center justify-between p-3.5 bg-[#090A0A] text-white hover:bg-wbk-gold hover:text-wbk-black transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-none bg-white/10 text-wbk-gold group-hover:bg-wbk-black group-hover:text-white flex items-center justify-center transition-colors">
+                            <IconShieldLock size={17} strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                              <span>Admin Console</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            </div>
+                            <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
+                              Catalog, orders, pricing & feeds
+                            </div>
+                          </div>
+                        </div>
+                        <IconArrowRight size={15} className="text-wbk-gold group-hover:text-wbk-black group-hover:translate-x-0.5 transition-all" />
+                      </Link>
+                    )}
+
                     <Link
                       href={localizedHref("/account?tab=orders")}
                       onClick={closeUserDrawer}
@@ -344,14 +379,27 @@ export function UserDrawer() {
                     </Link>
                   </div>
 
-                  {/* Primary Full Account CTA */}
-                  <Link
-                    href={localizedHref("/account")}
-                    onClick={closeUserDrawer}
-                    className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
-                  >
-                    {t("auth.customerAccount", "View Account Dashboard")}
-                  </Link>
+                  {/* Primary Full Account & Admin Actions */}
+                  <div className="space-y-2.5">
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={closeUserDrawer}
+                        className="flex items-center justify-center gap-2 w-full py-3 text-center bg-[#090A0A] hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] transition-all rounded-full shadow-md cursor-pointer"
+                      >
+                        <IconShieldLock size={16} className="text-wbk-gold" />
+                        <span>Open Admin Dashboard</span>
+                      </Link>
+                    )}
+
+                    <Link
+                      href={localizedHref("/account")}
+                      onClick={closeUserDrawer}
+                      className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
+                    >
+                      {t("auth.customerAccount", "View Account Dashboard")}
+                    </Link>
+                  </div>
 
                   {/* Sign Out Button */}
                   <button

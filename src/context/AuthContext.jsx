@@ -192,10 +192,16 @@ export function AuthProvider({ children }) {
   const signUpWithPassword = useCallback(async (email, password, fullName = "") => {
     if (!supabase) throw new Error("Supabase client is not available.");
 
+    const emailRedirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/account?verified=true`
+        : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
+        emailRedirectTo,
         data: {
           full_name: fullName.trim(),
         },

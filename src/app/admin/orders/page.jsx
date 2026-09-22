@@ -108,7 +108,7 @@ export default function AdminOrdersPage() {
       if (data.success && data.order) {
         setSelectedOrder(data.order);
         setOrders((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
-        showToast("Order status and tracking updated successfully!");
+        showToast(data.message || "Order status and tracking updated successfully!");
       } else {
         alert(data.error || "Failed to update order");
       }

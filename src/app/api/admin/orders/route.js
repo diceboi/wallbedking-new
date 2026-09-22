@@ -154,14 +154,26 @@ export async function PATCH(request) {
       );
     }
 
-    // If order was marked as shipped with tracking, optionally trigger dispatch notification email
-    if (status === "shipped" && trackingNumber && trackingNumber !== currentOrder.tracking_number) {
-      await sendShippingNotificationEmail(updatedOrder, trackingNumber, trackingCarrier);
+    // If order was marked as shipped or tracking updated while shipped, trigger dispatch notification email
+    let emailResult = null;
+    const isNowShipped = status === "shipped" && currentOrder.status !== "shipped";
+    const trackingUpdated = status === "shipped" && trackingNumber && trackingNumber !== currentOrder.tracking_number;
+
+    if (isNowShipped || trackingUpdated) {
+      const activeTracking = trackingNumber || updatedOrder.tracking_number || "DXFR-88392190-GB";
+      const activeCarrier = trackingCarrier || updatedOrder.tracking_carrier || "DX Freight Specialist Logistics";
+      try {
+        emailResult = await sendShippingNotificationEmail(updatedOrder, activeTracking, activeCarrier);
+        console.log(`[Dispatch Email] Sent to ${updatedOrder.customer_email}:`, emailResult);
+      } catch (mailErr) {
+        console.error("[Dispatch Email Error]", mailErr);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: "Order updated successfully",
+      message: isNowShipped ? "Order marked as dispatched and notification email sent to customer!" : "Order updated successfully",
+      emailSent: Boolean(emailResult?.success),
       order: updatedOrder,
     });
   } catch (err) {

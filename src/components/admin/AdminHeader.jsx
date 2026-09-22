@@ -58,7 +58,7 @@ export function AdminHeader({ title, onOpenMobile }) {
         </Link>
 
         <Link
-          href="/"
+          href="/en"
           target="_blank"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#9A9A8C] hover:bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-xs cursor-pointer"
         >

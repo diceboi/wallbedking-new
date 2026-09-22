@@ -65,7 +65,7 @@ export function AdminLayout({ children, title }) {
             )}
 
             <Link
-              href="/"
+              href="/en"
               className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/80 text-xs font-medium uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
             >
               <IconArrowLeft size={15} />

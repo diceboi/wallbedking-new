@@ -238,6 +238,18 @@ export default function ProductDetailPage() {
 
   // Read size from URL search parameters if provided (e.g. ?size=135x190)
   const searchParams = useSearchParams();
+
+  // Auto-switch to reviews tab if URL requests review dialog
+  useEffect(() => {
+    const isReviewParam =
+      searchParams?.get("review") === "true" ||
+      searchParams?.get("review") === "open" ||
+      Boolean(searchParams?.get("rating"));
+
+    if (isReviewParam) {
+      setActiveTab("reviews");
+    }
+  }, [searchParams]);
   // Helper to map category, style, and orientation to flagship slugs
   const getFlagshipSlug = useCallback((category, style, orientation) => {
     const cat = (category || "beds").toLowerCase();

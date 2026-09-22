@@ -37,7 +37,7 @@ const LANGUAGES = [
 
 export function Header() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
+  const isAdminRoute = pathname?.startsWith("/admin");
 
   const [langOpen, setLangOpen] = useState(false);
   const { locale, market, switchLocale, localizedHref, t } = useLocale();
@@ -117,6 +117,7 @@ export function Header() {
   };
 
   useEffect(() => {
+    if (isAdminRoute) return;
     updateHeaderHeight();
 
     const ro = new ResizeObserver(() => {
@@ -136,9 +137,10 @@ export function Header() {
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
       window.removeEventListener("resize", updateHeaderHeight);
     };
-  }, []);
+  }, [isAdminRoute]);
 
   useEffect(() => {
+    if (isAdminRoute) return;
     let ticking = false;
 
     const handleScroll = () => {
@@ -207,6 +209,8 @@ export function Header() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [setSubMenu, isSearchOpen]);
+
+  if (isAdminRoute) return null;
 
   return (
     <>

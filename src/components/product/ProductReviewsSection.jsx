@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
   IconStar,
@@ -29,6 +30,7 @@ export function ProductReviewsSection({
   const urlEmail = searchParams?.get("email") || "";
   const shouldAutoOpen = initialOpen || urlReview === "true" || urlReview === "open" || Boolean(urlRating);
 
+  const [mounted, setMounted] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({ totalCount: 0, avgRating: 5.0 });
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,21 @@ export function ProductReviewsSection({
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [formFeedback, setFormFeedback] = useState(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll when modal or photo viewer is active
+  useEffect(() => {
+    if (isModalOpen || selectedPhoto) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isModalOpen, selectedPhoto]);
 
   useEffect(() => {
     if (shouldAutoOpen) {
@@ -266,19 +283,19 @@ export function ProductReviewsSection({
         </div>
       )}
 
-      {/* Write a Review Modal */}
-      {isModalOpen && (
+      {/* Write a Review Modal (Portaled to document.body to avoid parent transform/stacking traps) */}
+      {mounted && isModalOpen && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xs overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] overflow-y-auto overscroll-contain transition-all"
           onClick={() => setIsModalOpen(false)}
         >
           <div className="min-h-full flex items-center justify-center p-3 sm:p-6 py-10 sm:py-16">
             <div
-              className="bg-white max-w-lg w-full rounded-none border border-wbk-lightgrey shadow-2xl relative my-auto max-h-[90vh] flex flex-col"
+              className="bg-white max-w-lg w-full rounded-2xl border border-wbk-lightgrey/80 shadow-2xl relative my-auto max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Pinned Modal Header */}
-              <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-wbk-lightgrey shrink-0 bg-white">
+              <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-wbk-lightgrey/60 shrink-0 bg-white">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-gold block">
                     Feedback
@@ -290,7 +307,7 @@ export function ProductReviewsSection({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded transition-colors cursor-pointer"
+                  className="p-2 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
                   aria-label="Close modal"
                 >
                   <IconX size={20} />
@@ -336,7 +353,7 @@ export function ProductReviewsSection({
                         placeholder="e.g. Sarah Jenkins"
                         value={authorName}
                         onChange={(e) => setAuthorName(e.target.value)}
-                        className="w-full px-3 py-2 border border-wbk-lightgrey bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black"
+                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
                       />
                     </div>
                     <div>
@@ -348,7 +365,7 @@ export function ProductReviewsSection({
                         placeholder="sarah@example.com"
                         value={authorEmail}
                         onChange={(e) => setAuthorEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-wbk-lightgrey bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black"
+                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
                       />
                     </div>
                   </div>
@@ -363,7 +380,7 @@ export function ProductReviewsSection({
                       placeholder="e.g. Smooth mechanism, huge space saver!"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black"
+                      className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
                     />
                   </div>
 
@@ -378,7 +395,7 @@ export function ProductReviewsSection({
                       placeholder="Tell us about the installation, build quality, and how the wall bed has improved your room..."
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black leading-relaxed"
+                      className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors leading-relaxed"
                     />
                   </div>
 
@@ -389,12 +406,12 @@ export function ProductReviewsSection({
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
                       {photos.map((p, idx) => (
-                        <div key={idx} className="relative w-16 h-16 border border-wbk-lightgrey rounded overflow-hidden">
+                        <div key={idx} className="relative w-16 h-16 border border-wbk-lightgrey/80 rounded-lg overflow-hidden shadow-xs">
                           <img src={p} alt="Upload preview" className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => handleRemovePhoto(idx)}
-                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5 hover:bg-black cursor-pointer"
+                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5 hover:bg-black cursor-pointer transition-colors"
                           >
                             <IconX size={12} />
                           </button>
@@ -402,9 +419,9 @@ export function ProductReviewsSection({
                       ))}
 
                       {photos.length < 4 && (
-                        <label className="w-16 h-16 border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded flex flex-col items-center justify-center text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors">
+                        <label className="w-16 h-16 border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-lg flex flex-col items-center justify-center text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors bg-[#FBF9F8] hover:bg-white">
                           <IconUpload size={16} />
-                          <span className="text-[9px] mt-1">Add</span>
+                          <span className="text-[9px] mt-1 font-medium">Add</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -420,7 +437,7 @@ export function ProductReviewsSection({
                   {/* Feedback Alert */}
                   {formFeedback && (
                     <div
-                      className={`p-3 text-xs border flex items-start gap-2 ${
+                      className={`p-3 text-xs border rounded-lg flex items-start gap-2 ${
                         formFeedback.type === "success"
                           ? "bg-emerald-50 border-emerald-300 text-emerald-800"
                           : "bg-red-50 border-red-300 text-red-800"
@@ -440,7 +457,7 @@ export function ProductReviewsSection({
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                      className="w-full py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
                       {submitting ? (
                         <>
@@ -459,24 +476,25 @@ export function ProductReviewsSection({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Lightbox / Full-size photo viewer */}
-      {selectedPhoto && (
+      {/* Lightbox / Full-size photo viewer (Portaled to document.body) */}
+      {mounted && selectedPhoto && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] flex items-center justify-center p-4"
           onClick={() => setSelectedPhoto(null)}
         >
           <div
-            className="bg-white p-2 sm:p-3 max-w-2xl w-full relative shadow-2xl"
+            className="bg-white p-3 sm:p-4 max-w-2xl w-full relative shadow-2xl rounded-2xl border border-wbk-lightgrey/80 animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-end pb-1">
+            <div className="flex justify-end pb-2">
               <button
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
-                className="p-1 text-wbk-black hover:text-wbk-gold transition-colors cursor-pointer"
+                className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
                 aria-label="Close preview"
               >
                 <IconX size={20} />
@@ -485,10 +503,11 @@ export function ProductReviewsSection({
             <img
               src={selectedPhoto}
               alt="Full size customer photo"
-              className="max-h-[75vh] w-auto mx-auto object-contain"
+              className="max-h-[75vh] w-auto mx-auto object-contain rounded-lg"
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
