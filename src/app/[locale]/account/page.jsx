@@ -29,6 +29,8 @@ import {
   IconHome,
   IconExternalLink,
   IconStar,
+  IconBell,
+  IconClock,
 } from "@tabler/icons-react";
 import { Container } from "@/components/ui/Container";
 import { useAuth } from "@/context/AuthContext";
@@ -76,7 +78,7 @@ const SAMPLE_ORDERS = [
 ];
 
 export default function AccountPage() {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const {
     user,
     loading,
@@ -90,10 +92,15 @@ export default function AccountPage() {
     deleteAddress,
     delete3DConfiguration,
   } = useAuth();
-  const [activeTab, setActiveTab] = useState("orders"); // 'orders' | 'configs' | 'addresses' | 'profile'
+  const [activeTab, setActiveTab] = useState("orders"); // 'orders' | 'waitlist' | 'configs' | 'addresses' | 'profile'
   const [recoveryFromUrl, setRecoveryFromUrl] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+
+  // Waitlist / Wishlist state
+  const [waitlistItems, setWaitlistItems] = useState([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [removingWaitlistId, setRemovingWaitlistId] = useState(null);
 
   // Fetch real customer orders from Supabase
   useEffect(() => {
@@ -117,14 +124,55 @@ export default function AccountPage() {
     fetchUserOrders();
   }, [user]);
 
+  // Fetch customer waitlist / wishlist from API
+  useEffect(() => {
+    async function fetchWaitlist() {
+      if (!user?.email && !user?.id) return;
+      try {
+        setWaitlistLoading(true);
+        const res = await fetch(
+          `/api/waitlist?email=${encodeURIComponent(user.email || "")}${
+            user?.id ? `&user_id=${encodeURIComponent(user.id)}` : ""
+          }`
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.waitlist || data.items)) {
+          setWaitlistItems(data.waitlist || data.items);
+        }
+      } catch (err) {
+        console.warn("Could not fetch waitlist", err);
+      } finally {
+        setWaitlistLoading(false);
+      }
+    }
+    fetchWaitlist();
+  }, [user]);
+
+  const handleRemoveWaitlist = async (id) => {
+    setRemovingWaitlistId(id);
+    try {
+      const res = await fetch(`/api/waitlist?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWaitlistItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to remove waitlist item:", err);
+    } finally {
+      setRemovingWaitlistId(null);
+    }
+  };
+
   // Detect tab or recovery mode from URL or AuthContext
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash || "";
       const tabParam = params.get("tab");
-      if (tabParam && ["orders", "configs", "addresses", "profile"].includes(tabParam)) {
-        setActiveTab(tabParam);
+      if (tabParam && ["orders", "waitlist", "wishlist", "configs", "addresses", "profile"].includes(tabParam)) {
+        setActiveTab(tabParam === "wishlist" ? "waitlist" : tabParam);
       }
       if (params.get("mode") === "recovery" || hash.includes("type=recovery")) {
         setRecoveryFromUrl(true);
@@ -566,6 +614,36 @@ export default function AccountPage() {
 
               <button
                 type="button"
+                onClick={() => setActiveTab("waitlist")}
+                className={`w-full flex items-center justify-between p-3.5 text-xs font-semibold uppercase tracking-wider text-left transition-colors cursor-pointer ${
+                  activeTab === "waitlist"
+                    ? "bg-wbk-black text-white"
+                    : "text-wbk-black hover:bg-[#FBF9F8]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <IconBell
+                    size={17}
+                    strokeWidth={1.5}
+                    className={activeTab === "waitlist" ? "text-wbk-gold" : "text-wbk-black"}
+                  />
+                  <span>{t("waitlist.myWaitlist", "Waitlist & Stock Alerts")}</span>
+                </div>
+                {waitlistItems.length > 0 && (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                      activeTab === "waitlist"
+                        ? "bg-wbk-gold text-wbk-black"
+                        : "bg-wbk-gold/20 text-wbk-black border border-wbk-gold/40"
+                    }`}
+                  >
+                    {waitlistItems.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab("configs")}
                 className={`w-full flex items-center gap-3 p-3.5 text-xs font-semibold uppercase tracking-wider text-left transition-colors cursor-pointer ${
                   activeTab === "configs"
@@ -846,6 +924,158 @@ export default function AccountPage() {
                     ))
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* ── TAB: WAITLIST & WISHLIST ── */}
+            {activeTab === "waitlist" && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-new-york text-2xl text-wbk-black">
+                      {t("waitlist.trackedProducts", "Your Waitlist & Stock Alerts")}
+                    </h2>
+                    <p className="text-xs text-wbk-brown mt-0.5">
+                      {t("waitlist.myWaitlistSub", "Items you have saved for automatic back-in-stock email notifications.")}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/products"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-black text-white text-xs font-medium uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-all rounded-full cursor-pointer shadow-sm self-start sm:self-auto"
+                  >
+                    <IconPlus size={14} />
+                    <span>{t("waitlist.exploreProducts", "Explore Products")}</span>
+                  </Link>
+                </div>
+
+                {waitlistLoading ? (
+                  <div className="py-12 text-center text-xs text-wbk-brown flex flex-col items-center justify-center gap-2.5">
+                    <IconLoader2 size={24} className="animate-spin text-wbk-gold" />
+                    <span>{t("waitlist.submitting", "Checking inventory & waitlist...")}</span>
+                  </div>
+                ) : waitlistItems.length === 0 ? (
+                  <div className="p-10 border border-dashed border-wbk-lightgrey text-center space-y-4 bg-[#FBF9F8] rounded-xl">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-wbk-gold/15 border border-wbk-gold/40 flex items-center justify-center text-wbk-gold">
+                      <IconBell size={26} className="text-wbk-gold" />
+                    </div>
+                    <div className="space-y-1.5 max-w-md mx-auto">
+                      <div className="text-sm font-semibold text-wbk-black uppercase tracking-wider">
+                        {t("waitlist.emptyTitle", "Your Waitlist is Empty")}
+                      </div>
+                      <p className="text-xs text-wbk-brown leading-relaxed">
+                        {t("waitlist.emptyDesc", "When an item or size is out of stock, join its waitlist to receive instant email notifications the moment inventory arrives.")}
+                      </p>
+                    </div>
+                    <div>
+                      <Link
+                        href="/products"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                      >
+                        <span>{t("waitlist.exploreProducts", "Explore All Products")}</span>
+                        <IconArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {waitlistItems.map((item) => {
+                      const itemHref = item.product_slug
+                        ? `/products/beds/${item.product_slug}${item.options?.size ? `?size=${encodeURIComponent(item.options.size)}` : ""}`
+                        : "/products";
+                      const dateAdded = item.created_at
+                        ? new Date(item.created_at).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : null;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-white border border-wbk-lightgrey p-5 flex flex-col justify-between space-y-4 hover:border-wbk-gold/70 transition-all shadow-xs group"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="relative w-20 h-20 bg-[#F4F2F0] border border-wbk-lightgrey/60 rounded-none overflow-hidden shrink-0 flex items-center justify-center">
+                              <img
+                                src={item.product_image || "/sofa1.webp"}
+                                alt={item.product_name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-xs text-wbk-black truncate leading-tight">
+                                {item.product_name}
+                              </h4>
+                              <p className="text-[11px] text-wbk-brown truncate mt-0.5">
+                                {item.variant_name || item.options?.size || "Standard Size"}
+                              </p>
+                              {dateAdded && (
+                                <p className="text-[10px] text-wbk-brown/70 mt-1 flex items-center gap-1">
+                                  <IconCalendar size={11} />
+                                  <span>Saved {dateAdded}</span>
+                                </p>
+                              )}
+                              <div className="mt-2 flex items-center gap-1.5">
+                                {item.is_in_stock ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-wbk-gold/15 border border-wbk-gold/40 text-wbk-black text-[10px] font-semibold">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                                    {t("waitlist.backInStock", "Back in Stock!")}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey text-wbk-brown text-[10px] font-medium">
+                                    <IconClock size={11} className="text-wbk-gold" />
+                                    {t("waitlist.waitingForRestock", "Waiting for Restock")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveWaitlist(item.id)}
+                              disabled={removingWaitlistId === item.id}
+                              className="p-1.5 text-wbk-brown/60 hover:text-red-600 transition-colors cursor-pointer shrink-0"
+                              title="Remove from waitlist"
+                            >
+                              {removingWaitlistId === item.id ? (
+                                <IconLoader2 size={16} className="animate-spin text-red-500" />
+                              ) : (
+                                <IconTrash size={16} />
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="pt-3 border-t border-wbk-lightgrey/50 flex items-center justify-between">
+                            <span className="text-[11px] text-wbk-brown">
+                              {item.is_in_stock
+                                ? t("waitlist.readyToDispatch", "Ready to order & dispatch")
+                                : "Notification active"}
+                            </span>
+
+                            {item.is_in_stock ? (
+                              <Link
+                                href={itemHref}
+                                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs"
+                              >
+                                <span>{t("waitlist.orderNow", "Order Now")}</span>
+                                <IconArrowRight size={12} />
+                              </Link>
+                            ) : (
+                              <Link
+                                href={itemHref}
+                                className="inline-flex items-center gap-1 text-[11px] text-wbk-black hover:text-wbk-gold font-medium underline transition-colors"
+                              >
+                                <span>View Product</span>
+                                <IconExternalLink size={12} />
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

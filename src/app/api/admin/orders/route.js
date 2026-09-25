@@ -154,17 +154,19 @@ export async function PATCH(request) {
       );
     }
 
-    // If order was marked as shipped or tracking updated while shipped, trigger dispatch notification email
+    // If order was marked as shipped or tracking/carrier updated while shipped, trigger dispatch notification email
     let emailResult = null;
     const isNowShipped = status === "shipped" && currentOrder.status !== "shipped";
     const trackingUpdated = status === "shipped" && trackingNumber && trackingNumber !== currentOrder.tracking_number;
+    const carrierUpdated = status === "shipped" && trackingCarrier && trackingCarrier !== currentOrder.tracking_carrier;
 
-    if (isNowShipped || trackingUpdated) {
-      const activeTracking = trackingNumber || updatedOrder.tracking_number || "DXFR-88392190-GB";
-      const activeCarrier = trackingCarrier || updatedOrder.tracking_carrier || "DX Freight Specialist Logistics";
+    if (isNowShipped || trackingUpdated || carrierUpdated) {
+      const activeCarrier = trackingCarrier || updatedOrder.tracking_carrier || "UPS";
+      const isOwn = (activeCarrier || "").toLowerCase().includes("own") || (activeCarrier || "").toLowerCase().includes("saját");
+      const activeTracking = isOwn ? "" : (trackingNumber !== undefined ? trackingNumber : (updatedOrder.tracking_number || ""));
       try {
         emailResult = await sendShippingNotificationEmail(updatedOrder, activeTracking, activeCarrier);
-        console.log(`[Dispatch Email] Sent to ${updatedOrder.customer_email}:`, emailResult);
+        console.log(`[Dispatch Email] Sent to ${updatedOrder.customer_email} (${activeCarrier}):`, emailResult);
       } catch (mailErr) {
         console.error("[Dispatch Email Error]", mailErr);
       }

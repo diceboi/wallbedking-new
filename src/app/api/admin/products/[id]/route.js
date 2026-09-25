@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { triggerRestockNotification } from "@/lib/restock";
 
 import fs from "fs";
 import path from "path";
@@ -20,6 +21,13 @@ export async function PATCH(request, { params }) {
     // Prevent overwriting id
     delete body.id;
 
+    // Check if restock notification was explicitly requested
+    const shouldForceNotify = Boolean(body.notifyRestock);
+    delete body.notifyRestock;
+
+    let previousStock = null;
+    let existingSlug = null;
+
     // Update local JSON catalog first so enriched data is persisted immediately
     try {
       const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
@@ -28,9 +36,13 @@ export async function PATCH(request, { params }) {
         const list = JSON.parse(raw);
         const idx = list.findIndex((p) => String(p.id) === String(id));
         if (idx !== -1) {
+          previousStock = list[idx].stock !== undefined ? Number(list[idx].stock) : null;
+          existingSlug = list[idx].slug || null;
           list[idx] = { ...list[idx], ...body, id: Number(id) };
-          fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), "utf-8");
+        } else {
+          list.push({ ...body, id: Number(id) });
         }
+        fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), "utf-8");
       }
     } catch (localErr) {
       console.warn("Could not sync local products-catalog.json:", localErr.message);
@@ -78,9 +90,32 @@ export async function PATCH(request, { params }) {
 
     const updated = await res.json();
     const finalProduct = { ...body, ...(updated[0] || updated), id: Number(id) };
+
+    // Check if product was restocked from 0 (or explicitly triggered)
+    const newStock = body.stock !== undefined ? Number(body.stock) : null;
+    const isRestocked =
+      shouldForceNotify ||
+      (previousStock !== null && previousStock <= 0 && newStock !== null && newStock > 0);
+
+    let restockNotifiedCount = 0;
+    if (isRestocked) {
+      try {
+        console.log(`[Admin Stock Update] Restock detected for #${id} (Previous: ${previousStock}, New: ${newStock}). Triggering waitlist notifications...`);
+        const notifyResult = await triggerRestockNotification({
+          productId: id,
+          productSlug: finalProduct.slug || existingSlug,
+        });
+        restockNotifiedCount = notifyResult.notifiedCount || 0;
+        console.log(`[Admin Stock Update] Restock alert result: ${notifyResult.message}`);
+      } catch (notifyErr) {
+        console.error("[Admin Stock Update] Restock notification error:", notifyErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       product: finalProduct,
+      restockNotifiedCount,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -99,6 +134,19 @@ export async function DELETE(request, { params }) {
     if (!res.ok) {
       const err = await res.text();
       return NextResponse.json({ success: false, error: err }, { status: res.status });
+    }
+
+    // Also remove from local products-catalog.json
+    try {
+      const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
+      if (fs.existsSync(catalogPath)) {
+        const raw = fs.readFileSync(catalogPath, "utf-8");
+        const list = JSON.parse(raw);
+        const filtered = list.filter((p) => String(p.id) !== String(id));
+        fs.writeFileSync(catalogPath, JSON.stringify(filtered, null, 2), "utf-8");
+      }
+    } catch (localErr) {
+      console.warn("Could not delete from local products-catalog.json:", localErr.message);
     }
 
     return NextResponse.json({

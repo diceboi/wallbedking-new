@@ -15,10 +15,13 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [formData, setFormData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [notifyRestock, setNotifyRestock] = useState(false);
 
   useEffect(() => {
     if (product) {
       setFormData({ ...product });
+      // If product was out of stock, default notifyRestock to true
+      setNotifyRestock(Number(product.stock ?? 0) <= 0);
     }
   }, [product]);
 
@@ -45,20 +48,35 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
     setMessage(null);
 
     try {
+      const payload = {
+        ...formData,
+        notifyRestock: Boolean(notifyRestock),
+      };
+
       const res = await fetch(`/api/admin/products/${formData.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: "success", text: "Product saved successfully to Supabase!" });
+        const restockNote =
+          data.restockNotifiedCount > 0
+            ? ` (${data.restockNotifiedCount} waitlist customer(s) notified via email!)`
+            : "";
+        setMessage({
+          type: "success",
+          text: `Product saved successfully!${restockNote}`,
+        });
         onSaveSuccess?.(data.product || formData);
-        setTimeout(() => {
-          setMessage(null);
-          onClose();
-        }, 1200);
+        setTimeout(
+          () => {
+            setMessage(null);
+            onClose();
+          },
+          data.restockNotifiedCount > 0 ? 2500 : 1200
+        );
       } else {
         setMessage({ type: "error", text: data.error || "Failed to save product." });
       }
@@ -347,6 +365,17 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   onChange={(e) => handleNumberChange("stock", e.target.value)}
                   className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none"
                 />
+                <label className="mt-1.5 flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={notifyRestock}
+                    onChange={(e) => setNotifyRestock(e.target.checked)}
+                    className="accent-wbk-gold rounded-xs w-3.5 h-3.5"
+                  />
+                  <span className="text-[10px] text-wbk-brown">
+                    Email waitlist subscribers on restock
+                  </span>
+                </label>
               </div>
 
               <div>

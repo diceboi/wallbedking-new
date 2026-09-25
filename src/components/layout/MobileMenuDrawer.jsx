@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
+import { SearchBar } from "./SearchBar";
 
 const LANGUAGES = [
   { code: "en", label: "UK", flag: "🇬🇧" },
@@ -149,6 +150,11 @@ export function MobileMenuDrawer() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Quick Search */}
+            <div className="px-4 py-2.5 bg-white border-b border-wbk-lightgrey/80">
+              <SearchBar onSelect={closeMobileMenu} />
             </div>
 
             {/* Scrollable Content */}

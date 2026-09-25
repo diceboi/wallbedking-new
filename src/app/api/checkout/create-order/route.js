@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { validateOrderTotals, generateOrderNumber } from "@/lib/orders";
+import { getPaymentConfig } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +18,14 @@ export async function POST(request) {
       paymentMethod = "card",
       userId = null,
       notes = "",
+      locale = "en",
+      currency = null,
+      companyEntity = null,
     } = body || {};
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Basket is empty." },
+        { success: false, error: "Cart is empty." },
         { status: 400 }
       );
     }
@@ -32,6 +36,10 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    const paymentConfig = getPaymentConfig(locale, currency);
+    const targetCurrency = (currency || paymentConfig.currency).toUpperCase();
+    const targetEntity = companyEntity || paymentConfig.entity;
 
     // 1. Server-side validation of prices and totals
     const calculation = await validateOrderTotals(items, deliveryOption, promoCode);
@@ -57,7 +65,9 @@ export async function POST(request) {
       shipping_address: shippingAddress,
       billing_address: billingAddress || shippingAddress,
       items: calculation.items,
-      currency: "GBP",
+      currency: targetCurrency,
+      company_entity: targetEntity,
+      locale: locale || "en",
       subtotal: calculation.subtotal,
       discount_amount: calculation.discountAmount,
       promo_code: calculation.promoCode,

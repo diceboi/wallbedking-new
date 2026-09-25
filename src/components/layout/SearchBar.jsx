@@ -13,7 +13,7 @@ import { useLocale } from "@/context/LocaleContext";
 const normalizeStr = (s) =>
   s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 
-export function SearchBar() {
+export function SearchBar({ className = "", onSelect = null }) {
   const router = useRouter();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const [query, setQuery] = useState("");
@@ -115,12 +115,22 @@ export function SearchBar() {
   const handleSelect = (item) => {
     setIsOpen(false);
     setQuery("");
+    onSelect?.();
     router.push(localizedHref(`/products/${item.parent_category}/${item.slug}`));
   };
 
+  const handleSubmitSearch = (e) => {
+    e?.preventDefault();
+    if (query.trim()) {
+      setIsOpen(false);
+      onSelect?.();
+      router.push(localizedHref(`/products?search=${encodeURIComponent(query.trim())}`));
+    }
+  };
+
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && results.length > 0) {
-      handleSelect(results[0]);
+    if (e.key === "Enter") {
+      handleSubmitSearch(e);
     } else if (e.key === "Escape") {
       setIsOpen(false);
       inputRef.current?.blur();
@@ -130,15 +140,19 @@ export function SearchBar() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full md:max-w-sm lg:max-w-md rounded-none"
+      className={`relative w-full font-poppins ${className}`}
     >
       {/* Search Input Box */}
-      <div className="relative flex items-center rounded-none">
-        <IconSearch
-          size={16}
-          strokeWidth={1.5}
-          className="absolute left-3 text-wbk-brown pointer-events-none"
-        />
+      <form
+        onSubmit={handleSubmitSearch}
+        className="relative flex items-center w-full bg-white border border-wbk-lightgrey focus-within:border-wbk-black rounded-full shadow-xs hover:border-wbk-black/40 transition-colors p-1 sm:p-1.5"
+      >
+        <div className="pl-3 sm:pl-3.5 pr-2 text-wbk-brown flex items-center justify-center shrink-0">
+          <IconSearch
+            size={17}
+            strokeWidth={1.8}
+          />
+        </div>
         <input
           ref={inputRef}
           type="text"
@@ -150,7 +164,7 @@ export function SearchBar() {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={t("header.searchPlaceholder", "Search beds, sofas, mattresses...")}
-          className="w-full h-9 pl-9 pr-8 text-xs bg-[#FBF9F8] border border-wbk-lightgrey text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black transition-colors rounded-none font-poppins"
+          className="w-full h-8 sm:h-8.5 text-xs sm:text-[13px] bg-transparent text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none min-w-0 font-normal"
         />
         {query && (
           <button
@@ -159,26 +173,32 @@ export function SearchBar() {
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="absolute right-2.5 text-wbk-brown hover:text-wbk-black p-0.5"
+            className="p-1 text-wbk-brown hover:text-wbk-black mr-1.5 cursor-pointer transition-colors shrink-0"
             aria-label="Clear search"
           >
-            <IconX size={14} />
+            <IconX size={15} />
           </button>
         )}
-      </div>
+        <button
+          type="submit"
+          className="px-4 sm:px-5 h-8 sm:h-8.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer shrink-0 shadow-2xs active:scale-[0.98]"
+        >
+          {t("search.title", "Search")}
+        </button>
+      </form>
 
       {/* Instant Results Dropdown */}
       <AnimatePresence>
         {isOpen && query.trim().length >= 2 && (
           <motion.div
-            initial={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
+            exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full mt-1.5 bg-wbk-white border border-wbk-lightgrey shadow-2xl z-50 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto"
+            className="absolute left-0 right-0 top-full mt-2 bg-wbk-white border border-wbk-lightgrey/90 shadow-2xl z-50 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto rounded-2xl overflow-hidden divide-y divide-wbk-lightgrey/60"
           >
             {results.length > 0 ? (
-              <div className="divide-y divide-wbk-lightgrey/60">
+              <div>
                 <div className="px-4 py-2 bg-[#F4F2F0] text-[10px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center justify-between">
                   <span>Product Suggestions</span>
                   <span>{results.length} found</span>
@@ -188,9 +208,9 @@ export function SearchBar() {
                     key={item.id}
                     type="button"
                     onClick={() => handleSelect(item)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-[#FBF9F8] transition-colors text-left group cursor-pointer"
+                    className="w-full flex items-center gap-3 p-3 hover:bg-[#F8F7F5] transition-colors text-left group cursor-pointer"
                   >
-                    <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
+                    <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/80 rounded-lg p-1 flex items-center justify-center">
                       <Image
                         src={
                           item.image ||
@@ -234,8 +254,11 @@ export function SearchBar() {
                 ))}
                 <Link
                   href={localizedHref(`/products?search=${encodeURIComponent(query)}`)}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2.5 text-center text-xs font-medium text-wbk-green hover:text-wbk-black hover:bg-[#F4F2F0] transition-colors tracking-wide uppercase"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onSelect?.();
+                  }}
+                  className="block px-4 py-3 text-center text-xs font-semibold text-wbk-black hover:text-white hover:bg-wbk-green bg-[#F4F2F0] transition-colors tracking-wider uppercase"
                 >
                   View all results for &ldquo;{query}&rdquo;
                 </Link>

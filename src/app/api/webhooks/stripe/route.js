@@ -55,14 +55,19 @@ export async function POST(request) {
           .maybeSingle();
 
         // 2. Mark order as paid
+        const updateData = {
+          status: "paid",
+          payment_status: "paid",
+          payment_id: session.id || paymentIntentId || null,
+          updated_at: new Date().toISOString(),
+        };
+        if (session.metadata?.company_entity) updateData.company_entity = session.metadata.company_entity;
+        if (session.currency) updateData.currency = session.currency.toUpperCase();
+        if (session.metadata?.locale) updateData.locale = session.metadata.locale;
+
         const { error: updateError } = await supabaseAdmin
           .from("orders")
-          .update({
-            status: "paid",
-            payment_status: "paid",
-            payment_id: session.id || paymentIntentId || null,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("id", orderId);
 
         if (updateError) {

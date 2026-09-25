@@ -378,7 +378,45 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   `;
 }
 
-export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber = "DXFR-88392190-GB", carrier = "DX Freight") {
+export function getCarrierTrackingUrl(carrier, trackingNumber) {
+  if (!trackingNumber) return null;
+  const c = (carrier || "").toLowerCase().trim();
+  const tn = encodeURIComponent(String(trackingNumber).trim());
+
+  if (c.includes("ups")) {
+    return `https://www.ups.com/track?track=yes&trackNums=${tn}`;
+  }
+  if (c.includes("dhl")) {
+    return `https://www.dhl.com/en/express/tracking.html?AWB=${tn}&brand=DHL`;
+  }
+  return null;
+}
+
+export function isOwnDelivery(carrier) {
+  const c = (carrier || "").toLowerCase().trim();
+  return (
+    c.includes("own") ||
+    c.includes("saját") ||
+    c.includes("dedicated") ||
+    c.includes("fleet") ||
+    c.includes("direct") ||
+    c.includes("internal")
+  );
+}
+
+export function getCarrierDisplayName(carrier) {
+  const c = (carrier || "").toLowerCase().trim();
+  if (c.includes("ups")) return "UPS";
+  if (c.includes("dhl")) return "DHL Express";
+  if (isOwnDelivery(carrier)) return "Wall Bed King Dedicated Delivery (Internal Fleet)";
+  return carrier || "Specialist Delivery Service";
+}
+
+export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber = "1Z9999999999999999", carrier = "UPS") {
+  const ownFleet = isOwnDelivery(carrier);
+  const carrierName = getCarrierDisplayName(carrier);
+  const trackingUrl = !ownFleet ? getCarrierTrackingUrl(carrier, trackingNumber) : null;
+
   return `
     <!DOCTYPE html>
     <html>
@@ -392,7 +430,7 @@ export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber
           .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
           .header p { margin: 6px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; }
           .content { padding: 32px 28px; }
-          .tracking-card { background: #faf9f7; border: 1px solid #eeeae3; border-radius: 6px; padding: 20px; margin: 24px 0; text-align: center; }
+          .tracking-card { background: #faf9f7; border: 1px solid #eeeae3; border-radius: 6px; padding: 22px 20px; margin: 24px 0; text-align: center; }
           .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 20px; text-align: center; font-size: 12px; color: #777; }
         </style>
       </head>
@@ -405,30 +443,71 @@ export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber
           <div class="content">
             <h2 style="color: #111; font-size: 20px; margin-top: 0; font-weight: 600;">Your Order is On Its Way! 🚚</h2>
             <p style="color: #555; font-size: 14px; line-height: 1.6;">
-              Great news, <strong>${order.customer_name || "Customer"}</strong>! Your wall bed order <strong style="color: #111;">#${order.id}</strong> has been carefully packed and handed over to our specialist courier service.
+              Great news, <strong>${order.customer_name || "Customer"}</strong>! Your wall bed order <strong style="color: #111;">#${order.id}</strong> has been carefully packed and handed over for delivery.
             </p>
 
-            <div class="tracking-card">
-              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px;">
-                Assigned Carrier
+            ${ownFleet ? `
+              <!-- Own Dedicated Delivery Box (No Tracking Link) -->
+              <div class="tracking-card">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px;">
+                  Delivery Partner
+                </div>
+                <div style="font-size: 17px; font-weight: 700; color: #111; margin-bottom: 12px;">
+                  Wall Bed King Dedicated Delivery (Internal Fleet)
+                </div>
+                <div style="max-width: 460px; margin: 0 auto; background: #ffffff; padding: 14px 18px; border: 1px solid #e7e5e1; border-radius: 4px; text-align: left;">
+                  <p style="margin: 0; font-size: 13px; color: #444; line-height: 1.6;">
+                    Your order is being transported directly by our own dedicated delivery fleet.
+                    Our logistics coordinator will contact you by <strong>telephone or SMS</strong> to confirm your scheduled delivery date and your dedicated 2-hour arrival slot.
+                  </p>
+                </div>
               </div>
-              <div style="font-size: 16px; font-weight: 600; color: #111; margin-bottom: 16px;">
-                ${carrier || "DX Freight Specialist Logistics"}
-              </div>
+            ` : `
+              <!-- External Courier Box (UPS / DHL with direct tracking link) -->
+              <div class="tracking-card">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px;">
+                  Assigned Courier Service
+                </div>
+                <div style="font-size: 17px; font-weight: 700; color: #111; margin-bottom: 14px;">
+                  ${carrierName}
+                </div>
 
-              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px;">
-                Consignment / Tracking Number
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px;">
+                  Tracking / Waybill Number
+                </div>
+                <div style="margin-bottom: 16px;">
+                  ${trackingUrl ? `
+                    <a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 19px; font-weight: 700; color: #111; letter-spacing: 1.5px; background: #ffffff; padding: 10px 18px; border: 1px dashed #cca864; display: inline-block; border-radius: 4px; text-decoration: none; font-family: monospace;">
+                      ${trackingNumber}
+                    </a>
+                  ` : `
+                    <div style="font-size: 19px; font-weight: 700; color: #111; letter-spacing: 1.5px; background: #ffffff; padding: 10px 18px; border: 1px dashed #cca864; display: inline-block; border-radius: 4px; font-family: monospace;">
+                      ${trackingNumber}
+                    </div>
+                  `}
+                </div>
+
+                ${trackingUrl ? `
+                  <div style="margin-top: 14px;">
+                    <a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #111111; color: #ffffff !important; text-decoration: none; padding: 13px 28px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+                      Track Your Parcel on ${carrier.toLowerCase().includes("dhl") ? "DHL" : "UPS"} →
+                    </a>
+                  </div>
+                ` : ""}
               </div>
-              <div style="font-size: 20px; font-weight: 700; color: #111; letter-spacing: 1px; background: #ffffff; padding: 10px 16px; border: 1px dashed #cca864; display: inline-block; border-radius: 4px;">
-                ${trackingNumber}
-              </div>
-            </div>
+            `}
 
             <h4 style="font-size: 14px; color: #111; margin-top: 24px; margin-bottom: 8px;">Delivery Details & Instructions:</h4>
             <ul style="color: #555; font-size: 13px; line-height: 1.7; padding-left: 20px; margin-top: 0;">
-              <li>The courier will contact you via SMS or phone prior to delivery with a designated 2-hour arrival window.</li>
-              <li>Please ensure clear access to your room of choice or ground floor entrance.</li>
-              <li>Assembly instructions and digital installation video links are available on our website at any time.</li>
+              ${ownFleet ? `
+                <li>Our two-man delivery team will carefully handle your furniture and carry boxes to your room of choice.</li>
+                <li>You will receive a confirmation call 30-60 minutes before our van arrives at your address.</li>
+                <li>Digital installation manuals, diagrams, and video assembly guides are available on our website at any time.</li>
+              ` : `
+                <li>The courier provides automated live status updates via the tracking link above.</li>
+                <li>Please ensure somebody is available at the delivery premises to inspect and sign for packages.</li>
+                <li>Digital installation manuals, diagrams, and video assembly guides are available on our website at any time.</li>
+              `}
             </ul>
           </div>
           <div class="footer">
@@ -900,3 +979,198 @@ export async function sendAdminNewReviewAlert(review) {
     return { success: false, error: error.message };
   }
 }
+
+// ==========================================
+// 7. MULTILINGUAL RESTOCK / BACK IN STOCK EMAIL
+// ==========================================
+export const RESTOCK_I18N = {
+  en: {
+    subject: (name) => `Good news! ${name} is back in stock at Wall Bed King`,
+    badge: "Back in Stock",
+    headline: "Your requested item is available again!",
+    greeting: (name) => `Hello ${name || "Customer"},`,
+    intro: "You previously requested to be notified when this item was restocked. It is now back in inventory and ready to order.",
+    btnText: "Order Now While Stock Lasts",
+    urgency: "Please note that stock is limited and allocated on a first-come, first-served basis.",
+    warrantyBadge: "Lifetime Mechanism Guarantee • Free UK Mainland Delivery",
+  },
+  us: {
+    subject: (name) => `Good news! ${name} is back in stock at Wall Bed King`,
+    badge: "Back in Stock",
+    headline: "Your requested item is available again!",
+    greeting: (name) => `Hello ${name || "Customer"},`,
+    intro: "You asked us to let you know when this Murphy bed returns to inventory. It is now available and ready to order.",
+    btnText: "Order Now While Supplies Last",
+    urgency: "Inventory is limited and orders are processed on a first-come, first-served basis.",
+    warrantyBadge: "Lifetime Mechanism Warranty • Free Shipping",
+  },
+  de: {
+    subject: (name) => `Gute Neuigkeiten! ${name} ist wieder bei Wall Bed King verfügbar`,
+    badge: "Wieder Verfügbar",
+    headline: "Ihr Wunschartikel ist wieder auf Lager!",
+    greeting: (name) => `Hallo ${name || "Kunde"},`,
+    intro: "Sie haben sich auf die Warteliste für dieses Schrankbett gesetzt. Das Produkt ist nun wieder vorrätig und kann ab sofort bestellt werden.",
+    btnText: "Jetzt Bestellen, Solange Vorrat Reicht",
+    urgency: "Bitte beachten Sie, dass die Stückzahlen begrenzt sind und nach Bestelleingang zugeteilt werden.",
+    warrantyBadge: "Lebenslange Mechanik-Garantie • Kostenlose Lieferung",
+  },
+  fr: {
+    subject: (name) => `Bonne nouvelle ! ${name} est de retour en stock chez Wall Bed King`,
+    badge: "De Retour en Stock",
+    headline: "Votre article demandé est à nouveau disponible !",
+    greeting: (name) => `Bonjour ${name || "Client"},`,
+    intro: "Vous aviez demandé à être prévenu(e) du retour de cet article. Il est désormais disponible à la commande.",
+    btnText: "Commander Maintenant",
+    urgency: "Attention : les quantités sont limitées et allouées selon l'ordre d'arrivée des commandes.",
+    warrantyBadge: "Garantie Mécanisme à Vie • Livraison Gratuite",
+  },
+  es: {
+    subject: (name) => `¡Buenas noticias! ${name} vuelve a estar disponible en Wall Bed King`,
+    badge: "De Nuevo en Stock",
+    headline: "¡El producto que esperabas ya está disponible!",
+    greeting: (name) => `Hola ${name || "Cliente"},`,
+    intro: "Te registraste en nuestra lista de espera para este modelo. ¡Nos complace informarte de que ya está disponible para ordenar!",
+    btnText: "Comprar Ahora",
+    urgency: "Ten en cuenta que el stock es limitado y se asigna por orden de llegada.",
+    warrantyBadge: "Garantía de Mecanismo de por Vida • Envío Gratuito",
+  },
+  it: {
+    subject: (name) => `Buone notizie! ${name} è di nuovo disponibile su Wall Bed King`,
+    badge: "Di Nuovo Disponibile",
+    headline: "Il prodotto che desideravi è tornato in stock!",
+    greeting: (name) => `Gentile ${name || "Cliente"},`,
+    intro: "Hai richiesto di essere informato al ritorno di questo letto a scomparsa. È ora nuovamente disponibile per l'ordine.",
+    btnText: "Ordina Ora",
+    urgency: "Nota: le scorte sono limitate e assegnate in ordine di ricezione degli ordini.",
+    warrantyBadge: "Garanzia a Vita sul Meccanismo • Spedizione Gratuita",
+  },
+  pt: {
+    subject: (name) => `Boas notícias! ${name} está novamente disponível na Wall Bed King`,
+    badge: "Novamente em Stock",
+    headline: "O artigo que aguardava já está disponível!",
+    greeting: (name) => `Olá ${name || "Cliente"},`,
+    intro: "Pediu para ser avisado quando este modelo estivesse disponível. Já pode fazer a sua encomenda online.",
+    btnText: "Encomendar Agora",
+    urgency: "Atenção: as unidades são limitadas e atribuídas por ordem de chegada.",
+    warrantyBadge: "Garantia Vitalícia do Mecanismo • Envio Gratuito",
+  },
+};
+
+export function getRestockNotificationHtml(waitlistItem, product = null, locale = "en") {
+  const loc = (locale || waitlistItem?.locale || "en").toLowerCase();
+  const t = RESTOCK_I18N[loc] || RESTOCK_I18N.en;
+  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Murphy Bed";
+  const pSlug = waitlistItem.product_slug || product?.slug || "";
+  let pImage = waitlistItem.product_image || product?.image || "https://wallbedking.co.uk/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp";
+  if (pImage && pImage.startsWith("/")) {
+    pImage = `https://wallbedking.co.uk${pImage}`;
+  }
+  const variantText = waitlistItem.variant_name || (waitlistItem.options?.size ? `${waitlistItem.options.size}` : "");
+  const customerName = waitlistItem.customer_name || waitlistItem.options?.customer_name || "";
+  
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
+  const localePrefix = loc && loc !== "en" ? `/${loc}` : "";
+  const cat = product?.parent_category || "beds";
+  const productUrl = `${siteUrl}${localePrefix}/products/${cat}/${pSlug}`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${t.badge} - ${pName}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
+          .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+          .header { background: #111111; color: #ffffff; padding: 28px 24px; text-align: center; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+          .header p { margin: 6px 0 0; font-size: 11px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; }
+          .content { padding: 32px 28px; text-align: center; }
+          .product-card { background: #faf9f7; border: 1px solid #eeeae3; border-radius: 6px; padding: 20px; margin: 24px 0; text-align: center; }
+          .cta-btn { display: inline-block; background: #111111; color: #ffffff !important; text-decoration: none; padding: 14px 32px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+          .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 20px; text-align: center; font-size: 12px; color: #777; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Wall Bed King</h1>
+            <p>${t.badge}</p>
+          </div>
+          <div class="content">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #2e7d32; background: #e8f5e9; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
+              ✓ ${t.badge}
+            </span>
+            <h2 style="color: #111; font-size: 22px; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <p style="color: #555; font-size: 14px; line-height: 1.6; max-width: 480px; margin: 0 auto 20px;">
+              ${t.greeting(customerName)} ${t.intro}
+            </p>
+
+            <div class="product-card">
+              <img src="${pImage}" alt="${pName}" style="width: 100%; max-width: 320px; height: 180px; object-fit: cover; border-radius: 4px; border: 1px solid #e0e0e0; margin-bottom: 14px;" />
+              <strong style="font-size: 16px; color: #111; display: block;">${pName}</strong>
+              ${variantText ? `<span style="font-size: 12px; color: #666; display: block; margin-top: 4px;">${variantText}</span>` : ""}
+
+              <div style="margin-top: 20px;">
+                <a href="${productUrl}" class="cta-btn" target="_blank" rel="noopener noreferrer">
+                  ${t.btnText} →
+                </a>
+              </div>
+            </div>
+
+            <p style="color: #888; font-size: 12px; line-height: 1.5; margin: 20px 0 0;">
+              ${t.urgency}
+            </p>
+          </div>
+          <div class="footer">
+            <p style="margin: 0 0 6px;">${t.warrantyBadge}</p>
+            <p style="margin: 0 0 6px;">Freephone: <strong>${STORE_PHONE}</strong> • Email: <a href="mailto:support@wallbedking.com" style="color: #9f7d3d;">support@wallbedking.com</a></p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Send Back in Stock Notification Email via Resend
+ */
+export async function sendRestockNotificationEmail(waitlistItem, product = null) {
+  if (!waitlistItem || !waitlistItem.customer_email) {
+    return { success: false, error: "Missing recipient email" };
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const loc = (waitlistItem.locale || "en").toLowerCase();
+  const t = RESTOCK_I18N[loc] || RESTOCK_I18N.en;
+  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Murphy Bed";
+
+  if (!apiKey) {
+    console.log(`[Email Service: Mock] Restock Alert for ${pName} sent to ${waitlistItem.customer_email} (${loc})`);
+    return {
+      success: true,
+      mode: "mock",
+      message: "Restock alert logged in dev mode.",
+    };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [waitlistItem.customer_email],
+      replyTo: ADMIN_EMAIL,
+      reply_to: ADMIN_EMAIL,
+      subject: t.subject(pName),
+      html: getRestockNotificationHtml(waitlistItem, product, loc),
+    });
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("[Restock Email Error]", error);
+    return { success: false, error: error.message };
+  }
+}
+

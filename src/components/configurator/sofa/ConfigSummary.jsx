@@ -387,8 +387,8 @@ export function ConfigSummary() {
                 ) : (
                   <>
                     <TbShoppingCartPlus size={16} />
-                    <span className="hidden xs:inline">{t("configurator.addToCart", "Add to Basket")}</span>
-                    <span className="xs:hidden">{t("configurator.addToCart", "Add to Basket")}</span>
+                    <span className="hidden xs:inline">{t("configurator.addToCart", "Add to Cart")}</span>
+                    <span className="xs:hidden">{t("configurator.addToCart", "Add to Cart")}</span>
                   </>
                 )}
               </button>

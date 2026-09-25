@@ -164,12 +164,27 @@ export function Header() {
             return;
           }
 
+          // Ignore scroll events during body lock or synthetic layout shifts
+          if (typeof document !== "undefined" && document.body.style.overflow === "hidden") {
+            lastScrollY.current = currentScrollY;
+            ticking = false;
+            return;
+          }
+
           // Top zone: Always keep header fully visible near top of page
           if (currentScrollY <= 40) {
             changeMenuVisibility(true);
             scrollDeltaAccumulator.current = 0;
           } else {
             const stepDiff = currentScrollY - lastScrollY.current;
+
+            // Disregard abrupt artificial jumps (>250px) caused by modal open/close or layout shifts
+            if (Math.abs(stepDiff) > 250) {
+              lastScrollY.current = currentScrollY;
+              scrollDeltaAccumulator.current = 0;
+              ticking = false;
+              return;
+            }
 
             if (stepDiff > 0) {
               // Scrolling down
@@ -263,7 +278,7 @@ export function Header() {
           </div>
 
           {/* Center: Live instant product search */}
-          <div className="hidden md:flex flex-1 justify-center max-w-md">
+          <div className="hidden md:flex flex-1 justify-center max-w-sm lg:max-w-md xl:max-w-lg px-2">
             <SearchBar />
           </div>
 
@@ -379,7 +394,7 @@ export function Header() {
           className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white relative z-30"
           initial={false}
           animate={{
-            height: isMenuVisible ? 52 : 0,
+            height: isMenuVisible ? 56 : 0,
             opacity: isMenuVisible ? 1 : 0,
             paddingTop: isMenuVisible ? 8 : 0,
             paddingBottom: isMenuVisible ? 8 : 0,

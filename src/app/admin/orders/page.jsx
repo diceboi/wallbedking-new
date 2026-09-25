@@ -43,7 +43,7 @@ export default function AdminOrdersPage() {
   // Edit fields for drawer
   const [editStatus, setEditStatus] = useState("pending");
   const [editTrackingNumber, setEditTrackingNumber] = useState("");
-  const [editTrackingCarrier, setEditTrackingCarrier] = useState("DX Freight");
+  const [editTrackingCarrier, setEditTrackingCarrier] = useState("UPS");
   const [editAdminNotes, setEditAdminNotes] = useState("");
 
   const loadOrders = async () => {
@@ -79,7 +79,7 @@ export default function AdminOrdersPage() {
     setSelectedOrder(order);
     setEditStatus(order.status || "pending");
     setEditTrackingNumber(order.tracking_number || "");
-    setEditTrackingCarrier(order.tracking_carrier || "DX Freight");
+    setEditTrackingCarrier(order.tracking_carrier || "UPS");
     setEditAdminNotes(order.admin_notes || "");
   };
 
@@ -410,26 +410,58 @@ export default function AdminOrdersPage() {
                       onChange={(e) => setEditTrackingCarrier(e.target.value)}
                       className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
                     >
-                      <option value="DX Freight">DX Freight (UK Two-Man)</option>
-                      <option value="DPD UK">DPD UK Express</option>
-                      <option value="Royal Mail">Royal Mail Special</option>
-                      <option value="FedEx">FedEx International</option>
-                      <option value="Direct Fleet">WallBedKing Direct Van</option>
+                      <option value="UPS">UPS (United Parcel Service)</option>
+                      <option value="DHL">DHL Express / Logistics</option>
+                      <option value="Own Delivery">Wall Bed King Dedicated Delivery (Internal Fleet)</option>
                     </select>
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
-                      Tracking Reference / Waybill Number
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. DX-9842103GB"
-                      value={editTrackingNumber}
-                      onChange={(e) => setEditTrackingNumber(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs font-mono text-wbk-black focus:border-wbk-black focus:outline-none"
-                    />
-                  </div>
+                  {editTrackingCarrier === "Own Delivery" ? (
+                    <div className="sm:col-span-2 p-3 bg-amber-50/80 border border-amber-200 text-amber-900 rounded text-xs flex items-start gap-2.5">
+                      <IconTruck size={17} className="shrink-0 mt-0.5 text-amber-700" />
+                      <div className="space-y-0.5">
+                        <span className="font-semibold block text-[11px] uppercase tracking-wider text-amber-900">
+                          Internal Dedicated Delivery Fleet
+                        </span>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          Internal dedicated fleet delivery does not use external tracking numbers. The customer dispatch notification email will automatically include direct logistics delivery information and phone/SMS scheduling details.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
+                          Tracking Reference / Waybill Number ({editTrackingCarrier})
+                        </label>
+                        {editTrackingNumber && (
+                          <a
+                            href={
+                              editTrackingCarrier.toLowerCase().includes("ups")
+                                ? `https://www.ups.com/track?track=yes&trackNums=${encodeURIComponent(editTrackingNumber)}`
+                                : `https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(editTrackingNumber)}&brand=DHL`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-wbk-gold hover:underline flex items-center gap-0.5"
+                          >
+                            <span>Open {editTrackingCarrier} tracker ↗</span>
+                          </a>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={
+                          editTrackingCarrier.toLowerCase().includes("ups")
+                            ? "e.g. 1Z9999999999999999"
+                            : "e.g. 1234567890"
+                        }
+                        value={editTrackingNumber}
+                        onChange={(e) => setEditTrackingNumber(e.target.value)}
+                        className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs font-mono text-wbk-black focus:border-wbk-black focus:outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end pt-2">

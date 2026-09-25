@@ -69,7 +69,7 @@ export function CookieConsent() {
               We value your privacy
             </h3>
             <p className="text-xs text-wbk-brown leading-relaxed">
-              Wall Bed King uses cookies to ensure our precision bed configurator, shopping basket, and secure checkout work seamlessly, and to analyse site traffic in compliance with UK & EU GDPR. You can accept all or customize your preferences.{" "}
+              Wall Bed King uses cookies to ensure our precision bed configurator, shopping cart, and secure checkout work seamlessly, and to analyse site traffic in compliance with UK & EU GDPR. You can accept all or customize your preferences.{" "}
               <Link href="/privacy" className="underline hover:text-wbk-green transition-colors">
                 Read Privacy Policy
               </Link>

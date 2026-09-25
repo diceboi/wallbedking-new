@@ -25,6 +25,7 @@ import {
   IconZoomIn,
   IconPhoto,
   IconCheck,
+  IconBell,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
@@ -38,6 +39,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice, formatPrice } from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
+import { WaitlistModal } from "@/components/product/WaitlistModal";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -68,7 +70,8 @@ export default function ProductDetailPage() {
 
   // Imperial vs Metric measurement helpers
   const isUS = locale === "us";
-  const formatWeight = (kg) => (!kg ? "" : isUS ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`);
+  const formatWeight = (kg) =>
+    !kg ? "" : isUS ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`;
   const formatMm = (mm) => {
     if (!mm) return "";
     if (isUS) {
@@ -90,27 +93,36 @@ export default function ProductDetailPage() {
     if (label.includes('"')) return label;
 
     if (/\(\s*\d+\s*[xX×]\s*\d+\s*cm\s*\)/i.test(label)) {
-      return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (match, w, l) => {
-        const wIn = Math.round(Number(w) / 2.54);
-        const lIn = Math.round(Number(l) / 2.54);
-        return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
-      });
+      return label.replace(
+        /\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi,
+        (match, w, l) => {
+          const wIn = Math.round(Number(w) / 2.54);
+          const lIn = Math.round(Number(l) / 2.54);
+          return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
+        },
+      );
     }
 
     if (/\b\d+\s*[xX×]\s*\d+\s*cm\b/i.test(label)) {
-      return label.replace(/\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi, (match, w, l) => {
-        const wIn = Math.round(Number(w) / 2.54);
-        const lIn = Math.round(Number(l) / 2.54);
-        return `${w}x${l} cm (${wIn}" x ${lIn}")`;
-      });
+      return label.replace(
+        /\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi,
+        (match, w, l) => {
+          const wIn = Math.round(Number(w) / 2.54);
+          const lIn = Math.round(Number(l) / 2.54);
+          return `${w}x${l} cm (${wIn}" x ${lIn}")`;
+        },
+      );
     }
 
     if (/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/.test(label)) {
-      return label.replace(/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g, (match, w, l) => {
-        const wIn = Math.round(Number(w) / 2.54);
-        const lIn = Math.round(Number(l) / 2.54);
-        return `${w}x${l} (${wIn}" x ${lIn}")`;
-      });
+      return label.replace(
+        /\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g,
+        (match, w, l) => {
+          const wIn = Math.round(Number(w) / 2.54);
+          const lIn = Math.round(Number(l) / 2.54);
+          return `${w}x${l} (${wIn}" x ${lIn}")`;
+        },
+      );
     }
 
     if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
@@ -139,6 +151,7 @@ export default function ProductDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState("description");
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
 
   // Vertical gallery step-scrolling state & refs
   const galleryContainerRef = useRef(null);
@@ -471,7 +484,9 @@ export default function ProductDetailPage() {
         tabsSwiper.slideTo(3);
       }
       const timer = setTimeout(() => {
-        const el = document.getElementById("reviews-section") || document.getElementById("product-tabs");
+        const el =
+          document.getElementById("reviews-section") ||
+          document.getElementById("product-tabs");
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -558,6 +573,11 @@ export default function ProductDetailPage() {
 
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
+  const isOutOfStock =
+    (displayProduct?.stock !== undefined &&
+      displayProduct?.stock !== null &&
+      Number(displayProduct.stock) <= 0) ||
+    displayProduct?.in_stock === false;
   const has3D = Boolean(
     displayProduct?.has3D ||
     displayProduct?.type === "Integrated" ||
@@ -733,6 +753,29 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
+              {isOutOfStock ? (
+                <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                    {t("waitlist.outOfStock", "Out of Stock")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsWaitlistModalOpen(true)}
+                    className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <IconBell size={13} className="text-wbk-gold" />
+                    {t("waitlist.joinWaitlist", "Join Waitlist")}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 pt-1.5">
+                  <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
+                  <span className="text-xs font-semibold text-wbk-green tracking-tight">
+                    {t("common.inStock", "In Stock • Fast Dispatch")}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -779,6 +822,35 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
+                  {isOutOfStock ? (
+                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                        {t(
+                          "waitlist.currentlyOutOfStock",
+                          "Currently Out of Stock",
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsWaitlistModalOpen(true)}
+                        className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <IconBell size={13} className="text-wbk-gold" />
+                        {t(
+                          "waitlist.joinWaitlistBtn",
+                          "Join Waitlist / Notify Me",
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 pt-2">
+                      <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
+                      <span className="text-xs font-semibold text-wbk-green tracking-tight">
+                        {t("common.inStock", "In Stock • Fast Dispatch")}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -884,7 +956,8 @@ export default function ProductDetailPage() {
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span className="truncate">
-                        {formatSizeLabel(productSize) || formatSizeLabel(availableSizes[0]?.label)}
+                        {formatSizeLabel(productSize) ||
+                          formatSizeLabel(availableSizes[0]?.label)}
                       </span>
                       <IconChevronDown
                         size={14}
@@ -1016,7 +1089,9 @@ export default function ProductDetailPage() {
                       className="flex items-center gap-2 px-5 py-2.5 bg-wbk-black text-wbk-white hover:bg-wbk-green hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 cursor-pointer"
                     >
                       <IconArrowsUpDown size={13} className="animate-pulse" />
-                      {isFolded ? t("home.openBed", "Open Bed") : t("home.closeBed", "Close Bed")}
+                      {isFolded
+                        ? t("home.openBed", "Open Bed")
+                        : t("home.closeBed", "Close Bed")}
                     </button>
                     <p className="text-[10px] text-wbk-brown/70 font-poppins select-none pointer-events-none">
                       {t("home.dragToRotate", "← Drag to rotate 3D view →")}
@@ -1065,7 +1140,9 @@ export default function ProductDetailPage() {
                     {t("product.gallery", "Gallery")} ({galleryImages.length})
                   </p>
                   <span className="text-[10px] text-wbk-brown/70 font-poppins">
-                    {has3D ? t("product.clickToZoom", "Tap photo to zoom") : t("product.selectView", "Select view")}
+                    {has3D
+                      ? t("product.clickToZoom", "Tap photo to zoom")
+                      : t("product.selectView", "Select view")}
                   </span>
                 </div>
 
@@ -1473,9 +1550,18 @@ export default function ProductDetailPage() {
               className="tabs-swiper w-full !overflow-visible flex items-center"
             >
               {[
-                { id: "description", label: t("product.tab_description", "Description") },
-                { id: "media", label: t("product.tab_media", "Photos & Videos") },
-                { id: "support", label: t("product.tab_support", "Support & Guides") },
+                {
+                  id: "description",
+                  label: t("product.tab_description", "Description"),
+                },
+                {
+                  id: "media",
+                  label: t("product.tab_media", "Photos & Videos"),
+                },
+                {
+                  id: "support",
+                  label: t("product.tab_support", "Support & Guides"),
+                },
                 { id: "reviews", label: t("product.tab_reviews", "Reviews") },
               ].map((tab) => (
                 <SwiperSlide key={tab.id} className="!w-auto">
@@ -1593,7 +1679,9 @@ export default function ProductDetailPage() {
                       )}
                       {displayProduct.weight && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">{t("product.weight", "Net Weight")}</td>
+                          <td className="py-2.5 font-medium">
+                            {t("product.weight", "Net Weight")}
+                          </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatWeight(displayProduct.weight)}
                           </td>
@@ -1608,19 +1696,48 @@ export default function ProductDetailPage() {
                           <td className="py-2.5 text-right text-wbk-brown">
                             {displayProduct.pack_1 ? (
                               <div className="space-y-0.5 text-xs font-mono">
-                                <div>Box 1: {formatSizeLabel(displayProduct.pack_1, locale)}</div>
+                                <div>
+                                  Box 1:{" "}
+                                  {formatSizeLabel(
+                                    displayProduct.pack_1,
+                                    locale,
+                                  )}
+                                </div>
                                 {displayProduct.pack_2 && (
-                                  <div>Box 2: {formatSizeLabel(displayProduct.pack_2, locale)}</div>
+                                  <div>
+                                    Box 2:{" "}
+                                    {formatSizeLabel(
+                                      displayProduct.pack_2,
+                                      locale,
+                                    )}
+                                  </div>
                                 )}
                                 {displayProduct.pack_3 && (
-                                  <div>Box 3: {formatSizeLabel(displayProduct.pack_3, locale)}</div>
+                                  <div>
+                                    Box 3:{" "}
+                                    {formatSizeLabel(
+                                      displayProduct.pack_3,
+                                      locale,
+                                    )}
+                                  </div>
                                 )}
                                 {displayProduct.pack_4 && (
-                                  <div>Box 4: {formatSizeLabel(displayProduct.pack_4, locale)}</div>
+                                  <div>
+                                    Box 4:{" "}
+                                    {formatSizeLabel(
+                                      displayProduct.pack_4,
+                                      locale,
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             ) : (
-                              <span>{formatSizeLabel(displayProduct.package_dimensions, locale)}</span>
+                              <span>
+                                {formatSizeLabel(
+                                  displayProduct.package_dimensions,
+                                  locale,
+                                )}
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -1918,7 +2035,9 @@ export default function ProductDetailPage() {
               >
                 <ProductReviewsSection
                   productSlug={productSlug}
-                  productName={activeProduct?.name || "Wall Bed King Murphy Bed"}
+                  productName={
+                    activeProduct?.name || "Wall Bed King Murphy Bed"
+                  }
                   initialOpen={
                     searchParams?.get("review") === "true" ||
                     searchParams?.get("review") === "open" ||
@@ -2390,8 +2509,8 @@ export default function ProductDetailPage() {
           className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
         >
           {/* Left: Product Name & Selected Size */}
-          <div className="flex flex-col min-w-0 max-w-[130px] sm:max-w-xs md:max-w-sm">
-            <span className="font-new-york text-sm sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
+          <div className="flex flex-col flex-1 min-w-0 sm:max-w-xs md:max-w-sm pr-2">
+            <span className="font-poppins text-xs sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
               {displayProduct.title || displayProduct.name}
             </span>
             <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
@@ -2400,13 +2519,13 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right: Total Price & Add to Cart Button */}
-          <div className="flex items-center gap-2.5 sm:gap-6 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-6 shrink-0">
             <div className="flex flex-col items-end font-poppins">
               <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
                 {t("common.total", "Total")}
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="font-bold text-wbk-black text-base sm:text-xl md:text-2xl leading-none">
+                <span className="font-bold text-wbk-black text-sm sm:text-xl md:text-2xl leading-none">
                   {formatPrice(totalDecimal, locale)}
                 </span>
                 {productPricing.isOnSale && (
@@ -2420,31 +2539,62 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-wbk-black hover:bg-wbk-black text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
-            >
-              {isAdded ? (
-                <>
-                  <IconCheck size={14} className="text-wbk-gold" />
-                  <span className="text-wbk-gold">
-                    {t("common.addedToCart", "Added!")}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <IconShoppingCart
-                    size={14}
-                    className="transition-transform duration-200 group-hover:scale-110"
-                  />
-                  <span>{t("common.addToCart", "Add to basket")}</span>
-                </>
-              )}
-            </button>
+            {isOutOfStock ? (
+              <button
+                type="button"
+                onClick={() => setIsWaitlistModalOpen(true)}
+                title={t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
+              >
+                <IconBell
+                  size={16}
+                  className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
+                />
+                <span className="hidden sm:inline">
+                  {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                title={isAdded ? t("common.addedToCart", "Added to Cart!") : t("common.addToCart", "Add to Cart")}
+                className={`flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 border text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0 ${
+                  isAdded
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-wbk-black hover:bg-white hover:text-wbk-black text-white border-wbk-black hover:border-white"
+                }`}
+              >
+                {isAdded ? (
+                  <>
+                    <IconCheck size={16} className="text-white" />
+                    <span className="text-white hidden sm:inline">
+                      {t("common.addedToCart", "Added to Cart!")}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <IconShoppingCart
+                      size={16}
+                      className="transition-transform duration-200 group-hover:scale-110"
+                    />
+                    <span className="hidden sm:inline">{t("common.addToCart", "Add to Cart")}</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </Container>
       </motion.div>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal
+        isOpen={isWaitlistModalOpen}
+        onClose={() => setIsWaitlistModalOpen(false)}
+        product={displayProduct}
+        selectedVariant={selectedVariant}
+        productSize={productSize}
+      />
     </div>
   );
 }

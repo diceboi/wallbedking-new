@@ -223,6 +223,7 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
 
   return {
     raw: effectivePrice,
+    numeric: effectivePrice,
     regularRaw: regularPrice,
     saleRaw: finalSalePrice,
     display: formatPrice(effectivePrice, normLocale),

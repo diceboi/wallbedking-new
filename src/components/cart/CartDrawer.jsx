@@ -32,15 +32,24 @@ export function CartDrawer() {
   } = useCart();
   const { t, formatPrice, localizedHref, locale } = useLocale();
 
-  // Prevent background scrolling when cart drawer is open
+  // Prevent background scrolling when cart drawer is open WITHOUT breaking sticky headers
   useEffect(() => {
-    if (isCartOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
+    if (!isCartOpen) return;
+
+    const preventBackgroundScroll = (e) => {
+      if (e.target.closest("aside") || e.target.closest(".custom-scrollbar")) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    window.addEventListener("wheel", preventBackgroundScroll, { passive: false });
+    window.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", preventBackgroundScroll);
+      window.removeEventListener("touchmove", preventBackgroundScroll);
+    };
   }, [isCartOpen]);
 
   // Close on Escape key
@@ -266,7 +275,7 @@ export function CartDrawer() {
                     onClick={closeCart}
                     className="w-full flex items-center justify-center py-2.5 px-4 border border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black text-xs font-medium uppercase tracking-[0.14em] transition-colors rounded-full cursor-pointer"
                   >
-                    {t("cart.viewBasket", "View Shopping Basket")}
+                    {t("cart.viewBasket", "View Shopping Cart")}
                   </Link>
                 </div>
 

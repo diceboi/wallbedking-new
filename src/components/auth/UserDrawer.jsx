@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -19,6 +19,11 @@ import {
   IconLoader2,
   IconShieldCheck,
   IconShieldLock,
+  IconBell,
+  IconArrowLeft,
+  IconTrash,
+  IconClock,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -46,6 +51,62 @@ export function UserDrawer() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // Waitlist sub-view states
+  const [subView, setSubView] = useState("main"); // "main" | "waitlist"
+  const [waitlistItems, setWaitlistItems] = useState([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
+
+  const fetchWaitlist = useCallback(async () => {
+    if (!user?.email) return;
+    setWaitlistLoading(true);
+    try {
+      const res = await fetch(
+        `/api/waitlist?email=${encodeURIComponent(user.email)}${
+          user?.id ? `&user_id=${encodeURIComponent(user.id)}` : ""
+        }`
+      );
+      const data = await res.json();
+      if (data.success && Array.isArray(data.items)) {
+        setWaitlistItems(data.items);
+      }
+    } catch (err) {
+      console.error("[UserDrawer] Failed to fetch waitlist:", err);
+    } finally {
+      setWaitlistLoading(false);
+    }
+  }, [user?.email, user?.id]);
+
+  useEffect(() => {
+    if (isUserDrawerOpen && user?.email) {
+      fetchWaitlist();
+    }
+  }, [isUserDrawerOpen, user?.email, fetchWaitlist]);
+
+  // Reset to main view whenever drawer is closed
+  useEffect(() => {
+    if (!isUserDrawerOpen) {
+      setSubView("main");
+    }
+  }, [isUserDrawerOpen]);
+
+  const handleRemoveWaitlistItem = async (id) => {
+    setRemovingId(id);
+    try {
+      const res = await fetch(`/api/waitlist?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWaitlistItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete waitlist item:", err);
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   // Lock body scroll when open
   useEffect(() => {
@@ -212,19 +273,43 @@ export function UserDrawer() {
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-wbk-lightgrey">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 flex items-center justify-center text-wbk-black">
-                  <IconUser size={18} strokeWidth={1.5} />
+              {subView === "waitlist" ? (
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setSubView("main")}
+                    className="w-8 h-8 rounded-full bg-[#F4F2F0] hover:bg-wbk-black hover:text-white border border-wbk-lightgrey flex items-center justify-center text-wbk-black transition-colors cursor-pointer"
+                    title="Back to account menu"
+                  >
+                    <IconArrowLeft size={16} />
+                  </button>
+                  <div>
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-wbk-black flex items-center gap-2">
+                      <span>{t("waitlist.myWaitlist", "My Waitlist")}</span>
+                      <span className="px-1.5 py-0.2 rounded-full bg-wbk-gold/20 text-wbk-black border border-wbk-gold/30 text-[10px] font-mono font-bold">
+                        {waitlistItems.length}
+                      </span>
+                    </h2>
+                    <p className="text-[10px] text-wbk-brown tracking-wide">
+                      {t("waitlist.myWaitlistSub", "Stock alerts & saved items")}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                    {user ? t("auth.customerAccount", "My Account") : t("auth.welcomeBack", "Welcome")}
-                  </h2>
-                  <p className="text-[10px] text-wbk-brown tracking-wide">
-                    {user ? "WallBedKing Member" : t("auth.signIn", "Sign in or create an account")}
-                  </p>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 flex items-center justify-center text-wbk-black">
+                    <IconUser size={18} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
+                      {user ? t("auth.customerAccount", "My Account") : t("auth.welcomeBack", "Welcome")}
+                    </h2>
+                    <p className="text-[10px] text-wbk-brown tracking-wide">
+                      {user ? "WallBedKing Member" : t("auth.signIn", "Sign in or create an account")}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <button
                 type="button"
@@ -240,6 +325,139 @@ export function UserDrawer() {
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
               {user ? (
                 /* ── Authenticated User State ── */
+                subView === "waitlist" ? (
+                  /* ── Sub-view: My Waitlist & Stock Alerts ── */
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-wbk-lightgrey/60">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-wbk-black">
+                        {t("waitlist.trackedProducts", "Tracked Products & Stock Alerts")}
+                      </div>
+                      <div className="text-[11px] text-wbk-brown font-mono">
+                        {waitlistItems.length} {waitlistItems.length === 1 ? t("waitlist.item", "item") : t("waitlist.items", "items")}
+                      </div>
+                    </div>
+
+                    {waitlistLoading ? (
+                      <div className="py-12 flex flex-col items-center justify-center text-wbk-brown gap-2.5">
+                        <IconLoader2 size={24} className="animate-spin text-wbk-gold" />
+                        <span className="text-xs font-medium">{t("waitlist.submitting", "Checking inventory & waitlist...")}</span>
+                      </div>
+                    ) : waitlistItems.length === 0 ? (
+                      <div className="py-10 px-4 text-center border border-dashed border-wbk-lightgrey bg-[#FBF9F8] rounded-xl flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-wbk-gold/15 text-wbk-gold border border-wbk-gold/30 flex items-center justify-center mb-3">
+                          <IconBell size={22} className="text-wbk-gold" />
+                        </div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-black mb-1">
+                          {t("waitlist.emptyTitle", "Your Waitlist is Empty")}
+                        </h3>
+                        <p className="text-[11px] text-wbk-brown leading-relaxed max-w-[260px] mb-4">
+                          {t("waitlist.emptyDesc", "When an item or size is out of stock, join its waitlist to receive instant email notifications the moment inventory arrives.")}
+                        </p>
+                        <Link
+                          href={localizedHref("/products")}
+                          onClick={closeUserDrawer}
+                          className="px-5 py-2.5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[11px] font-medium uppercase tracking-wider rounded-full transition-all shadow-sm"
+                        >
+                          {t("waitlist.exploreProducts", "Explore Products")}
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {waitlistItems.map((item) => {
+                          const itemHref = item.product_slug
+                            ? localizedHref(`/products/beds/${item.product_slug}${item.options?.size ? `?size=${encodeURIComponent(item.options.size)}` : ""}`)
+                            : localizedHref("/products");
+                          return (
+                            <div
+                              key={item.id}
+                              className="p-3 bg-white border border-wbk-lightgrey/80 hover:border-wbk-gold/60 transition-all flex flex-col gap-2.5 shadow-2xs"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-16 h-16 rounded-none bg-[#F4F2F0] border border-wbk-lightgrey/60 overflow-hidden shrink-0 flex items-center justify-center">
+                                  <img
+                                    src={item.product_image || "/sofa1.webp"}
+                                    alt={item.product_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-xs font-semibold text-wbk-black truncate leading-tight">
+                                    {item.product_name}
+                                  </h4>
+                                  <div className="text-[11px] text-wbk-brown truncate mt-0.5">
+                                    {item.variant_name || item.options?.size || "Standard Size"}
+                                  </div>
+                                  <div className="mt-1.5 flex items-center gap-1.5">
+                                    {item.is_in_stock ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wbk-gold/15 border border-wbk-gold/40 text-wbk-black text-[10px] font-semibold">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                                        {t("waitlist.backInStock", "Back in Stock!")}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F4F2F0] border border-wbk-lightgrey/80 text-wbk-brown text-[10px] font-medium">
+                                        <IconClock size={11} className="text-wbk-gold" />
+                                        {t("waitlist.waitingForRestock", "Waiting for Restock")}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveWaitlistItem(item.id)}
+                                  disabled={removingId === item.id}
+                                  className="p-1 text-wbk-brown/60 hover:text-red-600 transition-colors cursor-pointer shrink-0"
+                                  title="Remove from waitlist"
+                                >
+                                  {removingId === item.id ? (
+                                    <IconLoader2 size={15} className="animate-spin text-red-500" />
+                                  ) : (
+                                    <IconTrash size={15} />
+                                  )}
+                                </button>
+                              </div>
+
+                              {item.is_in_stock && (
+                                <div className="pt-2 border-t border-wbk-lightgrey/40 flex items-center justify-between">
+                                  <span className="text-[10px] text-wbk-black font-medium">
+                                    {t("waitlist.readyToDispatch", "Ready to order & dispatch")}
+                                  </span>
+                                  <Link
+                                    href={itemHref}
+                                    onClick={closeUserDrawer}
+                                    className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs"
+                                  >
+                                    <span>{t("waitlist.orderNow", "Order Now")}</span>
+                                    <IconArrowRight size={11} />
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="pt-2 space-y-2">
+                      <Link
+                        href={localizedHref("/account?tab=waitlist")}
+                        onClick={closeUserDrawer}
+                        className="w-full py-2.5 bg-[#F4F2F0] hover:bg-wbk-gold hover:text-wbk-black text-xs font-semibold uppercase tracking-wider text-wbk-black transition-colors rounded-full text-center flex items-center justify-center gap-1.5"
+                      >
+                        <IconExternalLink size={14} />
+                        <span>Manage in Account Dashboard</span>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setSubView("main")}
+                        className="w-full py-2.5 border border-wbk-lightgrey text-xs font-semibold uppercase tracking-wider text-wbk-black hover:bg-wbk-gold/10 hover:border-wbk-gold transition-colors rounded-full cursor-pointer text-center"
+                      >
+                        {t("waitlist.backToProfile", "Back to Profile Menu")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                /* ── Main View: Authenticated User ── */
                 <div className="space-y-6">
                   {/* User Profile Card */}
                   <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/80 flex items-center gap-4">
@@ -314,6 +532,33 @@ export function UserDrawer() {
                       </div>
                       <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
                     </Link>
+
+                    {/* Waitlist Navigation Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSubView("waitlist")}
+                      className="w-full flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group cursor-pointer text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
+                          <IconBell size={17} strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-wbk-black flex items-center gap-2">
+                            <span>{t("waitlist.myWaitlist", "My Waitlist & Alerts")}</span>
+                            {waitlistItems.length > 0 && (
+                              <span className="px-1.5 py-0.2 rounded-full bg-wbk-gold/20 text-wbk-black border border-wbk-gold/40 text-[10px] font-bold font-mono">
+                                {waitlistItems.length}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-wbk-brown">
+                            {t("waitlist.myWaitlistSub", "Stock alerts and saved notifications")}
+                          </div>
+                        </div>
+                      </div>
+                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                    </button>
 
                     <Link
                       href={localizedHref("/configurator")}
@@ -414,6 +659,7 @@ export function UserDrawer() {
                     <span>{t("auth.signOut", "Sign Out")}</span>
                   </button>
                 </div>
+                )
               ) : (
                 /* ── Guest / Authentication State ── */
                 <div className="space-y-5">

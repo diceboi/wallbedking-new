@@ -3,10 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { IconLoader2, IconAlertCircle } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
+import { getPaymentConfig } from "@/lib/payments";
 
-const PAYPAL_CLIENT_ID = "AatfEC-B5arwZNWs2BbzxxYC0P1Z9jGIXw0HFXQ0f-57xEsm2W0y_4GGl_o0wF_vlliq2vE5hzRkhvrL";
+export function PayPalCheckoutButton({ disabled = false, customerDetails = null, onBeforeCheckout = null }) {
+  const { locale, market } = useLocale();
+  const paymentConfig = getPaymentConfig(locale, market?.currency);
+  const paypalClientId = paymentConfig.paypalClientId;
+  const paypalCurrency = paymentConfig.paypalCurrency;
+  const paypalDescriptor = paymentConfig.paypalDescriptor;
 
-export function PayPalCheckoutButton({ disabled = false }) {
   const {
     items,
     subtotal,
@@ -23,35 +29,54 @@ export function PayPalCheckoutButton({ disabled = false }) {
   const [sdkError, setSdkError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Keep references to latest cart values inside PayPal callbacks
-  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails });
+  // Keep references to latest cart and payment values inside PayPal callbacks
+  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout });
   useEffect(() => {
-    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails };
-  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails]);
+    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout };
+  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout]);
 
-  // Load PayPal SDK Script
+  // Load PayPal SDK Script dynamically based on selected market / entity
   useEffect(() => {
-    const scriptId = "wbk-paypal-sdk";
+    setSdkReady(false);
+    setSdkError("");
 
-    if (window.paypal) {
+    const targetScriptId = `wbk-paypal-sdk-${paypalClientId}-${paypalCurrency}`;
+
+    // If an existing PayPal script for another entity or currency exists, remove it first
+    const existingScripts = document.querySelectorAll("script[id^='wbk-paypal-sdk']");
+    let hasMatchingScript = false;
+
+    existingScripts.forEach((s) => {
+      if (s.id === targetScriptId) {
+        hasMatchingScript = true;
+      } else {
+        s.remove();
+        if (typeof window !== "undefined") {
+          window.paypal = undefined;
+        }
+      }
+    });
+
+    if (hasMatchingScript && window.paypal) {
       setSdkReady(true);
       return;
     }
 
-    let script = document.getElementById(scriptId);
-    if (!script) {
-      script = document.createElement("script");
-      script.id = scriptId;
-      script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=GBP&components=buttons&enable-funding=card&disable-funding=sofort`;
-      script.async = true;
-      script.onload = () => setSdkReady(true);
-      script.onerror = () => setSdkError("Failed to load PayPal SDK. Please refresh or try another payment method.");
-      document.body.appendChild(script);
-    } else {
-      script.addEventListener("load", () => setSdkReady(true));
-      script.addEventListener("error", () => setSdkError("Failed to load PayPal SDK."));
-    }
-  }, []);
+    const script = document.createElement("script");
+    script.id = targetScriptId;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=${paypalCurrency}&components=buttons&enable-funding=card&disable-funding=sofort`;
+    script.async = true;
+    script.onload = () => {
+      console.log(`[PayPal SDK] Loaded successfully for entity: ${paymentConfig.entity}, Currency: ${paypalCurrency}`);
+      setSdkReady(true);
+    };
+    script.onerror = () => setSdkError("Failed to load PayPal SDK. Please refresh or try another payment method.");
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup if unmounted while changing
+    };
+  }, [paypalClientId, paypalCurrency, paymentConfig.entity]);
 
   // Render PayPal Buttons when SDK is ready
   useEffect(() => {
@@ -72,10 +97,18 @@ export function PayPalCheckoutButton({ disabled = false }) {
             tagline: false,
           },
 
-          createOrder: (data, actions) => {
+          createOrder: async (data, actions) => {
             const current = cartRef.current;
+            if (typeof current.onBeforeCheckout === "function") {
+              try {
+                await current.onBeforeCheckout();
+              } catch (err) {
+                console.warn("PayPal onBeforeCheckout error:", err);
+              }
+            }
             const finalTotal = Number(current.total).toFixed(2);
             const discountMult = current.subtotal > 0 ? Math.max(0, (current.subtotal - current.discount) / current.subtotal) : 1;
+            const curr = current.paypalCurrency || "GBP";
 
             const paypalItems = current.items.map((it) => {
               const unitPrice = (Math.round(Number(it.price) * discountMult * 100) / 100).toFixed(2);
@@ -85,10 +118,10 @@ export function PayPalCheckoutButton({ disabled = false }) {
                 description: String(opt || "Standard").slice(0, 120),
                 sku: String(it.rawId || it.productId || it.id).slice(0, 60),
                 unit_amount: {
-                  currency_code: "GBP",
+                  currency_code: curr,
                   value: unitPrice,
                 },
-                tax: { currency_code: "GBP", value: "0.00" },
+                tax: { currency_code: curr, value: "0.00" },
                 quantity: String(it.quantity || 1),
                 category: "PHYSICAL_GOODS",
               };
@@ -100,10 +133,10 @@ export function PayPalCheckoutButton({ disabled = false }) {
                 description: "Delivery option",
                 sku: `DELIVERY_${current.deliveryOption.toUpperCase()}`,
                 unit_amount: {
-                  currency_code: "GBP",
+                  currency_code: curr,
                   value: Number(current.shipping).toFixed(2),
                 },
-                tax: { currency_code: "GBP", value: "0.00" },
+                tax: { currency_code: curr, value: "0.00" },
                 quantity: "1",
                 category: "PHYSICAL_GOODS",
               });
@@ -113,11 +146,11 @@ export function PayPalCheckoutButton({ disabled = false }) {
               intent: "CAPTURE",
               purchase_units: [
                 {
-                  description: `WBK_order_${finalTotal}_${Date.now()}`,
+                  description: `WBK_${current.paymentConfig.entity}_order_${finalTotal}_${Date.now()}`,
                   custom_id: current.customCartId,
-                  soft_descriptor: "WBK UK",
+                  soft_descriptor: paypalDescriptor,
                   amount: {
-                    currency_code: "GBP",
+                    currency_code: curr,
                     value: finalTotal,
                   },
                 },
@@ -153,10 +186,14 @@ export function PayPalCheckoutButton({ disabled = false }) {
                       address1: shipping.address?.address_line_1 || "",
                       city: shipping.address?.admin_area_2 || "",
                       postcode: shipping.address?.postal_code || "",
-                      country: shipping.address?.country_code || "United Kingdom",
+                      country: shipping.address?.country_code || (current.locale === "en" ? "United Kingdom" : "International"),
                     },
                     deliveryOption: current.deliveryOption,
                     paymentMethod: "paypal",
+                    userId: current.customerDetails?.userId || null,
+                    locale: current.locale,
+                    currency: current.paypalCurrency,
+                    companyEntity: current.paymentConfig.entity,
                   }),
                 });
                 const orderJson = await orderRes.json();
@@ -169,6 +206,9 @@ export function PayPalCheckoutButton({ disabled = false }) {
                       orderId: confirmedOrderId,
                       paypalOrderId: orderData.id,
                       captureData: pu.payments?.captures?.[0],
+                      locale: current.locale,
+                      currency: current.paypalCurrency,
+                      companyEntity: current.paymentConfig.entity,
                     }),
                   });
                 }
@@ -176,7 +216,7 @@ export function PayPalCheckoutButton({ disabled = false }) {
                 console.warn("PayPal database order sync notice:", errDb);
               }
 
-              // Redirect to thank you page
+              // Redirect to thank you page in customer's selected language
               const params = new URLSearchParams({
                 tx: orderData.id || "",
                 cartIdFORM: current.customCartId || "",
@@ -187,10 +227,10 @@ export function PayPalCheckoutButton({ disabled = false }) {
                 street: shipping.address?.address_line_1 || "",
                 zip: shipping.address?.postal_code || "",
                 city: shipping.address?.admin_area_2 || "",
-                country: shipping.address?.country_code || "GB",
+                country: shipping.address?.country_code || (current.locale === "en" ? "GB" : "EU"),
               });
 
-              window.location.href = `/thanks?${params.toString()}`;
+              window.location.href = `/${current.locale}/thanks?${params.toString()}`;
             } catch (err) {
               console.error("PayPal capture error:", err);
               setSdkError("Payment could not be captured. Please try again or contact support.");

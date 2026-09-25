@@ -56,7 +56,7 @@ export default function CartPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="animate-pulse text-wbk-brown font-poppins text-sm">
-          {t("cart.loadingBasket", "Loading your shopping basket...")}
+          {t("cart.loadingBasket", "Loading your shopping cart...")}
         </div>
       </div>
     );
@@ -79,11 +79,11 @@ export default function CartPage() {
               {t("nav.home", "Home")}
             </Link>
             <span>/</span>
-            <span className="text-wbk-black font-medium">{t("cart.title", "Shopping Basket")}</span>
+            <span className="text-wbk-black font-medium">{t("cart.title", "Shopping Cart")}</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-              {t("cart.title", "Shopping Basket")}
+              {t("cart.title", "Shopping Cart")}
             </h1>
             {items.length > 0 && (
               <span className="text-xs text-wbk-brown font-poppins">
@@ -96,13 +96,13 @@ export default function CartPage() {
 
       <Container size="xl" className="pt-8 sm:pt-12">
         {items.length === 0 ? (
-          /* Empty Basket View */
+          /* Empty Cart View */
           <div className="max-w-xl mx-auto text-center py-20 px-4">
             <div className="w-20 h-20 mx-auto rounded-full bg-[#F4F2F0] flex items-center justify-center text-wbk-brown mb-6">
               <IconShoppingBag size={36} strokeWidth={1.5} />
             </div>
             <h2 className="font-new-york text-2xl sm:text-3xl text-wbk-black mb-3">
-              {t("cart.empty", "Your basket is currently empty")}
+              {t("cart.empty", "Your cart is currently empty")}
             </h2>
             <p className="text-sm text-wbk-brown font-poppins leading-relaxed max-w-md mx-auto mb-8">
               {t("cart.emptyDesc", "Explore our space-saving solutions designed for modern living.")}
@@ -270,7 +270,7 @@ export default function CartPage() {
                   onClick={clearCart}
                   className="text-xs text-wbk-brown hover:text-red-600 transition-colors underline cursor-pointer"
                 >
-                  {t("cart.clearBasket", "Clear entire basket")}
+                  {t("cart.clearBasket", "Clear entire cart")}
                 </button>
               </div>
 

@@ -48,6 +48,11 @@ export default function AdminProductsPage() {
   const [newProductSku, setNewProductSku] = useState("");
   const [newProductWeight, setNewProductWeight] = useState("");
   const [newProductEan, setNewProductEan] = useState("");
+  const [newProductType, setNewProductType] = useState("Classic");
+  const [newProductOrientation, setNewProductOrientation] = useState("Vertical");
+  const [newProductWidth, setNewProductWidth] = useState("");
+  const [newProductLength, setNewProductLength] = useState("");
+  const [syncing, setSyncing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -67,6 +72,28 @@ export default function AdminProductsPage() {
       setMessage({ type: "error", text: "Failed to load products from database." });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncStorefront = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/admin/products/sync", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({
+          type: "success",
+          text: `Storefront catalog synchronized (${data.count} products updated)!`,
+        });
+        fetchProducts();
+      } else {
+        setMessage({ type: "error", text: data.error || "Sync failed." });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Network error during sync." });
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setMessage(null), 4000);
     }
   };
 
@@ -101,7 +128,7 @@ export default function AdminProductsPage() {
     setProducts((prev) =>
       prev.map((p) => (p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p))
     );
-    setMessage({ type: "success", text: `"${updatedProduct.name}" updated successfully in Supabase!` });
+    setMessage({ type: "success", text: `"${updatedProduct.name}" updated successfully in Supabase & Catalog!` });
     setTimeout(() => setMessage(null), 3000);
   };
 
@@ -115,7 +142,7 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
-        setMessage({ type: "success", text: `"${name}" removed from database.` });
+        setMessage({ type: "success", text: `"${name}" removed from database and storefront catalog.` });
         setTimeout(() => setMessage(null), 3000);
       } else {
         alert(data.error || "Failed to delete product.");
@@ -165,8 +192,10 @@ export default function AdminProductsPage() {
       price_usd: Number(newProductPrice),
       stock: 100,
       visibility: "Visible",
-      orientation: "Vertical",
-      type: "Classic",
+      orientation: newProductOrientation,
+      type: newProductType,
+      width: newProductWidth ? Number(newProductWidth) : null,
+      length: newProductLength ? Number(newProductLength) : null,
     };
 
     try {
@@ -183,7 +212,11 @@ export default function AdminProductsPage() {
         setNewProductSku("");
         setNewProductWeight("");
         setNewProductEan("");
-        setMessage({ type: "success", text: "Product created successfully in Supabase!" });
+        setNewProductWidth("");
+        setNewProductLength("");
+        setNewProductType("Classic");
+        setNewProductOrientation("Vertical");
+        setMessage({ type: "success", text: "Product created & synced to storefront catalog!" });
         setTimeout(() => setMessage(null), 3000);
       } else {
         alert(data.error || "Error creating product.");
@@ -205,6 +238,17 @@ export default function AdminProductsPage() {
         description="Live catalog and inventory management directly synced with Supabase"
         actions={
           <>
+            <button
+              type="button"
+              onClick={handleSyncStorefront}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              title="Synchronize Supabase products with storefront catalog"
+            >
+              <IconRefresh size={15} className={syncing ? "animate-spin text-wbk-gold" : "text-wbk-gold"} />
+              <span>{syncing ? "Syncing..." : "Sync Storefront"}</span>
+            </button>
+
             <button
               type="button"
               onClick={fetchProducts}
@@ -541,7 +585,7 @@ export default function AdminProductsPage() {
       {/* Add Product Modal */}
       {isAddOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md p-6 rounded-none border border-wbk-lightgrey shadow-2xl space-y-4 font-poppins">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 rounded-none border border-wbk-lightgrey shadow-2xl space-y-4 font-poppins custom-scrollbar">
             <h3 className="font-poppins text-lg text-wbk-black font-semibold">
               Create New Product
             </h3>
@@ -561,22 +605,97 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
-                  Category
-                </label>
-                <select
-                  value={newProductCategory}
-                  onChange={(e) => setNewProductCategory(e.target.value)}
-                  className="w-full p-2.5 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
-                >
-                  <option value="beds">Murphy Beds</option>
-                  <option value="sofas">Sofas</option>
-                  <option value="tables">Tables & Desks</option>
-                  <option value="mattresses">Mattresses</option>
-                  <option value="cabinets">Cabinets</option>
-                  <option value="extras">Extras & Accessories</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={newProductCategory}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
+                  >
+                    <option value="beds">Murphy Beds</option>
+                    <option value="sofas">Sofas</option>
+                    <option value="tables">Tables & Desks</option>
+                    <option value="mattresses">Mattresses</option>
+                    <option value="cabinets">Cabinets</option>
+                    <option value="extras">Extras & Accessories</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Type
+                  </label>
+                  <select
+                    value={newProductType}
+                    onChange={(e) => setNewProductType(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
+                  >
+                    <option value="Classic">Classic</option>
+                    <option value="Studio">Studio</option>
+                    <option value="Integrated">Integrated</option>
+                    <option value="Transforming">Transforming</option>
+                    <option value="Wall-Mounted">Wall-Mounted</option>
+                    <option value="Extending">Extending</option>
+                    <option value="Coffee & Side">Coffee & Side</option>
+                    <option value="Modular">Modular</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider mb-1">
+                    Orientation
+                  </label>
+                  <select
+                    value={newProductOrientation}
+                    onChange={(e) => setNewProductOrientation(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
+                  >
+                    <option value="Vertical">Vertical</option>
+                    <option value="Horizontal">Horizontal</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Dimensions for grouping into size variants */}
+              <div className="p-3 bg-[#FBF9F8] border border-wbk-lightgrey/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider">
+                    Dimensions (for Storefront Size Dropdown)
+                  </span>
+                  <span className="text-[10px] text-wbk-brown">
+                    e.g. 1400 x 2000 mm creates 140x200 cm variant
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
+                      Width (mm)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 1400"
+                      value={newProductWidth}
+                      onChange={(e) => setNewProductWidth(e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
+                      Length (mm)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 2000"
+                      value={newProductLength}
+                      onChange={(e) => setNewProductLength(e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -3,8 +3,16 @@
 import { useState } from "react";
 import { IconLock, IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 
-export function StripeCheckoutButton({ className = "", label = "Pay with Card / Stripe", disabled = false, customerDetails = null }) {
+export function StripeCheckoutButton({
+  className = "",
+  label = "Pay with Card / Stripe",
+  disabled = false,
+  customerDetails = null,
+  onBeforeCheckout = null,
+}) {
+  const { locale, market } = useLocale();
   const {
     items,
     subtotal,
@@ -22,15 +30,27 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
 
   const handleStripeCheckout = async () => {
     if (items.length === 0) {
-      setErrorMessage("Your basket is empty.");
+      setErrorMessage("Your cart is empty.");
       return;
     }
 
     setIsLoading(true);
     setErrorMessage("");
 
+    // Execute optional pre-checkout hook (e.g., save address to account)
+    if (typeof onBeforeCheckout === "function") {
+      try {
+        await onBeforeCheckout();
+      } catch (err) {
+        console.warn("Stripe pre-checkout hook error:", err);
+      }
+    }
+
     try {
       let activeOrderId = null;
+      const currentCurrency = (market?.currency || (locale === "en" ? "GBP" : "EUR")).toUpperCase();
+      const currentCurrencyLower = currentCurrency.toLowerCase();
+      const companyEntity = locale === "en" ? "UK" : "INTERNATIONAL";
 
       // 1. If customer details are provided, pre-create the order in database
       if (customerDetails?.email && customerDetails?.address1) {
@@ -49,6 +69,10 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
               deliveryOption,
               promoCode,
               paymentMethod: "stripe",
+              userId: customerDetails?.userId || null,
+              locale,
+              currency: currentCurrency,
+              companyEntity,
             }),
           });
           const orderData = await orderRes.json();
@@ -80,7 +104,7 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
 
         return {
           price_data: {
-            currency: "gbp",
+            currency: currentCurrencyLower,
             product_data: {
               name: item.title,
               description: optionsDesc || "Wall Bed King Product",
@@ -95,10 +119,10 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
       if (shipping > 0) {
         lineItems.push({
           price_data: {
-            currency: "gbp",
+            currency: currentCurrencyLower,
             product_data: {
               name: selectedDeliveryDetails?.label || "Delivery",
-              description: selectedDeliveryDetails?.message || "Standard UK Mainland Delivery",
+              description: selectedDeliveryDetails?.message || (locale === "en" ? "Standard UK Mainland Delivery" : "Standard Delivery"),
             },
             unit_amount: Math.round(shipping * 100),
           },
@@ -107,8 +131,8 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
       }
 
       const orderRef = activeOrderId || customCartId;
-      const successUrl = `${window.location.origin}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(orderRef)}&cart_id=${encodeURIComponent(customCartId)}`;
-      const cancelUrl = `${window.location.origin}/cart`;
+      const successUrl = `${window.location.origin}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(orderRef)}&cart_id=${encodeURIComponent(customCartId)}`;
+      const cancelUrl = `${window.location.origin}/${locale}/cart`;
 
       const response = await fetch("/api/checkout/stripe", {
         method: "POST",
@@ -119,7 +143,10 @@ export function StripeCheckoutButton({ className = "", label = "Pay with Card / 
           cancel_url: cancelUrl,
           cartId: customCartId,
           orderId: activeOrderId,
+          locale,
+          currency: currentCurrency,
           collect_phone: true,
+          customerEmail: customerDetails?.email || undefined,
         }),
       });
 

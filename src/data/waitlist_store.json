@@ -1,0 +1,22 @@
+[
+  {
+    "id": "wl_1790155872465_k742iu",
+    "user_id": "e17f0ed8-4270-4201-9742-45b7411de884",
+    "customer_email": "diceboii13@gmail.com",
+    "customer_name": "Szász Szabolcs",
+    "product_id": null,
+    "product_slug": "small-single-vertical-classic-bed-76x190",
+    "product_name": "Small Single Vertical Classic Bed",
+    "product_image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    "variant_name": "Small Single (76x190 cm)",
+    "options": {
+      "size": "Small Single (76x190 cm)",
+      "format": "Vertical"
+    },
+    "locale": "de",
+    "status": "notified",
+    "notified_at": "2026-09-24T09:03:45.449Z",
+    "created_at": "2026-09-23T09:31:12.465Z",
+    "updated_at": "2026-09-24T09:03:45.449Z"
+  }
+]

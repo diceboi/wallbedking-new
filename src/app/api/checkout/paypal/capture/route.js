@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { orderId, paypalOrderId, payer, shipping, captureData } = body || {};
+    const { orderId, paypalOrderId, payer, shipping, captureData, locale, currency, companyEntity } = body || {};
 
     if (!orderId && !paypalOrderId) {
       return NextResponse.json(
@@ -17,7 +17,7 @@ export async function POST(request) {
     }
 
     const targetOrderId = orderId;
-    console.log(`[PayPal Capture] Finalizing payment for order: ${targetOrderId}`);
+    console.log(`[PayPal Capture] Finalizing payment for order: ${targetOrderId} (Entity: ${companyEntity || "N/A"}, Currency: ${currency || "N/A"})`);
 
     if (supabaseAdmin && targetOrderId) {
       // 1. Fetch current order
@@ -27,16 +27,21 @@ export async function POST(request) {
         .eq("id", targetOrderId)
         .maybeSingle();
 
-      // 2. Mark order as paid
+      // 2. Mark order as paid and store payment details
+      const updatePayload = {
+        status: "paid",
+        payment_status: "paid",
+        payment_method: "paypal",
+        payment_id: paypalOrderId || captureData?.id || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (companyEntity) updatePayload.company_entity = companyEntity;
+      if (currency) updatePayload.currency = currency.toUpperCase();
+      if (locale) updatePayload.locale = locale;
+
       await supabaseAdmin
         .from("orders")
-        .update({
-          status: "paid",
-          payment_status: "paid",
-          payment_method: "paypal",
-          payment_id: paypalOrderId || captureData?.id || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("id", targetOrderId);
 
       // 3. Decrement stock
