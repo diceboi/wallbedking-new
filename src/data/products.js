@@ -800,8 +800,16 @@ export function getDynamicFlagships(templates, rawItems, category) {
 
     const bestPrice = minSaleGbp || minGbp;
 
+    const collectedTags = Array.from(
+      new Set([
+        ...(template.tags || []),
+        ...matching.flatMap((m) => (Array.isArray(m.tags) ? m.tags : [])),
+      ])
+    ).filter(Boolean);
+
     return {
       ...template,
+      tags: collectedTags,
       price_gbp: minGbp,
       price_euro: minEuro,
       price_usd: minUsd,

@@ -14,8 +14,12 @@ import {
   IconEyeOff,
   IconAlertCircle,
   IconCheck,
+  IconTag,
+  IconX,
+  IconAdjustments,
 } from "@tabler/icons-react";
 import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
+import { BulkProductEditModal } from "@/components/admin/BulkProductEditModal";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const CATEGORIES = [
@@ -40,7 +44,17 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedOrientation, setSelectedOrientation] = useState("all");
+  const [selectedTag, setSelectedTag] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Bulk operations state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+
+  // Dynamic taxonomy state
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [tagsList, setTagsList] = useState([]);
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newProductName, setNewProductName] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("beds");
@@ -52,13 +66,34 @@ export default function AdminProductsPage() {
   const [newProductOrientation, setNewProductOrientation] = useState("Vertical");
   const [newProductWidth, setNewProductWidth] = useState("");
   const [newProductLength, setNewProductLength] = useState("");
+  const [newProductTags, setNewProductTags] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
     fetchProducts();
+    fetchTaxonomy();
   }, []);
+
+  const fetchTaxonomy = async () => {
+    try {
+      const [catRes, tagRes] = await Promise.all([
+        fetch("/api/admin/categories"),
+        fetch("/api/admin/tags"),
+      ]);
+      const catData = await catRes.json();
+      const tagData = await tagRes.json();
+      if (catData.success && Array.isArray(catData.categories)) {
+        setCategoriesList(catData.categories);
+      }
+      if (tagData.success && Array.isArray(tagData.tags)) {
+        setTagsList(tagData.tags);
+      }
+    } catch (e) {
+      console.warn("Could not load taxonomy:", e);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -103,8 +138,12 @@ export default function AdminProductsPage() {
         selectedCategory === "all" || p.parent_category === selectedCategory;
       const matchesOrientation =
         selectedOrientation === "all" || p.orientation === selectedOrientation;
+      const matchesTag =
+        selectedTag === "all" ||
+        (Array.isArray(p.tags) && p.tags.includes(selectedTag));
+
       const q = search.trim().toLowerCase();
-      if (!q) return matchesCategory && matchesOrientation;
+      if (!q) return matchesCategory && matchesOrientation && matchesTag;
 
       const matchesSearch =
         String(p.id).includes(q) ||
@@ -118,11 +157,114 @@ export default function AdminProductsPage() {
         (p.ean_fr && p.ean_fr.toLowerCase().includes(q)) ||
         (p.ean_es && p.ean_es.toLowerCase().includes(q)) ||
         (p.ean_it && p.ean_it.toLowerCase().includes(q)) ||
-        (p.ean_pt && p.ean_pt.toLowerCase().includes(q));
+        (p.ean_pt && p.ean_pt.toLowerCase().includes(q)) ||
+        (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes(q)));
 
-      return matchesCategory && matchesOrientation && matchesSearch;
+      return matchesCategory && matchesOrientation && matchesTag && matchesSearch;
     });
-  }, [products, selectedCategory, selectedOrientation, search]);
+  }, [products, selectedCategory, selectedOrientation, selectedTag, search]);
+
+  // Bulk selection handlers
+  const toggleSelectProduct = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllFiltered = () => {
+    const filteredIds = filteredProducts.map((p) => p.id);
+    const allSelected =
+      filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !filteredIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
+    }
+  };
+
+  const handleBulkQuickVisibility = async (vis) => {
+    if (selectedIds.length === 0) return;
+    try {
+      const res = await fetch("/api/admin/products/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: selectedIds,
+          action: "update",
+          updates: { visibility: vis },
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            selectedIds.includes(p.id) ? { ...p, visibility: vis } : p
+          )
+        );
+        setMessage({
+          type: "success",
+          text: `Updated visibility to "${vis}" for ${selectedIds.length} products.`,
+        });
+        setSelectedIds([]);
+        setTimeout(() => setMessage(null), 3500);
+      }
+    } catch (err) {
+      alert("Error setting visibility");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete all ${selectedIds.length} selected products?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/products/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: selectedIds,
+          action: "delete",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
+        setMessage({
+          type: "success",
+          text: `Successfully deleted ${selectedIds.length} products.`,
+        });
+        setSelectedIds([]);
+        setTimeout(() => setMessage(null), 3500);
+      } else {
+        alert(data.error || "Failed to delete products.");
+      }
+    } catch (err) {
+      alert("Network error.");
+    }
+  };
+
+  const handleBulkUpdateSuccess = (result) => {
+    const updatedMap = new Map();
+    if (Array.isArray(result.products)) {
+      result.products.forEach((p) => updatedMap.set(p.id, p));
+    }
+
+    setProducts((prev) =>
+      prev.map((p) => (updatedMap.has(p.id) ? { ...p, ...updatedMap.get(p.id) } : p))
+    );
+
+    setMessage({
+      type: "success",
+      text: `Bulk edit complete! Updated ${result.updatedCount || selectedIds.length} products.`,
+    });
+    setSelectedIds([]);
+    setTimeout(() => setMessage(null), 4000);
+  };
 
   const handleSaveSuccess = (updatedProduct) => {
     setProducts((prev) =>
@@ -196,6 +338,7 @@ export default function AdminProductsPage() {
       type: newProductType,
       width: newProductWidth ? Number(newProductWidth) : null,
       length: newProductLength ? Number(newProductLength) : null,
+      tags: newProductTags,
     };
 
     try {
@@ -214,6 +357,7 @@ export default function AdminProductsPage() {
         setNewProductEan("");
         setNewProductWidth("");
         setNewProductLength("");
+        setNewProductTags([]);
         setNewProductType("Classic");
         setNewProductOrientation("Vertical");
         setMessage({ type: "success", text: "Product created & synced to storefront catalog!" });
@@ -293,44 +437,76 @@ export default function AdminProductsPage() {
       <div className="bg-white p-5 border border-wbk-lightgrey/60 shadow-xs space-y-4">
         {/* Category tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-          {CATEGORIES.map((c) => {
-            const isSelected = selectedCategory === c.id;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setSelectedCategory(c.id)}
-                className={`px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider rounded-full transition-all shrink-0 cursor-pointer ${
-                  isSelected
-                    ? "bg-wbk-black text-white"
-                    : "bg-[#F4F2F0] text-wbk-brown hover:text-wbk-black"
-                }`}
-              >
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
+          {(() => {
+            const allCats = [
+              { id: "all", label: "All Categories" },
+              ...categoriesList.map((c) => ({ id: c.id, label: c.name || c.title })),
+            ];
+            // If categoriesList is not yet loaded, use static fallback
+            const displayCats = allCats.length > 1 ? allCats : CATEGORIES;
 
-        {/* Orientation & Search */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-wbk-brown uppercase font-medium">Orientation:</span>
-            <div className="flex items-center gap-1">
-              {ORIENTATIONS.map((o) => (
+            return displayCats.map((c) => {
+              const isSelected = selectedCategory === c.id;
+              return (
                 <button
-                  key={o.id}
+                  key={c.id}
                   type="button"
-                  onClick={() => setSelectedOrientation(o.id)}
-                  className={`px-3 py-1 text-xs rounded-none border transition-colors cursor-pointer ${
-                    selectedOrientation === o.id
-                      ? "border-wbk-black bg-wbk-black text-white font-medium"
-                      : "border-wbk-lightgrey bg-white text-wbk-brown hover:text-wbk-black"
+                  onClick={() => setSelectedCategory(c.id)}
+                  className={`px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider rounded-full transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? "bg-wbk-black text-white"
+                      : "bg-[#F4F2F0] text-wbk-brown hover:text-wbk-black"
                   }`}
                 >
-                  {o.label}
+                  {c.label}
                 </button>
-              ))}
+              );
+            });
+          })()}
+        </div>
+
+        {/* Orientation, Tag & Search */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Orientation */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-wbk-brown uppercase font-medium">Orientation:</span>
+              <div className="flex items-center gap-1">
+                {ORIENTATIONS.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => setSelectedOrientation(o.id)}
+                    className={`px-3 py-1 text-xs rounded-none border transition-colors cursor-pointer ${
+                      selectedOrientation === o.id
+                        ? "border-wbk-black bg-wbk-black text-white font-medium"
+                        : "border-wbk-lightgrey bg-white text-wbk-brown hover:text-wbk-black"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tag Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-wbk-brown uppercase font-medium flex items-center gap-1">
+                <IconTag size={13} className="text-wbk-gold" />
+                <span>Tag:</span>
+              </span>
+              <select
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                className="text-xs bg-[#FBF9F8] border border-wbk-lightgrey px-2.5 py-1 text-wbk-black rounded-none focus:outline-none"
+              >
+                <option value="all">All Tags ({tagsList.length})</option>
+                {tagsList.map((tag) => (
+                  <option key={tag.id} value={tag.id || tag.slug}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -341,7 +517,7 @@ export default function AdminProductsPage() {
             />
             <input
               type="text"
-              placeholder="Search by name, SKU, or ID..."
+              placeholder="Search name, SKU, tag, or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-[#FBF9F8] border border-wbk-lightgrey text-xs text-wbk-black rounded-none focus:outline-none focus:border-wbk-black"
@@ -350,15 +526,35 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Product Table Count Info */}
+      {/* Product Table Count Info & Bulk Trigger */}
       <div className="flex items-center justify-between text-xs text-wbk-brown px-1">
-        <span>
-          Showing <strong>{filteredProducts.length}</strong> of{" "}
-          <strong>{products.length}</strong> products.
-        </span>
-        <span className="text-[11px] text-wbk-brown/70 italic">
-          Click the edit icon on any row to open the full product drawer.
-        </span>
+        <div className="flex items-center gap-3">
+          <span>
+            Showing <strong>{filteredProducts.length}</strong> of{" "}
+            <strong>{products.length}</strong> products.
+          </span>
+          {selectedIds.length > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-wbk-gold text-wbk-black font-semibold text-[11px]">
+              {selectedIds.length} selected
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsBulkOpen(true)}
+              className="flex items-center gap-1 px-3 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs cursor-pointer"
+            >
+              <IconAdjustments size={13} />
+              <span>Bulk Edit ({selectedIds.length})</span>
+            </button>
+          )}
+          <span className="text-[11px] text-wbk-brown/70 italic hidden sm:inline">
+            Check boxes on rows to bulk edit parameters.
+          </span>
+        </div>
       </div>
 
       {/* Interactive Products Table */}
@@ -366,9 +562,21 @@ export default function AdminProductsPage() {
         <table className="w-full text-left text-xs border-collapse font-poppins">
           <thead>
             <tr className="bg-[#F4F2F0] border-b border-wbk-lightgrey text-wbk-black uppercase tracking-wider text-[10px] font-semibold select-none">
+              <th className="py-3 px-3 w-10 text-center">
+                <input
+                  type="checkbox"
+                  checked={
+                    filteredProducts.length > 0 &&
+                    filteredProducts.every((p) => selectedIds.includes(p.id))
+                  }
+                  onChange={handleSelectAllFiltered}
+                  className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                  title="Select / Deselect all filtered products"
+                />
+              </th>
               <th className="py-3 px-3 w-16">ID</th>
               <th className="py-3 px-3 w-16">Image</th>
-              <th className="py-3 px-4 min-w-[200px]">Product Name & Type</th>
+              <th className="py-3 px-4 min-w-[200px]">Product Name & Tags</th>
               <th className="py-3 px-3">Category</th>
               <th className="py-3 px-3">Size</th>
               <th className="py-3 px-3">Price (GBP)</th>
@@ -383,14 +591,14 @@ export default function AdminProductsPage() {
           <tbody className="divide-y divide-wbk-lightgrey/40">
             {loading ? (
               <tr>
-                <td colSpan={12} className="py-12 text-center text-wbk-brown">
+                <td colSpan={13} className="py-12 text-center text-wbk-brown">
                   <IconRefresh size={22} className="animate-spin mx-auto mb-2" />
                   Loading products from Supabase...
                 </td>
               </tr>
             ) : filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-12 text-center text-wbk-brown">
+                <td colSpan={13} className="py-12 text-center text-wbk-brown">
                   No products found matching the current filters.
                 </td>
               </tr>
@@ -398,15 +606,31 @@ export default function AdminProductsPage() {
               filteredProducts.map((p) => {
                 const isOnSale = p.sale_percent != null || p.sale_price_gbp != null;
                 const isHidden = p.visibility === "Hidden";
+                const isSelected = selectedIds.includes(p.id);
                 const imgUrl = p.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp";
 
                 return (
                   <tr
                     key={p.id}
                     className={`hover:bg-[#FBF9F8] transition-colors group ${
-                      isHidden ? "opacity-60 bg-gray-50/50" : ""
+                      isSelected
+                        ? "bg-amber-50/40"
+                        : isHidden
+                        ? "opacity-60 bg-gray-50/50"
+                        : ""
                     }`}
                   >
+                    {/* Selection Checkbox */}
+                    <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectProduct(p.id)}
+                        className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                        title={`Select product #${p.id}`}
+                      />
+                    </td>
+
                     {/* ID */}
                     <td className="py-3 px-3 font-mono font-semibold text-wbk-brown">
                       #{p.id}
@@ -425,7 +649,7 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
 
-                    {/* Name & Type */}
+                    {/* Name & Type & Tags */}
                     <td className="py-3 px-4">
                       <div className="font-medium text-wbk-black line-clamp-1 max-w-xs">
                         {p.name}
@@ -449,6 +673,34 @@ export default function AdminProductsPage() {
                           </>
                         )}
                       </div>
+
+                      {/* Tags Badges */}
+                      {Array.isArray(p.tags) && p.tags.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                          {p.tags.map((tId) => {
+                            const tagObj = tagsList.find((t) => t.id === tId || t.slug === tId);
+                            const color = tagObj?.color || "#D4AF37";
+                            const name = tagObj?.name || tId;
+                            return (
+                              <span
+                                key={tId}
+                                className="text-[9px] px-1.5 py-0.2 rounded-xs font-semibold tracking-wide border flex items-center gap-1"
+                                style={{
+                                  borderColor: color,
+                                  backgroundColor: `${color}15`,
+                                  color: color,
+                                }}
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: color }}
+                                />
+                                <span>{name}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </td>
 
                     {/* Category */}
@@ -574,12 +826,78 @@ export default function AdminProductsPage() {
         </table>
       </div>
 
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#090A0A] text-white px-5 py-3 shadow-2xl border border-white/10 flex items-center gap-4 animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-wbk-gold animate-pulse" />
+            <span className="text-xs font-semibold">
+              <strong>{selectedIds.length}</strong> products selected
+            </span>
+          </div>
+
+          <div className="h-4 w-px bg-white/20" />
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsBulkOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-wbk-gold text-wbk-black hover:bg-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              <IconAdjustments size={14} />
+              <span>Bulk Edit Parameters</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleBulkQuickVisibility("Visible")}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer"
+            >
+              Make Visible
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleBulkQuickVisibility("Hidden")}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer"
+            >
+              Make Hidden
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="px-3 py-1.5 bg-red-900/60 hover:bg-red-700 text-red-200 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+            >
+              Delete Selected
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+              title="Deselect all"
+            >
+              <IconX size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Edit Drawer Modal */}
       <ProductEditDrawer
         product={selectedProduct}
         isOpen={Boolean(selectedProduct)}
         onClose={() => setSelectedProduct(null)}
         onSaveSuccess={handleSaveSuccess}
+      />
+
+      {/* Bulk Product Edit Modal */}
+      <BulkProductEditModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        selectedProductIds={selectedIds}
+        onBulkUpdateSuccess={handleBulkUpdateSuccess}
       />
 
       {/* Add Product Modal */}
@@ -615,12 +933,22 @@ export default function AdminProductsPage() {
                     onChange={(e) => setNewProductCategory(e.target.value)}
                     className="w-full p-2.5 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
                   >
-                    <option value="beds">Murphy Beds</option>
-                    <option value="sofas">Sofas</option>
-                    <option value="tables">Tables & Desks</option>
-                    <option value="mattresses">Mattresses</option>
-                    <option value="cabinets">Cabinets</option>
-                    <option value="extras">Extras & Accessories</option>
+                    {categoriesList.length > 0 ? (
+                      categoriesList.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name || c.title}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="beds">Murphy Beds</option>
+                        <option value="sofas">Sofas</option>
+                        <option value="tables">Tables & Desks</option>
+                        <option value="mattresses">Mattresses</option>
+                        <option value="cabinets">Cabinets</option>
+                        <option value="extras">Extras & Accessories</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -754,6 +1082,51 @@ export default function AdminProductsPage() {
                   />
                 </div>
               </div>
+
+              {/* Tag Picker */}
+              {tagsList.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-xs font-medium text-wbk-brown uppercase tracking-wider flex items-center gap-1">
+                    <IconTag size={13} className="text-wbk-gold" />
+                    <span>Assign Tags ({newProductTags.length} selected)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-[#FBF9F8] border border-wbk-lightgrey">
+                    {tagsList.map((tag) => {
+                      const isSel = newProductTags.includes(tag.id || tag.slug);
+                      const col = tag.color || "#D4AF37";
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() =>
+                            setNewProductTags((prev) =>
+                              prev.includes(tag.id || tag.slug)
+                                ? prev.filter((t) => t !== (tag.id || tag.slug))
+                                : [...prev, tag.id || tag.slug]
+                            )
+                          }
+                          style={{
+                            borderColor: isSel ? col : undefined,
+                            backgroundColor: isSel ? `${col}18` : undefined,
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 text-xs transition-all border cursor-pointer ${
+                            isSel
+                              ? "font-medium text-wbk-black border-2"
+                              : "bg-white border-wbk-lightgrey text-wbk-brown hover:border-wbk-black"
+                          }`}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: col }}
+                          />
+                          <span>{tag.name}</span>
+                          {isSel && <IconCheck size={12} className="stroke-[3]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-3">
                 <button

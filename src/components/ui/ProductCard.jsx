@@ -5,6 +5,8 @@ import Link from "next/link";
 import { IconShoppingCart, IconHeart } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice, formatSizeLabel } from "@/lib/i18n";
+import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
+import { TagBadge } from "@/components/ui/TagBadge";
 import { QuickAddModal } from "@/components/product/QuickAddModal";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 
@@ -68,6 +70,12 @@ export function ProductCard({ product, className = "" }) {
       Number(product.stock) <= 0) ||
     product.in_stock === false;
 
+  // Tag metadata
+  const productTags = Array.isArray(product.tags)
+    ? product.tags.map(getTagMeta).filter(Boolean)
+    : [];
+  const primaryTag = productTags[0] || null;
+
   return (
     <>
       <Link href={link} className={`group block space-y-4 ${className}`}>
@@ -103,10 +111,24 @@ export function ProductCard({ product, className = "" }) {
               {t("product.sale", "Sale")} {pricing.discountLabel || (pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : "")}
             </span>
           )}
+
+          {/* Primary Tag badge */}
+          {primaryTag && (
+            <TagBadge tagIdOrSlug={primaryTag.id} locale={locale} variant="corner" />
+          )}
         </div>
 
         {/* Product Text Details */}
         <div className="space-y-2 px-1">
+          {/* Tags row */}
+          {productTags.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {productTags.map((t) => (
+                <TagBadge key={t.id} tagIdOrSlug={t.id} locale={locale} variant="micro" />
+              ))}
+            </div>
+          )}
+
           {/* Title */}
           <h3 className="font-poppins font-medium text-base text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
             {title}

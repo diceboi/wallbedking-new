@@ -38,6 +38,8 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice, formatPrice } from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
+import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
+import { TagBadge } from "@/components/ui/TagBadge";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 
@@ -753,6 +755,15 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
+
+              {/* Product Tags */}
+              {Array.isArray(displayProduct?.tags) && displayProduct.tags.length > 0 && (
+                <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                  {displayProduct.tags.map((tId) => (
+                    <TagBadge key={tId} tagIdOrSlug={tId} locale={locale} variant="micro" />
+                  ))}
+                </div>
+              )}
               {isOutOfStock ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
@@ -822,6 +833,15 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
+
+                  {/* Product Tags (Desktop) */}
+                  {Array.isArray(displayProduct?.tags) && displayProduct.tags.length > 0 && (
+                    <div className="flex items-center gap-2 pt-2 flex-wrap">
+                      {displayProduct.tags.map((tId) => (
+                        <TagBadge key={tId} tagIdOrSlug={tId} locale={locale} variant="pdp" />
+                      ))}
+                    </div>
+                  )}
                   {isOutOfStock ? (
                     <div className="flex flex-wrap items-center gap-2 pt-2">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">

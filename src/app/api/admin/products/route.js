@@ -92,7 +92,7 @@ export async function POST(request) {
         .replace(/^-|-$/g, "");
     }
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+    let res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
       method: "POST",
       headers: {
         ...headers,
@@ -103,12 +103,36 @@ export async function POST(request) {
 
     if (!res.ok) {
       const errText = await res.text();
-      let errMsg = errText;
-      try {
-        const errObj = JSON.parse(errText);
-        errMsg = errObj.message || errObj.details || errText;
-      } catch (_) {}
-      return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
+      if (errText.includes("does not exist") || errText.includes("Could not find")) {
+        const safePayload = { ...body };
+        delete safePayload.tags;
+        delete safePayload.sku;
+        delete safePayload.ean_uk;
+        delete safePayload.ean_us;
+        delete safePayload.ean_de;
+        delete safePayload.ean_fr;
+        delete safePayload.ean_es;
+        delete safePayload.ean_it;
+        delete safePayload.ean_pt;
+
+        res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          method: "POST",
+          headers: {
+            ...headers,
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(safePayload),
+        });
+      }
+
+      if (!res.ok) {
+        let errMsg = errText;
+        try {
+          const errObj = JSON.parse(errText);
+          errMsg = errObj.message || errObj.details || errText;
+        } catch (_) {}
+        return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
+      }
     }
 
     const created = await res.json();

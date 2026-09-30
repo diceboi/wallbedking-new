@@ -62,6 +62,7 @@ export async function PATCH(request, { params }) {
       // If column does not exist yet in Supabase table (before SQL migration)
       if (err.includes("does not exist") || err.includes("Could not find")) {
         const safePayload = { ...body };
+        delete safePayload.tags;
         delete safePayload.sku;
         delete safePayload.ean_uk;
         delete safePayload.ean_us;

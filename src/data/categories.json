@@ -1,0 +1,91 @@
+[
+  {
+    "id": "beds",
+    "name": "Murphy Beds (Wall Beds)",
+    "title": "Murphy Beds (Wall Beds)",
+    "slug": "beds",
+    "description": "Premium vertical and horizontal wall beds with gas piston counterbalancing mechanism and integrated slatted bed frame.",
+    "subcategories": [
+      "Classic Vertical",
+      "Classic Horizontal",
+      "Studio Vertical Desk Bed",
+      "Studio Horizontal Desk Bed",
+      "Integrated Front Bed"
+    ],
+    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    "display_order": 1
+  },
+  {
+    "id": "sofas",
+    "name": "Sofas & Modular Fronts",
+    "title": "Sofas & Modular Fronts",
+    "slug": "sofas",
+    "description": "Modular sofas, chaise lounges, and ottomans engineered specifically to fit seamlessly in front of WallBedKing murphy beds.",
+    "subcategories": [
+      "Modular 2-Seater Sofa",
+      "Modular 3-Seater Sofa",
+      "L-Shape Chaise Lounge Extension",
+      "Storage Ottoman Footstool"
+    ],
+    "image": "/product-images/morphy-integrated/160x200-4.jpg",
+    "display_order": 2
+  },
+  {
+    "id": "tables",
+    "name": "Smart & Transforming Tables",
+    "title": "Smart & Transforming Tables",
+    "slug": "tables",
+    "description": "Multifunctional, height-adjustable, drop-leaf and extending tables engineered for compact living and seamless bed pairing.",
+    "subcategories": [
+      "Transforming Coffee-to-Dining Table",
+      "Wall-Mounted Drop-Leaf Folding Table",
+      "Extending Console-to-Dining Table",
+      "Compact Bed-Front Side Table"
+    ],
+    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    "display_order": 3
+  },
+  {
+    "id": "mattresses",
+    "name": "Mattresses",
+    "title": "Mattresses",
+    "slug": "mattresses",
+    "description": "Rigorously tested, max. 30 cm depth orthopaedic memory foam and pocket sprung mattresses crafted for vertical storage.",
+    "subcategories": [
+      "Orthopaedic Memory Foam",
+      "Pocket Spring Hybrid Comfort",
+      "Hypoallergenic Slim Mattress"
+    ],
+    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    "display_order": 4
+  },
+  {
+    "id": "cabinets",
+    "name": "Cabinets & Bookcases",
+    "title": "Cabinets & Bookcases",
+    "slug": "cabinets",
+    "description": "Matching modular wardrobes, shelving systems, and overhead bridge storage designed to complement wall bed finishes.",
+    "subcategories": [
+      "Single Wardrobe with Hanging Rail",
+      "Bookcase Shelf Unit with Soft-Close Doors",
+      "Overhead Bridge Storage"
+    ],
+    "image": "/product-images/morphy-integrated/160x200-6.jpg",
+    "display_order": 5
+  },
+  {
+    "id": "extras",
+    "name": "Extras & Accessories",
+    "title": "Extras & Accessories",
+    "slug": "extras",
+    "description": "Integrated dual LED reading lights, recessed USB-C fast charging stations, headboards, and mattress retaining straps.",
+    "subcategories": [
+      "Integrated Dual LED Reading Lights",
+      "Recessed USB-C Fast Charger Ports",
+      "Upholstered Padded Headboard",
+      "Mattress Retaining Straps"
+    ],
+    "image": "/product-images/morphy-integrated/160x200-8.jpg",
+    "display_order": 6
+  }
+]

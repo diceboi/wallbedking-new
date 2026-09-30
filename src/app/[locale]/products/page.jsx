@@ -27,6 +27,8 @@ import {
 } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice } from "@/lib/i18n";
+import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
+import { TagIcon } from "@/components/ui/TagBadge";
 
 // Multi-language string normalization for Hungarian and English search
 const normalizeStr = (s) =>
@@ -50,6 +52,7 @@ function ProductsSearchContent() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [selectedStock, setSelectedStock] = useState("All");
+  const [selectedTag, setSelectedTag] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   // Sentinel & Sticky filter bar state
@@ -100,11 +103,18 @@ function ProductsSearchContent() {
     } else {
       setSelectedStock("All");
     }
+
+    const tag = searchParams?.get("tag");
+    if (tag) {
+      setSelectedTag(tag);
+    } else {
+      setSelectedTag("All");
+    }
   }, [searchParams]);
 
   // Sync state updates to URL parameters without reloading
   const updateUrlParams = useCallback(
-    (newQ, newCat, newOrient, newType, newPrice, newStock) => {
+    (newQ, newCat, newOrient, newType, newPrice, newStock, newTag) => {
       if (typeof window === "undefined") return;
       const url = new URL(window.location.href);
 
@@ -146,9 +156,16 @@ function ProductsSearchContent() {
         url.searchParams.delete("stock");
       }
 
+      const tagVal = newTag !== undefined ? newTag : selectedTag;
+      if (tagVal && tagVal !== "All") {
+        url.searchParams.set("tag", tagVal);
+      } else {
+        url.searchParams.delete("tag");
+      }
+
       window.history.replaceState(null, "", url.toString());
     },
-    []
+    [selectedTag]
   );
 
   // Track sticky state for the filter bar
@@ -192,7 +209,8 @@ function ProductsSearchContent() {
       selectedOrientation,
       selectedType,
       selectedPrice,
-      selectedStock
+      selectedStock,
+      selectedTag
     );
     scrollToProducts();
   };
@@ -206,7 +224,8 @@ function ProductsSearchContent() {
       selectedOrientation,
       selectedType,
       selectedPrice,
-      selectedStock
+      selectedStock,
+      selectedTag
     );
   };
 
@@ -271,6 +290,13 @@ function ProductsSearchContent() {
           extras: "tartozek kiegészítő alkatresz gazteleszkop gas strut led",
         }[prod.parent_category] || "";
 
+      const tagKeywords = (prod.tags || [])
+        .map((tagId) => {
+          const meta = getTagMeta(tagId);
+          return meta ? `${meta.name} ${meta.slug} ${getLocalizedTagName(tagId, locale)}` : tagId;
+        })
+        .join(" ");
+
       const searchableText = normalizeStr(
         [
           prod.name,
@@ -284,6 +310,7 @@ function ProductsSearchContent() {
           prod.tagline,
           prod.badge,
           catSynonyms,
+          tagKeywords,
           variantKeywords,
         ]
           .filter(Boolean)
@@ -370,6 +397,13 @@ function ProductsSearchContent() {
       });
     }
 
+    // 7. Tag Filter
+    if (selectedTag !== "All") {
+      list = list.filter((item) => {
+        return Array.isArray(item.tags) && item.tags.includes(selectedTag);
+      });
+    }
+
     return list;
   }, [
     searchableProducts,
@@ -379,6 +413,7 @@ function ProductsSearchContent() {
     selectedType,
     selectedPrice,
     selectedStock,
+    selectedTag,
     locale,
   ]);
 
@@ -429,13 +464,18 @@ function ProductsSearchContent() {
     return ["All", ...types];
   }, [searchableProducts, selectedCategory]);
 
+  const availableTags = useMemo(() => {
+    return getAllTags();
+  }, []);
+
   const hasActiveFilters =
     Boolean(activeQuery) ||
     selectedCategory !== "All" ||
     selectedOrientation !== "All" ||
     selectedType !== "All" ||
     selectedPrice !== "All" ||
-    selectedStock !== "All";
+    selectedStock !== "All" ||
+    selectedTag !== "All";
 
   const clearAllFilters = () => {
     setActiveQuery("");
@@ -445,7 +485,8 @@ function ProductsSearchContent() {
     setSelectedType("All");
     setSelectedPrice("All");
     setSelectedStock("All");
-    updateUrlParams("", "All", "All", "All", "All", "All");
+    setSelectedTag("All");
+    updateUrlParams("", "All", "All", "All", "All", "All", "All");
   };
 
   const popularSuggestions = [
@@ -912,7 +953,8 @@ function ProductsSearchContent() {
                               selectedOrientation,
                               selectedType,
                               selectedPrice,
-                              opt.key
+                              opt.key,
+                              selectedTag
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -930,6 +972,106 @@ function ProductsSearchContent() {
                   )}
                 </div>
               </SwiperSlide>
+
+              {/* 6. Tag Filter */}
+              {availableTags.length > 0 && (
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                  <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDropdown(activeDropdown === "tag" ? null : "tag")}
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                        selectedTag !== "All"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <TagIcon
+                          tagIdOrSlug={selectedTag !== "All" ? selectedTag : "tag"}
+                          size={13}
+                          className={selectedTag !== "All" ? "text-wbk-black" : "text-wbk-brown"}
+                        />
+                        <span>
+                          {t("common.tags", "Tag")}:{" "}
+                          <strong className="font-semibold">
+                            {selectedTag === "All"
+                              ? t("categories.all", "All")
+                              : getLocalizedTagName(selectedTag, locale)}
+                          </strong>
+                        </span>
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${
+                          activeDropdown === "tag" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        }`}
+                      />
+                    </button>
+
+                    {activeDropdown === "tag" && (
+                      <div className="absolute top-full right-0 sm:left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[200px] rounded-none">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTag("All");
+                            updateUrlParams(
+                              activeQuery,
+                              selectedCategory,
+                              selectedOrientation,
+                              selectedType,
+                              selectedPrice,
+                              selectedStock,
+                              "All"
+                            );
+                            setActiveDropdown(null);
+                            scrollToProducts();
+                          }}
+                          className={`w-full text-left px-4 py-2 text-xs rounded-none transition-colors whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                            selectedTag === "All"
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                          }`}
+                        >
+                          <TagIcon tagIdOrSlug="tag" size={13} className="text-wbk-brown shrink-0" />
+                          <span>{t("categories.all", "All Tags")}</span>
+                        </button>
+                        {availableTags.map((tag) => (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTag(tag.id);
+                              updateUrlParams(
+                                activeQuery,
+                                selectedCategory,
+                                selectedOrientation,
+                                selectedType,
+                                selectedPrice,
+                                selectedStock,
+                                tag.id
+                              );
+                              setActiveDropdown(null);
+                              scrollToProducts();
+                            }}
+                            className={`w-full text-left px-4 py-2 text-xs rounded-none transition-colors whitespace-nowrap cursor-pointer flex items-center justify-between gap-3 ${
+                              selectedTag === tag.id
+                                ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                                : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <TagIcon tagIdOrSlug={tag.id} size={13} className="text-wbk-black/75 shrink-0" />
+                              <span>{getLocalizedTagName(tag.id, locale)}</span>
+                            </span>
+                            {selectedTag === tag.id && <IconCheck size={14} className="text-wbk-black" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              )}
 
               {/* Reset Filters button */}
               {hasActiveFilters && (
@@ -1064,13 +1206,32 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedStock("All");
-                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, selectedPrice, "All");
+                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, selectedPrice, "All", selectedTag);
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove stock filter"
                 >
                   <span className="font-medium text-white">{t("search.inStockOnly", "In Stock Only")}</span>
+                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                </button>
+              )}
+
+              {selectedTag !== "All" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTag("All");
+                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, selectedPrice, selectedStock, "All");
+                    scrollToProducts();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
+                  title="Remove tag filter"
+                >
+                  <TagIcon tagIdOrSlug={selectedTag} size={12} className="text-white/80 shrink-0" />
+                  <span className="font-medium text-white">
+                    {getLocalizedTagName(selectedTag, locale)}
+                  </span>
                   <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
                 </button>
               )}

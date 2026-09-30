@@ -8,8 +8,11 @@ import {
   IconCheck,
   IconAlertCircle,
   IconRefresh,
+  IconTag,
+  IconPlus,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { TagIcon } from "@/components/ui/TagBadge";
 
 export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [formData, setFormData] = useState(null);
@@ -17,13 +20,68 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [message, setMessage] = useState(null);
   const [notifyRestock, setNotifyRestock] = useState(false);
 
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [tagsList, setTagsList] = useState([]);
+  const [isQuickTagOpen, setIsQuickTagOpen] = useState(false);
+  const [quickTagName, setQuickTagName] = useState("");
+  const [quickTagColor, setQuickTagColor] = useState("#D4AF37");
+
+  useEffect(() => {
+    fetch("/api/admin/categories")
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.categories)) setCategoriesList(d.categories);
+      })
+      .catch((e) => console.warn(e));
+
+    fetch("/api/admin/tags")
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.tags)) setTagsList(d.tags);
+      })
+      .catch((e) => console.warn(e));
+  }, []);
+
   useEffect(() => {
     if (product) {
-      setFormData({ ...product });
+      setFormData({
+        ...product,
+        tags: Array.isArray(product.tags) ? product.tags : [],
+      });
       // If product was out of stock, default notifyRestock to true
       setNotifyRestock(Number(product.stock ?? 0) <= 0);
     }
   }, [product]);
+
+  const toggleTag = (tagId) => {
+    const currentTags = Array.isArray(formData?.tags) ? [...formData.tags] : [];
+    const exists = currentTags.includes(tagId);
+    const newTags = exists
+      ? currentTags.filter((t) => t !== tagId)
+      : [...currentTags, tagId];
+    handleChange("tags", newTags);
+  };
+
+  const handleCreateQuickTag = async (e) => {
+    e.preventDefault();
+    if (!quickTagName.trim()) return;
+    try {
+      const res = await fetch("/api/admin/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: quickTagName.trim(), color: quickTagColor }),
+      });
+      const data = await res.json();
+      if (data.success && data.tag) {
+        setTagsList((prev) => [...prev, data.tag]);
+        toggleTag(data.tag.id);
+        setQuickTagName("");
+        setIsQuickTagOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (!isOpen || !formData) return null;
 
@@ -312,13 +370,54 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   onChange={(e) => handleChange("parent_category", e.target.value)}
                   className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none font-medium text-wbk-black"
                 >
-                  <option value="beds">Murphy Beds (beds)</option>
-                  <option value="sofas">Sofas & Seating (sofas)</option>
-                  <option value="tables">Tables & Desks (tables)</option>
-                  <option value="mattresses">Mattresses (mattresses)</option>
-                  <option value="cabinets">Cabinets & Storage (cabinets)</option>
-                  <option value="extras">Extras & Accessories (extras)</option>
+                  {categoriesList.length > 0 ? (
+                    categoriesList.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name || cat.title} ({cat.id})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="beds">Murphy Beds (beds)</option>
+                      <option value="sofas">Sofas & Seating (sofas)</option>
+                      <option value="tables">Tables & Desks (tables)</option>
+                      <option value="mattresses">Mattresses (mattresses)</option>
+                      <option value="cabinets">Cabinets & Storage (cabinets)</option>
+                      <option value="extras">Extras & Accessories (extras)</option>
+                    </>
+                  )}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-wbk-black mb-1">
+                  Sub-Category / Model Line
+                </label>
+                {(() => {
+                  const currentCategory = categoriesList.find(
+                    (c) => c.id === (formData.parent_category || "beds")
+                  );
+                  const subcats = currentCategory?.subcategories || [];
+                  return (
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        list="subcategories-datalist"
+                        placeholder="e.g. Classic Vertical or custom"
+                        value={formData.sub_category || ""}
+                        onChange={(e) => handleChange("sub_category", e.target.value)}
+                        className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none"
+                      />
+                      {subcats.length > 0 && (
+                        <datalist id="subcategories-datalist">
+                          {subcats.map((sub, idx) => (
+                            <option key={idx} value={sub} />
+                          ))}
+                        </datalist>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>
@@ -390,6 +489,101 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   <option value="Visible">Visible (Published)</option>
                   <option value="Hidden">Hidden (Draft)</option>
                 </select>
+              </div>
+
+              {/* Product Tags (Címkék) Selection Section */}
+              <div className="md:col-span-2 pt-3 border-t border-wbk-lightgrey/50 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <IconTag size={15} className="text-wbk-gold" />
+                    <span className="text-xs font-semibold text-wbk-black uppercase tracking-wider">
+                      Product Tags (Címkék)
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F4F2F0] text-wbk-brown font-mono">
+                      {Array.isArray(formData.tags) ? formData.tags.length : 0} selected
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickTagOpen((v) => !v)}
+                    className="text-[11px] text-wbk-brown hover:text-wbk-black flex items-center gap-1 font-medium transition-colors"
+                  >
+                    <IconPlus size={13} />
+                    <span>{isQuickTagOpen ? "Cancel" : "New Tag"}</span>
+                  </button>
+                </div>
+
+                {/* Quick Add Tag Form */}
+                {isQuickTagOpen && (
+                  <div className="p-3 bg-[#F4F2F0]/80 border border-wbk-lightgrey/70 space-y-2.5 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase text-wbk-black tracking-wider">
+                        Create New Tag
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Tag name (e.g. Clearance)"
+                        value={quickTagName}
+                        onChange={(e) => setQuickTagName(e.target.value)}
+                        className="flex-1 p-1.5 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      />
+                      <input
+                        type="color"
+                        value={quickTagColor}
+                        onChange={(e) => setQuickTagColor(e.target.value)}
+                        className="w-8 h-8 p-0.5 bg-white border border-wbk-lightgrey cursor-pointer shrink-0"
+                        title="Choose tag color"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateQuickTag}
+                        className="px-3 py-1.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-medium rounded-none transition-colors shrink-0"
+                      >
+                        Add & Select
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tag Selection Badges */}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {tagsList.length === 0 ? (
+                    <span className="text-[11px] text-wbk-brown italic">
+                      No tags available yet. Click &quot;New Tag&quot; above to create one.
+                    </span>
+                  ) : (
+                    tagsList.map((tag) => {
+                      const isSelected = Array.isArray(formData.tags) && formData.tags.includes(tag.id || tag.slug);
+
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => toggleTag(tag.id || tag.slug)}
+                          className={`flex items-center gap-1.5 px-3 py-1 text-xs transition-all border select-none cursor-pointer rounded-full ${
+                            isSelected
+                              ? "bg-wbk-black text-white border-wbk-black shadow-xs font-medium"
+                              : "bg-[#FBF9F8] border-wbk-lightgrey/80 text-wbk-black hover:border-wbk-black"
+                          }`}
+                        >
+                          <TagIcon
+                            tagIdOrSlug={tag.id}
+                            iconName={tag.icon}
+                            size={12}
+                            className={isSelected ? "text-white/80 shrink-0" : "text-wbk-black/70 shrink-0"}
+                          />
+                          <span>{tag.name}</span>
+                          {isSelected && (
+                            <IconCheck size={12} className="shrink-0 text-white ml-0.5 stroke-[2.5]" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
   IconBuildingStore,
   IconMail,
   IconStar,
+  IconBookmark,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -56,6 +57,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Categories",
     href: "/admin/categories",
     icon: IconFolder,
+  },
+  {
+    id: "tags",
+    label: "Product Tags",
+    href: "/admin/categories?tab=tags",
+    icon: IconBookmark,
   },
   {
     id: "users",

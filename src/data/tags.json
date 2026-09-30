@@ -1,0 +1,50 @@
+[
+  {
+    "id": "best-seller",
+    "name": "Best Seller",
+    "slug": "best-seller",
+    "icon": "flame",
+    "color": "#090A0A",
+    "description": "Top-rated & most popular customer favorites"
+  },
+  {
+    "id": "new-arrival",
+    "name": "New Arrival",
+    "slug": "new-arrival",
+    "icon": "sparkles",
+    "color": "#090A0A",
+    "description": "Newly launched designs and latest mechanism upgrades"
+  },
+  {
+    "id": "sale",
+    "name": "Special Offer",
+    "slug": "sale",
+    "icon": "tag",
+    "color": "#090A0A",
+    "description": "Discounted products and seasonal promotions"
+  },
+  {
+    "id": "space-saver",
+    "name": "Space Saver",
+    "slug": "space-saver",
+    "icon": "maximize",
+    "color": "#090A0A",
+    "description": "Optimized for studio flats and compact micro-apartments"
+  },
+  {
+    "id": "premium",
+    "name": "Premium Edition",
+    "slug": "premium",
+    "icon": "crown",
+    "color": "#090A0A",
+    "description": "High-end finishes and deluxe engineered materials"
+  },
+  {
+    "id": "quick-ship",
+    "name": "Quick Ship",
+    "slug": "quick-ship",
+    "icon": "truck",
+    "color": "#090A0A",
+    "description": "In stock with rapid delivery dispatch"
+  }
+]
