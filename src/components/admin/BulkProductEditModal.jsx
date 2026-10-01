@@ -10,8 +10,19 @@ import {
   IconFolder,
   IconCurrencyPound,
   IconBox,
+  IconWorld,
 } from "@tabler/icons-react";
 import { TagIcon } from "@/components/ui/TagBadge";
+
+const TARGET_LOCALES = [
+  { code: "en", label: "UK", name: "United Kingdom", flag: "🇬🇧", currency: "GBP (£)" },
+  { code: "us", label: "US", name: "United States", flag: "🇺🇸", currency: "USD ($)" },
+  { code: "de", label: "DE", name: "Germany", flag: "🇩🇪", currency: "EUR (€)" },
+  { code: "fr", label: "FR", name: "France", flag: "🇫🇷", currency: "EUR (€)" },
+  { code: "es", label: "ES", name: "Spain", flag: "🇪🇸", currency: "EUR (€)" },
+  { code: "por", label: "POR", name: "Portugal", flag: "🇵🇹", currency: "EUR (€)" },
+  { code: "it", label: "IT", name: "Italy", flag: "🇮🇹", currency: "EUR (€)" },
+];
 
 export function BulkProductEditModal({
   isOpen,
@@ -35,6 +46,7 @@ export function BulkProductEditModal({
     warranty: false,
     color: false,
     tags: false,
+    locales: false,
     stock: false,
     pricing: false,
   });
@@ -51,6 +63,10 @@ export function BulkProductEditModal({
     color: "Black",
   });
 
+  // Country / Locale options
+  const [localeAction, setLocaleAction] = useState("replace"); // "replace" | "add" | "remove" | "all"
+  const [selectedLocales, setSelectedLocales] = useState(["en", "us", "de", "fr", "es", "por", "it"]);
+
   // Tag options
   const [tagAction, setTagAction] = useState("add"); // "add" | "replace" | "remove"
   const [selectedTags, setSelectedTags] = useState([]);
@@ -66,7 +82,7 @@ export function BulkProductEditModal({
   const [salePercent, setSalePercent] = useState(20);
 
   // Active section tab
-  const [activeTab, setActiveTab] = useState("taxonomy"); // "taxonomy" | "tags" | "inventory" | "pricing"
+  const [activeTab, setActiveTab] = useState("taxonomy"); // "taxonomy" | "markets" | "tags" | "inventory" | "pricing"
 
   useEffect(() => {
     if (isOpen) {
@@ -111,6 +127,23 @@ export function BulkProductEditModal({
     setEnabledFields((prev) => ({ ...prev, tags: true }));
   };
 
+  const toggleLocaleSelection = (code) => {
+    setSelectedLocales((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
+    setEnabledFields((prev) => ({ ...prev, locales: true }));
+  };
+
+  const selectAllLocales = () => {
+    setSelectedLocales(["en", "us", "de", "fr", "es", "por", "it"]);
+    setEnabledFields((prev) => ({ ...prev, locales: true }));
+  };
+
+  const clearAllLocales = () => {
+    setSelectedLocales([]);
+    setEnabledFields((prev) => ({ ...prev, locales: true }));
+  };
+
   const activeFieldsCount = Object.values(enabledFields).filter(Boolean).length;
 
   const handleSubmit = async (e) => {
@@ -138,6 +171,12 @@ export function BulkProductEditModal({
       action: "update",
       updates,
     };
+
+    // Target Markets / Locales
+    if (enabledFields.locales) {
+      payload.localeAction = localeAction;
+      payload.locales = selectedLocales;
+    }
 
     // Tags
     if (enabledFields.tags) {
@@ -259,6 +298,22 @@ export function BulkProductEditModal({
               enabledFields.type ||
               enabledFields.orientation ||
               enabledFields.visibility) && (
+              <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("markets")}
+            className={`py-3 px-4 font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              activeTab === "markets"
+                ? "border-wbk-black text-wbk-black bg-white"
+                : "border-transparent text-wbk-brown hover:text-wbk-black"
+            }`}
+          >
+            <IconWorld size={15} />
+            <span>Target Markets</span>
+            {enabledFields.locales && (
               <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
             )}
           </button>
@@ -471,6 +526,181 @@ export function BulkProductEditModal({
                   </select>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB: Target Markets & Country Visibility */}
+          {activeTab === "markets" && (
+            <div className="space-y-5 bg-white p-5 border border-wbk-lightgrey/60">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-wbk-black uppercase tracking-wider flex items-center gap-1.5">
+                    <IconWorld size={16} className="text-wbk-gold" />
+                    <span>Bulk Country & Market Availability</span>
+                  </h4>
+                  <p className="text-xs text-wbk-brown mt-0.5">
+                    Configure which language countries / regional storefronts display the selected products.
+                  </p>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none bg-[#F4F2F0] px-3 py-1.5 border border-wbk-lightgrey">
+                  <input
+                    type="checkbox"
+                    checked={enabledFields.locales}
+                    onChange={() => toggleField("locales")}
+                    className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-xs font-semibold text-wbk-black">
+                    Apply Market Visibility
+                  </span>
+                </label>
+              </div>
+
+              {enabledFields.locales && (
+                <div className="space-y-4 pt-2 border-t border-wbk-lightgrey/40">
+                  {/* Market Action Mode */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-wbk-black mb-2">
+                      Operation Mode:
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLocaleAction("replace")}
+                        className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
+                          localeAction === "replace"
+                            ? "border-wbk-black bg-[#090A0A] text-white font-medium"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <div className="font-semibold">Set Exact</div>
+                        <div className="text-[10px] opacity-80 mt-0.5">
+                          Replace with chosen markets
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLocaleAction("add")}
+                        className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
+                          localeAction === "add"
+                            ? "border-wbk-black bg-[#090A0A] text-white font-medium"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <div className="font-semibold">Add Markets</div>
+                        <div className="text-[10px] opacity-80 mt-0.5">
+                          Keep existing and add chosen
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLocaleAction("remove")}
+                        className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
+                          localeAction === "remove"
+                            ? "border-wbk-black bg-[#090A0A] text-white font-medium"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <div className="font-semibold">Remove Markets</div>
+                        <div className="text-[10px] opacity-80 mt-0.5">
+                          Hide from chosen markets
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLocaleAction("all");
+                          selectAllLocales();
+                        }}
+                        className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
+                          localeAction === "all"
+                            ? "border-wbk-black bg-[#090A0A] text-white font-medium"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <div className="font-semibold">All Markets</div>
+                        <div className="text-[10px] opacity-80 mt-0.5">
+                          Make visible in all 7 countries
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Market Selection Grid */}
+                  {localeAction !== "all" && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-semibold uppercase text-wbk-black">
+                          Select Target Countries ({selectedLocales.length} of 7 selected):
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={selectAllLocales}
+                            className="text-[11px] text-wbk-black hover:text-wbk-gold font-medium underline cursor-pointer"
+                          >
+                            Select All
+                          </button>
+                          <span className="text-wbk-brown/40">|</span>
+                          <button
+                            type="button"
+                            onClick={clearAllLocales}
+                            className="text-[11px] text-wbk-brown hover:text-red-600 font-medium underline cursor-pointer"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 p-3 bg-[#FBF9F8] border border-wbk-lightgrey">
+                        {TARGET_LOCALES.map((loc) => {
+                          const isSelected = selectedLocales.includes(loc.code);
+                          return (
+                            <label
+                              key={loc.code}
+                              className={`flex items-center justify-between p-3 border cursor-pointer select-none transition-all ${
+                                isSelected
+                                  ? "bg-amber-50/40 border-wbk-black shadow-2xs font-medium"
+                                  : "bg-white border-wbk-lightgrey/80 opacity-60 hover:opacity-100 hover:border-wbk-black"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleLocaleSelection(loc.code)}
+                                  className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                                />
+                                <div>
+                                  <div className="flex items-center gap-1.5 text-xs text-wbk-black">
+                                    <span className="text-base leading-none">{loc.flag}</span>
+                                    <span>{loc.label}</span>
+                                    <span className="text-[10px] text-wbk-brown font-normal">({loc.code})</span>
+                                  </div>
+                                  <div className="text-[10px] text-wbk-brown mt-0.5">
+                                    {loc.name} &bull; {loc.currency}
+                                  </div>
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <IconCheck size={14} className="text-wbk-gold" />
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-amber-50/60 border border-amber-200/60 text-xs text-amber-900 leading-relaxed">
+                    <strong>Note:</strong> Selected changes will be applied to all{" "}
+                    <strong>{selectedProductIds.length}</strong> selected products simultaneously upon saving.
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

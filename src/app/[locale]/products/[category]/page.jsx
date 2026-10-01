@@ -29,6 +29,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { resolveCategory } from "@/data/slugs";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
+import { isProductAvailableInLocale } from "@/lib/products";
 
 export default function CategoryArchivePage() {
   const params = useParams();
@@ -44,8 +45,10 @@ export default function CategoryArchivePage() {
   };
 
   const rawCategoryProducts = useMemo(() => {
-    return ALL_PRODUCTS[currentCategory] || [];
-  }, [currentCategory]);
+    const list = ALL_PRODUCTS[currentCategory] || [];
+    if (!locale) return list;
+    return list.filter((p) => isProductAvailableInLocale(p, locale));
+  }, [currentCategory, locale]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {

@@ -17,6 +17,13 @@ import {
   IconTag,
   IconX,
   IconAdjustments,
+  IconDownload,
+  IconFileSpreadsheet,
+  IconWorld,
+  IconArrowUp,
+  IconArrowDown,
+  IconArrowsSort,
+  IconCopy,
 } from "@tabler/icons-react";
 import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
 import { BulkProductEditModal } from "@/components/admin/BulkProductEditModal";
@@ -38,6 +45,17 @@ const ORIENTATIONS = [
   { id: "Horizontal", label: "Horizontal" },
 ];
 
+const TARGET_MARKETS = [
+  { id: "all", label: "All Markets", flag: "🌍" },
+  { id: "en", label: "UK (en)", flag: "🇬🇧" },
+  { id: "us", label: "US (us)", flag: "🇺🇸" },
+  { id: "de", label: "DE (de)", flag: "🇩🇪" },
+  { id: "fr", label: "FR (fr)", flag: "🇫🇷" },
+  { id: "es", label: "ES (es)", flag: "🇪🇸" },
+  { id: "por", label: "POR (por)", flag: "🇵🇹" },
+  { id: "it", label: "IT (it)", flag: "🇮🇹" },
+];
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +63,12 @@ export default function AdminProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedOrientation, setSelectedOrientation] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedMarket, setSelectedMarket] = useState("all");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Export state
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Bulk operations state
   const [selectedIds, setSelectedIds] = useState([]);
@@ -74,6 +97,13 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchTaxonomy();
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("action") === "export") {
+        setIsExportOpen(true);
+      }
+    }
   }, []);
 
   const fetchTaxonomy = async () => {
@@ -132,18 +162,58 @@ export default function AdminProductsPage() {
     }
   };
 
+  // Sorting handlers
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key !== key) {
+        return { key, direction: "asc" };
+      }
+      if (prev.direction === "asc") {
+        return { key, direction: "desc" };
+      }
+      return { key: null, direction: "asc" };
+    });
+  };
+
+  const handleResetSort = () => {
+    setSortConfig({ key: null, direction: "asc" });
+  };
+
+  const getSortLabel = (key) => {
+    switch (key) {
+      case "id": return "ID";
+      case "name": return "Product Name";
+      case "category": return "Category";
+      case "size": return "Size";
+      case "price_gbp": return "Price GBP (£)";
+      case "price_euro": return "Price EUR (€)";
+      case "price_usd": return "Price USD ($)";
+      case "stock": return "Stock";
+      case "visibility": return "Visibility";
+      default: return key;
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory =
-        selectedCategory === "all" || p.parent_category === selectedCategory;
+        selectedCategory === "all" ||
+        p.parent_category === selectedCategory ||
+        (p.parent_category && p.parent_category.toLowerCase() === selectedCategory.toLowerCase()) ||
+        (p.category && p.category.toLowerCase().includes(selectedCategory.toLowerCase()));
       const matchesOrientation =
         selectedOrientation === "all" || p.orientation === selectedOrientation;
       const matchesTag =
         selectedTag === "all" ||
         (Array.isArray(p.tags) && p.tags.includes(selectedTag));
+      const matchesMarket =
+        selectedMarket === "all" ||
+        (Array.isArray(p.available_locales) && p.available_locales.length > 0
+          ? p.available_locales.includes(selectedMarket)
+          : true);
 
       const q = search.trim().toLowerCase();
-      if (!q) return matchesCategory && matchesOrientation && matchesTag;
+      if (!q) return matchesCategory && matchesOrientation && matchesTag && matchesMarket;
 
       const matchesSearch =
         String(p.id).includes(q) ||
@@ -160,9 +230,258 @@ export default function AdminProductsPage() {
         (p.ean_pt && p.ean_pt.toLowerCase().includes(q)) ||
         (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes(q)));
 
-      return matchesCategory && matchesOrientation && matchesTag && matchesSearch;
+      return matchesCategory && matchesOrientation && matchesTag && matchesMarket && matchesSearch;
     });
-  }, [products, selectedCategory, selectedOrientation, selectedTag, search]);
+  }, [products, selectedCategory, selectedOrientation, selectedTag, selectedMarket, search]);
+
+  // Apply column sorting to filtered products
+  const sortedProducts = useMemo(() => {
+    let result = [...filteredProducts];
+    if (!sortConfig.key) return result;
+
+    const { key, direction } = sortConfig;
+    const mult = direction === "asc" ? 1 : -1;
+
+    result.sort((a, b) => {
+      if (key === "id") {
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "name") {
+        const cmp = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+        return (cmp !== 0 ? cmp : ((Number(a.id) || 0) - (Number(b.id) || 0))) * mult;
+      }
+      if (key === "category") {
+        // If already filtered to a category, sort by subcategory / type / model name
+        const catA = (selectedCategory !== "all" ? (a.sub_category || a.category || a.name || "") : (a.parent_category || ""));
+        const catB = (selectedCategory !== "all" ? (b.sub_category || b.category || b.name || "") : (b.parent_category || ""));
+        const cmp = catA.localeCompare(catB, undefined, { sensitivity: "base" });
+        return (cmp !== 0 ? cmp : ((Number(a.id) || 0) - (Number(b.id) || 0))) * mult;
+      }
+      if (key === "size") {
+        const areaA = (Number(a.width) || 0) * (Number(a.length) || 0);
+        const areaB = (Number(b.width) || 0) * (Number(b.length) || 0);
+        if (areaA !== areaB) return (areaA - areaB) * mult;
+        if ((Number(a.width) || 0) !== (Number(b.width) || 0)) {
+          return ((Number(a.width) || 0) - (Number(b.width) || 0)) * mult;
+        }
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "price_gbp") {
+        const pA = Number(a.sale_price_gbp || a.price_gbp || 0);
+        const pB = Number(b.sale_price_gbp || b.price_gbp || 0);
+        if (pA !== pB) return (pA - pB) * mult;
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "price_euro") {
+        const pA = Number(a.sale_price_euro || a.price_euro || 0);
+        const pB = Number(b.sale_price_euro || b.price_euro || 0);
+        if (pA !== pB) return (pA - pB) * mult;
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "price_usd") {
+        const pA = Number(a.sale_price_usd || a.price_usd || 0);
+        const pB = Number(b.sale_price_usd || b.price_usd || 0);
+        if (pA !== pB) return (pA - pB) * mult;
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "stock") {
+        const sA = Number(a.stock) ?? 100;
+        const sB = Number(b.stock) ?? 100;
+        if (sA !== sB) return (sA - sB) * mult;
+        return ((Number(a.id) || 0) - (Number(b.id) || 0)) * mult;
+      }
+      if (key === "visibility") {
+        const vA = a.visibility || "Visible";
+        const vB = b.visibility || "Visible";
+        const cmp = vA.localeCompare(vB);
+        return (cmp !== 0 ? cmp : ((Number(a.id) || 0) - (Number(b.id) || 0))) * mult;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [filteredProducts, sortConfig, selectedCategory]);
+
+  // Export handlers
+  const handleExportCSV = (target = "filtered") => {
+    let exportItems = [];
+    if (target === "selected" && selectedIds.length > 0) {
+      exportItems = products.filter((p) => selectedIds.includes(p.id));
+    } else if (target === "all") {
+      exportItems = [...products];
+    } else {
+      exportItems = [...sortedProducts];
+    }
+
+    if (exportItems.length === 0) {
+      alert("No products to export.");
+      return;
+    }
+
+    const columns = [
+      { key: "id", label: "ID" },
+      { key: "sku", label: "SKU" },
+      { key: "name", label: "Product Name" },
+      { key: "slug", label: "Slug" },
+      { key: "parent_category", label: "Category" },
+      { key: "sub_category", label: "Sub Category" },
+      { key: "type", label: "Type" },
+      { key: "orientation", label: "Orientation" },
+      { key: "width", label: "Width (mm)" },
+      { key: "length", label: "Length (mm)" },
+      {
+        key: "dimensions_cm",
+        label: "Dimensions (cm)",
+        getValue: (p) => (p.width && p.length ? `${Math.round(p.width / 10)}x${Math.round(p.length / 10)}` : ""),
+      },
+      { key: "weight", label: "Weight (kg)" },
+      { key: "stock", label: "Stock" },
+      { key: "visibility", label: "Visibility" },
+      {
+        key: "available_locales",
+        label: "Target Countries",
+        getValue: (p) =>
+          Array.isArray(p.available_locales) && p.available_locales.length > 0
+            ? p.available_locales.join(", ")
+            : "ALL (en, us, de, fr, es, por, it)",
+      },
+      { key: "price_gbp", label: "Price GBP" },
+      { key: "sale_price_gbp", label: "Sale Price GBP" },
+      { key: "price_euro", label: "Price EUR" },
+      { key: "sale_price_euro", label: "Sale Price EUR" },
+      { key: "price_usd", label: "Price USD" },
+      { key: "sale_price_usd", label: "Sale Price USD" },
+      { key: "sale_percent", label: "Sale %" },
+      { key: "ean", label: "Master EAN" },
+      { key: "ean_uk", label: "EAN UK" },
+      { key: "ean_us", label: "EAN US" },
+      { key: "ean_de", label: "EAN DE" },
+      { key: "ean_fr", label: "EAN FR" },
+      { key: "ean_es", label: "EAN ES" },
+      { key: "ean_it", label: "EAN IT" },
+      { key: "ean_pt", label: "EAN PT" },
+      { key: "package_dimensions", label: "Package Dimensions" },
+      { key: "pack_1", label: "Box 1" },
+      { key: "pack_2", label: "Box 2" },
+      { key: "pack_3", label: "Box 3" },
+      { key: "pack_4", label: "Box 4" },
+      {
+        key: "tags",
+        label: "Tags",
+        getValue: (p) => (Array.isArray(p.tags) ? p.tags.join(", ") : ""),
+      },
+      { key: "warranty", label: "Warranty" },
+      { key: "image", label: "Image URL" },
+      { key: "description", label: "Description" },
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return "";
+      const str = String(val);
+      if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const headerLine = columns.map((col) => escapeCsv(col.label)).join(",");
+    const rows = exportItems.map((prod) =>
+      columns.map((col) => escapeCsv(col.getValue ? col.getValue(prod) : prod[col.key])).join(",")
+    );
+
+    const csvContent = "\uFEFF" + [headerLine, ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.setAttribute("download", `wallbedking-products-${target}-${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setMessage({
+      type: "success",
+      text: `Exported ${exportItems.length} products to CSV (Excel & Google Sheets compatible)!`,
+    });
+    setIsExportOpen(false);
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  const handleCopyForGoogleSheets = (target = "filtered") => {
+    let exportItems = [];
+    if (target === "selected" && selectedIds.length > 0) {
+      exportItems = products.filter((p) => selectedIds.includes(p.id));
+    } else if (target === "all") {
+      exportItems = [...products];
+    } else {
+      exportItems = [...sortedProducts];
+    }
+
+    if (exportItems.length === 0) {
+      alert("No products to copy.");
+      return;
+    }
+
+    const columns = [
+      { key: "id", label: "ID" },
+      { key: "sku", label: "SKU" },
+      { key: "name", label: "Product Name" },
+      { key: "parent_category", label: "Category" },
+      { key: "type", label: "Type" },
+      { key: "orientation", label: "Orientation" },
+      {
+        key: "dimensions",
+        label: "Dimensions (cm)",
+        getValue: (p) => (p.width && p.length ? `${Math.round(p.width / 10)}x${Math.round(p.length / 10)}` : ""),
+      },
+      { key: "stock", label: "Stock" },
+      { key: "visibility", label: "Visibility" },
+      {
+        key: "available_locales",
+        label: "Target Countries",
+        getValue: (p) =>
+          Array.isArray(p.available_locales) && p.available_locales.length > 0
+            ? p.available_locales.join(", ")
+            : "ALL",
+      },
+      { key: "price_gbp", label: "Price GBP" },
+      { key: "sale_price_gbp", label: "Sale Price GBP" },
+      { key: "price_euro", label: "Price EUR" },
+      { key: "sale_price_euro", label: "Sale Price EUR" },
+      { key: "price_usd", label: "Price USD" },
+      { key: "sale_price_usd", label: "Sale Price USD" },
+      { key: "ean", label: "EAN" },
+      { key: "package_dimensions", label: "Package Dimensions" },
+    ];
+
+    const cleanTsv = (val) => {
+      if (val === null || val === undefined) return "";
+      return String(val).replace(/[\t\r\n]+/g, " ");
+    };
+
+    const header = columns.map((c) => cleanTsv(c.label)).join("\t");
+    const tsvRows = exportItems.map((prod) =>
+      columns.map((c) => cleanTsv(c.getValue ? c.getValue(prod) : prod[c.key])).join("\t")
+    );
+    const fullTsv = [header, ...tsvRows].join("\n");
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(fullTsv).then(() => {
+        setMessage({
+          type: "success",
+          text: `Copied ${exportItems.length} products to clipboard! Just paste (Ctrl+V) into Google Sheets or Excel.`,
+        });
+        setIsExportOpen(false);
+        setTimeout(() => setMessage(null), 5000);
+      }).catch(() => {
+        alert("Clipboard copy failed. Please use Download CSV instead.");
+      });
+    } else {
+      alert("Clipboard access is not available. Please use Download CSV.");
+    }
+  };
 
   // Bulk selection handlers
   const toggleSelectProduct = (id) => {
@@ -172,7 +491,7 @@ export default function AdminProductsPage() {
   };
 
   const handleSelectAllFiltered = () => {
-    const filteredIds = filteredProducts.map((p) => p.id);
+    const filteredIds = sortedProducts.map((p) => p.id);
     const allSelected =
       filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id));
     if (allSelected) {
@@ -181,6 +500,7 @@ export default function AdminProductsPage() {
       setSelectedIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
     }
   };
+  const handleSelectAll = handleSelectAllFiltered;
 
   const handleBulkQuickVisibility = async (vis) => {
     if (selectedIds.length === 0) return;
@@ -395,6 +715,16 @@ export default function AdminProductsPage() {
 
             <button
               type="button"
+              onClick={() => setIsExportOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs cursor-pointer"
+              title="Export database products to CSV, Excel, or Google Sheets"
+            >
+              <IconFileSpreadsheet size={15} className="text-emerald-700" />
+              <span>Export</span>
+            </button>
+
+            <button
+              type="button"
               onClick={fetchProducts}
               disabled={loading}
               className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer"
@@ -508,6 +838,25 @@ export default function AdminProductsPage() {
                 ))}
               </select>
             </div>
+
+            {/* Market / Country Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-wbk-brown uppercase font-medium flex items-center gap-1">
+                <IconWorld size={13} className="text-wbk-gold" />
+                <span>Market:</span>
+              </span>
+              <select
+                value={selectedMarket}
+                onChange={(e) => setSelectedMarket(e.target.value)}
+                className="text-xs bg-[#FBF9F8] border border-wbk-lightgrey px-2.5 py-1 text-wbk-black rounded-none focus:outline-none"
+              >
+                {TARGET_MARKETS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.flag} {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="relative w-full sm:w-80">
@@ -530,7 +879,7 @@ export default function AdminProductsPage() {
       <div className="flex items-center justify-between text-xs text-wbk-brown px-1">
         <div className="flex items-center gap-3">
           <span>
-            Showing <strong>{filteredProducts.length}</strong> of{" "}
+            Showing <strong>{sortedProducts.length}</strong> of{" "}
             <strong>{products.length}</strong> products.
           </span>
           {selectedIds.length > 0 && (
@@ -552,10 +901,71 @@ export default function AdminProductsPage() {
             </button>
           )}
           <span className="text-[11px] text-wbk-brown/70 italic hidden sm:inline">
-            Check boxes on rows to bulk edit parameters.
+            Check boxes on rows to bulk edit parameters. Click table headers to sort.
           </span>
         </div>
       </div>
+
+      {/* Active Sort & Category Filter Indicator Banner */}
+      {(sortConfig.key || selectedCategory !== "all") && (
+        <div className="flex items-center justify-between bg-amber-50/90 border border-amber-200/90 px-4 py-2 text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-3 flex-wrap">
+            {selectedCategory !== "all" && (
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-wbk-black">Category Filter:</span>
+                <span className="font-bold text-wbk-black px-2 py-0.5 bg-white border border-amber-300">
+                  {categoriesList.find((c) => c.id === selectedCategory)?.name ||
+                    CATEGORIES.find((c) => c.id === selectedCategory)?.label ||
+                    selectedCategory}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("all")}
+                  className="text-[10px] text-wbk-brown hover:text-red-700 underline font-medium cursor-pointer"
+                  title="Clear Category Filter"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            {sortConfig.key && (
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-wbk-black">Active Sort:</span>
+                <span className="font-bold text-wbk-black px-2 py-0.5 bg-white border border-amber-300">
+                  {getSortLabel(sortConfig.key)}
+                </span>
+                <span className="text-[11px] font-semibold text-wbk-brown">
+                  {sortConfig.direction === "asc"
+                    ? "Ascending (A-Z, 0-9 ↑)"
+                    : "Descending (Z-A, 9-0 ↓)"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetSort}
+                  className="text-[10px] text-wbk-brown hover:text-red-700 underline font-medium cursor-pointer"
+                  title="Reset Column Sort"
+                >
+                  Reset Sort
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              handleResetSort();
+              setSelectedCategory("all");
+            }}
+            className="flex items-center gap-1 px-3 py-1 bg-white hover:bg-wbk-black hover:text-white text-wbk-black text-xs font-semibold uppercase tracking-wider border border-amber-300 transition-all cursor-pointer shadow-2xs shrink-0"
+            title="Reset both category filters and sorting to default order"
+          >
+            <IconX size={13} />
+            <span>Reset All</span>
+          </button>
+        </div>
+      )}
 
       {/* Interactive Products Table */}
       <div className="bg-white border border-wbk-lightgrey/60 shadow-xs overflow-x-auto">
@@ -566,44 +976,265 @@ export default function AdminProductsPage() {
                 <input
                   type="checkbox"
                   checked={
-                    filteredProducts.length > 0 &&
-                    filteredProducts.every((p) => selectedIds.includes(p.id))
+                    sortedProducts.length > 0 &&
+                    sortedProducts.every((p) => selectedIds.includes(p.id))
                   }
                   onChange={handleSelectAllFiltered}
                   className="accent-wbk-gold w-4 h-4 cursor-pointer"
                   title="Select / Deselect all filtered products"
                 />
               </th>
-              <th className="py-3 px-3 w-16">ID</th>
+              
+              {/* ID */}
+              <th
+                onClick={() => handleSort("id")}
+                className={`py-3 px-3 w-16 cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "id" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by ID (ascending / descending)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>ID</span>
+                  {sortConfig.key === "id" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Image */}
               <th className="py-3 px-3 w-16">Image</th>
-              <th className="py-3 px-4 min-w-[200px]">Product Name & Tags</th>
-              <th className="py-3 px-3">Category</th>
-              <th className="py-3 px-3">Size</th>
-              <th className="py-3 px-3">Price (GBP)</th>
-              <th className="py-3 px-3">Price (EUR)</th>
-              <th className="py-3 px-3">Price (USD)</th>
+
+              {/* Name */}
+              <th
+                onClick={() => handleSort("name")}
+                className={`py-3 px-4 min-w-[200px] cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "name" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by Product Name (A-Z / Z-A)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Product Name & Tags</span>
+                  {sortConfig.key === "name" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Category */}
+              <th
+                className={`py-2 px-3 transition-colors group select-none ${
+                  sortConfig.key === "category" || selectedCategory !== "all"
+                    ? "bg-amber-100/70 font-bold"
+                    : "hover:bg-[#EAE7E4]"
+                }`}
+              >
+                <div className="flex flex-col gap-1">
+                  <div
+                    onClick={() => handleSort("category")}
+                    className="flex items-center gap-1 cursor-pointer"
+                    title="Click to sort by Category / Subcategory"
+                  >
+                    <span>Category</span>
+                    {sortConfig.key === "category" ? (
+                      sortConfig.direction === "asc" ? (
+                        <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                      ) : (
+                        <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                      )
+                    ) : (
+                      <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                    )}
+                  </div>
+                  {/* Category Filter selector in column header */}
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[9px] py-0.5 px-1 bg-white border border-wbk-lightgrey font-normal normal-case cursor-pointer focus:outline-none focus:border-wbk-black max-w-[110px]"
+                    title="Filter list by Category"
+                  >
+                    <option value="all">All ({products.length})</option>
+                    {(categoriesList.length > 0 ? categoriesList : CATEGORIES.slice(1)).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name || c.title || c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </th>
+
+              {/* Size */}
+              <th
+                onClick={() => handleSort("size")}
+                className={`py-3 px-3 cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "size" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by Size (by surface area and dimensions)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Size</span>
+                  {sortConfig.key === "size" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Price (GBP) */}
+              <th
+                onClick={() => handleSort("price_gbp")}
+                className={`py-3 px-3 cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "price_gbp" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by GBP price (£)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Price (GBP)</span>
+                  {sortConfig.key === "price_gbp" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Price (EUR) */}
+              <th
+                onClick={() => handleSort("price_euro")}
+                className={`py-3 px-3 cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "price_euro" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by EUR price (€)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Price (EUR)</span>
+                  {sortConfig.key === "price_euro" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Price (USD) */}
+              <th
+                onClick={() => handleSort("price_usd")}
+                className={`py-3 px-3 cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "price_usd" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by USD price ($)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Price (USD)</span>
+                  {sortConfig.key === "price_usd" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Sale */}
               <th className="py-3 px-3 text-center">Sale</th>
-              <th className="py-3 px-3 text-center">Stock</th>
-              <th className="py-3 px-3 text-center">Visibility</th>
+
+              {/* Stock */}
+              <th
+                onClick={() => handleSort("stock")}
+                className={`py-3 px-3 text-center cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "stock" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by Stock quantity"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Stock</span>
+                  {sortConfig.key === "stock" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Target Markets */}
+              <th className="py-3 px-2.5 text-center">
+                <span title="Target Market Regional Storefronts">Markets</span>
+              </th>
+
+              {/* Visibility */}
+              <th
+                onClick={() => handleSort("visibility")}
+                className={`py-3 px-3 text-center cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                  sortConfig.key === "visibility" ? "bg-amber-100/70 font-bold" : ""
+                }`}
+                title="Click to sort by Visibility status"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Visibility</span>
+                  {sortConfig.key === "visibility" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={13} className="text-wbk-gold stroke-[2.5]" />
+                    ) : (
+                      <IconArrowDown size={13} className="text-wbk-gold stroke-[2.5]" />
+                    )
+                  ) : (
+                    <IconArrowsSort size={12} className="opacity-0 group-hover:opacity-40 text-wbk-brown transition-opacity" />
+                  )}
+                </div>
+              </th>
+
+              {/* Actions */}
               <th className="py-3 px-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-wbk-lightgrey/40">
             {loading ? (
               <tr>
-                <td colSpan={13} className="py-12 text-center text-wbk-brown">
+                <td colSpan={14} className="py-12 text-center text-wbk-brown">
                   <IconRefresh size={22} className="animate-spin mx-auto mb-2" />
                   Loading products from Supabase...
                 </td>
               </tr>
-            ) : filteredProducts.length === 0 ? (
+            ) : sortedProducts.length === 0 ? (
               <tr>
-                <td colSpan={13} className="py-12 text-center text-wbk-brown">
+                <td colSpan={14} className="py-12 text-center text-wbk-brown">
                   No products found matching the current filters.
                 </td>
               </tr>
             ) : (
-              filteredProducts.map((p) => {
+              sortedProducts.map((p) => {
                 const isOnSale = p.sale_percent != null || p.sale_price_gbp != null;
                 const isHidden = p.visibility === "Hidden";
                 const isSelected = selectedIds.includes(p.id);
@@ -705,9 +1336,18 @@ export default function AdminProductsPage() {
 
                     {/* Category */}
                     <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 text-[10px] uppercase font-semibold bg-[#F4F2F0] text-wbk-black">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory(p.parent_category || "beds")}
+                        title={`Filter list by category: ${p.parent_category || "beds"}`}
+                        className={`px-2 py-0.5 text-[10px] uppercase font-semibold transition-colors cursor-pointer ${
+                          selectedCategory === (p.parent_category || "beds")
+                            ? "bg-wbk-black text-white"
+                            : "bg-[#F4F2F0] text-wbk-black hover:bg-wbk-gold hover:text-white"
+                        }`}
+                      >
                         {p.parent_category || "beds"}
-                      </span>
+                      </button>
                     </td>
 
                     {/* Dimensions */}
@@ -771,6 +1411,62 @@ export default function AdminProductsPage() {
                       >
                         {p.stock ?? 100} in stock
                       </span>
+                    </td>
+
+                    {/* Target Markets */}
+                    <td className="py-3 px-2.5 text-center">
+                      {(() => {
+                        const locs =
+                          Array.isArray(p.available_locales) && p.available_locales.length > 0
+                            ? p.available_locales
+                            : ["en", "us", "de", "fr", "es", "por", "it"];
+                        const isAll = locs.length === 7;
+                        const flagMap = {
+                          en: "🇬🇧",
+                          us: "🇺🇸",
+                          de: "🇩🇪",
+                          fr: "🇫🇷",
+                          es: "🇪🇸",
+                          por: "🇵🇹",
+                          it: "🇮🇹",
+                        };
+
+                        if (isAll) {
+                          return (
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-[#F4F2F0] text-wbk-black rounded-xs border border-wbk-lightgrey/60"
+                              title="Visible across all 7 markets: UK, US, DE, FR, ES, POR, IT"
+                            >
+                              <span>🌍</span>
+                              <span>All (7)</span>
+                            </span>
+                          );
+                        }
+
+                        if (locs.length === 0) {
+                          return (
+                            <span
+                              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200"
+                              title="Hidden from all markets"
+                            >
+                              None
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <div
+                            className="flex items-center justify-center gap-0.5 flex-wrap max-w-[90px] mx-auto cursor-help"
+                            title={`Megjelenik itt: ${locs.join(", ").toUpperCase()}`}
+                          >
+                            {locs.map((l) => (
+                              <span key={l} className="text-xs" title={l.toUpperCase()}>
+                                {flagMap[l] || l}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* Visibility Switch */}
@@ -1145,6 +1841,192 @@ export default function AdminProductsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Export Catalog Modal */}
+      {isExportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg p-6 rounded-none border border-wbk-lightgrey shadow-2xl space-y-5 font-poppins animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-wbk-lightgrey/60 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-50 text-emerald-800 rounded-full">
+                  <IconFileSpreadsheet size={20} />
+                </div>
+                <div>
+                  <h3 className="font-poppins text-base text-wbk-black font-semibold">
+                    Export Product Catalog
+                  </h3>
+                  <p className="text-[11px] text-wbk-brown">
+                    Spreadsheet compatible with Microsoft Excel & Google Sheets
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExportOpen(false)}
+                className="p-1.5 text-wbk-brown hover:text-wbk-black rounded-full hover:bg-[#F4F2F0] transition-colors cursor-pointer"
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+
+            {/* Scope Selection */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase text-wbk-black tracking-wider">
+                Export Scope:
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center justify-between p-3 border cursor-pointer select-none bg-[#FBF9F8] hover:border-wbk-black transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="exportScope"
+                      value="filtered"
+                      defaultChecked
+                      id="scope-filtered"
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-semibold text-wbk-black">
+                        Currently Filtered Products
+                      </div>
+                      <div className="text-[11px] text-wbk-brown">
+                        {sortedProducts.length} products (matching active search, category, and sort)
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 bg-white border border-wbk-lightgrey">
+                    {sortedProducts.length} items
+                  </span>
+                </label>
+
+                {selectedIds.length > 0 && (
+                  <label className="flex items-center justify-between p-3 border cursor-pointer select-none bg-amber-50/50 border-amber-300 hover:border-wbk-black transition-colors">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="radio"
+                        name="exportScope"
+                        value="selected"
+                        id="scope-selected"
+                        className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                      />
+                      <div>
+                        <div className="text-xs font-semibold text-wbk-black">
+                          Selected Products Only
+                        </div>
+                        <div className="text-[11px] text-wbk-brown">
+                          {selectedIds.length} checked products from table
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 bg-wbk-gold text-wbk-black">
+                      {selectedIds.length} items
+                    </span>
+                  </label>
+                )}
+
+                <label className="flex items-center justify-between p-3 border cursor-pointer select-none bg-[#FBF9F8] hover:border-wbk-black transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="exportScope"
+                      value="all"
+                      id="scope-all"
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-semibold text-wbk-black">
+                        Complete Catalog
+                      </div>
+                      <div className="text-[11px] text-wbk-brown">
+                        All active products in database
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 bg-white border border-wbk-lightgrey">
+                    {products.length} items
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Export Action Options */}
+            <div className="space-y-3 pt-2">
+              <label className="block text-xs font-semibold uppercase text-wbk-black tracking-wider">
+                Choose Export Format:
+              </label>
+
+              {/* Action 1: Download CSV */}
+              <button
+                type="button"
+                onClick={() => {
+                  const selectedScope =
+                    document.querySelector('input[name="exportScope"]:checked')?.value || "filtered";
+                  handleExportCSV(selectedScope);
+                }}
+                className="w-full flex items-center justify-between p-3.5 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black transition-all cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <IconDownload size={18} className="text-wbk-gold group-hover:text-wbk-black transition-colors" />
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wider">
+                      Download CSV File (.csv)
+                    </div>
+                    <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
+                      UTF-8 encoded CSV with BOM, opens natively in Excel and Google Sheets
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold uppercase">&rarr;</span>
+              </button>
+
+              {/* Action 2: Copy to Clipboard for Google Sheets */}
+              <button
+                type="button"
+                onClick={() => {
+                  const selectedScope =
+                    document.querySelector('input[name="exportScope"]:checked')?.value || "filtered";
+                  handleCopyForGoogleSheets(selectedScope);
+                }}
+                className="w-full flex items-center justify-between p-3.5 bg-[#F4F2F0] hover:bg-[#EAE7E4] text-wbk-black border border-wbk-lightgrey transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <IconCopy size={18} className="text-wbk-brown group-hover:text-wbk-black" />
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wider">
+                      Copy to Clipboard (Google Sheets &bull; Ctrl+V)
+                    </div>
+                    <div className="text-[10px] text-wbk-brown">
+                      Instantly paste into any Google Sheet or Excel spreadsheet
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold uppercase">&rarr;</span>
+              </button>
+            </div>
+
+            {/* Direct API Info */}
+            <div className="p-3 bg-[#FBF9F8] border border-wbk-lightgrey/80 text-[11px] text-wbk-brown space-y-1">
+              <div className="font-semibold text-wbk-black flex items-center gap-1.5">
+                <span>💡</span>
+                <span>Automated Google Sheets Live Import:</span>
+              </div>
+              <p className="font-mono text-[10px] bg-white p-1.5 border border-wbk-lightgrey select-all break-all">
+                =IMPORTDATA(&quot;{typeof window !== "undefined" ? window.location.origin : ""}/api/admin/products/export&quot;)
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setIsExportOpen(false)}
+                className="px-4 py-2 text-xs font-medium text-wbk-brown hover:text-wbk-black cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

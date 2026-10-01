@@ -20,6 +20,8 @@ export async function POST(request) {
       updates = {},
       tagAction,
       tags = [],
+      localeAction,
+      locales = [],
       priceAdjustment,
       stockAdjustment,
     } = body;
@@ -97,6 +99,22 @@ export async function POST(request) {
         }
       }
 
+      // Locale / Country visibility actions
+      if (localeAction && Array.isArray(locales)) {
+        const currentLocales = Array.isArray(item.available_locales)
+          ? [...item.available_locales]
+          : ["en", "us", "de", "fr", "es", "por", "it"];
+        if (localeAction === "replace" || localeAction === "set") {
+          item.available_locales = [...locales];
+        } else if (localeAction === "add") {
+          item.available_locales = Array.from(new Set([...currentLocales, ...locales]));
+        } else if (localeAction === "remove") {
+          item.available_locales = currentLocales.filter((l) => !locales.includes(l));
+        } else if (localeAction === "all") {
+          item.available_locales = ["en", "us", "de", "fr", "es", "por", "it"];
+        }
+      }
+
       // Price adjustment (% increase or decrease)
       if (priceAdjustment && priceAdjustment.type === "percent" && priceAdjustment.percent) {
         const multiplier = 1 + Number(priceAdjustment.percent) / 100;
@@ -156,6 +174,7 @@ export async function POST(request) {
               delete payload.ean_es;
               delete payload.ean_it;
               delete payload.ean_pt;
+              delete payload.available_locales;
 
               res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${prod.id}`, {
                 method: "PATCH",

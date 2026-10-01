@@ -76,4 +76,20 @@ export async function getProduct(categorySlug, productSlug) {
   return localFallback;
 }
 
+/**
+ * Checks if a product is available in a given locale
+ */
+export function isProductAvailableInLocale(product, locale) {
+  if (!product) return false;
+  if (!locale) return true;
+  if (
+    !product.available_locales ||
+    !Array.isArray(product.available_locales) ||
+    product.available_locales.length === 0
+  ) {
+    return true; // Default: available everywhere
+  }
+  return product.available_locales.includes(locale);
+}
+
 export { findProductBySlug, getProductVariants };

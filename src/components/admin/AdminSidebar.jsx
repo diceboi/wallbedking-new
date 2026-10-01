@@ -18,6 +18,7 @@ import {
   IconMail,
   IconStar,
   IconBookmark,
+  IconFileSpreadsheet,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -39,6 +40,13 @@ export const ADMIN_NAV_ITEMS = [
     href: "/admin/products",
     icon: IconPackage,
     hasCount: true,
+  },
+  {
+    id: "export",
+    label: "Export Catalog",
+    href: "/admin/products?action=export",
+    icon: IconFileSpreadsheet,
+    badge: "CSV",
   },
   {
     id: "feeds",
@@ -182,6 +190,12 @@ export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
               {item.hasCount && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-wbk-gold text-wbk-black leading-none">
                   {item.id === "users" ? (userCount ?? "…") : productCount}
+                </span>
+              )}
+
+              {item.badge && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 leading-none">
+                  {item.badge}
                 </span>
               )}
             </Link>

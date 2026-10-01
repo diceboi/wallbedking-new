@@ -29,6 +29,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { getProductPrice } from "@/lib/i18n";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
+import { isProductAvailableInLocale } from "@/lib/products";
 
 // Multi-language string normalization for Hungarian and English search
 const normalizeStr = (s) =>
@@ -327,6 +328,11 @@ function ProductsSearchContent() {
   // Filter products by search query, category, orientation, type, price, and stock
   const filteredProducts = useMemo(() => {
     let list = searchableProducts;
+
+    // 0. Country / Locale Availability Filter
+    if (locale) {
+      list = list.filter((item) => isProductAvailableInLocale(item, locale));
+    }
 
     // 1. Search Query Multi-token Match
     if (activeQuery && activeQuery.trim().length > 0) {

@@ -75,6 +75,7 @@ export async function PATCH(request, { params }) {
         delete safePayload.pack_2;
         delete safePayload.pack_3;
         delete safePayload.pack_4;
+        delete safePayload.available_locales;
 
         res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
           method: "PATCH",

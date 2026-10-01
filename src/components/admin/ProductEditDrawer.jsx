@@ -10,9 +10,20 @@ import {
   IconRefresh,
   IconTag,
   IconPlus,
+  IconWorld,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { TagIcon } from "@/components/ui/TagBadge";
+
+const TARGET_LOCALES = [
+  { code: "en", label: "UK", name: "United Kingdom", flag: "🇬🇧", currency: "GBP (£)" },
+  { code: "us", label: "US", name: "United States", flag: "🇺🇸", currency: "USD ($)" },
+  { code: "de", label: "DE", name: "Germany", flag: "🇩🇪", currency: "EUR (€)" },
+  { code: "fr", label: "FR", name: "France", flag: "🇫🇷", currency: "EUR (€)" },
+  { code: "es", label: "ES", name: "Spain", flag: "🇪🇸", currency: "EUR (€)" },
+  { code: "por", label: "POR", name: "Portugal", flag: "🇵🇹", currency: "EUR (€)" },
+  { code: "it", label: "IT", name: "Italy", flag: "🇮🇹", currency: "EUR (€)" },
+];
 
 export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [formData, setFormData] = useState(null);
@@ -44,14 +55,37 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
   useEffect(() => {
     if (product) {
+      const defaultLocales = ["en", "us", "de", "fr", "es", "por", "it"];
       setFormData({
         ...product,
         tags: Array.isArray(product.tags) ? product.tags : [],
+        available_locales:
+          Array.isArray(product.available_locales) && product.available_locales.length > 0
+            ? product.available_locales
+            : defaultLocales,
       });
       // If product was out of stock, default notifyRestock to true
       setNotifyRestock(Number(product.stock ?? 0) <= 0);
     }
   }, [product]);
+
+  const toggleLocale = (code) => {
+    const current = Array.isArray(formData?.available_locales)
+      ? [...formData.available_locales]
+      : ["en", "us", "de", "fr", "es", "por", "it"];
+    const next = current.includes(code)
+      ? current.filter((c) => c !== code)
+      : [...current, code];
+    handleChange("available_locales", next);
+  };
+
+  const selectAllLocales = () => {
+    handleChange("available_locales", ["en", "us", "de", "fr", "es", "por", "it"]);
+  };
+
+  const clearAllLocales = () => {
+    handleChange("available_locales", []);
+  };
 
   const toggleTag = (tagId) => {
     const currentTags = Array.isArray(formData?.tags) ? [...formData.tags] : [];
@@ -491,13 +525,13 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 </select>
               </div>
 
-              {/* Product Tags (Címkék) Selection Section */}
+              {/* Product Tags Selection Section */}
               <div className="md:col-span-2 pt-3 border-t border-wbk-lightgrey/50 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <IconTag size={15} className="text-wbk-gold" />
                     <span className="text-xs font-semibold text-wbk-black uppercase tracking-wider">
-                      Product Tags (Címkék)
+                      Product Tags
                     </span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F4F2F0] text-wbk-brown font-mono">
                       {Array.isArray(formData.tags) ? formData.tags.length : 0} selected
@@ -585,6 +619,101 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Section: Target Markets & Country Visibility */}
+          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <IconWorld size={16} className="text-wbk-gold" />
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
+                  Target Markets & Regional Visibility
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllLocales}
+                  className="text-[11px] text-wbk-black hover:text-wbk-gold font-medium underline cursor-pointer"
+                >
+                  Select All
+                </button>
+                <span className="text-wbk-brown/40">|</span>
+                <button
+                  type="button"
+                  onClick={clearAllLocales}
+                  className="text-[11px] text-wbk-brown hover:text-red-600 font-medium underline cursor-pointer"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-wbk-brown">
+              Choose which regional storefronts and language countries display this product. When all are selected, it is visible across all markets.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+              {TARGET_LOCALES.map((loc) => {
+                const isSelected =
+                  Array.isArray(formData.available_locales) &&
+                  formData.available_locales.includes(loc.code);
+
+                return (
+                  <label
+                    key={loc.code}
+                    className={`flex items-center justify-between p-3 border cursor-pointer select-none transition-all ${
+                      isSelected
+                        ? "bg-amber-50/40 border-wbk-black shadow-2xs"
+                        : "bg-[#FBF9F8] border-wbk-lightgrey/70 opacity-60 hover:opacity-100 hover:border-wbk-black"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleLocale(loc.code)}
+                        className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5 font-medium text-xs text-wbk-black">
+                          <span className="text-base leading-none">{loc.flag}</span>
+                          <span>{loc.label}</span>
+                          <span className="text-[10px] text-wbk-brown font-normal">({loc.code})</span>
+                        </div>
+                        <div className="text-[10px] text-wbk-brown mt-0.5">
+                          {loc.name} &bull; {loc.currency}
+                        </div>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-xs">
+                        Active
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="text-[11px] text-wbk-brown flex items-center justify-between pt-1 border-t border-wbk-lightgrey/40">
+              <span>
+                Active markets count:{" "}
+                <strong>
+                  {Array.isArray(formData.available_locales) ? formData.available_locales.length : 7} / 7
+                </strong>
+              </span>
+              {(formData.available_locales?.length === 7 || !formData.available_locales) && (
+                <span className="text-emerald-700 font-semibold text-[10px]">
+                  ✓ Visible across all international storefronts
+                </span>
+              )}
+              {formData.available_locales?.length === 0 && (
+                <span className="text-red-600 font-semibold text-[10px]">
+                  ⚠ Hidden from all storefronts (No active markets)
+                </span>
+              )}
             </div>
           </div>
 

@@ -114,6 +114,7 @@ export async function POST(request) {
         delete safePayload.ean_es;
         delete safePayload.ean_it;
         delete safePayload.ean_pt;
+        delete safePayload.available_locales;
 
         res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
           method: "POST",
