@@ -80,7 +80,11 @@ export async function POST(request, { params }) {
     };
 
     items.push(newItem);
-    fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    } catch (fsErr) {
+      console.warn("[Feeds API] File is read-only (serverless):", fsErr.message);
+    }
 
     // Also attempt Supabase insert if configured
     try {

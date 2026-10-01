@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import fs from "fs";
 import path from "path";
 
@@ -47,7 +48,11 @@ export async function POST(request) {
     if (action === "delete") {
       const idSet = new Set(ids.map(Number));
       const filtered = catalog.filter((p) => !idSet.has(Number(p.id)));
-      fs.writeFileSync(catalogPath, JSON.stringify(filtered, null, 2), "utf-8");
+      try {
+        fs.writeFileSync(catalogPath, JSON.stringify(filtered, null, 2), "utf-8");
+      } catch (fsErr) {
+        console.warn("[Bulk Delete] Local file is read-only (serverless):", fsErr.message);
+      }
 
       if (SUPABASE_URL && SERVICE_KEY) {
         try {
@@ -141,8 +146,12 @@ export async function POST(request) {
       return item;
     });
 
-    // Save updated local JSON catalog
-    fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2), "utf-8");
+    // Save updated local JSON catalog if filesystem is writable
+    try {
+      fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2), "utf-8");
+    } catch (fsErr) {
+      console.warn("[Bulk Update] Local file is read-only (serverless):", fsErr.message);
+    }
 
     // Sync updates to Supabase
     let sbSyncedCount = 0;
@@ -175,6 +184,22 @@ export async function POST(request) {
               delete payload.ean_it;
               delete payload.ean_pt;
               delete payload.available_locales;
+              delete payload.name_en;
+              delete payload.name_us;
+              delete payload.name_de;
+              delete payload.name_fr;
+              delete payload.name_es;
+              delete payload.name_por;
+              delete payload.name_pt;
+              delete payload.name_it;
+              delete payload.gtin_en;
+              delete payload.gtin_us;
+              delete payload.gtin_de;
+              delete payload.gtin_fr;
+              delete payload.gtin_es;
+              delete payload.gtin_por;
+              delete payload.gtin_pt;
+              delete payload.gtin_it;
 
               res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${prod.id}`, {
                 method: "PATCH",

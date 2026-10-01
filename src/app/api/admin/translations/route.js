@@ -119,7 +119,11 @@ export async function POST(request) {
 
       const unflattened = unflattenObject(flatDict);
       const filePath = path.join(dir, `${loc}.json`);
-      fs.writeFileSync(filePath, JSON.stringify(unflattened, null, 2), "utf-8");
+      try {
+        fs.writeFileSync(filePath, JSON.stringify(unflattened, null, 2), "utf-8");
+      } catch (fsErr) {
+        console.warn(`[Translations API] Could not write ${loc}.json (read-only filesystem):`, fsErr.message);
+      }
     }
 
     // Also attempt to upsert to Supabase translations table if service role key is configured

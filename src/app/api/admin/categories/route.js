@@ -25,8 +25,12 @@ const getLocalCategories = () => {
 };
 
 const saveLocalCategories = (categories) => {
-  const filePath = path.join(process.cwd(), "src", "data", "categories.json");
-  fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), "utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "src", "data", "categories.json");
+    fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("[Categories API] File is read-only (serverless environment):", err.message);
+  }
 };
 
 // Calculate product counts per category

@@ -42,6 +42,7 @@ import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
+import { getLocalizedProductName, getLocalizedProductGtin } from "@/lib/products";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -601,24 +602,8 @@ export default function ProductDetailPage() {
   const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
 
-  const currentEan =
-    (locale === "uk" || locale === "en"
-      ? displayProduct?.ean_uk
-      : locale === "de"
-        ? displayProduct?.ean_de
-        : locale === "fr"
-          ? displayProduct?.ean_fr
-          : locale === "it"
-            ? displayProduct?.ean_it
-            : locale === "es"
-              ? displayProduct?.ean_es
-              : locale === "pt"
-                ? displayProduct?.ean_pt
-                : locale === "us"
-                  ? displayProduct?.ean_us
-                  : null) ||
-    displayProduct?.ean ||
-    displayProduct?.ean_uk;
+  const localizedProductName = getLocalizedProductName(displayProduct, locale);
+  const currentEan = getLocalizedProductGtin(displayProduct, locale);
 
   // ── CART INTEGRATION ──
   const { addItem } = useCart();
@@ -628,7 +613,7 @@ export default function ProductDetailPage() {
     const itemToAdd = {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
-      title: displayProduct?.title || displayProduct?.name || "Wall Bed",
+      title: localizedProductName,
       image:
         currentMainImage?.src ||
         displayProduct?.image ||
@@ -655,11 +640,11 @@ export default function ProductDetailPage() {
       : [
           {
             src: displayProduct.image,
-            alt: `${displayProduct.title} Primary View`,
+            alt: `${localizedProductName} Primary View`,
           },
           {
             src: displayProduct.hover_image || displayProduct.hoverImage,
-            alt: `${displayProduct.title} Open View`,
+            alt: `${localizedProductName} Open View`,
           },
           ...GLOBAL_GALLERY_TEMPLATES.filter(
             (img) =>
@@ -735,7 +720,7 @@ export default function ProductDetailPage() {
             {/* Title */}
             <div className="space-y-1">
               <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black leading-tight tracking-tight">
-                {displayProduct.title || displayProduct.name}
+                {localizedProductName}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
                 <span>{formatSizeLabel(productSize)}</span>
@@ -813,7 +798,7 @@ export default function ProductDetailPage() {
 
                 <div className="space-y-1">
                   <h1 className="font-new-york text-3xl xl:text-4xl text-wbk-black leading-tight tracking-tight">
-                    {displayProduct.title || displayProduct.name}
+                    {localizedProductName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
                     <span>{formatSizeLabel(productSize)}</span>
@@ -1654,7 +1639,7 @@ export default function ProductDetailPage() {
               >
                 <div className="space-y-6">
                   <h3 className="font-new-york text-2xl text-wbk-black">
-                    About {displayProduct.title || displayProduct.name}
+                    About {localizedProductName}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
                     {displayProduct.description ||
@@ -1691,7 +1676,7 @@ export default function ProductDetailPage() {
                       )}
                       {currentEan && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">Barcode (EAN)</td>
+                          <td className="py-2.5 font-medium">{locale === "us" ? "GTIN / UPC" : "Barcode (GTIN / EAN)"}</td>
                           <td className="py-2.5 text-right font-mono text-wbk-brown">
                             {currentEan}
                           </td>
@@ -2531,7 +2516,7 @@ export default function ProductDetailPage() {
           {/* Left: Product Name & Selected Size */}
           <div className="flex flex-col flex-1 min-w-0 sm:max-w-xs md:max-w-sm pr-2">
             <span className="font-poppins text-xs sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
-              {displayProduct.title || displayProduct.name}
+              {localizedProductName}
             </span>
             <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
               {formatSizeLabel(productSize || "Standard", locale)}

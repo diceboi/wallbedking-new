@@ -22,8 +22,12 @@ const getLocalTags = () => {
 };
 
 const saveLocalTags = (tags) => {
-  const filePath = path.join(process.cwd(), "src", "data", "tags.json");
-  fs.writeFileSync(filePath, JSON.stringify(tags, null, 2), "utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "src", "data", "tags.json");
+    fs.writeFileSync(filePath, JSON.stringify(tags, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("[Tags ID API] File is read-only (serverless environment):", err.message);
+  }
 };
 
 export async function GET(request, { params }) {

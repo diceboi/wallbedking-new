@@ -19,6 +19,7 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductVariants, formatCatalogItem } from "@/data/products";
 import { getProductPrice, formatPrice, formatSizeLabel } from "@/lib/i18n";
+import { getLocalizedProductName } from "@/lib/products";
 
 export function QuickAddModal({ isOpen, onClose, product }) {
   const { locale, localizedHref, t } = useLocale();
@@ -168,7 +169,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     const itemToAdd = {
       id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${sizeStr}-${activeProduct.orientation || "Vertical"}-${activeProduct.type || "Classic"}`,
       productId: activeProduct.slug || activeProduct.rawId || activeProduct.id,
-      title: activeProduct.title || activeProduct.name || product.title || product.name,
+      title: getLocalizedProductName(activeProduct, locale) || getLocalizedProductName(product, locale),
       image:
         activeProduct.image ||
         product.image ||
@@ -220,7 +221,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                   : product.parent_category || "Wall Bed King"}
               </span>
               <h3 className="font-new-york text-base sm:text-lg text-wbk-black font-semibold truncate max-w-[240px] sm:max-w-xs">
-                {product.title || product.name}
+                {getLocalizedProductName(product, locale)}
               </h3>
             </div>
           </div>
@@ -243,7 +244,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                 product.image ||
                 "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
               }
-              alt={activeProduct.name || product.name}
+              alt={getLocalizedProductName(activeProduct, locale) || getLocalizedProductName(product, locale)}
               className="w-full h-full object-contain"
             />
             {pricing.isOnSale && (

@@ -76,6 +76,22 @@ export async function PATCH(request, { params }) {
         delete safePayload.pack_3;
         delete safePayload.pack_4;
         delete safePayload.available_locales;
+        delete safePayload.name_en;
+        delete safePayload.name_us;
+        delete safePayload.name_de;
+        delete safePayload.name_fr;
+        delete safePayload.name_es;
+        delete safePayload.name_por;
+        delete safePayload.name_pt;
+        delete safePayload.name_it;
+        delete safePayload.gtin_en;
+        delete safePayload.gtin_us;
+        delete safePayload.gtin_de;
+        delete safePayload.gtin_fr;
+        delete safePayload.gtin_es;
+        delete safePayload.gtin_por;
+        delete safePayload.gtin_pt;
+        delete safePayload.gtin_it;
 
         res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
           method: "PATCH",

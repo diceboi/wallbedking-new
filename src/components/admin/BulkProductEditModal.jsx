@@ -11,6 +11,7 @@ import {
   IconCurrencyPound,
   IconBox,
   IconWorld,
+  IconLanguage,
 } from "@tabler/icons-react";
 import { TagIcon } from "@/components/ui/TagBadge";
 
@@ -49,6 +50,8 @@ export function BulkProductEditModal({
     locales: false,
     stock: false,
     pricing: false,
+    localized_names: false,
+    gtins: false,
   });
 
   // Field values
@@ -61,6 +64,20 @@ export function BulkProductEditModal({
     backorder: true,
     warranty: "Lifetime on mechanism",
     color: "Black",
+    name_en: "",
+    name_us: "",
+    name_de: "",
+    name_fr: "",
+    name_es: "",
+    name_por: "",
+    name_it: "",
+    gtin_en: "",
+    gtin_us: "",
+    gtin_de: "",
+    gtin_fr: "",
+    gtin_es: "",
+    gtin_por: "",
+    gtin_it: "",
   });
 
   // Country / Locale options
@@ -165,6 +182,53 @@ export function BulkProductEditModal({
     if (enabledFields.backorder) updates.backorder = Boolean(values.backorder);
     if (enabledFields.warranty) updates.warranty = values.warranty;
     if (enabledFields.color) updates.color = values.color;
+
+    // Localized Product Names
+    if (enabledFields.localized_names) {
+      if (values.name_en?.trim()) updates.name_en = values.name_en.trim();
+      if (values.name_us?.trim()) updates.name_us = values.name_us.trim();
+      if (values.name_de?.trim()) updates.name_de = values.name_de.trim();
+      if (values.name_fr?.trim()) updates.name_fr = values.name_fr.trim();
+      if (values.name_es?.trim()) updates.name_es = values.name_es.trim();
+      if (values.name_por?.trim()) {
+        updates.name_por = values.name_por.trim();
+        updates.name_pt = values.name_por.trim();
+      }
+      if (values.name_it?.trim()) updates.name_it = values.name_it.trim();
+    }
+
+    // Localized GTIN Barcodes
+    if (enabledFields.gtins) {
+      if (values.gtin_en?.trim()) {
+        updates.gtin_en = values.gtin_en.trim();
+        updates.ean_uk = values.gtin_en.trim();
+      }
+      if (values.gtin_us?.trim()) {
+        updates.gtin_us = values.gtin_us.trim();
+        updates.ean_us = values.gtin_us.trim();
+      }
+      if (values.gtin_de?.trim()) {
+        updates.gtin_de = values.gtin_de.trim();
+        updates.ean_de = values.gtin_de.trim();
+      }
+      if (values.gtin_fr?.trim()) {
+        updates.gtin_fr = values.gtin_fr.trim();
+        updates.ean_fr = values.gtin_fr.trim();
+      }
+      if (values.gtin_es?.trim()) {
+        updates.gtin_es = values.gtin_es.trim();
+        updates.ean_es = values.gtin_es.trim();
+      }
+      if (values.gtin_por?.trim()) {
+        updates.gtin_por = values.gtin_por.trim();
+        updates.gtin_pt = values.gtin_por.trim();
+        updates.ean_pt = values.gtin_por.trim();
+      }
+      if (values.gtin_it?.trim()) {
+        updates.gtin_it = values.gtin_it.trim();
+        updates.ean_it = values.gtin_it.trim();
+      }
+    }
 
     const payload = {
       ids: selectedProductIds,
@@ -365,6 +429,22 @@ export function BulkProductEditModal({
               enabledFields.warranty ||
               enabledFields.backorder ||
               enabledFields.color) && (
+              <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("names_gtins")}
+            className={`py-3 px-4 font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              activeTab === "names_gtins"
+                ? "border-wbk-black text-wbk-black bg-white"
+                : "border-transparent text-wbk-brown hover:text-wbk-black"
+            }`}
+          >
+            <IconLanguage size={15} />
+            <span>Names & GTINs</span>
+            {(enabledFields.localized_names || enabledFields.gtins) && (
               <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
             )}
           </button>
@@ -1137,6 +1217,120 @@ export function BulkProductEditModal({
                     onChange={(e) => handleValueChange("color", e.target.value)}
                     className="w-full p-2 text-xs bg-white border border-wbk-lightgrey"
                   />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: Localized Names & GTINs */}
+          {activeTab === "names_gtins" && (
+            <div className="space-y-6 bg-white p-5 border border-wbk-lightgrey/60">
+              <div>
+                <h4 className="text-xs font-semibold text-wbk-black uppercase tracking-wider">
+                  Bulk Override Localized Names & GTINs
+                </h4>
+                <p className="text-[11px] text-wbk-brown mt-0.5">
+                  Update product names and GTIN barcodes across all 7 supported storefront markets simultaneously.
+                </p>
+              </div>
+
+              {/* Localized Names Group */}
+              <div className="p-4 bg-[#FAF9F7] border border-wbk-lightgrey/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={enabledFields.localized_names}
+                      onChange={() => toggleField("localized_names")}
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-wbk-black">
+                      Bulk Update Localized Names
+                    </span>
+                  </label>
+                  {enabledFields.localized_names && (
+                    <span className="text-[10px] bg-wbk-gold/20 text-wbk-black font-semibold px-2 py-0.5 rounded-full">
+                      Enabled
+                    </span>
+                  )}
+                </div>
+
+                {enabledFields.localized_names && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    {[
+                      { key: "name_en", label: "UK / English (EN)", flag: "🇬🇧", placeholder: "English product name" },
+                      { key: "name_us", label: "United States (US)", flag: "🇺🇸", placeholder: "US product name" },
+                      { key: "name_de", label: "Germany (DE)", flag: "🇩🇪", placeholder: "Deutscher Produktname" },
+                      { key: "name_fr", label: "France (FR)", flag: "🇫🇷", placeholder: "Nom du produit en français" },
+                      { key: "name_es", label: "Spain (ES)", flag: "🇪🇸", placeholder: "Nombre en español" },
+                      { key: "name_por", label: "Portugal (POR)", flag: "🇵🇹", placeholder: "Nome em português" },
+                      { key: "name_it", label: "Italy (IT)", flag: "🇮🇹", placeholder: "Nome in italiano" },
+                    ].map((loc) => (
+                      <div key={loc.key} className="space-y-1">
+                        <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                          <span className="text-sm">{loc.flag}</span>
+                          <span>{loc.label}</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={loc.placeholder}
+                          value={values[loc.key] || ""}
+                          onChange={(e) => handleValueChange(loc.key, e.target.value)}
+                          className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Localized GTIN Barcodes Group */}
+              <div className="p-4 bg-[#F4F2F0]/60 border border-wbk-lightgrey/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={enabledFields.gtins}
+                      onChange={() => toggleField("gtins")}
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-wbk-black">
+                      Bulk Update GTIN Barcodes
+                    </span>
+                  </label>
+                  {enabledFields.gtins && (
+                    <span className="text-[10px] bg-wbk-gold/20 text-wbk-black font-semibold px-2 py-0.5 rounded-full">
+                      Enabled
+                    </span>
+                  )}
+                </div>
+
+                {enabledFields.gtins && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    {[
+                      { key: "gtin_en", label: "UK GTIN (EN)", flag: "🇬🇧", placeholder: "GTIN UK" },
+                      { key: "gtin_us", label: "US GTIN / UPC", flag: "🇺🇸", placeholder: "GTIN US" },
+                      { key: "gtin_de", label: "Germany GTIN (DE)", flag: "🇩🇪", placeholder: "GTIN DE" },
+                      { key: "gtin_fr", label: "France GTIN (FR)", flag: "🇫🇷", placeholder: "GTIN FR" },
+                      { key: "gtin_es", label: "Spain GTIN (ES)", flag: "🇪🇸", placeholder: "GTIN ES" },
+                      { key: "gtin_por", label: "Portugal GTIN (POR)", flag: "🇵🇹", placeholder: "GTIN POR" },
+                      { key: "gtin_it", label: "Italy GTIN (IT)", flag: "🇮🇹", placeholder: "GTIN IT" },
+                    ].map((loc) => (
+                      <div key={loc.key} className="space-y-1">
+                        <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                          <span className="text-sm">{loc.flag}</span>
+                          <span>{loc.label}</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={loc.placeholder}
+                          value={values[loc.key] || ""}
+                          onChange={(e) => handleValueChange(loc.key, e.target.value)}
+                          className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

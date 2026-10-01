@@ -75,9 +75,24 @@ export async function GET(request) {
       products = products.filter(
         (p) =>
           String(p.id).includes(q) ||
-          (p.name && p.name.toLowerCase().includes(q)) ||
           (p.sku && p.sku.toLowerCase().includes(q)) ||
-          (p.slug && p.slug.toLowerCase().includes(q))
+          (p.name && p.name.toLowerCase().includes(q)) ||
+          (p.name_en && p.name_en.toLowerCase().includes(q)) ||
+          (p.name_us && p.name_us.toLowerCase().includes(q)) ||
+          (p.name_de && p.name_de.toLowerCase().includes(q)) ||
+          (p.name_fr && p.name_fr.toLowerCase().includes(q)) ||
+          (p.name_es && p.name_es.toLowerCase().includes(q)) ||
+          (p.name_por && p.name_por.toLowerCase().includes(q)) ||
+          (p.name_it && p.name_it.toLowerCase().includes(q)) ||
+          (p.slug && p.slug.toLowerCase().includes(q)) ||
+          (p.gtin_en && p.gtin_en.toLowerCase().includes(q)) ||
+          (p.gtin_us && p.gtin_us.toLowerCase().includes(q)) ||
+          (p.gtin_de && p.gtin_de.toLowerCase().includes(q)) ||
+          (p.gtin_fr && p.gtin_fr.toLowerCase().includes(q)) ||
+          (p.gtin_es && p.gtin_es.toLowerCase().includes(q)) ||
+          (p.gtin_por && p.gtin_por.toLowerCase().includes(q)) ||
+          (p.gtin_it && p.gtin_it.toLowerCase().includes(q)) ||
+          (p.ean && p.ean.toLowerCase().includes(q))
       );
     }
 
@@ -96,7 +111,14 @@ export async function GET(request) {
     const columns = [
       { key: "id", label: "ID" },
       { key: "sku", label: "SKU" },
-      { key: "name", label: "Product Name" },
+      { key: "name", label: "Product Name (Default)" },
+      { key: "name_en", label: "Name EN (UK)" },
+      { key: "name_us", label: "Name US" },
+      { key: "name_de", label: "Name DE" },
+      { key: "name_fr", label: "Name FR" },
+      { key: "name_es", label: "Name ES" },
+      { key: "name_por", label: "Name POR" },
+      { key: "name_it", label: "Name IT" },
       { key: "slug", label: "Slug" },
       { key: "parent_category", label: "Category" },
       { key: "sub_category", label: "Sub Category" },
@@ -128,14 +150,21 @@ export async function GET(request) {
       { key: "price_usd", label: "Price USD" },
       { key: "sale_price_usd", label: "Sale Price USD" },
       { key: "sale_percent", label: "Sale %" },
+      { key: "gtin_en", label: "GTIN EN (UK)" },
+      { key: "gtin_us", label: "GTIN US" },
+      { key: "gtin_de", label: "GTIN DE" },
+      { key: "gtin_fr", label: "GTIN FR" },
+      { key: "gtin_es", label: "GTIN ES" },
+      { key: "gtin_por", label: "GTIN POR" },
+      { key: "gtin_it", label: "GTIN IT" },
       { key: "ean", label: "Master EAN" },
-      { key: "ean_uk", label: "EAN UK" },
-      { key: "ean_us", label: "EAN US" },
-      { key: "ean_de", label: "EAN DE" },
-      { key: "ean_fr", label: "EAN FR" },
-      { key: "ean_es", label: "EAN ES" },
-      { key: "ean_it", label: "EAN IT" },
-      { key: "ean_pt", label: "EAN PT" },
+      { key: "ean_uk", label: "Legacy EAN UK" },
+      { key: "ean_us", label: "Legacy EAN US" },
+      { key: "ean_de", label: "Legacy EAN DE" },
+      { key: "ean_fr", label: "Legacy EAN FR" },
+      { key: "ean_es", label: "Legacy EAN ES" },
+      { key: "ean_it", label: "Legacy EAN IT" },
+      { key: "ean_pt", label: "Legacy EAN PT" },
       { key: "package_dimensions", label: "Package Dimensions" },
       { key: "pack_1", label: "Box 1" },
       { key: "pack_2", label: "Box 2" },

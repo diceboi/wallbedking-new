@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import fs from "fs";
 import path from "path";
 
@@ -47,12 +48,27 @@ export async function POST() {
       }
     }
 
-    fs.writeFileSync(catalogPath, JSON.stringify(localCatalog, null, 2), "utf-8");
+    // Safely attempt to write to local catalog file if filesystem is writable
+    try {
+      fs.writeFileSync(catalogPath, JSON.stringify(localCatalog, null, 2), "utf-8");
+    } catch (fsErr) {
+      // In serverless environments (e.g. Vercel, AWS Lambda), /var/task is read-only (EROFS)
+      console.warn("[Sync Storefront] Local filesystem is read-only (serverless environment):", fsErr.message);
+    }
+
+    // Purge & revalidate storefront caches so live pages serve newest Supabase products
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath("/[locale]/products", "page");
+      revalidatePath("/[locale]/products/[category]", "page");
+    } catch (revErr) {
+      console.warn("[Sync Storefront] Cache revalidation notice:", revErr.message);
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully synchronized ${dbProducts.length} products between Supabase and the storefront catalog.`,
-      count: localCatalog.length,
+      message: `Successfully synchronized ${dbProducts.length} products with the storefront catalog.`,
+      count: dbProducts.length,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

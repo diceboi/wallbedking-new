@@ -36,7 +36,11 @@ export async function PATCH(request, { params }) {
       updated_at: new Date().toISOString(),
     };
 
-    fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    } catch (fsErr) {
+      console.warn("[Feeds SKU API] File is read-only (serverless):", fsErr.message);
+    }
 
     // Also attempt Supabase update
     try {
@@ -71,7 +75,11 @@ export async function DELETE(request, { params }) {
     let items = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
     items = items.filter((p) => p.item_sku !== decodedSku);
 
-    fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(items, null, 2), "utf-8");
+    } catch (fsErr) {
+      console.warn("[Feeds SKU API] File is read-only (serverless):", fsErr.message);
+    }
 
     // Also attempt Supabase delete
     try {

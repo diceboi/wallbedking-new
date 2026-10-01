@@ -56,8 +56,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   useEffect(() => {
     if (product) {
       const defaultLocales = ["en", "us", "de", "fr", "es", "por", "it"];
+      const baseName = product.name || product.title || "";
+      const masterEan = product.ean || "";
       setFormData({
         ...product,
+        name_en: product.name_en ?? baseName,
+        name_us: product.name_us ?? baseName,
+        name_de: product.name_de ?? baseName,
+        name_fr: product.name_fr ?? baseName,
+        name_es: product.name_es ?? baseName,
+        name_por: product.name_por ?? product.name_pt ?? baseName,
+        name_it: product.name_it ?? baseName,
+
+        gtin_en: product.gtin_en ?? product.ean_uk ?? masterEan,
+        gtin_us: product.gtin_us ?? product.ean_us ?? masterEan,
+        gtin_de: product.gtin_de ?? product.ean_de ?? masterEan,
+        gtin_fr: product.gtin_fr ?? product.ean_fr ?? masterEan,
+        gtin_es: product.gtin_es ?? product.ean_es ?? masterEan,
+        gtin_por: product.gtin_por ?? product.gtin_pt ?? product.ean_pt ?? masterEan,
+        gtin_it: product.gtin_it ?? product.ean_it ?? masterEan,
+
         tags: Array.isArray(product.tags) ? product.tags : [],
         available_locales:
           Array.isArray(product.available_locales) && product.available_locales.length > 0
@@ -68,6 +86,36 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
       setNotifyRestock(Number(product.stock ?? 0) <= 0);
     }
   }, [product]);
+
+  const handleCopyBaseNameToAll = () => {
+    const baseName = formData?.name || "";
+    if (!baseName) return;
+    setFormData((prev) => ({
+      ...prev,
+      name_en: baseName,
+      name_us: baseName,
+      name_de: baseName,
+      name_fr: baseName,
+      name_es: baseName,
+      name_por: baseName,
+      name_it: baseName,
+    }));
+  };
+
+  const handleCopyMasterGtinToAll = () => {
+    const master = formData?.ean || formData?.gtin_en || "";
+    if (!master) return;
+    setFormData((prev) => ({
+      ...prev,
+      gtin_en: master,
+      gtin_us: master,
+      gtin_de: master,
+      gtin_fr: master,
+      gtin_es: master,
+      gtin_por: master,
+      gtin_it: master,
+    }));
+  };
 
   const toggleLocale = (code) => {
     const current = Array.isArray(formData?.available_locales)
@@ -284,112 +332,274 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 />
               </div>
 
-              {/* Country-Specific EAN Barcodes */}
+              {/* Country-Specific Localized Product Names */}
+              <div className="md:col-span-2 p-3.5 bg-[#FAF9F7] border border-wbk-lightgrey/80 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider block">
+                      Localized Product Names (Country Specific)
+                    </span>
+                    <span className="text-[10px] text-wbk-brown">
+                      Individual title override for each regional storefront. Takes 100% priority over general translations.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyBaseNameToAll}
+                    className="self-start sm:self-auto px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey transition-colors rounded-none shadow-2xs cursor-pointer"
+                  >
+                    Copy base name to all
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇬🇧</span>
+                      <span>UK / English (EN)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Product name in English"
+                      value={formData.name_en || ""}
+                      onChange={(e) => handleChange("name_en", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇺🇸</span>
+                      <span>United States (US)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Product name in US English"
+                      value={formData.name_us || ""}
+                      onChange={(e) => handleChange("name_us", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇩🇪</span>
+                      <span>Germany / Deutsch (DE)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Deutscher Produktname"
+                      value={formData.name_de || ""}
+                      onChange={(e) => handleChange("name_de", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇫🇷</span>
+                      <span>France / Français (FR)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nom du produit en français"
+                      value={formData.name_fr || ""}
+                      onChange={(e) => handleChange("name_fr", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇪🇸</span>
+                      <span>Spain / Español (ES)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nombre del producto en español"
+                      value={formData.name_es || ""}
+                      onChange={(e) => handleChange("name_es", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇵🇹</span>
+                      <span>Portugal / Português (POR)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nome do produto em português"
+                      value={formData.name_por || ""}
+                      onChange={(e) => {
+                        handleChange("name_por", e.target.value);
+                        handleChange("name_pt", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-wbk-brown flex items-center gap-1.5">
+                      <span className="text-sm">🇮🇹</span>
+                      <span>Italy / Italiano (IT)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nome del prodotto in italiano"
+                      value={formData.name_it || ""}
+                      onChange={(e) => handleChange("name_it", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Country-Specific GTIN Barcodes */}
               <div className="md:col-span-2 p-3.5 bg-[#F4F2F0]/60 border border-wbk-lightgrey/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider">
-                    EAN Barcodes (Country Specific)
-                  </span>
-                  <span className="text-[10px] text-wbk-brown">
-                    Market-specific barcodes for Google Shopping / Logistics
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider block">
+                      GTIN Barcodes (Country Specific)
+                    </span>
+                    <span className="text-[10px] text-wbk-brown">
+                      Market-specific GTIN-13 / EAN / UPC for Google Shopping feed, Amazon & logistics.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyMasterGtinToAll}
+                    className="self-start sm:self-auto px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey transition-colors rounded-none shadow-2xs cursor-pointer"
+                  >
+                    Copy master GTIN to all
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
-                      Default / Master EAN
+                  <div className="col-span-2 sm:col-span-4 bg-white/70 p-2 border border-wbk-lightgrey/50">
+                    <label className="block text-[10px] font-semibold text-wbk-black mb-1">
+                      Master / Default GTIN (Global EAN)
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. 5070502507993"
                       value={formData.ean || ""}
                       onChange={(e) => handleChange("ean", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono font-medium"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇬🇧</span> UK (GB) EAN
+                      <span>🇬🇧</span> UK (GB) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN UK"
-                      value={formData.ean_uk || ""}
-                      onChange={(e) => handleChange("ean_uk", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN UK"
+                      value={formData.gtin_en || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_en", e.target.value);
+                        handleChange("ean_uk", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇺🇸</span> US EAN / UPC
+                      <span>🇺🇸</span> US GTIN / UPC
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN US"
-                      value={formData.ean_us || ""}
-                      onChange={(e) => handleChange("ean_us", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN US"
+                      value={formData.gtin_us || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_us", e.target.value);
+                        handleChange("ean_us", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇩🇪</span> Germany (DE)
+                      <span>🇩🇪</span> Germany (DE) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN DE"
-                      value={formData.ean_de || ""}
-                      onChange={(e) => handleChange("ean_de", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN DE"
+                      value={formData.gtin_de || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_de", e.target.value);
+                        handleChange("ean_de", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇫🇷</span> France (FR)
+                      <span>🇫🇷</span> France (FR) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN FR"
-                      value={formData.ean_fr || ""}
-                      onChange={(e) => handleChange("ean_fr", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN FR"
+                      value={formData.gtin_fr || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_fr", e.target.value);
+                        handleChange("ean_fr", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇪🇸</span> Spain (ES)
+                      <span>🇪🇸</span> Spain (ES) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN ES"
-                      value={formData.ean_es || ""}
-                      onChange={(e) => handleChange("ean_es", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN ES"
+                      value={formData.gtin_es || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_es", e.target.value);
+                        handleChange("ean_es", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇮🇹</span> Italy (IT)
+                      <span>🇵🇹</span> Portugal (POR) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN IT"
-                      value={formData.ean_it || ""}
-                      onChange={(e) => handleChange("ean_it", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN POR"
+                      value={formData.gtin_por || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_por", e.target.value);
+                        handleChange("gtin_pt", e.target.value);
+                        handleChange("ean_pt", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-medium text-wbk-brown mb-0.5 flex items-center gap-1">
-                      <span>🇵🇹</span> Portugal (PT)
+                      <span>🇮🇹</span> Italy (IT) GTIN
                     </label>
                     <input
                       type="text"
-                      placeholder="EAN PT"
-                      value={formData.ean_pt || ""}
-                      onChange={(e) => handleChange("ean_pt", e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
+                      placeholder="GTIN IT"
+                      value={formData.gtin_it || ""}
+                      onChange={(e) => {
+                        handleChange("gtin_it", e.target.value);
+                        handleChange("ean_it", e.target.value);
+                      }}
+                      className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                     />
                   </div>
                 </div>

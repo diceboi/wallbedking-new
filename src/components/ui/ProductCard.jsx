@@ -9,6 +9,7 @@ import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { QuickAddModal } from "@/components/product/QuickAddModal";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
+import { getLocalizedProductName } from "@/lib/products";
 
 const DEFAULT_COLORS = ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"];
 
@@ -19,7 +20,7 @@ export function ProductCard({ product, className = "" }) {
 
   if (!product) return null;
 
-  const title = product.title || product.name || "Wall Bed";
+  const title = getLocalizedProductName(product, locale);
   const orientation = product.orientation || "Vertical";
   const rawSize =
     product.sizeLabel ||
