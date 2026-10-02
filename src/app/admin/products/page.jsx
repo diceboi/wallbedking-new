@@ -28,6 +28,7 @@ import {
 import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
 import { BulkProductEditModal } from "@/components/admin/BulkProductEditModal";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { PRODUCT_EXPORT_COLUMNS, generateCsvContent, generateTsvContent } from "@/lib/product-export";
 
 const CATEGORIES = [
   { id: "all", label: "All Categories" },
@@ -128,7 +129,7 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/products?limit=250");
+      const res = await fetch("/api/admin/products?limit=1000");
       const data = await res.json();
       if (data.success && Array.isArray(data.products)) {
         setProducts(data.products);
@@ -332,92 +333,7 @@ export default function AdminProductsPage() {
       return;
     }
 
-    const columns = [
-      { key: "id", label: "ID" },
-      { key: "sku", label: "SKU" },
-      { key: "name", label: "Product Name (Default)" },
-      { key: "name_en", label: "Name EN (UK)" },
-      { key: "name_us", label: "Name US" },
-      { key: "name_de", label: "Name DE" },
-      { key: "name_fr", label: "Name FR" },
-      { key: "name_es", label: "Name ES" },
-      { key: "name_por", label: "Name POR" },
-      { key: "name_it", label: "Name IT" },
-      { key: "slug", label: "Slug" },
-      { key: "parent_category", label: "Category" },
-      { key: "sub_category", label: "Sub Category" },
-      { key: "type", label: "Type" },
-      { key: "orientation", label: "Orientation" },
-      { key: "width", label: "Width (mm)" },
-      { key: "length", label: "Length (mm)" },
-      {
-        key: "dimensions_cm",
-        label: "Dimensions (cm)",
-        getValue: (p) => (p.width && p.length ? `${Math.round(p.width / 10)}x${Math.round(p.length / 10)}` : ""),
-      },
-      { key: "weight", label: "Weight (kg)" },
-      { key: "stock", label: "Stock" },
-      { key: "visibility", label: "Visibility" },
-      {
-        key: "available_locales",
-        label: "Target Countries",
-        getValue: (p) =>
-          Array.isArray(p.available_locales) && p.available_locales.length > 0
-            ? p.available_locales.join(", ")
-            : "ALL (en, us, de, fr, es, por, it)",
-      },
-      { key: "price_gbp", label: "Price GBP" },
-      { key: "sale_price_gbp", label: "Sale Price GBP" },
-      { key: "price_euro", label: "Price EUR" },
-      { key: "sale_price_euro", label: "Sale Price EUR" },
-      { key: "price_usd", label: "Price USD" },
-      { key: "sale_price_usd", label: "Sale Price USD" },
-      { key: "sale_percent", label: "Sale %" },
-      { key: "gtin_en", label: "GTIN EN (UK)" },
-      { key: "gtin_us", label: "GTIN US" },
-      { key: "gtin_de", label: "GTIN DE" },
-      { key: "gtin_fr", label: "GTIN FR" },
-      { key: "gtin_es", label: "GTIN ES" },
-      { key: "gtin_por", label: "GTIN POR" },
-      { key: "gtin_it", label: "GTIN IT" },
-      { key: "ean", label: "Master EAN" },
-      { key: "ean_uk", label: "Legacy EAN UK" },
-      { key: "ean_us", label: "Legacy EAN US" },
-      { key: "ean_de", label: "Legacy EAN DE" },
-      { key: "ean_fr", label: "Legacy EAN FR" },
-      { key: "ean_es", label: "Legacy EAN ES" },
-      { key: "ean_it", label: "Legacy EAN IT" },
-      { key: "ean_pt", label: "Legacy EAN PT" },
-      { key: "package_dimensions", label: "Package Dimensions" },
-      { key: "pack_1", label: "Box 1" },
-      { key: "pack_2", label: "Box 2" },
-      { key: "pack_3", label: "Box 3" },
-      { key: "pack_4", label: "Box 4" },
-      {
-        key: "tags",
-        label: "Tags",
-        getValue: (p) => (Array.isArray(p.tags) ? p.tags.join(", ") : ""),
-      },
-      { key: "warranty", label: "Warranty" },
-      { key: "image", label: "Image URL" },
-      { key: "description", label: "Description" },
-    ];
-
-    const escapeCsv = (val) => {
-      if (val === null || val === undefined) return "";
-      const str = String(val);
-      if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
-    const headerLine = columns.map((col) => escapeCsv(col.label)).join(",");
-    const rows = exportItems.map((prod) =>
-      columns.map((col) => escapeCsv(col.getValue ? col.getValue(prod) : prod[col.key])).join(",")
-    );
-
-    const csvContent = "\uFEFF" + [headerLine, ...rows].join("\r\n");
+    const csvContent = generateCsvContent(exportItems, PRODUCT_EXPORT_COLUMNS);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -431,7 +347,7 @@ export default function AdminProductsPage() {
 
     setMessage({
       type: "success",
-      text: `Exported ${exportItems.length} products to CSV (Excel & Google Sheets compatible)!`,
+      text: `Exported ${exportItems.length} products to CSV with all ${PRODUCT_EXPORT_COLUMNS.length} columns (Excel & Google Sheets compatible)!`,
     });
     setIsExportOpen(false);
     setTimeout(() => setMessage(null), 4000);
@@ -452,74 +368,22 @@ export default function AdminProductsPage() {
       return;
     }
 
-    const columns = [
-      { key: "id", label: "ID" },
-      { key: "sku", label: "SKU" },
-      { key: "name", label: "Product Name (Default)" },
-      { key: "name_en", label: "Name EN (UK)" },
-      { key: "name_us", label: "Name US" },
-      { key: "name_de", label: "Name DE" },
-      { key: "name_fr", label: "Name FR" },
-      { key: "name_es", label: "Name ES" },
-      { key: "name_por", label: "Name POR" },
-      { key: "name_it", label: "Name IT" },
-      { key: "parent_category", label: "Category" },
-      { key: "type", label: "Type" },
-      { key: "orientation", label: "Orientation" },
-      {
-        key: "dimensions",
-        label: "Dimensions (cm)",
-        getValue: (p) => (p.width && p.length ? `${Math.round(p.width / 10)}x${Math.round(p.length / 10)}` : ""),
-      },
-      { key: "stock", label: "Stock" },
-      { key: "visibility", label: "Visibility" },
-      {
-        key: "available_locales",
-        label: "Target Countries",
-        getValue: (p) =>
-          Array.isArray(p.available_locales) && p.available_locales.length > 0
-            ? p.available_locales.join(", ")
-            : "ALL",
-      },
-      { key: "price_gbp", label: "Price GBP" },
-      { key: "sale_price_gbp", label: "Sale Price GBP" },
-      { key: "price_euro", label: "Price EUR" },
-      { key: "sale_price_euro", label: "Sale Price EUR" },
-      { key: "price_usd", label: "Price USD" },
-      { key: "sale_price_usd", label: "Sale Price USD" },
-      { key: "gtin_en", label: "GTIN EN (UK)" },
-      { key: "gtin_us", label: "GTIN US" },
-      { key: "gtin_de", label: "GTIN DE" },
-      { key: "gtin_fr", label: "GTIN FR" },
-      { key: "gtin_es", label: "GTIN ES" },
-      { key: "gtin_por", label: "GTIN POR" },
-      { key: "gtin_it", label: "GTIN IT" },
-      { key: "ean", label: "Master EAN" },
-      { key: "package_dimensions", label: "Package Dimensions" },
-    ];
-
-    const cleanTsv = (val) => {
-      if (val === null || val === undefined) return "";
-      return String(val).replace(/[\t\r\n]+/g, " ");
-    };
-
-    const header = columns.map((c) => cleanTsv(c.label)).join("\t");
-    const tsvRows = exportItems.map((prod) =>
-      columns.map((c) => cleanTsv(c.getValue ? c.getValue(prod) : prod[c.key])).join("\t")
-    );
-    const fullTsv = [header, ...tsvRows].join("\n");
+    const fullTsv = generateTsvContent(exportItems, PRODUCT_EXPORT_COLUMNS);
 
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(fullTsv).then(() => {
-        setMessage({
-          type: "success",
-          text: `Copied ${exportItems.length} products to clipboard! Just paste (Ctrl+V) into Google Sheets or Excel.`,
+      navigator.clipboard
+        .writeText(fullTsv)
+        .then(() => {
+          setMessage({
+            type: "success",
+            text: `Copied ${exportItems.length} products (${PRODUCT_EXPORT_COLUMNS.length} columns) to clipboard! Just paste (Ctrl+V) into Google Sheets or Excel.`,
+          });
+          setIsExportOpen(false);
+          setTimeout(() => setMessage(null), 5000);
+        })
+        .catch(() => {
+          alert("Clipboard copy failed. Please use Download CSV instead.");
         });
-        setIsExportOpen(false);
-        setTimeout(() => setMessage(null), 5000);
-      }).catch(() => {
-        alert("Clipboard copy failed. Please use Download CSV instead.");
-      });
     } else {
       alert("Clipboard access is not available. Please use Download CSV.");
     }
@@ -1901,7 +1765,7 @@ export default function AdminProductsPage() {
                     Export Product Catalog
                   </h3>
                   <p className="text-[11px] text-wbk-brown">
-                    Spreadsheet compatible with Microsoft Excel & Google Sheets
+                    Spreadsheet compatible with Microsoft Excel & Google Sheets &bull; Complete database export ({PRODUCT_EXPORT_COLUMNS.length} columns)
                   </p>
                 </div>
               </div>
@@ -2017,7 +1881,7 @@ export default function AdminProductsPage() {
                       Download CSV File (.csv)
                     </div>
                     <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
-                      UTF-8 encoded CSV with BOM, opens natively in Excel and Google Sheets
+                      UTF-8 encoded with BOM, all {PRODUCT_EXPORT_COLUMNS.length} columns, opens in Excel & Google Sheets
                     </div>
                   </div>
                 </div>
@@ -2041,7 +1905,7 @@ export default function AdminProductsPage() {
                       Copy to Clipboard (Google Sheets &bull; Ctrl+V)
                     </div>
                     <div className="text-[10px] text-wbk-brown">
-                      Instantly paste into any Google Sheet or Excel spreadsheet
+                      Instantly paste all {PRODUCT_EXPORT_COLUMNS.length} columns into any Google Sheet or Excel spreadsheet
                     </div>
                   </div>
                 </div>

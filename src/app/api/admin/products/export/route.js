@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import catalog from "@/data/products-catalog.json";
+import { PRODUCT_EXPORT_COLUMNS, generateCsvContent } from "@/lib/product-export";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -103,97 +104,13 @@ export async function GET(request) {
       return NextResponse.json({
         success: true,
         count: products.length,
+        columns: PRODUCT_EXPORT_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
         products,
       });
     }
 
-    // Define CSV Headers
-    const columns = [
-      { key: "id", label: "ID" },
-      { key: "sku", label: "SKU" },
-      { key: "name", label: "Product Name (Default)" },
-      { key: "name_en", label: "Name EN (UK)" },
-      { key: "name_us", label: "Name US" },
-      { key: "name_de", label: "Name DE" },
-      { key: "name_fr", label: "Name FR" },
-      { key: "name_es", label: "Name ES" },
-      { key: "name_por", label: "Name POR" },
-      { key: "name_it", label: "Name IT" },
-      { key: "slug", label: "Slug" },
-      { key: "parent_category", label: "Category" },
-      { key: "sub_category", label: "Sub Category" },
-      { key: "type", label: "Type" },
-      { key: "orientation", label: "Orientation" },
-      { key: "width", label: "Width (mm)" },
-      { key: "length", label: "Length (mm)" },
-      {
-        key: "dimensions_cm",
-        label: "Dimensions (cm)",
-        getValue: (p) =>
-          p.width && p.length ? `${Math.round(p.width / 10)}x${Math.round(p.length / 10)}` : "",
-      },
-      { key: "weight", label: "Weight (kg)" },
-      { key: "stock", label: "Stock" },
-      { key: "visibility", label: "Visibility" },
-      {
-        key: "available_locales",
-        label: "Target Countries",
-        getValue: (p) =>
-          Array.isArray(p.available_locales) && p.available_locales.length > 0
-            ? p.available_locales.join(", ")
-            : "ALL (en, us, de, fr, es, por, it)",
-      },
-      { key: "price_gbp", label: "Price GBP" },
-      { key: "sale_price_gbp", label: "Sale Price GBP" },
-      { key: "price_euro", label: "Price EUR" },
-      { key: "sale_price_euro", label: "Sale Price EUR" },
-      { key: "price_usd", label: "Price USD" },
-      { key: "sale_price_usd", label: "Sale Price USD" },
-      { key: "sale_percent", label: "Sale %" },
-      { key: "gtin_en", label: "GTIN EN (UK)" },
-      { key: "gtin_us", label: "GTIN US" },
-      { key: "gtin_de", label: "GTIN DE" },
-      { key: "gtin_fr", label: "GTIN FR" },
-      { key: "gtin_es", label: "GTIN ES" },
-      { key: "gtin_por", label: "GTIN POR" },
-      { key: "gtin_it", label: "GTIN IT" },
-      { key: "ean", label: "Master EAN" },
-      { key: "ean_uk", label: "Legacy EAN UK" },
-      { key: "ean_us", label: "Legacy EAN US" },
-      { key: "ean_de", label: "Legacy EAN DE" },
-      { key: "ean_fr", label: "Legacy EAN FR" },
-      { key: "ean_es", label: "Legacy EAN ES" },
-      { key: "ean_it", label: "Legacy EAN IT" },
-      { key: "ean_pt", label: "Legacy EAN PT" },
-      { key: "package_dimensions", label: "Package Dimensions" },
-      { key: "pack_1", label: "Box 1" },
-      { key: "pack_2", label: "Box 2" },
-      { key: "pack_3", label: "Box 3" },
-      { key: "pack_4", label: "Box 4" },
-      {
-        key: "tags",
-        label: "Tags",
-        getValue: (p) => (Array.isArray(p.tags) ? p.tags.join(", ") : ""),
-      },
-      { key: "warranty", label: "Warranty" },
-      { key: "image", label: "Image URL" },
-      { key: "description", label: "Description" },
-      { key: "created_at", label: "Created At" },
-      { key: "updated_at", label: "Updated At" },
-    ];
-
-    const headerLine = columns.map((col) => escapeCsvField(col.label)).join(",");
-    const rows = products.map((prod) => {
-      return columns
-        .map((col) => {
-          const val = col.getValue ? col.getValue(prod) : prod[col.key];
-          return escapeCsvField(val);
-        })
-        .join(",");
-    });
-
-    // UTF-8 BOM (\uFEFF) ensures proper character rendering in Microsoft Excel & Google Sheets
-    const csvContent = "\uFEFF" + [headerLine, ...rows].join("\r\n");
+    // Generate CSV Content with complete columns and UTF-8 BOM
+    const csvContent = generateCsvContent(products, PRODUCT_EXPORT_COLUMNS);
 
     const today = new Date().toISOString().split("T")[0];
     const filename = `wallbedking-products-${today}.csv`;
