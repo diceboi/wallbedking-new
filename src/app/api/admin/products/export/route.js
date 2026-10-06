@@ -47,13 +47,17 @@ export async function GET(request) {
       const res = await fetch(queryUrl, { headers, cache: "no-store" });
       if (res.ok) {
         const sbProducts = await res.json();
-        products = sbProducts.map((item) => {
-          const local = catalog.find((c) => c.id === item.id || c.slug === item.slug) || {};
-          return { ...local, ...item };
-        });
+        products = sbProducts.map((item) => ({
+          ...item,
+          hoverImage: item.hoverImage || item.hover_image,
+          available_locales: Array.isArray(item.available_locales) && item.available_locales.length > 0
+            ? item.available_locales
+            : ["en", "us", "de", "fr", "es", "por", "it"],
+          tags: Array.isArray(item.tags) ? item.tags : [],
+        }));
       }
     } catch (sbErr) {
-      console.warn("[Admin Export API] Supabase fetch warning, using local catalog:", sbErr.message);
+      console.warn("[Admin Export API] Supabase fetch warning, using local catalog fallback:", sbErr.message);
     }
 
     if (products.length === 0) {

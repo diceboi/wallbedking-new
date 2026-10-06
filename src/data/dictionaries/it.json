@@ -20,7 +20,14 @@
     "contact": "Contatti",
     "categoryOverview": "Panoramica della categoria",
     "exploreAll": "Scopri tutti i modelli",
-    "from": "da"
+    "from": "da",
+    "morphyBeds": "Letti a Scomparsa MORPHY™",
+    "traditionalBeds": "Letti Tradizionali",
+    "allWallBeds": "Tutti i Letti a Scomparsa",
+    "allMorphyBeds": "Tutti i Letti MORPHY™",
+    "allTraditionalBeds": "Tutti i Letti Tradizionali",
+    "allMorphyTagline": "Scopri tutti i modelli MORPHY™",
+    "allTraditionalTagline": "Scopri i modelli classici a scomparsa"
   },
   "header": {
     "searchPlaceholder": "Cerca letti a scomparsa, divani, materassi...",

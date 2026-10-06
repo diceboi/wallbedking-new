@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
@@ -15,9 +15,11 @@ import "swiper/css/navigation";
 
 import { POPULAR_PRODUCTS_OVERVIEW } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 
 export function ProductSlider() {
   const { t, localizedHref } = useLocale();
+  const { allFlagships } = useProductCatalog();
   const [offset, setOffset] = useState(32);
   const prevRef = useRef(null);
   const nextRef = useRef(null);
@@ -42,7 +44,25 @@ export function ProductSlider() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const products = POPULAR_PRODUCTS_OVERVIEW;
+  const products = useMemo(() => {
+    if (!allFlagships || allFlagships.length === 0) return POPULAR_PRODUCTS_OVERVIEW;
+    return POPULAR_PRODUCTS_OVERVIEW.map((item) => {
+      const slug = item.link?.split("/").pop();
+      const match = allFlagships.find((f) => f.slug === slug);
+      if (match) {
+        return {
+          ...item,
+          title: match.title || match.name || item.title,
+          price: match.price || item.price,
+          numericPrice: match.numericPrice || item.numericPrice,
+          image: match.image || item.image,
+          hoverImage: match.hoverImage || match.hover_image || item.hoverImage,
+          tags: match.tags || item.tags,
+        };
+      }
+      return item;
+    });
+  }, [allFlagships]);
 
   return (
     <section className="py-16 md:py-24 bg-white overflow-hidden">

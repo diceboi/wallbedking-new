@@ -26,6 +26,7 @@ import {
   OTHER_CATEGORIES_LIST,
 } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { getProductPrice } from "@/lib/i18n";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
@@ -39,6 +40,7 @@ function ProductsSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, localizedHref, formatPrice, locale } = useLocale();
+  const { rawCatalog, allFlagships } = useProductCatalog();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -254,9 +256,12 @@ function ProductsSearchContent() {
 
   // Build searchable index map for each flagship product
   const searchableProducts = useMemo(() => {
-    return ALL_FLAGSHIP_PRODUCTS.map((prod) => {
-      // Find all associated size variants from RAW_CATALOG
-      const variants = RAW_CATALOG.filter((item) => {
+    const flagshipList = allFlagships || ALL_FLAGSHIP_PRODUCTS;
+    const catalogList = rawCatalog || RAW_CATALOG;
+
+    return flagshipList.map((prod) => {
+      // Find all associated size variants from rawCatalog
+      const variants = catalogList.filter((item) => {
         if (prod.parent_category === "beds") {
           return (
             item.parent_category === "beds" &&
@@ -323,7 +328,7 @@ function ProductsSearchContent() {
         searchableText,
       };
     });
-  }, []);
+  }, [allFlagships, rawCatalog, locale]);
 
   // Filter products by search query, category, orientation, type, price, and stock
   const filteredProducts = useMemo(() => {

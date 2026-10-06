@@ -77,11 +77,29 @@ export function ProductCard({ product, className = "" }) {
     : [];
   const primaryTag = productTags[0] || null;
 
+  const isMorphyItem =
+    Boolean(product.isMorphy) ||
+    (typeof image === "string" && image.includes("MORPHY")) ||
+    (typeof product.name === "string" && product.name.includes("MORPHY"));
+  const isIntegrated =
+    product.type === "Integrated" ||
+    (typeof image === "string" &&
+      (image.includes("-IV-") || image.includes("-IH-")));
+  const isSofa = product.parent_category === "sofas";
+
+  const imageScaleClass = isIntegrated
+    ? "scale-[1.2] group-hover:scale-[1.34]"
+    : isMorphyItem
+      ? "scale-[1.3] group-hover:scale-[1.46]"
+      : isSofa
+        ? "scale-[1.05] group-hover:scale-[1.08]"
+        : "scale-[1.15] group-hover:scale-[1.18]";
+
   return (
     <>
       <Link href={link} className={`group block space-y-4 ${className}`}>
         {/* Image Box - Light grey background container */}
-        <div className="relative aspect-[1/1] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-8 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 rounded-none border border-wbk-lightgrey/30">
+        <div className="relative aspect-[1/1] w-full overflow-hidden bg-[#E4E0DE]/45 flex items-center justify-center p-2 sm:p-3 transition-colors duration-300 group-hover:bg-[#E4E0DE]/60 rounded-none border border-wbk-lightgrey/30">
           {/* Subtle top-left green glow behind sale badge */}
           {pricing.isOnSale && (
             <div
@@ -97,25 +115,33 @@ export function ProductCard({ product, className = "" }) {
           <img
             src={image}
             alt={title}
-            className="h-full w-full object-contain transition-opacity duration-500 group-hover:opacity-0 relative z-1"
+            className={`h-full w-full object-contain transition-all duration-500 group-hover:opacity-0 relative z-1 ${imageScaleClass}`}
           />
           {/* Hover Product Image */}
           <img
             src={hoverImage}
             alt={`${title} details`}
-            className="absolute inset-0 h-full w-full object-contain p-8 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-1"
+            className={`absolute inset-0 h-full w-full object-contain p-2 sm:p-3 opacity-0 transition-all duration-500 group-hover:opacity-100 z-1 ${imageScaleClass}`}
           />
 
           {/* Sale badge */}
           {pricing.isOnSale && (
             <span className="absolute top-0 left-0 px-6 py-3 bg-wbk-green text-white text-xs sm:text-[13px] font-bold uppercase tracking-wider z-10 border-0 select-none">
-              {t("product.sale", "Sale")} {pricing.discountLabel || (pricing.discountPercent > 0 ? `-${pricing.discountPercent}%` : "")}
+              {t("product.sale", "Sale")}{" "}
+              {pricing.discountLabel ||
+                (pricing.discountPercent > 0
+                  ? `-${pricing.discountPercent}%`
+                  : "")}
             </span>
           )}
 
           {/* Primary Tag badge */}
           {primaryTag && (
-            <TagBadge tagIdOrSlug={primaryTag.id} locale={locale} variant="corner" />
+            <TagBadge
+              tagIdOrSlug={primaryTag.id}
+              locale={locale}
+              variant="corner"
+            />
           )}
         </div>
 
@@ -125,7 +151,12 @@ export function ProductCard({ product, className = "" }) {
           {productTags.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap">
               {productTags.map((t) => (
-                <TagBadge key={t.id} tagIdOrSlug={t.id} locale={locale} variant="micro" />
+                <TagBadge
+                  key={t.id}
+                  tagIdOrSlug={t.id}
+                  locale={locale}
+                  variant="micro"
+                />
               ))}
             </div>
           )}
@@ -145,9 +176,13 @@ export function ProductCard({ product, className = "" }) {
             {orientation &&
               product.parent_category !== "mattresses" &&
               product.parent_category !== "sofas" && (
-                <div>{t("product.orientation", "Orientation")}: {orientation}</div>
+                <div>
+                  {t("product.orientation", "Orientation")}: {orientation}
+                </div>
               )}
-            <div>{t("product.size", "Size")}: {size}</div>
+            <div>
+              {t("product.size", "Size")}: {size}
+            </div>
             {product.weight && (
               <div className="text-[11px] text-wbk-brown">
                 {t("product.weight", "Weight")}:{" "}
@@ -223,7 +258,10 @@ export function ProductCard({ product, className = "" }) {
                 title={t("common.addToCart", "Add to Cart")}
                 aria-label={t("common.addToCart", "Add to Cart")}
               >
-                <IconShoppingCart size={18} className="transition-transform duration-200 group-hover/btn:scale-110" />
+                <IconShoppingCart
+                  size={18}
+                  className="transition-transform duration-200 group-hover/btn:scale-110"
+                />
               </button>
             ) : (
               <button
@@ -234,10 +272,19 @@ export function ProductCard({ product, className = "" }) {
                   setIsWishlistOpen(true);
                 }}
                 className="w-10 h-10 rounded-full border border-wbk-gold bg-wbk-gold hover:bg-wbk-black hover:border-wbk-black text-wbk-black hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer group/fav shrink-0"
-                title={t("waitlist.joinWaitlistBtn", "Add to Wishlist / Notify Me")}
-                aria-label={t("waitlist.joinWaitlistBtn", "Add to Wishlist / Notify Me")}
+                title={t(
+                  "waitlist.joinWaitlistBtn",
+                  "Add to Wishlist / Notify Me",
+                )}
+                aria-label={t(
+                  "waitlist.joinWaitlistBtn",
+                  "Add to Wishlist / Notify Me",
+                )}
               >
-                <IconHeart size={18} className="transition-transform duration-200 group-hover/fav:scale-110" />
+                <IconHeart
+                  size={18}
+                  className="transition-transform duration-200 group-hover/fav:scale-110"
+                />
               </button>
             )}
           </div>

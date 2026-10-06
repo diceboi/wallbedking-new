@@ -4,6 +4,20 @@ const nextConfig = {
   // React Strict Mode mounts components twice in dev, which causes the 103MB GLTF model's
   // cached GPU buffers to be disposed on the first unmount, crashing the second mount.
   reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "czubfyhhyimfevpxhmsv.supabase.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;

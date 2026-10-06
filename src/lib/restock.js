@@ -39,24 +39,8 @@ export async function triggerRestockNotification({ productId, productSlug, custo
 
   let product = null;
 
-  // 1. Try resolving product from local products-catalog.json first (fast & reliable)
-  try {
-    const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-    if (fs.existsSync(catalogPath)) {
-      const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8"));
-      if (productId) {
-        product = catalog.find((p) => String(p.id) === String(productId));
-      }
-      if (!product && productSlug) {
-        product = catalog.find((p) => p.slug === productSlug);
-      }
-    }
-  } catch (err) {
-    console.warn("[Restock Notify] Catalog lookup notice:", err.message);
-  }
-
-  // 2. If not found in catalog, fetch from Supabase
-  if (!product && supabaseAdmin) {
+  // 1. Fetch product directly from Supabase
+  if (supabaseAdmin) {
     try {
       let pQuery = supabaseAdmin
         .from("products")
@@ -72,6 +56,24 @@ export async function triggerRestockNotification({ productId, productSlug, custo
       if (pData) product = pData;
     } catch (pErr) {
       console.warn("[Restock Notify] Supabase product fetch notice:", pErr.message);
+    }
+  }
+
+  // 2. Fallback to local catalog if Supabase was unreachable
+  if (!product) {
+    try {
+      const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
+      if (fs.existsSync(catalogPath)) {
+        const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8"));
+        if (productId) {
+          product = catalog.find((p) => String(p.id) === String(productId));
+        }
+        if (!product && productSlug) {
+          product = catalog.find((p) => p.slug === productSlug);
+        }
+      }
+    } catch (err) {
+      console.warn("[Restock Notify] Catalog lookup fallback notice:", err.message);
     }
   }
 

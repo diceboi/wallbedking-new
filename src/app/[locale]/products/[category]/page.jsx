@@ -20,12 +20,10 @@ import {
   ALL_PRODUCTS,
   CATEGORIES_INFO,
   OTHER_CATEGORIES_LIST,
-  RAW_CATALOG,
-  formatCatalogItem,
-  getFlagshipBed,
 } from "@/data/products";
 import { MenuContext } from "@/context/MenuContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { resolveCategory } from "@/data/slugs";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
@@ -34,6 +32,7 @@ import { isProductAvailableInLocale } from "@/lib/products";
 export default function CategoryArchivePage() {
   const params = useParams();
   const { t, localizedHref, formatPrice, locale } = useLocale();
+  const { allProducts } = useProductCatalog();
   const rawCategory = params?.category || "beds";
   const currentCategory = resolveCategory(rawCategory, params?.locale);
 
@@ -45,10 +44,11 @@ export default function CategoryArchivePage() {
   };
 
   const rawCategoryProducts = useMemo(() => {
-    const list = ALL_PRODUCTS[currentCategory] || [];
+    const productsMap = allProducts || ALL_PRODUCTS;
+    const list = productsMap[currentCategory] || [];
     if (!locale) return list;
     return list.filter((p) => isProductAvailableInLocale(p, locale));
-  }, [currentCategory, locale]);
+  }, [allProducts, currentCategory, locale]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -62,6 +62,7 @@ export default function CategoryArchivePage() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [selectedTag, setSelectedTag] = useState("All");
+  const [selectedCollection, setSelectedCollection] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const formatTypeLabel = useCallback(
@@ -163,10 +164,17 @@ export default function CategoryArchivePage() {
     } else {
       setSelectedTag("All");
     }
+
+    const col = searchParams?.get("collection");
+    if (col) {
+      setSelectedCollection(col.toLowerCase());
+    } else {
+      setSelectedCollection("All");
+    }
   }, [searchParams, distinctOrientations, distinctTypes]);
 
   // Sync state changes to URL query parameters
-  const updateUrlParams = useCallback((newOrientation, newType, newPrice, newTag) => {
+  const updateUrlParams = useCallback((newOrientation, newType, newPrice, newTag, newCollection) => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (newOrientation && newOrientation !== "All") {
@@ -191,14 +199,30 @@ export default function CategoryArchivePage() {
     } else {
       url.searchParams.delete("tag");
     }
+    const colVal = newCollection !== undefined ? newCollection : selectedCollection;
+    if (colVal && colVal !== "All") {
+      url.searchParams.set("collection", colVal);
+    } else {
+      url.searchParams.delete("collection");
+    }
     window.history.replaceState(null, "", url.toString());
-  }, [selectedTag]);
+  }, [selectedTag, selectedCollection]);
 
   // ── REAL FILTERING LOGIC ──
   const filteredProducts = useMemo(() => {
     const baseList = rawCategoryProducts;
 
     return baseList.filter((prod) => {
+      // Collection filter (Morphy vs Traditional)
+      if (selectedCollection !== "All") {
+        if (selectedCollection === "morphy" && prod.isMorphy !== true) {
+          return false;
+        }
+        if (selectedCollection === "traditional" && prod.isMorphy === true) {
+          return false;
+        }
+      }
+
       // Orientation filter
       if (
         selectedOrientation !== "All" &&
@@ -248,6 +272,7 @@ export default function CategoryArchivePage() {
     selectedType,
     selectedPrice,
     selectedTag,
+    selectedCollection,
   ]);
 
   const { isMenuVisible, subMenu } = useContext(MenuContext);
@@ -308,7 +333,8 @@ export default function CategoryArchivePage() {
     selectedOrientation !== "All" ||
     selectedType !== "All" ||
     selectedPrice !== "All" ||
-    selectedTag !== "All";
+    selectedTag !== "All" ||
+    selectedCollection !== "All";
 
   const productGridRef = useRef(null);
 
@@ -334,6 +360,19 @@ export default function CategoryArchivePage() {
         behavior: "smooth",
       });
     });
+  };
+
+  const handleSelectCollection = (opt) => {
+    setSelectedCollection(opt);
+    updateUrlParams(
+      selectedOrientation,
+      selectedType,
+      selectedPrice,
+      selectedTag,
+      opt,
+    );
+    setActiveDropdown(null);
+    scrollToProducts();
   };
 
   const handleSelectType = (opt) => {
@@ -369,7 +408,8 @@ export default function CategoryArchivePage() {
     setSelectedType("All");
     setSelectedPrice("All");
     setSelectedTag("All");
-    updateUrlParams("All", "All", "All", "All");
+    setSelectedCollection("All");
+    updateUrlParams("All", "All", "All", "All", "All");
     setActiveDropdown(null);
     scrollToProducts();
   };
@@ -467,6 +507,87 @@ export default function CategoryArchivePage() {
                   <span className="hidden sm:inline">{t("common.filters", "Filters")}</span>
                 </div>
               </SwiperSlide>
+
+              {/* Collection Filter (MORPHY vs Traditional) for Beds */}
+              {currentCategory === "beds" && (
+                <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "collection" ? null : "collection",
+                        )
+                      }
+                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
+                        selectedCollection !== "All"
+                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
+                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
+                      }`}
+                    >
+                      <span>
+                        {t("categories.collection", "Collection")}:{" "}
+                        <strong className="font-semibold">
+                          {selectedCollection === "morphy"
+                            ? "MORPHY™"
+                            : selectedCollection === "traditional"
+                              ? t("nav.traditionalBeds", "Traditional")
+                              : t("categories.all", "All")}
+                        </strong>
+                      </span>
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${
+                          activeDropdown === "collection"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
+                        }`}
+                      />
+                    </button>
+
+                    {activeDropdown === "collection" && (
+                      <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-none">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectCollection("All")}
+                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-none transition-colors whitespace-nowrap cursor-pointer ${
+                            selectedCollection === "All"
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                          }`}
+                        >
+                          {t("categories.all", "All")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectCollection("morphy")}
+                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-none transition-colors whitespace-nowrap cursor-pointer ${
+                            selectedCollection === "morphy"
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                          }`}
+                        >
+                          MORPHY™
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectCollection("traditional")}
+                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-none transition-colors whitespace-nowrap cursor-pointer ${
+                            selectedCollection === "traditional"
+                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
+                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
+                          }`}
+                        >
+                          {t("nav.traditionalBeds", "Traditional")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              )}
 
               {/* Type / Model Filter */}
               {distinctTypes.length > 2 && (

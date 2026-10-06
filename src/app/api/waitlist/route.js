@@ -170,20 +170,20 @@ export async function POST(request) {
 
     const cleanEmail = customerEmail.trim().toLowerCase();
 
-    // Resolve product ID from local catalog if missing
+    // Resolve product ID from Supabase if missing
     let resolvedProductId = productId ? parseInt(productId, 10) : null;
-    if (!resolvedProductId && productSlug) {
+    if (!resolvedProductId && productSlug && supabaseAdmin) {
       try {
-        const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-        if (fs.existsSync(catalogPath)) {
-          const list = JSON.parse(fs.readFileSync(catalogPath, "utf-8"));
-          const found = list.find((p) => p.slug === productSlug);
-          if (found && found.id) {
-            resolvedProductId = parseInt(found.id, 10);
-          }
+        const { data: pData } = await supabaseAdmin
+          .from("products")
+          .select("id")
+          .eq("slug", productSlug)
+          .maybeSingle();
+        if (pData?.id) {
+          resolvedProductId = parseInt(pData.id, 10);
         }
-      } catch (catErr) {
-        console.warn("[Waitlist API] Catalog resolution notice:", catErr.message);
+      } catch (sbErr) {
+        console.warn("[Waitlist API] Supabase product resolution notice:", sbErr.message);
       }
     }
 

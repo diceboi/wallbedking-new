@@ -20,10 +20,12 @@ import { useLocale } from "@/context/LocaleContext";
 import { getProductVariants, formatCatalogItem } from "@/data/products";
 import { getProductPrice, formatPrice, formatSizeLabel } from "@/lib/i18n";
 import { getLocalizedProductName } from "@/lib/products";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 
 export function QuickAddModal({ isOpen, onClose, product }) {
   const { locale, localizedHref, t } = useLocale();
   const { addItem, openCart } = useCart();
+  const { getProductVariants: catalogGetVariants } = useProductCatalog();
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState(null);
@@ -39,12 +41,13 @@ export function QuickAddModal({ isOpen, onClose, product }) {
   // Fetch all variants for this product family
   const variants = useMemo(() => {
     if (!product) return [];
-    const list = getProductVariants(product);
+    const getVariants = catalogGetVariants || getProductVariants;
+    const list = getVariants(product);
     if (!list || list.length === 0) {
       return [formatCatalogItem(product)];
     }
     return list;
-  }, [product]);
+  }, [product, catalogGetVariants]);
 
   // Available orientations if bed
   const formats = useMemo(() => {

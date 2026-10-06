@@ -20,7 +20,14 @@
     "contact": "Contact",
     "categoryOverview": "Aperçu de la catégorie",
     "exploreAll": "Découvrir tous les modèles",
-    "from": "à partir de"
+    "from": "à partir de",
+    "morphyBeds": "Lits Escamotables MORPHY™",
+    "traditionalBeds": "Lits Traditionnels",
+    "allWallBeds": "Tous les Lits Escamotables",
+    "allMorphyBeds": "Tous les Lits MORPHY™",
+    "allTraditionalBeds": "Tous les Lits Traditionnels",
+    "allMorphyTagline": "Découvrir tous les modèles MORPHY™",
+    "allTraditionalTagline": "Découvrir les lits escamotables classiques"
   },
   "header": {
     "searchPlaceholder": "Rechercher lits escamotables, canapés, matelas...",

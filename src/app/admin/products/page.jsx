@@ -91,7 +91,6 @@ export default function AdminProductsPage() {
   const [newProductWidth, setNewProductWidth] = useState("");
   const [newProductLength, setNewProductLength] = useState("");
   const [newProductTags, setNewProductTags] = useState([]);
-  const [syncing, setSyncing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -141,27 +140,6 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleSyncStorefront = async () => {
-    setSyncing(true);
-    try {
-      const res = await fetch("/api/admin/products/sync", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        setMessage({
-          type: "success",
-          text: `Storefront catalog synchronized (${data.count} products updated)!`,
-        });
-        fetchProducts();
-      } else {
-        setMessage({ type: "error", text: data.error || "Sync failed." });
-      }
-    } catch (err) {
-      setMessage({ type: "error", text: "Network error during sync." });
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setMessage(null), 4000);
-    }
-  };
 
   // Sorting handlers
   const handleSort = (key) => {
@@ -605,19 +583,9 @@ export default function AdminProductsPage() {
         badge="Catalog & Inventory"
         title="Product Management"
         count={products.length}
-        description="Live catalog and inventory management directly synced with Supabase"
+        description="Live catalog and inventory management directly from Supabase database"
         actions={
           <>
-            <button
-              type="button"
-              onClick={handleSyncStorefront}
-              disabled={syncing}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all shadow-xs cursor-pointer disabled:opacity-50"
-              title="Synchronize Supabase products with storefront catalog"
-            >
-              <IconRefresh size={15} className={syncing ? "animate-spin text-wbk-gold" : "text-wbk-gold"} />
-              <span>{syncing ? "Syncing..." : "Sync Storefront"}</span>
-            </button>
 
             <button
               type="button"

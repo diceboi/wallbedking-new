@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import catalog from "@/data/products-catalog.json";
+import { revalidateProductsCache } from "@/lib/products-db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,13 +10,29 @@ const headers = {
   "Content-Type": "application/json",
 };
 
+const ALLOWED_SUPABASE_COLUMNS = new Set([
+  "id", "ean", "name", "slug", "width", "length", "height", "frame_width",
+  "folded_up_height", "folded_up_projection", "folded_down_projection",
+  "frame_distance_from_ground", "mounting_frame_height", "maximum_mattress_depth",
+  "orientation", "type", "color", "weight", "stock", "package_dimensions",
+  "price_gbp", "price_euro", "price_usd", "sale_percent", "sale_fix_gbp",
+  "sale_fix_euro", "sale_fix_usd", "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+  "category", "parent_category", "sub_category", "backorder", "visibility",
+  "warranty", "description", "image", "hover_image", "product_images",
+  "product_image_alt", "meta_title", "meta_description", "has_3d",
+  "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
+  "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
+  "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+]);
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const orientation = searchParams.get("orientation");
     const search = searchParams.get("search");
-    const limit = parseInt(searchParams.get("limit") || "250", 10);
+    const limit = parseInt(searchParams.get("limit") || "1000", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     let queryUrl = `${SUPABASE_URL}/rest/v1/products?select=*&order=id.asc&limit=${limit}&offset=${offset}`;
@@ -44,15 +58,20 @@ export async function GET(request) {
     }
 
     const products = await res.json();
-    const enrichedProducts = products.map((item) => {
-      const local = catalog.find((c) => c.id === item.id || c.slug === item.slug) || {};
-      return { ...local, ...item };
-    });
+    const formattedProducts = products.map((item) => ({
+      ...item,
+      hoverImage: item.hoverImage || item.hover_image,
+      available_locales:
+        Array.isArray(item.available_locales) && item.available_locales.length > 0
+          ? item.available_locales
+          : ["en", "us", "de", "fr", "es", "por", "it"],
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    }));
 
     return NextResponse.json({
       success: true,
-      count: enrichedProducts.length,
-      products: enrichedProducts,
+      count: formattedProducts.length,
+      products: formattedProducts,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -63,7 +82,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    // Ensure id is provided or automatically generated from max id
+    // Ensure id is provided or automatically generated from max id in database
     if (!body.id) {
       try {
         const maxRes = await fetch(
@@ -92,86 +111,41 @@ export async function POST(request) {
         .replace(/^-|-$/g, "");
     }
 
-    let res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+    // Sanitize payload against Supabase schema columns
+    const payload = {};
+    for (const [key, val] of Object.entries(body)) {
+      if (ALLOWED_SUPABASE_COLUMNS.has(key) && val !== undefined) {
+        payload[key] = val;
+      }
+    }
+    if (body.hoverImage && !payload.hover_image) {
+      payload.hover_image = body.hoverImage;
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
       method: "POST",
       headers: {
         ...headers,
         Prefer: "return=representation",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
       const errText = await res.text();
-      if (errText.includes("does not exist") || errText.includes("Could not find")) {
-        const safePayload = { ...body };
-        delete safePayload.tags;
-        delete safePayload.sku;
-        delete safePayload.ean_uk;
-        delete safePayload.ean_us;
-        delete safePayload.ean_de;
-        delete safePayload.ean_fr;
-        delete safePayload.ean_es;
-        delete safePayload.ean_it;
-        delete safePayload.ean_pt;
-        delete safePayload.available_locales;
-        delete safePayload.name_en;
-        delete safePayload.name_us;
-        delete safePayload.name_de;
-        delete safePayload.name_fr;
-        delete safePayload.name_es;
-        delete safePayload.name_por;
-        delete safePayload.name_pt;
-        delete safePayload.name_it;
-        delete safePayload.gtin_en;
-        delete safePayload.gtin_us;
-        delete safePayload.gtin_de;
-        delete safePayload.gtin_fr;
-        delete safePayload.gtin_es;
-        delete safePayload.gtin_por;
-        delete safePayload.gtin_pt;
-        delete safePayload.gtin_it;
-
-        res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-          method: "POST",
-          headers: {
-            ...headers,
-            Prefer: "return=representation",
-          },
-          body: JSON.stringify(safePayload),
-        });
-      }
-
-      if (!res.ok) {
-        let errMsg = errText;
-        try {
-          const errObj = JSON.parse(errText);
-          errMsg = errObj.message || errObj.details || errText;
-        } catch (_) {}
-        return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
-      }
+      let errMsg = errText;
+      try {
+        const errObj = JSON.parse(errText);
+        errMsg = errObj.message || errObj.details || errText;
+      } catch (_) {}
+      return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
     }
 
     const created = await res.json();
     const newProductRecord = created[0] || created;
 
-    // Persist immediately to local products-catalog.json so storefront displays the product
-    try {
-      const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-      if (fs.existsSync(catalogPath)) {
-        const raw = fs.readFileSync(catalogPath, "utf-8");
-        const list = JSON.parse(raw);
-        const idx = list.findIndex((p) => String(p.id) === String(newProductRecord.id));
-        if (idx !== -1) {
-          list[idx] = { ...list[idx], ...newProductRecord };
-        } else {
-          list.push(newProductRecord);
-        }
-        fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), "utf-8");
-      }
-    } catch (fsErr) {
-      console.warn("[Admin Products POST] Could not write to products-catalog.json:", fsErr.message);
-    }
+    // Invalidate storefront cache so new product appears immediately
+    revalidateProductsCache();
 
     return NextResponse.json({
       success: true,

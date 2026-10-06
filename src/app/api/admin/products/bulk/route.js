@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
-import fs from "fs";
-import path from "path";
+import { revalidateProductsCache } from "@/lib/products-db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,6 +9,22 @@ const headers = {
   Authorization: `Bearer ${SERVICE_KEY}`,
   "Content-Type": "application/json",
 };
+
+const ALLOWED_SUPABASE_COLUMNS = new Set([
+  "ean", "name", "slug", "width", "length", "height", "frame_width",
+  "folded_up_height", "folded_up_projection", "folded_down_projection",
+  "frame_distance_from_ground", "mounting_frame_height", "maximum_mattress_depth",
+  "orientation", "type", "color", "weight", "stock", "package_dimensions",
+  "price_gbp", "price_euro", "price_usd", "sale_percent", "sale_fix_gbp",
+  "sale_fix_euro", "sale_fix_usd", "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+  "category", "parent_category", "sub_category", "backorder", "visibility",
+  "warranty", "description", "image", "hover_image", "product_images",
+  "product_image_alt", "meta_title", "meta_description", "has_3d",
+  "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
+  "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
+  "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+]);
 
 export async function POST(request) {
   try {
@@ -34,50 +48,44 @@ export async function POST(request) {
       );
     }
 
-    const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-    let catalog = [];
-    if (fs.existsSync(catalogPath)) {
-      try {
-        catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8"));
-      } catch (e) {
-        console.error("Error reading products-catalog.json:", e);
-      }
-    }
-
     // Handle Bulk Delete
     if (action === "delete") {
-      const idSet = new Set(ids.map(Number));
-      const filtered = catalog.filter((p) => !idSet.has(Number(p.id)));
-      try {
-        fs.writeFileSync(catalogPath, JSON.stringify(filtered, null, 2), "utf-8");
-      } catch (fsErr) {
-        console.warn("[Bulk Delete] Local file is read-only (serverless):", fsErr.message);
+      const idListStr = `(${ids.join(",")})`;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.${idListStr}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        return NextResponse.json({ success: false, error: err }, { status: res.status });
       }
 
-      if (SUPABASE_URL && SERVICE_KEY) {
-        try {
-          const idListStr = `(${ids.join(",")})`;
-          await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.${idListStr}`, {
-            method: "DELETE",
-            headers,
-          });
-        } catch (sbErr) {
-          console.warn("[Bulk Delete] Supabase error:", sbErr.message);
-        }
-      }
+      revalidateProductsCache();
 
       return NextResponse.json({
         success: true,
         deletedCount: ids.length,
-        message: `${ids.length} products deleted.`,
+        message: `${ids.length} products deleted from database.`,
       });
     }
 
-    // Handle Bulk Updates
-    const updatedProducts = [];
-    const idSet = new Set(ids.map(Number));
+    // Fetch existing records from Supabase for target IDs
+    const idListStr = `(${ids.join(",")})`;
+    const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.${idListStr}`, {
+      headers,
+      cache: "no-store",
+    });
 
-    // Clean updates object (remove null/undefined unless explicitly set)
+    if (!fetchRes.ok) {
+      const err = await fetchRes.text();
+      return NextResponse.json({ success: false, error: err }, { status: fetchRes.status });
+    }
+
+    const existingProducts = await fetchRes.json();
+    const updatedProducts = [];
+
+    // Clean updates object (remove undefined or id)
     const cleanUpdates = {};
     for (const [key, value] of Object.entries(updates)) {
       if (value !== undefined) {
@@ -86,21 +94,24 @@ export async function POST(request) {
     }
     delete cleanUpdates.id;
 
-    // Apply updates to local catalog
-    catalog = catalog.map((p) => {
-      if (!idSet.has(Number(p.id))) return p;
-
-      let item = { ...p, ...cleanUpdates };
+    for (const existing of existingProducts) {
+      let item = { ...existing, ...cleanUpdates };
 
       // Tag actions
-      if (tagAction && Array.isArray(tags)) {
+      if (tagAction) {
         const currentTags = Array.isArray(item.tags) ? [...item.tags] : [];
-        if (tagAction === "replace") {
+        if (tagAction === "clear") {
+          item.tags = [];
+        } else if (tagAction === "replace" && Array.isArray(tags)) {
           item.tags = [...tags];
-        } else if (tagAction === "add") {
+        } else if (tagAction === "add" && Array.isArray(tags)) {
           item.tags = Array.from(new Set([...currentTags, ...tags]));
-        } else if (tagAction === "remove") {
-          item.tags = currentTags.filter((t) => !tags.includes(t));
+        } else if (tagAction === "remove" && Array.isArray(tags)) {
+          if (tags.length === 0) {
+            item.tags = currentTags;
+          } else {
+            item.tags = currentTags.filter((t) => !tags.includes(t));
+          }
         }
       }
 
@@ -142,86 +153,40 @@ export async function POST(request) {
       }
 
       item.updated_at = new Date().toISOString();
-      updatedProducts.push(item);
-      return item;
-    });
 
-    // Save updated local JSON catalog if filesystem is writable
-    try {
-      fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2), "utf-8");
-    } catch (fsErr) {
-      console.warn("[Bulk Update] Local file is read-only (serverless):", fsErr.message);
-    }
-
-    // Sync updates to Supabase
-    let sbSyncedCount = 0;
-    if (SUPABASE_URL && SERVICE_KEY && updatedProducts.length > 0) {
-      for (const prod of updatedProducts) {
-        try {
-          const payload = { ...prod };
-          delete payload.id;
-
-          let res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${prod.id}`, {
-            method: "PATCH",
-            headers: {
-              ...headers,
-              Prefer: "return=representation",
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (!res.ok) {
-            const errTxt = await res.text();
-            // Fallback if tags or specific enriched column doesn't exist yet in Supabase
-            if (errTxt.includes("does not exist") || errTxt.includes("Could not find")) {
-              delete payload.tags;
-              delete payload.sku;
-              delete payload.ean_uk;
-              delete payload.ean_us;
-              delete payload.ean_de;
-              delete payload.ean_fr;
-              delete payload.ean_es;
-              delete payload.ean_it;
-              delete payload.ean_pt;
-              delete payload.available_locales;
-              delete payload.name_en;
-              delete payload.name_us;
-              delete payload.name_de;
-              delete payload.name_fr;
-              delete payload.name_es;
-              delete payload.name_por;
-              delete payload.name_pt;
-              delete payload.name_it;
-              delete payload.gtin_en;
-              delete payload.gtin_us;
-              delete payload.gtin_de;
-              delete payload.gtin_fr;
-              delete payload.gtin_es;
-              delete payload.gtin_por;
-              delete payload.gtin_pt;
-              delete payload.gtin_it;
-
-              res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${prod.id}`, {
-                method: "PATCH",
-                headers,
-                body: JSON.stringify(payload),
-              });
-            }
-          }
-
-          if (res.ok) {
-            sbSyncedCount++;
-          }
-        } catch (sbErr) {
-          console.warn(`[Bulk Update] Error syncing product #${prod.id} to Supabase:`, sbErr.message);
+      // Sanitize payload for Supabase PATCH
+      const payload = {};
+      for (const [key, val] of Object.entries(item)) {
+        if (ALLOWED_SUPABASE_COLUMNS.has(key) && val !== undefined) {
+          payload[key] = val;
         }
       }
+      if (item.hoverImage && !payload.hover_image) {
+        payload.hover_image = item.hoverImage;
+      }
+
+      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${item.id}`, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (patchRes.ok) {
+        updatedProducts.push(item);
+      } else {
+        console.warn(`[Bulk API] Failed to update #${item.id}:`, await patchRes.text());
+      }
     }
+
+    // Invalidate Next.js cache so storefront updates immediately
+    revalidateProductsCache();
 
     return NextResponse.json({
       success: true,
       updatedCount: updatedProducts.length,
-      sbSyncedCount,
       products: updatedProducts,
     });
   } catch (error) {

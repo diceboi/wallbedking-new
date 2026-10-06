@@ -244,6 +244,11 @@ export function BulkProductEditModal({
 
     // Tags
     if (enabledFields.tags) {
+      if (tagAction === "remove" && selectedTags.length === 0) {
+        setError("Please select at least one tag to remove below, or choose 'Clear All Tags'.");
+        setSaving(false);
+        return;
+      }
       payload.tagAction = tagAction;
       payload.tags = selectedTags;
     }
@@ -817,7 +822,7 @@ export function BulkProductEditModal({
                     <label className="block text-xs font-semibold uppercase text-wbk-black mb-2">
                       Tag Operation Mode:
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
                         type="button"
                         onClick={() => setTagAction("add")}
@@ -829,7 +834,7 @@ export function BulkProductEditModal({
                       >
                         <div className="font-semibold">Add to Existing</div>
                         <div className="text-[10px] opacity-80 mt-0.5">
-                          Keep current tags and add chosen ones
+                          Keep current & add chosen
                         </div>
                       </button>
 
@@ -844,7 +849,7 @@ export function BulkProductEditModal({
                       >
                         <div className="font-semibold">Replace All</div>
                         <div className="text-[10px] opacity-80 mt-0.5">
-                          Overwrite all product tags with selection
+                          Overwrite with selection
                         </div>
                       </button>
 
@@ -859,54 +864,85 @@ export function BulkProductEditModal({
                       >
                         <div className="font-semibold">Remove Tags</div>
                         <div className="text-[10px] opacity-80 mt-0.5">
-                          Remove selected tags if present
+                          Remove chosen tags below
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTagAction("clear");
+                          setSelectedTags([]);
+                        }}
+                        className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
+                          tagAction === "clear"
+                            ? "border-red-600 bg-red-600 text-white font-medium"
+                            : "border-wbk-lightgrey bg-white text-red-600 hover:border-red-600"
+                        }`}
+                      >
+                        <div className="font-semibold">Clear All Tags</div>
+                        <div className="text-[10px] opacity-80 mt-0.5">
+                          Remove all tags from items
                         </div>
                       </button>
                     </div>
                   </div>
 
-                  {/* Tag Badges Picker */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase text-wbk-black mb-2">
-                      Select Target Tags ({selectedTags.length} selected):
-                    </label>
-
-                    <div className="flex flex-wrap gap-2 p-3 bg-[#FBF9F8] border border-wbk-lightgrey">
-                      {tagsList.length === 0 ? (
-                        <span className="text-xs text-wbk-brown italic">
-                          Loading tags...
-                        </span>
-                      ) : (
-                        tagsList.map((tag) => {
-                          const isSelected = selectedTags.includes(tag.id || tag.slug);
-
-                          return (
-                            <button
-                              key={tag.id}
-                              type="button"
-                              onClick={() => toggleTagSelection(tag.id || tag.slug)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all border select-none cursor-pointer rounded-full ${
-                                isSelected
-                                  ? "bg-wbk-black text-white border-wbk-black shadow-xs font-medium"
-                                  : "bg-white border-wbk-lightgrey/80 text-wbk-black hover:border-wbk-black"
-                              }`}
-                            >
-                              <TagIcon
-                                tagIdOrSlug={tag.id}
-                                iconName={tag.icon}
-                                size={12}
-                                className={isSelected ? "text-white/80 shrink-0" : "text-wbk-black/70 shrink-0"}
-                              />
-                              <span>{tag.name}</span>
-                              {isSelected && (
-                                <IconCheck size={12} className="stroke-[2.5] text-white ml-0.5" />
-                              )}
-                            </button>
-                          );
-                        })
-                      )}
+                  {tagAction === "clear" ? (
+                    <div className="p-3.5 bg-red-50 border border-red-200 text-xs text-red-800">
+                      <strong>Warning:</strong> All assigned tags will be completely removed from all{" "}
+                      <strong>{selectedProductIds.length}</strong> selected products upon saving.
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-semibold uppercase text-wbk-black">
+                          {tagAction === "remove" ? "Select Tags to Remove:" : "Select Target Tags:"} ({selectedTags.length} selected):
+                        </label>
+                        {tagAction === "remove" && selectedTags.length === 0 && (
+                          <span className="text-[11px] text-amber-700 font-medium">
+                            Pick which tag(s) to remove below
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 p-3 bg-[#FBF9F8] border border-wbk-lightgrey">
+                        {tagsList.length === 0 ? (
+                          <span className="text-xs text-wbk-brown italic">
+                            Loading tags...
+                          </span>
+                        ) : (
+                          tagsList.map((tag) => {
+                            const isSelected = selectedTags.includes(tag.id || tag.slug);
+
+                            return (
+                              <button
+                                key={tag.id}
+                                type="button"
+                                onClick={() => toggleTagSelection(tag.id || tag.slug)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all border select-none cursor-pointer rounded-full ${
+                                  isSelected
+                                    ? "bg-wbk-black text-white border-wbk-black shadow-xs font-medium"
+                                    : "bg-white border-wbk-lightgrey/80 text-wbk-black hover:border-wbk-black"
+                                }`}
+                              >
+                                <TagIcon
+                                  tagIdOrSlug={tag.id}
+                                  iconName={tag.icon}
+                                  size={12}
+                                  className={isSelected ? "text-white/80 shrink-0" : "text-wbk-black/70 shrink-0"}
+                                />
+                                <span>{tag.name}</span>
+                                {isSelected && (
+                                  <IconCheck size={12} className="stroke-[2.5] text-white ml-0.5" />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

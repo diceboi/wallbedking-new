@@ -9,6 +9,8 @@ import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import { CookieConsent } from "@/components/ui/CookieConsent";
+import { getStorefrontProducts } from "@/lib/products-db";
+import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -34,23 +36,27 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const initialProducts = await getStorefrontProducts();
+
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
       <body className="min-h-screen flex flex-col bg-wbk-white">
         <ScrollToTop />
         <AuthProvider>
           <LocaleProvider>
-            <CartProvider>
-              <MenuContextProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-                <CartDrawer />
-                <UserDrawer />
-                <CookieConsent />
-              </MenuContextProvider>
-            </CartProvider>
+            <ProductCatalogProvider initialProducts={initialProducts}>
+              <CartProvider>
+                <MenuContextProvider>
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                  <CartDrawer />
+                  <UserDrawer />
+                  <CookieConsent />
+                </MenuContextProvider>
+              </CartProvider>
+            </ProductCatalogProvider>
           </LocaleProvider>
         </AuthProvider>
       </body>

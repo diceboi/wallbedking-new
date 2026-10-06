@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RAW_CATALOG } from "@/data/products";
 import { MenuContext } from "@/context/MenuContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 
 const normalizeStr = (s) =>
   s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
@@ -16,6 +17,7 @@ const normalizeStr = (s) =>
 export function SearchBar({ className = "", onSelect = null }) {
   const router = useRouter();
   const { t, localizedHref, formatPrice, locale } = useLocale();
+  const { rawCatalog } = useProductCatalog();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -56,7 +58,8 @@ export function SearchBar({ className = "", onSelect = null }) {
       .map((tok) => tok.replace(/-(as|es|os|us)$/i, ""))
       .filter(Boolean);
 
-    return RAW_CATALOG.filter((item) => {
+    const catalogList = rawCatalog || RAW_CATALOG;
+    return catalogList.filter((item) => {
       const widthCm = item.width ? Math.round(item.width / 10) : "";
       const lengthCm = item.length ? Math.round(item.length / 10) : "";
       const dimCm =
@@ -110,7 +113,7 @@ export function SearchBar({ className = "", onSelect = null }) {
 
       return tokens.every((tok) => searchable.includes(tok));
     }).slice(0, 8);
-  }, [query]);
+  }, [query, rawCatalog]);
 
   const handleSelect = (item) => {
     setIsOpen(false);

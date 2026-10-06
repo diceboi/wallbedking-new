@@ -329,8 +329,8 @@ export function MobileMenuDrawer() {
                     transition={pageTransition}
                     className="flex flex-col divide-y divide-wbk-lightgrey/70"
                   >
-                    {/* Category Title & View All */}
-                    {activeCategoryData?.parent && (
+                    {/* Category Title & View All (for categories without sections) */}
+                    {!activeCategoryData?.sections && activeCategoryData?.parent && (
                       <Link
                         href={localizedHref(activeCategoryData.parent.href)}
                         onClick={closeMobileMenu}
@@ -357,63 +357,135 @@ export function MobileMenuDrawer() {
                       </Link>
                     )}
 
-                    {/* Subcategories list */}
-                    {activeCategoryData?.items?.map((item, idx) => {
-                      const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
-                      const itemBadge = item.badgeKey ? t(item.badgeKey, item.badge) : item.badge;
-                      const formattedPrice = item.price && item.price.includes("£")
-                        ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
-                        : item.price;
-
-                      return (
-                        <Link
-                          key={idx}
-                          href={localizedHref(item.href)}
-                          onClick={closeMobileMenu}
-                          className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
-                        >
-                          <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/50 p-1 flex items-center justify-center">
-                            <Image
-                              src={item.image}
-                              alt={itemTitle}
-                              width={42}
-                              height={42}
-                              className="object-contain group-hover:scale-105 transition-transform duration-200"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
-                              {itemTitle}
-                            </div>
-                            {(item.orientation || item.type || item.price) ? (
-                              <div className="text-[10px] text-wbk-brown flex items-center gap-1.5 mt-0.5 font-poppins flex-wrap">
-                                {item.orientation && (
-                                  <span>
-                                    {item.orientation.toLowerCase() === "vertical"
-                                      ? t("product.vertical", "Vertical")
-                                      : t("product.horizontal", "Horizontal")}
-                                  </span>
-                                )}
-                                {item.type && <span>• {item.type}</span>}
-                                {formattedPrice && (
-                                  <span className="font-semibold text-wbk-black">
-                                    • {formattedPrice}
-                                  </span>
-                                )}
-                              </div>
-                            ) : itemBadge ? (
-                              <span className="inline-block mt-0.5 text-[9px] uppercase tracking-wider text-wbk-brown">
-                                {itemBadge}
+                    {/* Subcategories list or sections */}
+                    {activeCategoryData?.sections ? (
+                      <div className="flex flex-col divide-y divide-wbk-lightgrey/70">
+                        {activeCategoryData.sections.map((section) => (
+                          <div key={section.id || section.title} className="flex flex-col">
+                            <div className="px-3.5 py-2 bg-[#F4F2F0] flex items-center justify-between border-b border-wbk-lightgrey/50">
+                              <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-wbk-black">
+                                {section.title}
                               </span>
-                            ) : null}
+                              {section.badge && (
+                                <span className="px-1.5 py-0.5 rounded bg-wbk-gold/15 text-wbk-black text-[9px] font-semibold uppercase">
+                                  {section.badge}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Section parent overview link */}
+                            {section.parent && (
+                              <Link
+                                href={localizedHref(section.parent.href)}
+                                onClick={closeMobileMenu}
+                                className="flex items-center gap-3 p-3 bg-[#FAF8F6] border-b border-wbk-lightgrey/50 hover:bg-[#F4F2F0] transition-colors group"
+                              >
+                                <div className="w-11 h-11 shrink-0 bg-white border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
+                                  <Image
+                                    src={section.parent.image}
+                                    alt={section.parent.titleKey ? t(section.parent.titleKey, section.parent.title) : section.parent.title}
+                                    width={38}
+                                    height={38}
+                                    className="object-contain"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[9px] uppercase font-semibold tracking-wider text-wbk-gold block">
+                                    {t("nav.categoryOverview", "Category Overview")}
+                                  </span>
+                                  <span className="text-xs font-semibold text-wbk-black group-hover:text-wbk-green transition-colors truncate block">
+                                    {section.parent.titleKey ? t(section.parent.titleKey, section.parent.title) : section.parent.title}
+                                  </span>
+                                </div>
+                                <IconChevronRight size={14} className="text-wbk-brown group-hover:text-wbk-green" />
+                              </Link>
+                            )}
+
+                            <div className="divide-y divide-wbk-lightgrey/50">
+                              {section.items?.map((item, idx) => {
+                                const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
+                                const formattedPrice = item.price && item.price.includes("£")
+                                  ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
+                                  : item.price;
+
+                                return (
+                                  <Link
+                                    key={idx}
+                                    href={localizedHref(item.href)}
+                                    onClick={closeMobileMenu}
+                                    className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
+                                  >
+                                    <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/50 p-1 flex items-center justify-center">
+                                      <Image
+                                        src={item.image}
+                                        alt={itemTitle}
+                                        width={42}
+                                        height={42}
+                                        className="object-contain group-hover:scale-105 transition-transform duration-200"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
+                                        {itemTitle}
+                                      </div>
+                                      {formattedPrice && (
+                                        <div className="text-[11px] font-semibold text-wbk-black mt-0.5 font-poppins">
+                                          {formattedPrice}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <IconChevronRight
+                                      size={14}
+                                      className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-0.5 transition-all"
+                                    />
+                                  </Link>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <IconChevronRight
-                            size={14}
-                            className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-0.5 transition-all"
-                          />
-                        </Link>
-                      );
-                    })}
+                        ))}
+                      </div>
+                    ) : (
+                      activeCategoryData?.items?.map((item, idx) => {
+                        const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
+                        const formattedPrice = item.price && item.price.includes("£")
+                          ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
+                          : item.price;
+
+                        return (
+                          <Link
+                            key={idx}
+                            href={localizedHref(item.href)}
+                            onClick={closeMobileMenu}
+                            className="flex items-center gap-3 p-3 bg-wbk-white hover:bg-[#FBF9F8] transition-colors group"
+                          >
+                            <div className="w-12 h-12 shrink-0 bg-[#F4F2F0] border border-wbk-lightgrey/50 p-1 flex items-center justify-center">
+                              <Image
+                                src={item.image}
+                                alt={itemTitle}
+                                width={42}
+                                height={42}
+                                className="object-contain group-hover:scale-105 transition-transform duration-200"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-wbk-black group-hover:text-wbk-green transition-colors leading-snug">
+                                {itemTitle}
+                              </div>
+                              {formattedPrice && (
+                                <div className="text-[11px] font-semibold text-wbk-black mt-0.5 font-poppins">
+                                  {formattedPrice}
+                                </div>
+                              )}
+                            </div>
+                            <IconChevronRight
+                              size={14}
+                              className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-0.5 transition-all"
+                            />
+                          </Link>
+                        );
+                      })
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

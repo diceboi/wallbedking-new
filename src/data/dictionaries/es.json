@@ -20,7 +20,14 @@
     "contact": "Contacto",
     "categoryOverview": "Resumen de categoría",
     "exploreAll": "Ver todos los modelos",
-    "from": "desde"
+    "from": "desde",
+    "morphyBeds": "Camas Abatibles MORPHY™",
+    "traditionalBeds": "Camas Tradicionales",
+    "allWallBeds": "Todas las Camas Abatibles",
+    "allMorphyBeds": "Todas las Camas MORPHY™",
+    "allTraditionalBeds": "Todas las Camas Tradicionales",
+    "allMorphyTagline": "Descubrir todos los modelos MORPHY™",
+    "allTraditionalTagline": "Descubrir los modelos clásicos abatibles"
   },
   "header": {
     "searchPlaceholder": "Buscar camas abatibles, sofás, colchones...",

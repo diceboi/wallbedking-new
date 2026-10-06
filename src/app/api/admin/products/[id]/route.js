@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { triggerRestockNotification } from "@/lib/restock";
-
-import fs from "fs";
-import path from "path";
+import { revalidateProductsCache } from "@/lib/products-db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,6 +10,22 @@ const headers = {
   Authorization: `Bearer ${SERVICE_KEY}`,
   "Content-Type": "application/json",
 };
+
+const ALLOWED_SUPABASE_COLUMNS = new Set([
+  "ean", "name", "slug", "width", "length", "height", "frame_width",
+  "folded_up_height", "folded_up_projection", "folded_down_projection",
+  "frame_distance_from_ground", "mounting_frame_height", "maximum_mattress_depth",
+  "orientation", "type", "color", "weight", "stock", "package_dimensions",
+  "price_gbp", "price_euro", "price_usd", "sale_percent", "sale_fix_gbp",
+  "sale_fix_euro", "sale_fix_usd", "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+  "category", "parent_category", "sub_category", "backorder", "visibility",
+  "warranty", "description", "image", "hover_image", "product_images",
+  "product_image_alt", "meta_title", "meta_description", "has_3d",
+  "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
+  "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
+  "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+]);
 
 export async function PATCH(request, { params }) {
   try {
@@ -25,27 +39,31 @@ export async function PATCH(request, { params }) {
     const shouldForceNotify = Boolean(body.notifyRestock);
     delete body.notifyRestock;
 
+    // Fetch previous stock from Supabase if needed for restock detection
     let previousStock = null;
     let existingSlug = null;
-
-    // Update local JSON catalog first so enriched data is persisted immediately
     try {
-      const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-      if (fs.existsSync(catalogPath)) {
-        const raw = fs.readFileSync(catalogPath, "utf-8");
-        const list = JSON.parse(raw);
-        const idx = list.findIndex((p) => String(p.id) === String(id));
-        if (idx !== -1) {
-          previousStock = list[idx].stock !== undefined ? Number(list[idx].stock) : null;
-          existingSlug = list[idx].slug || null;
-          list[idx] = { ...list[idx], ...body, id: Number(id) };
-        } else {
-          list.push({ ...body, id: Number(id) });
+      const prevRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}&select=stock,slug`, {
+        headers,
+        cache: "no-store",
+      });
+      if (prevRes.ok) {
+        const rows = await prevRes.json();
+        if (rows?.[0]) {
+          previousStock = rows[0].stock !== undefined ? Number(rows[0].stock) : null;
+          existingSlug = rows[0].slug || null;
         }
-        fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), "utf-8");
       }
-    } catch (localErr) {
-      console.warn("Could not sync local products-catalog.json:", localErr.message);
+    } catch (_) {}
+
+    const supabasePayload = {};
+    for (const [key, val] of Object.entries(body)) {
+      if (ALLOWED_SUPABASE_COLUMNS.has(key) && val !== undefined) {
+        supabasePayload[key] = val;
+      }
+    }
+    if (body.hoverImage && !supabasePayload.hover_image) {
+      supabasePayload.hover_image = body.hoverImage;
     }
 
     let res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
@@ -54,60 +72,19 @@ export async function PATCH(request, { params }) {
         ...headers,
         Prefer: "return=representation",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(supabasePayload),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      // If column does not exist yet in Supabase table (before SQL migration)
-      if (err.includes("does not exist") || err.includes("Could not find")) {
-        const safePayload = { ...body };
-        delete safePayload.tags;
-        delete safePayload.sku;
-        delete safePayload.ean_uk;
-        delete safePayload.ean_us;
-        delete safePayload.ean_de;
-        delete safePayload.ean_fr;
-        delete safePayload.ean_es;
-        delete safePayload.ean_it;
-        delete safePayload.ean_pt;
-        delete safePayload.pack_1;
-        delete safePayload.pack_2;
-        delete safePayload.pack_3;
-        delete safePayload.pack_4;
-        delete safePayload.available_locales;
-        delete safePayload.name_en;
-        delete safePayload.name_us;
-        delete safePayload.name_de;
-        delete safePayload.name_fr;
-        delete safePayload.name_es;
-        delete safePayload.name_por;
-        delete safePayload.name_pt;
-        delete safePayload.name_it;
-        delete safePayload.gtin_en;
-        delete safePayload.gtin_us;
-        delete safePayload.gtin_de;
-        delete safePayload.gtin_fr;
-        delete safePayload.gtin_es;
-        delete safePayload.gtin_por;
-        delete safePayload.gtin_pt;
-        delete safePayload.gtin_it;
-
-        res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
-          method: "PATCH",
-          headers: {
-            ...headers,
-            Prefer: "return=representation",
-          },
-          body: JSON.stringify(safePayload),
-        });
-      } else {
-        return NextResponse.json({ success: false, error: err }, { status: res.status });
-      }
+      return NextResponse.json({ success: false, error: err }, { status: res.status });
     }
 
     const updated = await res.json();
     const finalProduct = { ...body, ...(updated[0] || updated), id: Number(id) };
+
+    // Invalidate Next.js cache so storefront reflects changes immediately
+    revalidateProductsCache();
 
     // Check if product was restocked from 0 (or explicitly triggered)
     const newStock = body.stock !== undefined ? Number(body.stock) : null;
@@ -118,13 +95,12 @@ export async function PATCH(request, { params }) {
     let restockNotifiedCount = 0;
     if (isRestocked) {
       try {
-        console.log(`[Admin Stock Update] Restock detected for #${id} (Previous: ${previousStock}, New: ${newStock}). Triggering waitlist notifications...`);
+        console.log(`[Admin Stock Update] Restock detected for #${id}. Triggering waitlist notifications...`);
         const notifyResult = await triggerRestockNotification({
           productId: id,
           productSlug: finalProduct.slug || existingSlug,
         });
         restockNotifiedCount = notifyResult.notifiedCount || 0;
-        console.log(`[Admin Stock Update] Restock alert result: ${notifyResult.message}`);
       } catch (notifyErr) {
         console.error("[Admin Stock Update] Restock notification error:", notifyErr);
       }
@@ -154,18 +130,8 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ success: false, error: err }, { status: res.status });
     }
 
-    // Also remove from local products-catalog.json
-    try {
-      const catalogPath = path.join(process.cwd(), "src", "data", "products-catalog.json");
-      if (fs.existsSync(catalogPath)) {
-        const raw = fs.readFileSync(catalogPath, "utf-8");
-        const list = JSON.parse(raw);
-        const filtered = list.filter((p) => String(p.id) !== String(id));
-        fs.writeFileSync(catalogPath, JSON.stringify(filtered, null, 2), "utf-8");
-      }
-    } catch (localErr) {
-      console.warn("Could not delete from local products-catalog.json:", localErr.message);
-    }
+    // Invalidate Next.js cache
+    revalidateProductsCache();
 
     return NextResponse.json({
       success: true,

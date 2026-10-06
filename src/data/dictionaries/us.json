@@ -1,6 +1,13 @@
 {
   "nav": {
-    "beds": "Murphy Beds",
+    "beds": "Wall Beds",
+    "morphyBeds": "MORPHY™ Beds",
+    "traditionalBeds": "Traditional Beds",
+    "allWallBeds": "All Wall Beds",
+    "allMorphyBeds": "All MORPHY™ Beds",
+    "allTraditionalBeds": "All Traditional Beds",
+    "allMorphyTagline": "Explore all MORPHY™ models",
+    "allTraditionalTagline": "Explore classic wall bed models",
     "sofas": "Front Sofas",
     "tables": "Smart Tables",
     "mattresses": "Mattresses",

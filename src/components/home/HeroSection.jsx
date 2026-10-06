@@ -57,7 +57,7 @@ export function HeroSection() {
        * Doesn't move at all when scrolling.
        * pointer-events-none and touch-pan-y allow all mobile finger touch gestures to pass through to document scroll.
        */}
-      <div className="fixed top-[60px] left-0 right-0 bottom-0 z-0 pointer-events-none touch-pan-y">
+      <div className="fixed top-[60px] left-0 right-0 bottom-0 z-10 pointer-events-none touch-pan-y">
         {/* 3D Canvas */}
         <div className="absolute inset-0 pointer-events-none">
           {mounted && <Hero3DCanvas scrollProgress={scrollProgress} />}
@@ -79,7 +79,7 @@ export function HeroSection() {
           <p className="mt-2 text-xs sm:text-sm md:text-base text-wbk-white leading-relaxed drop-shadow-sm">
             {t("home.heroSubtitle", "Space-saving, handcrafted wall beds engineered for seamless everyday living.")}
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 pointer-events-auto">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 pointer-events-auto relative z-20">
             <Button
               as="link"
               href={localizedHref("/products/beds")}
@@ -126,11 +126,11 @@ export function HeroSection() {
 
       {/*
        * Scroll spacer — creates the scroll distance for the 3D animation.
-       * Receives touch & wheel events so mobile finger scrolling works effortlessly.
+       * Uses pointer-events-none so it never blocks clicks to the hero buttons.
        */}
       <div
         ref={containerRef}
-        className="relative h-[280vh] w-full touch-pan-y"
+        className="relative h-[280vh] w-full pointer-events-none"
       />
     </>
   );

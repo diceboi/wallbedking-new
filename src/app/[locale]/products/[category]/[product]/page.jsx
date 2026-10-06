@@ -32,17 +32,20 @@ import {
   getProductVariants,
   getFallbackProduct,
   GLOBAL_GALLERY_TEMPLATES,
-  RAW_CATALOG,
 } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { getProductPrice, formatPrice } from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
 import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
-import { getLocalizedProductName, getLocalizedProductGtin } from "@/lib/products";
+import {
+  getLocalizedProductName,
+  getLocalizedProductGtin,
+} from "@/lib/products";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -62,6 +65,8 @@ const ConfiguratorCanvas = dynamic(
 
 export default function ProductDetailPage() {
   const { locale, t } = useLocale();
+  const { findProductBySlug: catalogFindBySlug, getProductVariants: catalogGetVariants } =
+    useProductCatalog();
   const params = useParams();
   const router = useRouter();
   const rawCategory = params?.category || "beds";
@@ -273,9 +278,19 @@ export default function ProductDetailPage() {
     const o = (orientation || "Vertical").toLowerCase();
 
     if (cat === "beds") {
-      if (s === "integrated") return `integrated-${o}-wall-bed`;
-      if (s === "studio") return `studio-${o}-wall-bed`;
-      return `classic-${o}-wall-bed`;
+      const isMorphy = Boolean(
+        activeProduct?.isMorphy ??
+        ((activeProduct?.name || "").includes("MORPHY") ||
+          (activeProduct?.title || "").includes("MORPHY")),
+      );
+      if (isMorphy) {
+        if (s === "integrated") return `integrated-${o}-wall-bed`;
+        if (s === "studio") return `studio-${o}-wall-bed`;
+        return `classic-${o}-wall-bed`;
+      } else {
+        if (s === "studio") return `studio-${o}-traditional-bed`;
+        return `classic-${o}-traditional-bed`;
+      }
     }
 
     if (cat === "sofas") {
@@ -339,16 +354,19 @@ export default function ProductDetailPage() {
 
   // Lookup active product (flagship or specific)
   const activeProduct = useMemo(() => {
+    const lookup = catalogFindBySlug || findProductBySlug;
     return (
+      lookup(categorySlug, productSlug) ||
       findProductBySlug(categorySlug, productSlug) ||
       getFallbackProduct(categorySlug, productSlug)
     );
-  }, [categorySlug, productSlug]);
+  }, [catalogFindBySlug, categorySlug, productSlug]);
 
   // Available variants for the family / category (all sizes for this flagship model)
   const familyVariants = useMemo(() => {
-    return getProductVariants(activeProduct);
-  }, [activeProduct]);
+    const getVariants = catalogGetVariants || getProductVariants;
+    return getVariants(activeProduct);
+  }, [catalogGetVariants, activeProduct]);
 
   // Derived options for dropdowns based on actual products in the family
   const availableFormats = useMemo(() => {
@@ -361,7 +379,14 @@ export default function ProductDetailPage() {
 
   const availableStyles = useMemo(() => {
     if (activeProduct.parent_category === "beds") {
-      return ["Classic", "Studio", "Integrated"];
+      const isMorphy = Boolean(
+        activeProduct?.isMorphy ??
+        ((activeProduct?.name || "").includes("MORPHY") ||
+          (activeProduct?.title || "").includes("MORPHY")),
+      );
+      return isMorphy
+        ? ["Classic", "Studio", "Integrated"]
+        : ["Classic", "Studio"];
     }
     if (activeProduct.parent_category === "sofas") {
       return ["Bed Front", "Free Standing"];
@@ -742,13 +767,19 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Product Tags */}
-              {Array.isArray(displayProduct?.tags) && displayProduct.tags.length > 0 && (
-                <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
-                  {displayProduct.tags.map((tId) => (
-                    <TagBadge key={tId} tagIdOrSlug={tId} locale={locale} variant="micro" />
-                  ))}
-                </div>
-              )}
+              {Array.isArray(displayProduct?.tags) &&
+                displayProduct.tags.length > 0 && (
+                  <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                    {displayProduct.tags.map((tId) => (
+                      <TagBadge
+                        key={tId}
+                        tagIdOrSlug={tId}
+                        locale={locale}
+                        variant="micro"
+                      />
+                    ))}
+                  </div>
+                )}
               {isOutOfStock ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
@@ -820,13 +851,19 @@ export default function ProductDetailPage() {
                   </div>
 
                   {/* Product Tags (Desktop) */}
-                  {Array.isArray(displayProduct?.tags) && displayProduct.tags.length > 0 && (
-                    <div className="flex items-center gap-2 pt-2 flex-wrap">
-                      {displayProduct.tags.map((tId) => (
-                        <TagBadge key={tId} tagIdOrSlug={tId} locale={locale} variant="pdp" />
-                      ))}
-                    </div>
-                  )}
+                  {Array.isArray(displayProduct?.tags) &&
+                    displayProduct.tags.length > 0 && (
+                      <div className="flex items-center gap-2 pt-2 flex-wrap">
+                        {displayProduct.tags.map((tId) => (
+                          <TagBadge
+                            key={tId}
+                            tagIdOrSlug={tId}
+                            locale={locale}
+                            variant="pdp"
+                          />
+                        ))}
+                      </div>
+                    )}
                   {isOutOfStock ? (
                     <div className="flex flex-wrap items-center gap-2 pt-2">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
@@ -1108,7 +1145,7 @@ export default function ProductDetailPage() {
                 <div className="relative w-full h-full flex flex-col items-center justify-start p-0 lg:p-2 sm:p-4 pointer-events-auto">
                   <div
                     onClick={() => setLightboxIndex(selectedImageIndex)}
-                    className="relative group w-full aspect-[4/3] sm:aspect-[16/11] lg:bg-white bg-[#F4F2F0]/80  lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-6 sm:p-8 cursor-zoom-in transition-all duration-300"
+                    className="relative group w-full aspect-[4/3] sm:aspect-[16/11] lg:bg-white bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -1119,7 +1156,11 @@ export default function ProductDetailPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="max-h-full max-w-full object-cover filter drop-shadow-xs select-none"
+                        className={`max-h-full max-w-full object-contain filter drop-shadow-xs select-none transition-transform duration-300 ${
+                          currentMainImage?.src?.includes("MORPHY")
+                            ? "scale-[1.2] group-hover:scale-[1.3]"
+                            : "scale-100 group-hover:scale-105"
+                        }`}
                       />
                     </AnimatePresence>
 
@@ -1232,7 +1273,11 @@ export default function ProductDetailPage() {
                             <img
                               src={img.src}
                               alt={img.alt}
-                              className="w-full h-full object-cover object-center rounded-none"
+                              className={`w-full h-full object-contain object-center rounded-none ${
+                                img.src?.includes("MORPHY")
+                                  ? "scale-[1.22]"
+                                  : "scale-100"
+                              }`}
                             />
                             {isSelected && (
                               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
@@ -1354,7 +1399,11 @@ export default function ProductDetailPage() {
                               <img
                                 src={img.src}
                                 alt={img.alt}
-                                className="w-full h-full object-cover object-center rounded-none group-hover:scale-105 transition-transform duration-300"
+                                className={`w-full h-full object-contain object-center rounded-none group-hover:scale-110 transition-transform duration-300 ${
+                                  img.src?.includes("MORPHY")
+                                    ? "scale-[1.22]"
+                                    : "scale-100"
+                                }`}
                                 onLoad={updateScrollButtons}
                               />
                               {isSelected && (
@@ -1676,7 +1725,11 @@ export default function ProductDetailPage() {
                       )}
                       {currentEan && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">{locale === "us" ? "GTIN / UPC" : "Barcode (GTIN / EAN)"}</td>
+                          <td className="py-2.5 font-medium">
+                            {locale === "us"
+                              ? "GTIN / UPC"
+                              : "Barcode (GTIN / EAN)"}
+                          </td>
                           <td className="py-2.5 text-right font-mono text-wbk-brown">
                             {currentEan}
                           </td>
@@ -2548,7 +2601,10 @@ export default function ProductDetailPage() {
               <button
                 type="button"
                 onClick={() => setIsWaitlistModalOpen(true)}
-                title={t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                title={t(
+                  "waitlist.joinWaitlistBtn",
+                  "Join Waitlist / Notify Me",
+                )}
                 className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
               >
                 <IconBell
@@ -2563,7 +2619,11 @@ export default function ProductDetailPage() {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                title={isAdded ? t("common.addedToCart", "Added to Cart!") : t("common.addToCart", "Add to Cart")}
+                title={
+                  isAdded
+                    ? t("common.addedToCart", "Added to Cart!")
+                    : t("common.addToCart", "Add to Cart")
+                }
                 className={`flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 border text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0 ${
                   isAdded
                     ? "bg-emerald-600 border-emerald-600 text-white"
@@ -2583,7 +2643,9 @@ export default function ProductDetailPage() {
                       size={16}
                       className="transition-transform duration-200 group-hover:scale-110"
                     />
-                    <span className="hidden sm:inline">{t("common.addToCart", "Add to Cart")}</span>
+                    <span className="hidden sm:inline">
+                      {t("common.addToCart", "Add to Cart")}
+                    </span>
                   </>
                 )}
               </button>

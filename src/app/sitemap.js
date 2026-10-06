@@ -1,5 +1,6 @@
 import { LOCALES } from "@/lib/i18n";
 import { RAW_CATALOG } from "@/data/products";
+import { getStorefrontProducts } from "@/lib/products-db";
 
 export default async function sitemap() {
   const baseUrl = "https://www.wallbedking.co.uk";
@@ -18,6 +19,7 @@ export default async function sitemap() {
   ];
 
   const sitemapEntries = [];
+  const catalog = (await getStorefrontProducts()) || RAW_CATALOG;
 
   // Generate localized static routes
   for (const locale of LOCALES) {
@@ -31,8 +33,8 @@ export default async function sitemap() {
     }
 
     // Generate localized product pages
-    if (Array.isArray(RAW_CATALOG)) {
-      for (const prod of RAW_CATALOG.slice(0, 100)) {
+    if (Array.isArray(catalog)) {
+      for (const prod of catalog) {
         if (prod.slug) {
           const category = prod.parent_category || "beds";
           sitemapEntries.push({

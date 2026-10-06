@@ -20,7 +20,14 @@
     "contact": "Kontakt",
     "categoryOverview": "Kategorieübersicht",
     "exploreAll": "Alle Modelle entdecken",
-    "from": "ab"
+    "from": "ab",
+    "morphyBeds": "MORPHY™ Schrankbetten",
+    "traditionalBeds": "Klassische Schrankbetten",
+    "allWallBeds": "Alle Schrankbetten",
+    "allMorphyBeds": "Alle MORPHY™ Betten",
+    "allTraditionalBeds": "Alle klassischen Betten",
+    "allMorphyTagline": "Alle MORPHY™ Modelle entdecken",
+    "allTraditionalTagline": "Klassische Schrankbett-Modelle entdecken"
   },
   "header": {
     "searchPlaceholder": "Schrankbetten, Sofas, Matratzen suchen...",

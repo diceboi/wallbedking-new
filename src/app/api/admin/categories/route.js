@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import catalog from "@/data/products-catalog.json";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -33,23 +32,6 @@ const saveLocalCategories = (categories) => {
   }
 };
 
-// Calculate product counts per category
-const enrichCategoryCounts = (categories) => {
-  const counts = {};
-  if (Array.isArray(catalog)) {
-    catalog.forEach((p) => {
-      const cat = p.parent_category || p.category;
-      if (cat) {
-        counts[cat] = (counts[cat] || 0) + 1;
-      }
-    });
-  }
-  return categories.map((c) => ({
-    ...c,
-    count: counts[c.id] || counts[c.slug] || 0,
-  }));
-};
-
 export async function GET() {
   try {
     let categories = [];
@@ -58,16 +40,41 @@ export async function GET() {
     // Try Supabase first
     if (SUPABASE_URL && SERVICE_KEY) {
       try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/categories?select=*&order=display_order.asc,name.asc`,
-          { headers, cache: "no-store" }
-        );
-        if (res.ok) {
-          const data = await res.json();
+        const [catsRes, prodsRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=display_order.asc,name.asc`, { headers, cache: "no-store" }),
+          fetch(`${SUPABASE_URL}/rest/v1/products?select=parent_category`, { headers, cache: "no-store" }),
+        ]);
+
+        if (catsRes.ok) {
+          const data = await catsRes.json();
           if (Array.isArray(data) && data.length > 0) {
             categories = data;
             fromSupabase = true;
           }
+        }
+
+        let counts = {};
+        if (prodsRes.ok) {
+          const prods = await prodsRes.json();
+          if (Array.isArray(prods)) {
+            prods.forEach((p) => {
+              const cat = p.parent_category;
+              if (cat) counts[cat] = (counts[cat] || 0) + 1;
+            });
+          }
+        }
+
+        if (categories.length > 0) {
+          const enriched = categories.map((c) => ({
+            ...c,
+            count: counts[c.id] || counts[c.slug] || 0,
+          }));
+          return NextResponse.json({
+            success: true,
+            categories: enriched,
+            count: enriched.length,
+            fromSupabase,
+          });
         }
       } catch (sbErr) {
         console.warn("[Admin Categories API] Supabase query warning:", sbErr.message);
@@ -75,11 +82,13 @@ export async function GET() {
     }
 
     // Fallback to local categories.json
-    if (categories.length === 0) {
-      categories = getLocalCategories();
-    }
-
-    const enriched = enrichCategoryCounts(categories);
+    categories = getLocalCategories();
+    return NextResponse.json({
+      success: true,
+      categories: categories.map((c) => ({ ...c, count: 0 })),
+      count: categories.length,
+      fromSupabase: false,
+    });
 
     return NextResponse.json({
       success: true,

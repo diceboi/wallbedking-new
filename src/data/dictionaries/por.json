@@ -20,7 +20,14 @@
     "contact": "Contacto",
     "categoryOverview": "Visão geral da categoria",
     "exploreAll": "Ver todos os modelos",
-    "from": "a partir de"
+    "from": "a partir de",
+    "morphyBeds": "Camas Rebatíveis MORPHY™",
+    "traditionalBeds": "Camas Tradicionais",
+    "allWallBeds": "Todas as Camas Rebatíveis",
+    "allMorphyBeds": "Todas as Camas MORPHY™",
+    "allTraditionalBeds": "Todas as Camas Tradicionais",
+    "allMorphyTagline": "Descubra todos os modelos MORPHY™",
+    "allTraditionalTagline": "Descubra os modelos rebatíveis clássicos"
   },
   "header": {
     "searchPlaceholder": "Pesquisar camas rebatíveis, sofás, colchões...",
