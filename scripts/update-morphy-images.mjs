@@ -20,7 +20,7 @@ for (const line of envFile.split('\n')) {
 
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SUPABASE_STORAGE_BASE = `${supabaseUrl}/storage/v1/object/public/ProductImages`;
+const SUPABASE_STORAGE_BASE = `${supabaseUrl}/storage/v1/object/public/ProductImages/wallbeds`;
 
 export function getMorphySizeKey(item) {
   let bedWidthMm = Math.min(Number(item.width) || 0, Number(item.length) || 0);

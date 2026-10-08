@@ -4,7 +4,7 @@ import catalog from './products-catalog.json';
 export const RAW_CATALOG = catalog;
 
 export const SUPABASE_PRODUCT_IMAGES_BASE =
-  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages";
+  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
 
 export const getMorphyGallery2K = (
   sizeKey = "160x200",

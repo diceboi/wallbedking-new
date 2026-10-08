@@ -161,6 +161,15 @@ export default function ProductDetailPage() {
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
 
+  // Desktop Add to Cart ref & visibility state for floating bar
+  const desktopAddToCartRef = useRef(null);
+  const [isDesktopAddToCartVisible, setIsDesktopAddToCartVisible] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Left column height tracking to lock gallery & center image height
+  const leftColRef = useRef(null);
+  const [leftColHeight, setLeftColHeight] = useState(null);
+
   // Vertical gallery step-scrolling state & refs
   const galleryContainerRef = useRef(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
@@ -210,6 +219,57 @@ export default function ProductDetailPage() {
       window.removeEventListener("resize", updateScrollButtons);
     };
   }, [updateScrollButtons]);
+
+  // Track window resize for desktop detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Track left column height dynamically with ResizeObserver
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const h = Math.round(entry.contentRect.height);
+        if (h > 0) {
+          setLeftColHeight(h);
+        }
+      }
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mounted, productFormat, productStyle, productSize, sofaIncluded]);
+
+  // Track desktop Add to Cart button intersection to trigger floating bar
+  useEffect(() => {
+    const el = desktopAddToCartRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsDesktopAddToCartVisible(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mounted]);
+
+  // Update gallery step scroll buttons whenever leftColHeight changes
+  useEffect(() => {
+    updateScrollButtons();
+  }, [leftColHeight, updateScrollButtons]);
 
   const [customerPhotos, setCustomerPhotos] = useState([
     {
@@ -715,13 +775,15 @@ export default function ProductDetailPage() {
     );
   }
 
+  const showFloatingBar = !isDesktop || !isDesktopAddToCartVisible;
+
   return (
     <div className="relative min-h-screen flex flex-col bg-white pt-4 sm:pt-8 pb-32 sm:pb-36">
       {/* ── MAIN PRODUCT SECTION ── */}
-      <section className="relative z-10 w-full min-h-0 lg:min-h-[620px] lg:h-[86vh] flex items-center pb-8 lg:pb-0">
+      <section className="relative z-10 w-full min-h-0 flex items-start lg:items-center pb-8 lg:pb-6">
         <Container
           size="xl"
-          className="w-full h-full relative z-10 flex flex-col justify-between py-1"
+          className="w-full relative z-10 flex flex-col justify-start py-1"
         >
           {/* Mobile Top Header (Breadcrumbs + Title) visible only on < lg */}
           <div className="lg:hidden mb-4 space-y-2">
@@ -806,9 +868,12 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:items-stretch h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
             {/* ── LEFT COLUMN: PRODUCT CUSTOMIZATION CONTROLS (Order 2 on mobile, Column 1 on desktop) ── */}
-            <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start lg:justify-start space-y-8 lg:h-full lg:overflow-y-auto custom-scrollbar pr-1 pointer-events-auto">
+            <div
+              ref={leftColRef}
+              className="order-2 lg:order-1 lg:col-span-3 flex flex-col justify-start space-y-5 lg:space-y-6 pr-1 pointer-events-auto"
+            >
               {/* Desktop Breadcrumbs & Title (hidden on mobile) */}
               <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
@@ -1101,6 +1166,102 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
+              {/* ── DESKTOP ADD TO CART & PRICING BLOCK (Desktop only, hidden on mobile) ── */}
+              <div
+                ref={desktopAddToCartRef}
+                className="hidden lg:block pt-3 pb-2 border-y border-wbk-lightgrey/50 space-y-3 font-poppins"
+              >
+                {/* Total Price Display */}
+                <div className="flex items-baseline justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold block">
+                      {t("common.price", "Price")}
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl xl:text-3xl font-bold text-wbk-black tracking-tight">
+                        {formatPrice(totalDecimal, locale)}
+                      </span>
+                      {productPricing.isOnSale && (
+                        <span className="text-xs text-wbk-brown/70 line-through font-normal">
+                          {formatPrice(
+                            productPricing.regularRaw + sofaSurcharge,
+                            locale,
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {productPricing.isOnSale && (
+                    <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold uppercase tracking-wider rounded">
+                      Sale
+                    </span>
+                  )}
+                </div>
+
+                {/* Desktop CTA Button */}
+                {isOutOfStock ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsWaitlistModalOpen(true)}
+                    className="w-full py-3 px-5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer group"
+                  >
+                    <IconBell
+                      size={16}
+                      className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
+                    />
+                    <span>
+                      {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    title={
+                      isAdded
+                        ? t("common.addedToCart", "Added to Cart!")
+                        : t("common.addToCart", "Add to Cart")
+                    }
+                    className={`w-full py-3.5 px-6 border text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
+                      isAdded
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white border-wbk-black hover:border-wbk-green"
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <IconCheck size={18} className="text-white" />
+                        <span>{t("common.addedToCart", "Added to Cart!")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <IconShoppingCart
+                          size={18}
+                          className="transition-transform duration-200 group-hover:scale-110"
+                        />
+                        <span>{t("common.addToCart", "Add to Cart")}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Micro Guarantee / Delivery Note */}
+                <div className="flex items-center justify-between text-[11px] text-wbk-brown pt-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-green shrink-0" />
+                    <span>
+                      {isOutOfStock
+                        ? t("common.restockSoon", "Restock in progress")
+                        : t("common.freeDelivery", "Free UK/EU Delivery")}
+                    </span>
+                  </span>
+                  <span className="text-[11px] font-medium text-wbk-brown/80">
+                    {displayProduct?.warranty || "5-Year Guarantee"}
+                  </span>
+                </div>
+              </div>
+
               {/* Spec description */}
               <div className="pt-2">
                 <p className="text-[13px] text-wbk-black/90 leading-relaxed font-poppins">
@@ -1111,10 +1272,21 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── CENTER COLUMN: 3D VIEWER OR 2D MAIN IMAGE (Order 1 on mobile, Column 2 on desktop) ── */}
-            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full lg:h-full relative pointer-events-none">
+            <div
+              style={{
+                height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                maxHeight: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+              }}
+              className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full relative pointer-events-none self-center"
+            >
               {has3D ? (
                 /* 3D Mode Canvas Container - Mobilon keretes kártya, Asztalin keret nélküli tiszta háttér */
-                <div className="relative w-full h-[360px] sm:h-[450px] lg:h-full bg-[#F8F7F5] lg:bg-transparent border border-wbk-lightgrey/50 lg:border-none rounded-2xl lg:rounded-none overflow-hidden lg:overflow-visible flex items-center justify-center shadow-xs lg:shadow-none pointer-events-auto">
+                <div
+                  style={{
+                    height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                  }}
+                  className="relative w-full h-[360px] sm:h-[450px] lg:h-full bg-[#F8F7F5] lg:bg-transparent border border-wbk-lightgrey/50 lg:border-none rounded-2xl lg:rounded-none overflow-hidden lg:overflow-visible flex items-center justify-center shadow-xs lg:shadow-none pointer-events-auto"
+                >
                   {mounted && ready && (
                     <ConfiguratorCanvas
                       key={`${categorySlug}-${productSlug}-${displayProduct.slug}`}
@@ -1142,10 +1314,10 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 /* Non-3D Mode: High-Impact Center Main Image */
-                <div className="relative w-full h-full flex flex-col items-center justify-start p-0 lg:p-2 sm:p-4 pointer-events-auto">
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-0 lg:p-2 sm:p-4 pointer-events-auto">
                   <div
                     onClick={() => setLightboxIndex(selectedImageIndex)}
-                    className="relative group w-full aspect-[4/3] sm:aspect-[16/11] lg:bg-white bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
+                    className="relative group w-full lg:h-full aspect-[4/3] lg:aspect-auto sm:aspect-[16/11] lg:bg-transparent bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -1324,7 +1496,13 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY (Desktop Only, hidden on mobile) ── */}
-            <div className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between h-full overflow-hidden pointer-events-auto">
+            <div
+              style={{
+                height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                maxHeight: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+              }}
+              className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between overflow-hidden pointer-events-auto"
+            >
               <div className="flex flex-col h-full overflow-hidden">
                 <div className="flex items-center justify-between pb-2 shrink-0 border-b border-wbk-lightgrey/40">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
@@ -1379,7 +1557,7 @@ export default function ProductDetailPage() {
                           <div
                             key={idx}
                             data-gallery-card
-                            className="w-full max-w-[140px] xl:max-w-[150px] aspect-square shrink-0 mx-auto"
+                            className="w-full max-w-[130px] xl:max-w-[140px] aspect-square shrink-0 mx-auto"
                           >
                             <button
                               type="button"
@@ -2556,103 +2734,108 @@ export default function ProductDetailPage() {
       </AnimatePresence>
 
       {/* ── PERSISTENT STICKY BOTTOM BAR: PRODUCT TITLE, SIZE, TOTAL PRICE & ADD TO CART ── */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
-        className="fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 pointer-events-none px-2.5 sm:px-6"
-      >
-        <Container
-          size="xl"
-          className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
-        >
-          {/* Left: Product Name & Selected Size */}
-          <div className="flex flex-col flex-1 min-w-0 sm:max-w-xs md:max-w-sm pr-2">
-            <span className="font-poppins text-xs sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
-              {localizedProductName}
-            </span>
-            <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
-              {formatSizeLabel(productSize || "Standard", locale)}
-            </span>
-          </div>
-
-          {/* Right: Total Price & Add to Cart Button */}
-          <div className="flex items-center gap-2 sm:gap-6 shrink-0">
-            <div className="flex flex-col items-end font-poppins">
-              <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
-                {t("common.total", "Total")}
-              </span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-bold text-wbk-black text-sm sm:text-xl md:text-2xl leading-none">
-                  {formatPrice(totalDecimal, locale)}
+      <AnimatePresence>
+        {showFloatingBar && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 280, damping: 24 }}
+            className="fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 pointer-events-none px-2.5 sm:px-6"
+          >
+            <Container
+              size="xl"
+              className="flex items-center justify-between gap-3 sm:gap-6 bg-[#A3A48C]/95 backdrop-blur-md shadow-xl px-3.5 sm:px-8 py-2.5 sm:py-3 transition-all duration-300 pointer-events-auto border border-white/20"
+            >
+              {/* Left: Product Name & Selected Size */}
+              <div className="flex flex-col flex-1 min-w-0 sm:max-w-xs md:max-w-sm pr-2">
+                <span className="font-poppins text-xs sm:text-base md:text-lg text-wbk-black font-semibold truncate leading-tight">
+                  {localizedProductName}
                 </span>
-                {productPricing.isOnSale && (
-                  <span className="text-[10px] sm:text-xs text-wbk-black/60 line-through font-normal hidden sm:inline">
-                    {formatPrice(
-                      productPricing.regularRaw + sofaSurcharge,
-                      locale,
-                    )}
-                  </span>
-                )}
+                <span className="font-poppins text-[10px] sm:text-xs text-wbk-black/75 font-light truncate">
+                  {formatSizeLabel(productSize || "Standard", locale)}
+                </span>
               </div>
-            </div>
 
-            {isOutOfStock ? (
-              <button
-                type="button"
-                onClick={() => setIsWaitlistModalOpen(true)}
-                title={t(
-                  "waitlist.joinWaitlistBtn",
-                  "Join Waitlist / Notify Me",
-                )}
-                className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
-              >
-                <IconBell
-                  size={16}
-                  className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
-                />
-                <span className="hidden sm:inline">
-                  {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
-                </span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                title={
-                  isAdded
-                    ? t("common.addedToCart", "Added to Cart!")
-                    : t("common.addToCart", "Add to Cart")
-                }
-                className={`flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 border text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0 ${
-                  isAdded
-                    ? "bg-emerald-600 border-emerald-600 text-white"
-                    : "bg-wbk-black hover:bg-white hover:text-wbk-black text-white border-wbk-black hover:border-white"
-                }`}
-              >
-                {isAdded ? (
-                  <>
-                    <IconCheck size={16} className="text-white" />
-                    <span className="text-white hidden sm:inline">
-                      {t("common.addedToCart", "Added to Cart!")}
+              {/* Right: Total Price & Add to Cart Button */}
+              <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+                <div className="flex flex-col items-end font-poppins">
+                  <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
+                    {t("common.total", "Total")}
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-wbk-black text-sm sm:text-xl md:text-2xl leading-none">
+                      {formatPrice(totalDecimal, locale)}
                     </span>
-                  </>
-                ) : (
-                  <>
-                    <IconShoppingCart
+                    {productPricing.isOnSale && (
+                      <span className="text-[10px] sm:text-xs text-wbk-black/60 line-through font-normal hidden sm:inline">
+                        {formatPrice(
+                          productPricing.regularRaw + sofaSurcharge,
+                          locale,
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {isOutOfStock ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsWaitlistModalOpen(true)}
+                    title={t(
+                      "waitlist.joinWaitlistBtn",
+                      "Join Waitlist / Notify Me",
+                    )}
+                    className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
+                  >
+                    <IconBell
                       size={16}
-                      className="transition-transform duration-200 group-hover:scale-110"
+                      className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
                     />
                     <span className="hidden sm:inline">
-                      {t("common.addToCart", "Add to Cart")}
+                      {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
                     </span>
-                  </>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    title={
+                      isAdded
+                        ? t("common.addedToCart", "Added to Cart!")
+                        : t("common.addToCart", "Add to Cart")
+                    }
+                    className={`flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 border text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0 ${
+                      isAdded
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "bg-wbk-black hover:bg-white hover:text-wbk-black text-white border-wbk-black hover:border-white"
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <IconCheck size={16} className="text-white" />
+                        <span className="text-white hidden sm:inline">
+                          {t("common.addedToCart", "Added to Cart!")}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <IconShoppingCart
+                          size={16}
+                          className="transition-transform duration-200 group-hover:scale-110"
+                        />
+                        <span className="hidden sm:inline">
+                          {t("common.addToCart", "Add to Cart")}
+                        </span>
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
-          </div>
-        </Container>
-      </motion.div>
+              </div>
+            </Container>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Waitlist Modal */}
       <WaitlistModal

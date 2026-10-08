@@ -52,7 +52,7 @@ export const MAIN_NAV_ITEMS = [
   },
 ];
 
-const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages";
+const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
 
 export const SUBMENU_DATA = {
   beds: {
