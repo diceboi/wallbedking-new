@@ -12,7 +12,10 @@ export function TopMenu() {
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
         {/* Left: Highlights / Assurances */}
         <div className="flex items-center gap-6 text-[#A5988E]">
-          <div className="flex items-center gap-1.5">
+          <Link
+            href={localizedHref("/support/delivery")}
+            className="flex items-center gap-1.5 hover:text-wbk-white transition-colors cursor-pointer"
+          >
             <IconTruck
               size={14}
               className="text-wbk-gold shrink-0"
@@ -24,7 +27,7 @@ export function TopMenu() {
             <span className="sm:hidden text-wbk-white/90">
               {t("topbar.freeDeliveryShort", "Free UK Delivery")}
             </span>
-          </div>
+          </Link>
           <div className="hidden md:flex items-center gap-1.5">
             <IconShieldCheck
               size={14}
@@ -50,36 +53,37 @@ export function TopMenu() {
         {/* Right: Quick secondary links */}
         <div className="flex items-center gap-4 text-xs font-normal">
           <Link
+            href={localizedHref("/support/delivery")}
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 flex items-center gap-1 cursor-pointer"
+          >
+            <IconTruck size={13} className="text-wbk-gold" />
+            <span>{t("topbar.delivery", "Delivery & Shipping")}</span>
+          </Link>
+          <span className="text-white/20">|</span>
+          <Link
             href={localizedHref("/support/faq")}
-            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
           >
             {t("topbar.faq", "FAQ")}
           </Link>
           <span className="text-white/20">|</span>
           <Link
-            href={localizedHref("/support/installation-guides")}
-            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
-          >
-            {t("topbar.installation", "Installation")}
-          </Link>
-          <span className="text-white/20">|</span>
-          <Link
             href={localizedHref("/reviews")}
-            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
           >
             {t("topbar.reviews", "Reviews")}
           </Link>
           <span className="text-white/20">|</span>
           <Link
             href={localizedHref("/about")}
-            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
           >
             {t("topbar.about", "About")}
           </Link>
           <span className="text-white/20">|</span>
           <Link
             href={localizedHref("/contact")}
-            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150"
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
           >
             {t("topbar.contact", "Contact")}
           </Link>

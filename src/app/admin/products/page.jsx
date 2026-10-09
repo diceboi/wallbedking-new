@@ -29,6 +29,7 @@ import { ProductEditDrawer } from "@/components/admin/ProductEditDrawer";
 import { BulkProductEditModal } from "@/components/admin/BulkProductEditModal";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PRODUCT_EXPORT_COLUMNS, generateCsvContent, generateTsvContent } from "@/lib/product-export";
+import { getStorefrontProductUrl } from "@/lib/products";
 
 const CATEGORIES = [
   { id: "all", label: "All Categories" },
@@ -1191,9 +1192,9 @@ export default function AdminProductsPage() {
                                 key={tId}
                                 className="text-[9px] px-1.5 py-0.2 rounded-xs font-semibold tracking-wide border flex items-center gap-1"
                                 style={{
-                                  borderColor: color,
-                                  backgroundColor: `${color}15`,
-                                  color: color,
+                                   borderColor: color,
+                                   backgroundColor: `${color}15`,
+                                   color: color,
                                 }}
                               >
                                 <span
@@ -1206,6 +1207,37 @@ export default function AdminProductsPage() {
                           })}
                         </div>
                       )}
+
+                      {/* Installation Manual Status Badge */}
+                      {p.installation_manual ? (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <a
+                            href={p.installation_manual}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded hover:bg-emerald-100 transition-colors cursor-pointer"
+                            title={`Installation Manual: ${p.installation_manual.split("/").pop()}`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                            <span className="font-medium">Manual:</span>
+                            <span className="truncate max-w-[180px]">
+                              {p.installation_manual.split("/").pop().replace(/^gf-morphy-/, "").replace(/-assembly\.pdf$/, "")}
+                            </span>
+                            <IconExternalLink size={10} className="opacity-70" />
+                          </a>
+                        </div>
+                      ) : (p.name?.includes("MORPHY") || p.category?.includes("MORPHY") || p.parent_category === "beds") ? (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <span
+                            className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded"
+                            title="No manual linked yet — displays 'In progress' on storefront"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span>Manual: In progress</span>
+                          </span>
+                        </div>
+                      ) : null}
                     </td>
 
                     {/* Category */}
@@ -1371,10 +1403,10 @@ export default function AdminProductsPage() {
                           <IconEdit size={16} />
                         </button>
                         <Link
-                          href={`/products/${p.parent_category || "beds"}/${p.slug || p.id}`}
+                          href={getStorefrontProductUrl(p, "en")}
                           target="_blank"
-                          className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors"
-                          title="View on storefront"
+                          className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors cursor-pointer"
+                          title={`View on storefront: ${getStorefrontProductUrl(p, "en")}`}
                         >
                           <IconExternalLink size={16} />
                         </Link>

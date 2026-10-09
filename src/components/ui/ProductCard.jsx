@@ -9,7 +9,7 @@ import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { QuickAddModal } from "@/components/product/QuickAddModal";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
-import { getLocalizedProductName } from "@/lib/products";
+import { getLocalizedProductName, getStorefrontProductUrl } from "@/lib/products";
 
 const DEFAULT_COLORS = ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"];
 
@@ -42,13 +42,7 @@ export function ProductCard({ product, className = "" }) {
   }
 
   // Calculate destination link
-  const rawLink =
-    product.link ||
-    (product.parent_category && product.slug
-      ? `/products/${product.parent_category}/${product.slug}`
-      : product.slug
-        ? `/products/beds/${product.slug}`
-        : `/products/beds/${product.id || "integrated-bed"}`);
+  const rawLink = product.link || getStorefrontProductUrl(product);
   const link = localizedHref(rawLink);
 
   // Image resolution

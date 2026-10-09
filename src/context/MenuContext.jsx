@@ -2,12 +2,18 @@
 
 import { createContext, useRef, useState, useCallback, useEffect } from "react";
 
+import { MAIN_NAV_ITEMS } from "@/data/navigation";
+
 export const MenuContext = createContext({
   // Desktop mega-submenu
   subMenu: null,
   setSubMenu: () => {},
   cancelCloseSubmenu: () => {},
   scheduleCloseSubmenu: () => {},
+
+  // Navigation items from Supabase / fallback
+  navItems: MAIN_NAV_ITEMS,
+  refreshNavItems: () => {},
 
   // Header scroll visibility
   isMenuVisible: true,
@@ -36,6 +42,25 @@ export function MenuContextProvider({ children }) {
   // --- Desktop submenu ---
   const [subMenu, setSubMenuState] = useState(null);
   const closeTimeoutRef = useRef(null);
+
+  // --- Live navigation items from Supabase ---
+  const [navItems, setNavItems] = useState(MAIN_NAV_ITEMS);
+
+  const refreshNavItems = useCallback(async () => {
+    try {
+      const res = await fetch("/api/navigation");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+        setNavItems(data.items);
+      }
+    } catch (err) {
+      // Keep existing navItems on error
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshNavItems();
+  }, [refreshNavItems]);
 
   const setSubMenu = useCallback((slug) => {
     if (closeTimeoutRef.current) {
@@ -87,6 +112,8 @@ export function MenuContextProvider({ children }) {
         setSubMenu,
         scheduleCloseSubmenu,
         cancelCloseSubmenu,
+        navItems,
+        refreshNavItems,
         isMenuVisible,
         setIsMenuVisible,
         isSearchOpen,

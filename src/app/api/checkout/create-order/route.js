@@ -56,21 +56,23 @@ export async function POST(request) {
     const orderRecord = {
       id: orderId,
       user_id: userId || null,
-      status: "pending",
+      status: paymentMethod === "paypal" || paymentMethod === "stripe" ? "pending" : "processing",
       payment_status: "unpaid",
       payment_method: paymentMethod,
       customer_name: customerName,
       customer_email: customer.email.trim().toLowerCase(),
       customer_phone: customer.phone || "",
-      shipping_address: shippingAddress,
+      shipping_address: {
+        ...(typeof shippingAddress === "object" ? shippingAddress : {}),
+        locale: locale || "en",
+        company_entity: targetEntity,
+      },
       billing_address: billingAddress || shippingAddress,
       items: calculation.items,
       currency: targetCurrency,
-      company_entity: targetEntity,
-      locale: locale || "en",
       subtotal: calculation.subtotal,
       discount_amount: calculation.discountAmount,
-      promo_code: calculation.promoCode,
+      promo_code: calculation.promoCode || null,
       shipping_amount: calculation.shippingAmount,
       vat_amount: calculation.vatAmount,
       total_amount: calculation.totalAmount,
@@ -78,6 +80,7 @@ export async function POST(request) {
       delivery_label: calculation.delivery.label,
       delivery_message: calculation.delivery.message,
       customer_notes: notes || "",
+      admin_notes: `[Entity: ${targetEntity}] [Locale: ${locale || "en"}]`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -91,12 +94,26 @@ export async function POST(request) {
           .insert([orderRecord]);
 
         if (insertError) {
-          console.warn("[Create Order] Supabase insert warning:", insertError.message);
+          console.error("[Create Order] Supabase insert error:", insertError.message);
         } else {
           savedToDb = true;
+          console.log(`[Create Order] Order ${orderId} successfully persisted in Supabase.`);
         }
       } catch (dbErr) {
-        console.warn("[Create Order] Supabase insert exception:", dbErr.message);
+        console.error("[Create Order] Supabase insert exception:", dbErr.message);
+      }
+    }
+
+    // 3. For direct orders (not handled by async gateways like PayPal/Stripe checkout), send confirmation email immediately
+    if (paymentMethod !== "paypal" && paymentMethod !== "stripe") {
+      try {
+        const { sendOrderConfirmationEmail } = await import("@/lib/email");
+        await sendOrderConfirmationEmail(
+          { ...orderRecord, locale: locale || "en" },
+          locale || "en"
+        );
+      } catch (emailErr) {
+        console.warn("[Create Order] Direct order email trigger notice:", emailErr);
       }
     }
 

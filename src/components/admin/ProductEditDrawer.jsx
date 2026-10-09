@@ -26,9 +26,14 @@ import {
   IconDatabase,
   IconCloudUpload,
   IconFilter,
+  IconTarget,
+  IconFileText,
+  IconExternalLink,
+  IconBrandYoutube,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { TagIcon } from "@/components/ui/TagBadge";
+import { parseYouTubeVideo, OFFICIAL_INSTALLATION_VIDEOS } from "@/lib/products";
 
 const TARGET_LOCALES = [
   { code: "en", label: "UK", name: "United Kingdom", flag: "🇬🇧", currency: "GBP (£)" },
@@ -52,6 +57,12 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [quickTagName, setQuickTagName] = useState("");
   const [quickTagColor, setQuickTagColor] = useState("#D4AF37");
 
+  // Installation Manual states
+  const [manualsList, setManualsList] = useState([]);
+  const [uploadingManual, setUploadingManual] = useState(false);
+  const [manualFeedback, setManualFeedback] = useState(null);
+  const manualFileRef = useRef(null);
+
   // Image upload and gallery management states
   const [uploadFolder, setUploadFolder] = useState("wallbeds/1K");
   const [uploadingPrimary, setUploadingPrimary] = useState(false);
@@ -73,11 +84,21 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
   // Storage Media Library Modal
   const [isStorageBrowserOpen, setIsStorageBrowserOpen] = useState(false);
+  const [browserTarget, setBrowserTarget] = useState(null); // null | 'image' | 'hover_image' | 'gallery'
+  const [availableFolders, setAvailableFolders] = useState([
+    "wallbeds/1K",
+    "wallbeds/2K",
+    "mattresses",
+    "sofas",
+    "tables",
+    "cabinets",
+  ]);
   const [browserFolder, setBrowserFolder] = useState("wallbeds/1K");
   const [browserFiles, setBrowserFiles] = useState([]);
   const [browserLoading, setBrowserLoading] = useState(false);
   const [browserSearch, setBrowserSearch] = useState("");
   const [browserUploading, setBrowserUploading] = useState(false);
+  const [browserNotice, setBrowserNotice] = useState(null);
 
   const primaryFileRef = useRef(null);
   const hoverFileRef = useRef(null);
@@ -106,6 +127,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
         if (d.success && Array.isArray(d.prefixes)) setAvailablePrefixes(d.prefixes);
       })
       .catch((e) => console.warn(e));
+
+    // Dynamically load available folders from Supabase storage
+    fetch("/api/admin/storage?folders=true")
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.folders) && d.folders.length > 0) {
+          setAvailableFolders(d.folders);
+        }
+      })
+      .catch((e) => console.warn(e));
+
+    // Load available installation manuals from Supabase storage (SupportFiles/InstallationManuals)
+    fetch("/api/admin/storage?manuals=true")
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.manuals)) {
+          setManualsList(d.manuals);
+        }
+      })
+      .catch((e) => console.warn("Failed to load manuals:", e));
   }, []);
 
   const checkPrefixMatch = async (prefix) => {
@@ -169,6 +210,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
           Array.isArray(product.available_locales) && product.available_locales.length > 0
             ? product.available_locales
             : defaultLocales,
+        installation_manual: product.installation_manual || "",
       });
 
       // Calculate candidate Morphy prefix from dimensions and type/orientation
@@ -312,6 +354,39 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
     } finally {
       if (isPrimary) setUploadingPrimary(false);
       else setUploadingHover(false);
+    }
+  };
+
+  const handleUploadManual = async (file) => {
+    if (!file) return;
+    setUploadingManual(true);
+    setManualFeedback(null);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("bucket", "SupportFiles");
+      data.append("folder", "InstallationManuals");
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: data,
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to upload manual PDF");
+      }
+
+      handleChange("installation_manual", result.url);
+      setManualFeedback(`✓ Successfully uploaded: ${result.fileName}`);
+      setManualsList((prev) => {
+        if (prev.some((m) => m.url === result.url)) return prev;
+        return [{ name: result.fileName, url: result.url, path: result.path, size: result.size || file.size }, ...prev];
+      });
+    } catch (err) {
+      console.error("[Manual Upload Error]:", err);
+      setManualFeedback(`✗ Upload failed: ${err.message}`);
+    } finally {
+      setUploadingManual(false);
     }
   };
 
@@ -475,6 +550,79 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
     setApplyingMatch(false);
   };
 
+  const loadAvailableFolders = async (forceRefresh = false) => {
+    try {
+      const res = await fetch(`/api/admin/storage?folders=true${forceRefresh ? "&refresh=true" : ""}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.folders) && data.folders.length > 0) {
+        setAvailableFolders(data.folders);
+      }
+    } catch (err) {
+      console.warn("Folders fetch error:", err);
+    }
+  };
+
+  const handleOpenBrowserFor = (target = null) => {
+    setBrowserTarget(target);
+    setBrowserNotice(null);
+
+    // Smart default folder based on product category & target
+    const cat = (formData?.parent_category || product?.parent_category || formData?.category || product?.category || "").toLowerCase();
+    let initialFolder = browserFolder;
+    if (cat.includes("mattress")) {
+      initialFolder = "mattresses";
+    } else if (cat.includes("sofa")) {
+      initialFolder = "sofas";
+    } else if (cat.includes("table")) {
+      initialFolder = "tables";
+    } else if (cat.includes("cabinet")) {
+      initialFolder = "cabinets";
+    } else if (cat.includes("bed")) {
+      initialFolder = target === "gallery" ? "wallbeds/2K" : "wallbeds/1K";
+    }
+
+    setBrowserFolder(initialFolder);
+    setIsStorageBrowserOpen(true);
+    loadStorageBrowserFiles(initialFolder, browserSearch);
+    loadAvailableFolders();
+  };
+
+  const handleAssignImage = (target, url, filename = "") => {
+    if (!target || !url) return;
+    const displayName = filename || url.split("/").pop() || "image";
+
+    if (target === "image") {
+      handleChange("image", url);
+      const msg = `✓ Set as Primary Image: ${displayName}`;
+      setBrowserNotice(msg);
+      setMessage({ type: "success", text: msg });
+    } else if (target === "hover_image") {
+      handleChange("hover_image", url);
+      const msg = `✓ Set as Hover Image: ${displayName}`;
+      setBrowserNotice(msg);
+      setMessage({ type: "success", text: msg });
+    } else if (target === "gallery") {
+      const current = Array.isArray(formData?.product_images) ? [...formData.product_images] : [];
+      if (!current.includes(url)) {
+        handleChange("product_images", [...current, url]);
+        const msg = `✓ Added to Gallery: ${displayName}`;
+        setBrowserNotice(msg);
+        setMessage({ type: "success", text: msg });
+      } else {
+        const next = current.filter((u) => u !== url);
+        handleChange("product_images", next);
+        const msg = `Removed from Gallery: ${displayName}`;
+        setBrowserNotice(msg);
+        setMessage({ type: "success", text: msg });
+      }
+    }
+
+    setTimeout(() => {
+      setBrowserNotice(null);
+      setMessage(null);
+    }, 3500);
+  };
+
   const loadStorageBrowserFiles = async (folder = browserFolder, search = browserSearch) => {
     setBrowserLoading(true);
     try {
@@ -484,6 +632,9 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
       const data = await res.json();
       if (data.success && Array.isArray(data.files)) {
         setBrowserFiles(data.files);
+        if (Array.isArray(data.availableFolders) && data.availableFolders.length > 0) {
+          setAvailableFolders(data.availableFolders);
+        }
       } else {
         setBrowserFiles([]);
       }
@@ -1704,7 +1855,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 {/* Browse storage button */}
                 <button
                   type="button"
-                  onClick={() => setIsStorageBrowserOpen(true)}
+                  onClick={() => handleOpenBrowserFor(null)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-wbk-black hover:text-white border border-wbk-lightgrey/80 text-wbk-black text-xs font-medium rounded transition-all cursor-pointer shadow-xs self-start sm:self-auto shrink-0"
                 >
                   <IconDatabase size={14} className="text-wbk-gold" />
@@ -1809,8 +1960,16 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                           </button>
                           <button
                             type="button"
+                            onClick={() => handleOpenBrowserFor("image")}
+                            title="Browse Storage for Primary Image"
+                            className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-full shadow cursor-pointer"
+                          >
+                            <IconDatabase size={16} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => primaryFileRef.current?.click()}
-                            title="Replace image"
+                            title="Upload replacement file"
                             className="p-1.5 bg-white/90 hover:bg-white text-wbk-black rounded-full shadow cursor-pointer"
                           >
                             <IconUpload size={16} />
@@ -1828,18 +1987,18 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => primaryFileRef.current?.click()}
+                        onClick={() => handleOpenBrowserFor("image")}
                         className="flex flex-col items-center justify-center text-center p-3 text-wbk-brown hover:text-wbk-black transition-colors cursor-pointer w-full h-full"
                       >
-                        <IconUpload size={24} className="text-wbk-gold mb-1" />
-                        <span className="text-xs font-medium">Click or drop image to upload</span>
+                        <IconDatabase size={24} className="text-wbk-gold mb-1" />
+                        <span className="text-xs font-medium">Browse Storage or drop image</span>
                         <span className="text-[10px] text-wbk-brown/70">Recommended: 1K (1000px WebP)</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Path input & Upload Button */}
+                {/* Path input & Action Buttons */}
                 <div className="space-y-1.5">
                   <div className="flex gap-1.5">
                     <input
@@ -1859,15 +2018,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                       {copiedUrl === formData.image ? <IconCheck size={14} className="text-green-600" /> : <IconCopy size={14} />}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => primaryFileRef.current?.click()}
-                    disabled={uploadingPrimary}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white hover:bg-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-medium text-wbk-black rounded transition-all cursor-pointer shadow-xs disabled:opacity-50"
-                  >
-                    <IconUpload size={14} />
-                    <span>{formData.image ? "Replace Image File" : "Upload Image to Supabase"}</span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenBrowserFor("image")}
+                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-semibold rounded transition-all cursor-pointer shadow-xs"
+                      title="Select primary image from Supabase Storage"
+                    >
+                      <IconDatabase size={13} className="text-amber-700" />
+                      <span>Browse Storage</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => primaryFileRef.current?.click()}
+                      disabled={uploadingPrimary}
+                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-white hover:bg-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-medium text-wbk-black rounded transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      <IconUpload size={13} />
+                      <span>{formData.image ? "Upload File" : "Upload File"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1927,8 +2097,16 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                           </button>
                           <button
                             type="button"
+                            onClick={() => handleOpenBrowserFor("hover_image")}
+                            title="Browse Storage for Hover Image"
+                            className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow cursor-pointer"
+                          >
+                            <IconDatabase size={16} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => hoverFileRef.current?.click()}
-                            title="Replace image"
+                            title="Upload replacement file"
                             className="p-1.5 bg-white/90 hover:bg-white text-wbk-black rounded-full shadow cursor-pointer"
                           >
                             <IconUpload size={16} />
@@ -1946,18 +2124,18 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => hoverFileRef.current?.click()}
+                        onClick={() => handleOpenBrowserFor("hover_image")}
                         className="flex flex-col items-center justify-center text-center p-3 text-wbk-brown hover:text-wbk-black transition-colors cursor-pointer w-full h-full"
                       >
-                        <IconUpload size={24} className="text-blue-500 mb-1" />
-                        <span className="text-xs font-medium">Click or drop hover image</span>
+                        <IconDatabase size={24} className="text-blue-500 mb-1" />
+                        <span className="text-xs font-medium">Browse Storage or drop hover image</span>
                         <span className="text-[10px] text-wbk-brown/70">Recommended: 1K (with mattress or open)</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Path input & Upload Button */}
+                {/* Path input & Action Buttons */}
                 <div className="space-y-1.5">
                   <div className="flex gap-1.5">
                     <input
@@ -1977,15 +2155,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                       {copiedUrl === formData.hover_image ? <IconCheck size={14} className="text-green-600" /> : <IconCopy size={14} />}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => hoverFileRef.current?.click()}
-                    disabled={uploadingHover}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white hover:bg-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-medium text-wbk-black rounded transition-all cursor-pointer shadow-xs disabled:opacity-50"
-                  >
-                    <IconUpload size={14} />
-                    <span>{formData.hover_image ? "Replace Hover File" : "Upload Hover Image to Supabase"}</span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenBrowserFor("hover_image")}
+                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-900 text-[11px] font-semibold rounded transition-all cursor-pointer shadow-xs"
+                      title="Select hover image from Supabase Storage"
+                    >
+                      <IconDatabase size={13} className="text-blue-700" />
+                      <span>Browse Storage</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => hoverFileRef.current?.click()}
+                      disabled={uploadingHover}
+                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-white hover:bg-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-medium text-wbk-black rounded transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      <IconUpload size={13} />
+                      <span>{formData.hover_image ? "Upload File" : "Upload File"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2018,14 +2207,11 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setBrowserFolder("wallbeds/2K");
-                      setIsStorageBrowserOpen(true);
-                    }}
+                    onClick={() => handleOpenBrowserFor("gallery")}
                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded transition-colors cursor-pointer"
                   >
                     <IconDatabase size={14} className="text-wbk-gold" />
-                    <span>Browse 2K Storage</span>
+                    <span>Browse Storage</span>
                   </button>
 
                   <button
@@ -2320,6 +2506,314 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
               </div>
             </div>
           </div>
+
+          {/* Section 5: Assembly & Installation Manual */}
+          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-3">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold flex items-center gap-2">
+                  <IconFileText size={16} />
+                  <span>5. Assembly & Installation Manual</span>
+                </h3>
+                <p className="text-[11px] text-wbk-brown mt-0.5">
+                  Official PDF guide from Supabase Storage (SupportFiles/InstallationManuals). Displayed on the storefront Support & Guides tab. If left empty, the page will display &quot;In progress&quot;.
+                </p>
+              </div>
+            </div>
+
+            {/* Current Manual Display */}
+            {formData.installation_manual ? (
+              <div className="p-4 bg-[#FAF9F8] border border-wbk-lightgrey/70 rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-sm bg-white border border-wbk-lightgrey/80 text-wbk-gold flex items-center justify-center shrink-0 shadow-xs">
+                    <IconFileText size={22} stroke={1.6} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-semibold text-wbk-gold uppercase tracking-wider bg-white px-1.5 py-0.5 border border-wbk-gold/30 rounded-xs">
+                        Active Manual
+                      </span>
+                      <span className="text-[10px] text-green-700 font-medium">
+                        ✓ Linked to Product
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-wbk-black truncate mt-1">
+                      {formData.installation_manual.split("/").pop()}
+                    </p>
+                    <p className="text-[10px] text-wbk-brown font-mono truncate max-w-md">
+                      {formData.installation_manual}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                  <a
+                    href={formData.installation_manual}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-[11px] font-medium rounded transition-colors cursor-pointer"
+                  >
+                    <IconExternalLink size={13} />
+                    <span>View PDF</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange("installation_manual", "");
+                      setManualFeedback("Manual unlinked from this product.");
+                    }}
+                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-[11px] font-medium rounded transition-colors cursor-pointer"
+                    title="Remove manual assignment"
+                  >
+                    <IconTrash size={13} />
+                    <span>Remove</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-[#FAF9F8] border border-dashed border-amber-300 rounded-sm flex items-center gap-3">
+                <IconAlertCircle size={20} className="text-amber-600 shrink-0" />
+                <div className="text-[11px] text-wbk-brown">
+                  <span className="font-semibold text-amber-800">No manual currently assigned. </span>
+                  The storefront Support &amp; Guides tab will display <span className="font-semibold text-wbk-black">&quot;In progress&quot;</span> for this product until a manual is selected or uploaded.
+                </div>
+              </div>
+            )}
+
+            {/* Manual Feedback Notification */}
+            {manualFeedback && (
+              <div className="text-[11px] px-3 py-2 bg-neutral-100 border border-neutral-300 rounded text-wbk-black">
+                {manualFeedback}
+              </div>
+            )}
+
+            {/* Pick from existing manuals */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-wbk-black">
+                Select from Existing Storage Manuals ({manualsList.length} available)
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={formData.installation_manual || ""}
+                  onChange={(e) => {
+                    handleChange("installation_manual", e.target.value);
+                    if (e.target.value) {
+                      setManualFeedback(`✓ Selected manual: ${e.target.value.split("/").pop()}`);
+                    }
+                  }}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins"
+                >
+                  <option value="">-- None (Show &apos;In progress&apos; on product page) --</option>
+                  {manualsList.map((m) => (
+                    <option key={m.name} value={m.url}>
+                      {m.name} {m.size ? `(${Math.round(m.size / 1024)} KB)` : ""}
+                    </option>
+                  ))}
+                </select>
+                {formData.installation_manual && (
+                  <button
+                    type="button"
+                    onClick={() => handleChange("installation_manual", "")}
+                    className="px-2.5 py-2 text-xs border border-wbk-lightgrey text-wbk-brown hover:text-wbk-black rounded-none cursor-pointer"
+                    title="Clear selection"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Upload or Drop New PDF Manual */}
+            <div className="space-y-1.5 pt-2 border-t border-wbk-lightgrey/40">
+              <label className="block text-xs font-medium text-wbk-black">
+                Or Upload New Manual (PDF)
+              </label>
+              <input
+                ref={manualFileRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleUploadManual(e.target.files[0]);
+                  }
+                }}
+              />
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (e.dataTransfer.files?.[0]) {
+                    handleUploadManual(e.dataTransfer.files[0]);
+                  }
+                }}
+                onClick={() => manualFileRef.current?.click()}
+                className="border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold bg-[#FAF9F8] hover:bg-[#F5F2EF] p-4 text-center cursor-pointer transition-all rounded-sm flex flex-col items-center justify-center gap-1 group"
+              >
+                {uploadingManual ? (
+                  <>
+                    <IconRefresh size={22} className="animate-spin text-wbk-gold mb-1" />
+                    <span className="text-xs font-medium text-wbk-black">Uploading PDF to Supabase Storage...</span>
+                    <span className="text-[10px] text-wbk-brown">Bucket: SupportFiles/InstallationManuals</span>
+                  </>
+                ) : (
+                  <>
+                    <IconUpload size={22} className="text-wbk-gold group-hover:scale-110 transition-transform mb-0.5" />
+                    <span className="text-xs font-medium text-wbk-black">Click or drag &amp; drop a PDF manual to upload</span>
+                    <span className="text-[10px] text-wbk-brown">Uploads directly to Supabase SupportFiles/InstallationManuals</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 6: Installation & Assembly Video (YouTube) */}
+          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-3">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-red-600 flex items-center gap-2">
+                  <IconBrandYoutube size={16} />
+                  <span>6. Installation Video (YouTube)</span>
+                </h3>
+                <p className="text-[11px] text-wbk-brown mt-0.5">
+                  Official assembly guide video embedded directly into the storefront product page under &quot;Support &amp; Guides&quot;.
+                </p>
+              </div>
+            </div>
+
+            {/* Current Video Display & Live Preview */}
+            {(() => {
+              const parsed = parseYouTubeVideo(formData.installation_video);
+              if (parsed) {
+                return (
+                  <div className="p-4 bg-[#FAF9F8] border border-wbk-lightgrey/70 rounded-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-semibold text-red-600 uppercase tracking-wider bg-red-50 px-1.5 py-0.5 border border-red-200/80 rounded-xs">
+                            Active Video
+                          </span>
+                          <span className="text-[10px] text-green-700 font-medium">
+                            ✓ YouTube ID: {parsed.videoId}
+                          </span>
+                        </div>
+                        <p className="text-xs font-mono text-wbk-black truncate mt-1">
+                          {formData.installation_video}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a
+                          href={parsed.watchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-red-600 hover:text-white text-wbk-black border border-wbk-lightgrey text-[11px] font-medium rounded transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <IconExternalLink size={13} />
+                          <span>Watch on YouTube</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleChange("installation_video", "")}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-[11px] font-medium rounded transition-colors cursor-pointer"
+                          title="Remove video assignment"
+                        >
+                          <IconTrash size={13} />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live Player Preview */}
+                    <div className="relative aspect-video max-w-md bg-black border border-wbk-lightgrey/80 overflow-hidden shadow-xs">
+                      <iframe
+                        src={parsed.embedUrl}
+                        title="Installation video preview"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full border-0"
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="p-4 bg-[#FAF9F8] border border-dashed border-amber-300 rounded-sm flex items-center gap-3">
+                  <IconAlertCircle size={20} className="text-amber-600 shrink-0" />
+                  <div className="text-[11px] text-wbk-brown">
+                    <span className="font-semibold text-amber-800">No video currently assigned. </span>
+                    The storefront Support &amp; Guides tab will display <span className="font-semibold text-wbk-black">&quot;Coming soon&quot;</span> until a YouTube video is selected or entered.
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Quick Presets Dropdown */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-wbk-black">
+                Select from Official WallBedKing Presets
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={
+                    OFFICIAL_INSTALLATION_VIDEOS.find(
+                      (v) => v.videoId === parseYouTubeVideo(formData.installation_video)?.videoId
+                    )?.videoId || ""
+                  }
+                  onChange={(e) => {
+                    const found = OFFICIAL_INSTALLATION_VIDEOS.find((v) => v.videoId === e.target.value);
+                    if (found) {
+                      handleChange("installation_video", found.url);
+                    }
+                  }}
+                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins"
+                >
+                  <option value="">-- Choose an official guide video --</option>
+                  {OFFICIAL_INSTALLATION_VIDEOS.map((v) => (
+                    <option key={v.videoId} value={v.videoId}>
+                      {v.title} ({v.model})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Custom URL / Video ID input */}
+            <div className="space-y-1.5 pt-2 border-t border-wbk-lightgrey/40">
+              <label className="block text-xs font-medium text-wbk-black">
+                Or Paste Custom YouTube URL / Video ID
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="e.g. https://www.youtube.com/watch?v=1MQ7Ksb2t-Y or 1MQ7Ksb2t-Y"
+                    value={formData.installation_video || ""}
+                    onChange={(e) => handleChange("installation_video", e.target.value)}
+                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                  />
+                  {formData.installation_video && parseYouTubeVideo(formData.installation_video) && (
+                    <span className="absolute right-2.5 top-2 text-[10px] text-green-600 font-semibold flex items-center gap-1">
+                      <IconCheck size={12} /> Valid
+                    </span>
+                  )}
+                </div>
+                {formData.installation_video && (
+                  <button
+                    type="button"
+                    onClick={() => handleChange("installation_video", "")}
+                    className="px-3 py-2 text-xs border border-wbk-lightgrey text-wbk-brown hover:text-wbk-black rounded-none cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-wbk-brown">
+                Accepts full URLs (e.g. youtube.com/watch?v=..., youtu.be/...) or direct 11-character YouTube video IDs.
+              </p>
+            </div>
+          </div>
         </form>
 
         {/* Drawer Footer Actions */}
@@ -2434,52 +2928,159 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                       </span>
                     </h3>
                     <p className="text-[11px] text-white/60">
-                      Browse pre-uploaded images or upload new ones directly into this bucket.
+                      Browse pre-uploaded images from Supabase Storage and assign them to this product.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsStorageBrowserOpen(false)}
-                  className="p-1.5 text-white/70 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
-                >
-                  <IconX size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsStorageBrowserOpen(false)}
+                    className="p-1.5 text-white/70 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
+                  >
+                    <IconX size={20} />
+                  </button>
+                </div>
               </div>
+
+              {/* Target Slot Banner (when opened for image, hover_image, or gallery) */}
+              {browserTarget && (
+                <div className="px-4 py-2 bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-emerald-500/10 border-b border-wbk-gold/30 flex flex-wrap items-center justify-between gap-2 text-xs font-poppins shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-wbk-black flex items-center gap-1.5">
+                      <IconTarget size={15} className="text-amber-700" />
+                      <span>Active Target Slot:</span>
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] flex items-center gap-1 ${
+                        browserTarget === "image"
+                          ? "bg-amber-100 text-amber-900 border border-amber-300"
+                          : browserTarget === "hover_image"
+                          ? "bg-blue-100 text-blue-900 border border-blue-300"
+                          : "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                      }`}
+                    >
+                      {browserTarget === "image"
+                        ? "⭐ Primary Image (Főkép)"
+                        : browserTarget === "hover_image"
+                        ? "🔷 Hover Image (Hover kép)"
+                        : "🖼️ Product Gallery"}
+                    </span>
+                    <span className="text-[11px] text-wbk-brown hidden md:inline">
+                      — Click any thumbnail below or use the quick buttons!
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-wbk-brown">Switch target:</span>
+                    <button
+                      type="button"
+                      onClick={() => setBrowserTarget("image")}
+                      className={`px-2 py-0.5 text-[10px] rounded font-medium cursor-pointer transition-colors ${
+                        browserTarget === "image"
+                          ? "bg-amber-500 text-white font-bold shadow-xs"
+                          : "bg-white border text-wbk-black hover:bg-amber-50"
+                      }`}
+                    >
+                      Primary
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBrowserTarget("hover_image")}
+                      className={`px-2 py-0.5 text-[10px] rounded font-medium cursor-pointer transition-colors ${
+                        browserTarget === "hover_image"
+                          ? "bg-blue-600 text-white font-bold shadow-xs"
+                          : "bg-white border text-wbk-black hover:bg-blue-50"
+                      }`}
+                    >
+                      Hover
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBrowserTarget("gallery")}
+                      className={`px-2 py-0.5 text-[10px] rounded font-medium cursor-pointer transition-colors ${
+                        browserTarget === "gallery"
+                          ? "bg-emerald-600 text-white font-bold shadow-xs"
+                          : "bg-white border text-wbk-black hover:bg-emerald-50"
+                      }`}
+                    >
+                      Gallery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBrowserTarget(null)}
+                      className="px-1.5 py-0.5 text-[10px] text-wbk-brown hover:text-wbk-black cursor-pointer rounded"
+                      title="Clear slot selection mode"
+                    >
+                      ✕ Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Notification Banner */}
+              {browserNotice && (
+                <div className="px-4 py-1.5 bg-emerald-700 text-white text-xs font-medium flex items-center justify-between shrink-0 shadow-inner">
+                  <div className="flex items-center gap-1.5">
+                    <IconCheck size={14} />
+                    <span>{browserNotice}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBrowserNotice(null)}
+                    className="text-white/80 hover:text-white cursor-pointer px-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
 
               {/* Folder Tabs & Search Bar */}
               <div className="p-3 bg-[#F8F6F4] border-b border-wbk-lightgrey/60 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
-                {/* Folder pill tabs */}
-                <div className="flex flex-wrap items-center gap-1.5">
+                {/* Dynamic folder buttons from Supabase Storage */}
+                <div className="flex flex-wrap items-center gap-1.5 flex-1">
                   <span className="text-[11px] font-semibold text-wbk-brown mr-1 flex items-center gap-1">
                     <IconFolder size={14} className="text-wbk-gold" />
                     <span>Folder:</span>
                   </span>
-                  {[
-                    { id: "wallbeds/1K", label: "wallbeds/1K (Cards)" },
-                    { id: "wallbeds/2K", label: "wallbeds/2K (Gallery)" },
-                    { id: "wallbeds", label: "wallbeds (Root)" },
-                    { id: "sofas", label: "sofas" },
-                    { id: "tables", label: "tables" },
-                    { id: "cabinets", label: "cabinets" },
-                  ].map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => {
-                        setBrowserFolder(f.id);
-                        loadStorageBrowserFiles(f.id, browserSearch);
-                      }}
-                      className={`px-2.5 py-1 text-xs rounded transition-all cursor-pointer font-medium ${
-                        browserFolder === f.id
-                          ? "bg-wbk-black text-white shadow-xs"
-                          : "bg-white text-wbk-black hover:bg-[#EFECE8] border border-wbk-lightgrey/80"
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
+
+                  {availableFolders.map((fPath) => {
+                    const isSelected = browserFolder === fPath;
+                    let label = fPath;
+                    if (fPath === "wallbeds/1K") label = "wallbeds/1K (Cards)";
+                    else if (fPath === "wallbeds/2K") label = "wallbeds/2K (Gallery)";
+
+                    return (
+                      <button
+                        key={fPath}
+                        type="button"
+                        onClick={() => {
+                          setBrowserFolder(fPath);
+                          loadStorageBrowserFiles(fPath, browserSearch);
+                        }}
+                        className={`px-2.5 py-1 text-xs rounded transition-all cursor-pointer font-medium ${
+                          isSelected
+                            ? "bg-wbk-black text-white shadow-xs"
+                            : "bg-white text-wbk-black hover:bg-[#EFECE8] border border-wbk-lightgrey/80"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadAvailableFolders(true);
+                      loadStorageBrowserFiles(browserFolder, browserSearch);
+                    }}
+                    title="Re-scan bucket folders from Supabase"
+                    className="p-1 text-wbk-brown hover:text-wbk-black hover:bg-white rounded border border-transparent hover:border-wbk-lightgrey cursor-pointer transition-colors"
+                  >
+                    <IconRefresh size={13} className={browserLoading ? "animate-spin" : ""} />
+                  </button>
                 </div>
 
                 {/* Search input & upload button */}
@@ -2488,7 +3089,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                     <IconSearch size={14} className="absolute left-2.5 top-2.5 text-wbk-brown" />
                     <input
                       type="text"
-                      placeholder="Search filename (e.g. 120x200)..."
+                      placeholder="Search filename (e.g. 120x200, comfort)..."
                       value={browserSearch}
                       onChange={(e) => {
                         setBrowserSearch(e.target.value);
@@ -2545,7 +3146,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                 ) : browserFiles.length === 0 ? (
                   <div className="h-64 flex flex-col items-center justify-center gap-2 text-wbk-brown">
                     <IconFolder size={36} className="text-wbk-lightgrey" />
-                    <p className="text-xs font-medium">No files found in {browserFolder}.</p>
+                    <p className="text-xs font-medium">No files found in &quot;{browserFolder}&quot;.</p>
                     <p className="text-[11px] text-wbk-brown/70">
                       Upload files into this folder or choose another one above.
                     </p>
@@ -2570,8 +3171,18 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                               : "border-wbk-lightgrey/70 hover:border-wbk-black"
                           }`}
                         >
-                          {/* Image preview */}
-                          <div className="relative aspect-[4/3] bg-[#F4F2F0] p-1 flex items-center justify-center overflow-hidden">
+                          {/* Image preview (clickable to assign if browserTarget is active) */}
+                          <div
+                            onClick={() => {
+                              if (browserTarget) {
+                                handleAssignImage(browserTarget, file.url, file.name);
+                              }
+                            }}
+                            className={`relative aspect-[4/3] bg-[#F4F2F0] p-1 flex items-center justify-center overflow-hidden ${
+                              browserTarget ? "cursor-pointer" : ""
+                            }`}
+                            title={browserTarget ? `Click to select as ${browserTarget === "image" ? "Primary Image" : browserTarget === "hover_image" ? "Hover Image" : "Gallery"}` : ""}
+                          >
                             <img
                               src={file.url}
                               alt={file.name}
@@ -2598,12 +3209,24 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                               )}
                             </div>
 
+                            {/* Quick selection overlay prompt when target active */}
+                            {browserTarget && (
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                <span className="px-2 py-1 bg-white text-wbk-black font-semibold text-[10px] rounded shadow">
+                                  Select as {browserTarget === "image" ? "Primary" : browserTarget === "hover_image" ? "Hover" : "Gallery"}
+                                </span>
+                              </div>
+                            )}
+
                             {/* Overlay preview button */}
                             <button
                               type="button"
-                              onClick={() => setActivePreviewUrl(file.url)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActivePreviewUrl(file.url);
+                              }}
                               title="Preview large"
-                              className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-white text-wbk-black rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-white text-wbk-black rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
                             >
                               <IconEye size={13} />
                             </button>
@@ -2630,7 +3253,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                             <div className="grid grid-cols-3 gap-1 pt-1 border-t border-wbk-lightgrey/30">
                               <button
                                 type="button"
-                                onClick={() => handleChange("image", file.url)}
+                                onClick={() => handleAssignImage("image", file.url, file.name)}
                                 title="Set as primary image"
                                 className={`py-1 text-[9px] font-medium rounded transition-colors cursor-pointer text-center ${
                                   isMain
@@ -2642,7 +3265,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleChange("hover_image", file.url)}
+                                onClick={() => handleAssignImage("hover_image", file.url, file.name)}
                                 title="Set as hover image"
                                 className={`py-1 text-[9px] font-medium rounded transition-colors cursor-pointer text-center ${
                                   isHover
@@ -2655,12 +3278,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                               {isInGallery ? (
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    const idxToRemove = formData.product_images.indexOf(file.url);
-                                    if (idxToRemove !== -1) {
-                                      handleRemoveGalleryItem(idxToRemove);
-                                    }
-                                  }}
+                                  onClick={() => handleAssignImage("gallery", file.url, file.name)}
                                   title="Remove from product gallery"
                                   className="py-1 text-[9px] font-bold rounded transition-colors cursor-pointer text-center bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200"
                                 >
@@ -2669,14 +3287,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    const current = Array.isArray(formData.product_images)
-                                      ? [...formData.product_images]
-                                      : [];
-                                    if (!current.includes(file.url)) {
-                                      handleChange("product_images", [...current, file.url]);
-                                    }
-                                  }}
+                                  onClick={() => handleAssignImage("gallery", file.url, file.name)}
                                   title="Add to product gallery"
                                   className="py-1 text-[9px] font-medium rounded transition-colors cursor-pointer text-center bg-[#F4F2F0] hover:bg-emerald-50 text-wbk-black hover:text-emerald-700"
                                 >

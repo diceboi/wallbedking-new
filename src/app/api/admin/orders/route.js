@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { sendShippingNotificationEmail } from "@/lib/email";
+import {
+  sendOrderConfirmationEmail,
+  sendShippingNotificationEmail,
+  sendProductionNotificationEmail,
+  sendDeliveryNotificationEmail,
+  isOwnDelivery,
+} from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -88,12 +94,30 @@ export async function GET(request) {
 
 /**
  * PATCH /api/admin/orders
- * Updates status, tracking info, or admin notes for an order
+ * Updates status, tracking info, or admin notes for an order,
+ * or handles on-demand resending of notification emails.
+ *
+ * Rules:
+ * 1. First time moving to a status -> notification email is sent automatically (no checkbox needed).
+ * 2. If email for that status was already sent -> NO email is sent on subsequent edits unless
+ *    sendUpdateEmail is explicitly checked or an on-demand resend action is triggered.
+ * 3. Any resent/update email includes the [MÓDOSÍTÁS] / [UPDATED] subject tag and top banner.
  */
 export async function PATCH(request) {
   try {
     const body = await request.json();
-    const { orderId, status, trackingNumber, trackingCarrier, adminNotes, paymentStatus } = body || {};
+    const {
+      orderId,
+      status,
+      trackingNumber,
+      trackingCarrier,
+      adminNotes,
+      paymentStatus,
+      sendUpdateEmail,
+      action,
+      emailType,
+      isUpdate: explicitIsUpdate,
+    } = body || {};
 
     if (!orderId) {
       return NextResponse.json(
@@ -123,8 +147,77 @@ export async function PATCH(request) {
       );
     }
 
+    // Parse existing shipping address and notification timestamps
+    let shippingAddr = {};
+    if (typeof currentOrder.shipping_address === "string") {
+      try {
+        shippingAddr = JSON.parse(currentOrder.shipping_address);
+      } catch (e) {
+        shippingAddr = {};
+      }
+    } else if (currentOrder.shipping_address && typeof currentOrder.shipping_address === "object") {
+      shippingAddr = { ...currentOrder.shipping_address };
+    }
+
+    const notificationsSent = { ...(shippingAddr.notifications_sent || {}) };
+    const wasProcessingSent = Boolean(notificationsSent.processing);
+    const wasShippedSent = Boolean(currentOrder.dispatched_at || notificationsSent.shipped);
+    const wasDeliveredSent = Boolean(currentOrder.delivered_at || notificationsSent.completed);
+
+    // ==========================================
+    // ACTION: Direct Resend of Notification Email
+    // ==========================================
+    if (action === "resend_email") {
+      const targetType = emailType || "confirmation";
+      const isUpdate = explicitIsUpdate !== undefined ? Boolean(explicitIsUpdate) : true;
+      let emailResult = null;
+      const nowIso = new Date().toISOString();
+
+      if (targetType === "confirmation") {
+        emailResult = await sendOrderConfirmationEmail(currentOrder, null, isUpdate);
+        notificationsSent.confirmation = nowIso;
+      } else if (targetType === "production") {
+        emailResult = await sendProductionNotificationEmail(currentOrder, null, isUpdate);
+        notificationsSent.processing = nowIso;
+      } else if (targetType === "shipped") {
+        const activeCarrier = currentOrder.tracking_carrier || "UPS";
+        const ownFleet = isOwnDelivery(activeCarrier);
+        const activeTracking = ownFleet ? "" : (currentOrder.tracking_number || "");
+        emailResult = await sendShippingNotificationEmail(currentOrder, activeTracking, activeCarrier, isUpdate);
+        notificationsSent.shipped = nowIso;
+      } else if (targetType === "delivery" || targetType === "completed") {
+        emailResult = await sendDeliveryNotificationEmail(currentOrder, null, isUpdate);
+        notificationsSent.completed = nowIso;
+      } else {
+        return NextResponse.json({ success: false, error: `Unknown email type: ${targetType}` }, { status: 400 });
+      }
+
+      // Persist notifications_sent in DB
+      const updatedShipping = { ...shippingAddr, notifications_sent: notificationsSent };
+      const { data: updatedOrder, error: updateErr } = await supabaseAdmin
+        .from("orders")
+        .update({
+          shipping_address: updatedShipping,
+          updated_at: nowIso,
+        })
+        .eq("id", orderId)
+        .select()
+        .single();
+
+      return NextResponse.json({
+        success: true,
+        message: `${targetType.toUpperCase()} notification email resent (${isUpdate ? "marked as updated" : "standard"}).`,
+        emailResult,
+        order: updatedOrder || currentOrder,
+      });
+    }
+
+    // ==========================================
+    // STANDARD UPDATE: Status / Tracking / Notes
+    // ==========================================
+    const nowIso = new Date().toISOString();
     const updates = {
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     };
 
     if (status !== undefined) updates.status = status;
@@ -133,13 +226,38 @@ export async function PATCH(request) {
     if (trackingCarrier !== undefined) updates.tracking_carrier = trackingCarrier;
     if (adminNotes !== undefined) updates.admin_notes = adminNotes;
 
-    if (status === "shipped" && !currentOrder.dispatched_at) {
-      updates.dispatched_at = new Date().toISOString();
+    // Determine notification intentions
+    // 1. In Production (processing)
+    const isNowProcessingFirstTime = status === "processing" && currentOrder.status !== "processing" && !wasProcessingSent;
+    const isProcessingUpdate = (status === "processing" || (status === undefined && currentOrder.status === "processing")) && wasProcessingSent && Boolean(sendUpdateEmail);
+    const willSendProcessing = isNowProcessingFirstTime || isProcessingUpdate;
+
+    // 2. Dispatched (shipped)
+    const isNowShippedFirstTime = status === "shipped" && !wasShippedSent;
+    const isShippedUpdate = (status === "shipped" || (status === undefined && currentOrder.status === "shipped")) && wasShippedSent && Boolean(sendUpdateEmail);
+    const willSendShipped = isNowShippedFirstTime || isShippedUpdate;
+
+    // 3. Delivered (completed)
+    const isNowCompletedFirstTime = status === "completed" && !wasDeliveredSent;
+    const isCompletedUpdate = (status === "completed" || (status === undefined && currentOrder.status === "completed")) && wasDeliveredSent && Boolean(sendUpdateEmail);
+    const willSendCompleted = isNowCompletedFirstTime || isCompletedUpdate;
+
+    // Set timestamps in DB
+    if ((status === "shipped" || willSendShipped) && !currentOrder.dispatched_at) {
+      updates.dispatched_at = nowIso;
     }
-    if (status === "completed" && !currentOrder.delivered_at) {
-      updates.delivered_at = new Date().toISOString();
+    if ((status === "completed" || willSendCompleted) && !currentOrder.delivered_at) {
+      updates.delivered_at = nowIso;
     }
 
+    // Record notification timestamps
+    if (willSendProcessing) notificationsSent.processing = nowIso;
+    if (willSendShipped) notificationsSent.shipped = nowIso;
+    if (willSendCompleted) notificationsSent.completed = nowIso;
+
+    updates.shipping_address = { ...shippingAddr, notifications_sent: notificationsSent };
+
+    // Apply DB update
     const { data: updatedOrder, error: updateErr } = await supabaseAdmin
       .from("orders")
       .update(updates)
@@ -154,27 +272,65 @@ export async function PATCH(request) {
       );
     }
 
-    // If order was marked as shipped or tracking/carrier updated while shipped, trigger dispatch notification email
+    // Execute email sending with updated data
     let emailResult = null;
-    const isNowShipped = status === "shipped" && currentOrder.status !== "shipped";
-    const trackingUpdated = status === "shipped" && trackingNumber && trackingNumber !== currentOrder.tracking_number;
-    const carrierUpdated = status === "shipped" && trackingCarrier && trackingCarrier !== currentOrder.tracking_carrier;
+    let notificationType = null;
+    let wasUpdatedFlag = false;
 
-    if (isNowShipped || trackingUpdated || carrierUpdated) {
-      const activeCarrier = trackingCarrier || updatedOrder.tracking_carrier || "UPS";
-      const isOwn = (activeCarrier || "").toLowerCase().includes("own") || (activeCarrier || "").toLowerCase().includes("saját");
-      const activeTracking = isOwn ? "" : (trackingNumber !== undefined ? trackingNumber : (updatedOrder.tracking_number || ""));
+    if (willSendProcessing) {
+      const isUpdate = !isNowProcessingFirstTime;
+      wasUpdatedFlag = isUpdate;
       try {
-        emailResult = await sendShippingNotificationEmail(updatedOrder, activeTracking, activeCarrier);
-        console.log(`[Dispatch Email] Sent to ${updatedOrder.customer_email} (${activeCarrier}):`, emailResult);
+        emailResult = await sendProductionNotificationEmail(updatedOrder, null, isUpdate);
+        notificationType = "production";
+        console.log(`[Production Email] Sent to ${updatedOrder.customer_email} (isUpdate: ${isUpdate}):`, emailResult);
+      } catch (mailErr) {
+        console.error("[Production Email Error]", mailErr);
+      }
+    } else if (willSendShipped) {
+      const isUpdate = !isNowShippedFirstTime;
+      wasUpdatedFlag = isUpdate;
+      const activeCarrier = trackingCarrier || updatedOrder.tracking_carrier || "UPS";
+      const ownFleet = isOwnDelivery(activeCarrier);
+      const activeTracking = ownFleet ? "" : (trackingNumber !== undefined ? trackingNumber : (updatedOrder.tracking_number || ""));
+      try {
+        emailResult = await sendShippingNotificationEmail(updatedOrder, activeTracking, activeCarrier, isUpdate);
+        notificationType = "shipped";
+        console.log(`[Dispatch Email] Sent to ${updatedOrder.customer_email} (isUpdate: ${isUpdate}):`, emailResult);
       } catch (mailErr) {
         console.error("[Dispatch Email Error]", mailErr);
       }
+    } else if (willSendCompleted) {
+      const isUpdate = !isNowCompletedFirstTime;
+      wasUpdatedFlag = isUpdate;
+      try {
+        emailResult = await sendDeliveryNotificationEmail(updatedOrder, null, isUpdate);
+        notificationType = "delivered";
+        console.log(`[Delivery Email] Sent to ${updatedOrder.customer_email} (isUpdate: ${isUpdate}):`, emailResult);
+      } catch (mailErr) {
+        console.error("[Delivery Email Error]", mailErr);
+      }
+    }
+
+    let feedbackMessage = "Order updated successfully";
+    if (notificationType === "production") {
+      feedbackMessage = wasUpdatedFlag
+        ? "Order updated and [UPDATED] Production email sent to customer!"
+        : "Order marked as In Production and customer notified by email!";
+    } else if (notificationType === "shipped") {
+      feedbackMessage = wasUpdatedFlag
+        ? "Order updated and [UPDATED] Dispatch email sent to customer!"
+        : "Order marked as Dispatched and tracking email sent to customer!";
+    } else if (notificationType === "delivered") {
+      feedbackMessage = wasUpdatedFlag
+        ? "Order updated and [UPDATED] Delivery email sent to customer!"
+        : "Order marked as Delivered and confirmation email sent to customer!";
     }
 
     return NextResponse.json({
       success: true,
-      message: isNowShipped ? "Order marked as dispatched and notification email sent to customer!" : "Order updated successfully",
+      message: feedbackMessage,
+      notificationType,
       emailSent: Boolean(emailResult?.success),
       order: updatedOrder,
     });

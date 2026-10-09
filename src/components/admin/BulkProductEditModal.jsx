@@ -12,8 +12,12 @@ import {
   IconBox,
   IconWorld,
   IconLanguage,
+  IconBrandYoutube,
+  IconFileText,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { TagIcon } from "@/components/ui/TagBadge";
+import { parseYouTubeVideo, OFFICIAL_INSTALLATION_VIDEOS } from "@/lib/products";
 
 const TARGET_LOCALES = [
   { code: "en", label: "UK", name: "United Kingdom", flag: "🇬🇧", currency: "GBP (£)" },
@@ -33,6 +37,7 @@ export function BulkProductEditModal({
 }) {
   const [categories, setCategories] = useState([]);
   const [tagsList, setTagsList] = useState([]);
+  const [manualsList, setManualsList] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -52,6 +57,8 @@ export function BulkProductEditModal({
     pricing: false,
     localized_names: false,
     gtins: false,
+    installation_video: false,
+    installation_manual: false,
   });
 
   // Field values
@@ -78,6 +85,8 @@ export function BulkProductEditModal({
     gtin_es: "",
     gtin_por: "",
     gtin_it: "",
+    installation_video: "",
+    installation_manual: "",
   });
 
   // Country / Locale options
@@ -99,7 +108,7 @@ export function BulkProductEditModal({
   const [salePercent, setSalePercent] = useState(20);
 
   // Active section tab
-  const [activeTab, setActiveTab] = useState("taxonomy"); // "taxonomy" | "markets" | "tags" | "inventory" | "pricing"
+  const [activeTab, setActiveTab] = useState("taxonomy"); // "taxonomy" | "markets" | "tags" | "inventory" | "pricing" | "names_gtins" | "guides"
 
   useEffect(() => {
     if (isOpen) {
@@ -117,6 +126,14 @@ export function BulkProductEditModal({
         .then((r) => r.json())
         .then((d) => {
           if (d.success && Array.isArray(d.tags)) setTagsList(d.tags);
+        })
+        .catch(console.warn);
+
+      // Fetch manuals
+      fetch("/api/admin/manuals")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && Array.isArray(d.manuals)) setManualsList(d.manuals);
         })
         .catch(console.warn);
     }
@@ -228,6 +245,14 @@ export function BulkProductEditModal({
         updates.gtin_it = values.gtin_it.trim();
         updates.ean_it = values.gtin_it.trim();
       }
+    }
+
+    // Installation Video & Assembly Manual
+    if (enabledFields.installation_video) {
+      updates.installation_video = values.installation_video !== undefined ? values.installation_video.trim() : "";
+    }
+    if (enabledFields.installation_manual) {
+      updates.installation_manual = values.installation_manual !== undefined ? values.installation_manual.trim() : "";
     }
 
     const payload = {
@@ -450,6 +475,22 @@ export function BulkProductEditModal({
             <IconLanguage size={15} />
             <span>Names & GTINs</span>
             {(enabledFields.localized_names || enabledFields.gtins) && (
+              <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("guides")}
+            className={`py-3 px-4 font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              activeTab === "guides"
+                ? "border-wbk-black text-wbk-black bg-white"
+                : "border-transparent text-wbk-brown hover:text-wbk-black"
+            }`}
+          >
+            <IconBrandYoutube size={15} />
+            <span>Guides &amp; Videos</span>
+            {(enabledFields.installation_video || enabledFields.installation_manual) && (
               <span className="w-2 h-2 rounded-full bg-wbk-gold shrink-0" />
             )}
           </button>
@@ -1366,6 +1407,199 @@ export function BulkProductEditModal({
                         />
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: Guides & Videos */}
+          {activeTab === "guides" && (
+            <div className="space-y-5 bg-white p-5 border border-wbk-lightgrey/60">
+              <div>
+                <h4 className="text-xs font-semibold text-wbk-black uppercase tracking-wider flex items-center gap-2">
+                  <IconBrandYoutube size={16} className="text-red-600" />
+                  <span>Installation Videos &amp; PDF Manuals</span>
+                </h4>
+                <p className="text-[11px] text-wbk-brown mt-1">
+                  Bulk assign official YouTube installation guides and PDF assembly manuals across all {selectedProductIds.length} selected products.
+                </p>
+              </div>
+
+              {/* Field 1: Installation Video (YouTube) */}
+              <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={enabledFields.installation_video}
+                      onChange={() => toggleField("installation_video")}
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-wbk-black flex items-center gap-1.5">
+                      <IconBrandYoutube size={15} className="text-red-600" />
+                      <span>Installation Video (YouTube)</span>
+                    </span>
+                  </label>
+                  {enabledFields.installation_video && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-xs">
+                      Enabled for bulk update
+                    </span>
+                  )}
+                </div>
+
+                {enabledFields.installation_video && (
+                  <div className="space-y-3 pt-2 border-t border-wbk-lightgrey/50">
+                    {/* Quick Presets */}
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        Select from Official WallBedKing Presets
+                      </label>
+                      <select
+                        value={
+                          OFFICIAL_INSTALLATION_VIDEOS.find(
+                            (v) => v.videoId === parseYouTubeVideo(values.installation_video)?.videoId
+                          )?.videoId || ""
+                        }
+                        onChange={(e) => {
+                          const found = OFFICIAL_INSTALLATION_VIDEOS.find((v) => v.videoId === e.target.value);
+                          if (found) {
+                            handleValueChange("installation_video", found.url);
+                          }
+                        }}
+                        className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins"
+                      >
+                        <option value="">-- Choose an official guide video --</option>
+                        {OFFICIAL_INSTALLATION_VIDEOS.map((v) => (
+                          <option key={v.videoId} value={v.videoId}>
+                            {v.title} ({v.model})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Custom URL or Video ID */}
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        Or Enter Custom YouTube URL / Video ID
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            placeholder="e.g. https://www.youtube.com/watch?v=1MQ7Ksb2t-Y or leave empty to clear"
+                            value={values.installation_video || ""}
+                            onChange={(e) => handleValueChange("installation_video", e.target.value)}
+                            className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                          />
+                          {values.installation_video && parseYouTubeVideo(values.installation_video) && (
+                            <span className="absolute right-2.5 top-2 text-[10px] text-green-600 font-semibold flex items-center gap-1">
+                              <IconCheck size={12} /> Valid
+                            </span>
+                          )}
+                        </div>
+                        {values.installation_video && (
+                          <button
+                            type="button"
+                            onClick={() => handleValueChange("installation_video", "")}
+                            className="px-3 py-2 text-xs border border-wbk-lightgrey text-wbk-brown hover:text-wbk-black rounded-none cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-wbk-brown mt-1">
+                        Leave empty and keep checked if you want to clear/reset video on selected products.
+                      </p>
+                    </div>
+
+                    {/* Live Preview if valid */}
+                    {(() => {
+                      const parsed = parseYouTubeVideo(values.installation_video);
+                      if (!parsed) return null;
+                      return (
+                        <div className="pt-2">
+                          <span className="text-[10px] text-wbk-brown block mb-1">Preview:</span>
+                          <div className="relative aspect-video max-w-sm bg-black border border-wbk-lightgrey/80 overflow-hidden shadow-xs">
+                            <iframe
+                              src={parsed.embedUrl}
+                              title="Bulk preview"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              className="absolute inset-0 w-full h-full border-0"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Field 2: Assembly Manual (PDF) */}
+              <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={enabledFields.installation_manual}
+                      onChange={() => toggleField("installation_manual")}
+                      className="accent-wbk-gold w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-wbk-black flex items-center gap-1.5">
+                      <IconFileText size={15} className="text-wbk-gold" />
+                      <span>Assembly Manual (PDF)</span>
+                    </span>
+                  </label>
+                  {enabledFields.installation_manual && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-xs">
+                      Enabled for bulk update
+                    </span>
+                  )}
+                </div>
+
+                {enabledFields.installation_manual && (
+                  <div className="space-y-3 pt-2 border-t border-wbk-lightgrey/50">
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        Select from Existing Storage Manuals ({manualsList.length} available)
+                      </label>
+                      <select
+                        value={values.installation_manual || ""}
+                        onChange={(e) => handleValueChange("installation_manual", e.target.value)}
+                        className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins"
+                      >
+                        <option value="">-- Choose a manual or clear --</option>
+                        {manualsList.map((m) => (
+                          <option key={m.name} value={m.url}>
+                            {m.name} {m.size ? `(${Math.round(m.size / 1024)} KB)` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        Or Enter Direct PDF URL
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="https://.../SupportFiles/InstallationManuals/...pdf"
+                          value={values.installation_manual || ""}
+                          onChange={(e) => handleValueChange("installation_manual", e.target.value)}
+                          className="flex-1 p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
+                        />
+                        {values.installation_manual && (
+                          <button
+                            type="button"
+                            onClick={() => handleValueChange("installation_manual", "")}
+                            className="px-3 py-2 text-xs border border-wbk-lightgrey text-wbk-brown hover:text-wbk-black rounded-none cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

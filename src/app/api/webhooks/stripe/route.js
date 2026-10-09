@@ -61,9 +61,10 @@ export async function POST(request) {
           payment_id: session.id || paymentIntentId || null,
           updated_at: new Date().toISOString(),
         };
-        if (session.metadata?.company_entity) updateData.company_entity = session.metadata.company_entity;
         if (session.currency) updateData.currency = session.currency.toUpperCase();
-        if (session.metadata?.locale) updateData.locale = session.metadata.locale;
+        if (session.metadata?.company_entity || session.metadata?.locale) {
+          updateData.admin_notes = `[Entity: ${session.metadata?.company_entity || "N/A"}] [Locale: ${session.metadata?.locale || "en"}]`;
+        }
 
         const { error: updateError } = await supabaseAdmin
           .from("orders")

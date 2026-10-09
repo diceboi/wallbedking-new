@@ -24,7 +24,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
-  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
+  "installation_manual", "installation_video"
 ]);
 
 export async function PATCH(request, { params }) {
@@ -77,11 +78,52 @@ export async function PATCH(request, { params }) {
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ success: false, error: err }, { status: res.status });
+      let shouldRetry = false;
+      if (err.includes("installation_manual") && supabasePayload.installation_manual !== undefined) {
+        console.warn("[Admin PATCH] installation_manual column not in Supabase yet. Retrying without it...");
+        delete supabasePayload.installation_manual;
+        shouldRetry = true;
+      }
+      if (err.includes("installation_video") && supabasePayload.installation_video !== undefined) {
+        console.warn("[Admin PATCH] installation_video column not in Supabase yet. Retrying without it...");
+        delete supabasePayload.installation_video;
+        shouldRetry = true;
+      }
+
+      if (shouldRetry) {
+        res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+          method: "PATCH",
+          headers: {
+            ...headers,
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(supabasePayload),
+        });
+      }
+
+      if (!res.ok) {
+        const retryErr = await res.text();
+        return NextResponse.json({ success: false, error: retryErr }, { status: res.status });
+      }
     }
 
     const updated = await res.json();
     const finalProduct = { ...body, ...(updated[0] || updated), id: Number(id) };
+
+    // Sync changes to local products-catalog.json fallback
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const catalogPath = path.join(process.cwd(), "src/data/products-catalog.json");
+      const rawCatalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
+      const pIdx = rawCatalog.findIndex((p) => p.id === Number(id));
+      if (pIdx !== -1) {
+        rawCatalog[pIdx] = { ...rawCatalog[pIdx], ...finalProduct };
+        await fs.writeFile(catalogPath, JSON.stringify(rawCatalog, null, 2), "utf8");
+      }
+    } catch (catalogErr) {
+      console.warn("[Admin PATCH] Catalog JSON sync notice:", catalogErr.message);
+    }
 
     // Invalidate Next.js cache so storefront reflects changes immediately
     revalidateProductsCache();

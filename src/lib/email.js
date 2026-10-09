@@ -230,26 +230,123 @@ export const CONFIRMATION_I18N = {
 };
 
 // ==========================================
+// ORDER UPDATE NOTIFICATION DICTIONARIES
+// ==========================================
+
+export function resolveOrderLocale(order, fallback = "en") {
+  if (fallback && fallback !== "en") return fallback.toLowerCase();
+  if (order?.locale) return order.locale.toLowerCase();
+  if (order?.shipping_address?.locale) return order.shipping_address.locale.toLowerCase();
+  if (order?.billing_address?.locale) return order.billing_address.locale.toLowerCase();
+  if (typeof order?.admin_notes === "string") {
+    const match = order.admin_notes.match(/\[Locale:\s*([a-zA-Z-]+)\]/i);
+    if (match) return match[1].toLowerCase();
+  }
+  return "en";
+}
+
+export const UPDATE_NOTICE_I18N = {
+  en: {
+    subjectPrefix: "[UPDATED] ",
+    badge: "Order Details Updated",
+    title: "Order Update Notice",
+    message: "Your order details or delivery information have been modified. Please review your updated details below.",
+  },
+  us: {
+    subjectPrefix: "[UPDATED] ",
+    badge: "Order Details Updated",
+    title: "Order Update Notice",
+    message: "Your order details or delivery information have been modified. Please review your updated details below.",
+  },
+  de: {
+    subjectPrefix: "[AKTUALISIERT] ",
+    badge: "Bestellung Aktualisiert",
+    title: "Aktualisierungshinweis",
+    message: "Ihre Bestelldaten oder Lieferinformationen wurden aktualisiert. Nachfolgend finden Sie die aktuellen Daten.",
+  },
+  fr: {
+    subjectPrefix: "[MISE À JOUR] ",
+    badge: "Commande Modifiée",
+    title: "Avis de Modification",
+    message: "Les détails de votre commande ou de livraison ont été modifiés. Veuillez consulter vos informations mises à jour ci-dessous.",
+  },
+  es: {
+    subjectPrefix: "[ACTUALIZADO] ",
+    badge: "Pedido Actualizado",
+    title: "Aviso de Actualización",
+    message: "Los datos de su pedido o de entrega han sido actualizados. Por favor, revise la información corregida a continuación.",
+  },
+  it: {
+    subjectPrefix: "[AGGIORNATO] ",
+    badge: "Ordine Modificato",
+    title: "Avviso di Modifica",
+    message: "I dettagli del tuo ordine o della spedizione sono stati aggiornati. Di seguito trovi le informazioni corrette.",
+  },
+  hu: {
+    subjectPrefix: "[MÓDOSÍTÁS] ",
+    badge: "Rendelés Módosítva",
+    title: "Rendelés Módosítási Értesítő",
+    message: "Rendelésének adatai vagy a szállítási információk módosultak. Kérjük, tekintse át a frissített adatokat az alábbiakban.",
+  },
+  por: {
+    subjectPrefix: "[ATUALIZADO] ",
+    badge: "Encomenda Atualizada",
+    title: "Aviso de Atualização",
+    message: "Os dados da sua encomenda ou as informações de entrega foram alterados. Por favor, consulte os dados atualizados abaixo.",
+  },
+};
+
+export const SHIPPING_I18N = {
+  en: {
+    subject: (id) => `Your Wall Bed King Order #${id} Has Been Dispatched! 🚚`,
+  },
+  us: {
+    subject: (id) => `Your Wall Bed King Order #${id} Has Been Dispatched! 🚚`,
+  },
+  de: {
+    subject: (id) => `Ihre Wall Bed King Bestellung #${id} wurde versandt! 🚚`,
+  },
+  fr: {
+    subject: (id) => `Votre commande Wall Bed King #${id} a été expédiée ! 🚚`,
+  },
+  es: {
+    subject: (id) => `¡Su pedido Wall Bed King #${id} ha sido enviado! 🚚`,
+  },
+  it: {
+    subject: (id) => `Il tuo ordine Wall Bed King #${id} è stato spedito! 🚚`,
+  },
+  hu: {
+    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése feladásra került! 🚚`,
+  },
+  por: {
+    subject: (id) => `A sua encomenda Wall Bed King #${id} foi expedida! 🚚`,
+  },
+};
+
+// ==========================================
 // TEMPLATE GENERATORS
 // ==========================================
 
-export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale = null) {
-  const loc = (requestedLocale || order.locale || "en").toLowerCase();
+export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale = null, isUpdate = false) {
+  const loc = resolveOrderLocale(order, requestedLocale);
   const t = CONFIRMATION_I18N[loc] || CONFIRMATION_I18N.en;
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+  const currencyCode = (order.currency || (loc === "us" ? "USD" : loc === "en" ? "GBP" : "EUR")).toUpperCase();
+  const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
 
   const itemsList = (order.items || [])
     .map(
       (item) => `
       <tr>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111;">
-          <strong style="font-size: 14px;">${item.name || "Wall Bed Item"}</strong>
+          <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed Item"}</strong>
           ${item.variant ? `<br><span style="color:#777; font-size:12px; display:inline-block; margin-top:3px;">${item.variant}</span>` : ""}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
           ${item.quantity || 1}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: right; font-weight: 500;">
-          £${Number(item.price || 0).toFixed(2)}
+          ${currencySymbol}${Number(item.price || 0).toFixed(2)}
         </td>
       </tr>
     `
@@ -257,6 +354,17 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     .join("");
 
   const introText = t.intro.replace("{id}", order.id);
+
+  const updateBannerHtml = isUpdate ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  ` : "";
 
   return `
     <!DOCTYPE html>
@@ -284,6 +392,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
             <p>${t.title}</p>
           </div>
           <div class="content">
+            ${updateBannerHtml}
             <span class="badge">${t.badge}</span>
             <h2 style="font-size: 20px; color: #111; margin-top: 0; font-weight: 600;">${t.thankYou}, ${order.customer_name || "Customer"}!</h2>
             <p style="font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px;">
@@ -327,7 +436,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
 
             <div style="text-align: right; margin-top: 20px; font-size: 14px; border-top: 2px solid #111; padding-top: 16px;">
               <span style="color: #666; margin-right: 12px;">${t.totalPaid}</span>
-              <strong style="font-size: 20px; color: #111;">£${Number(order.total_amount || 0).toFixed(2)}</strong>
+              <strong style="font-size: 20px; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
             </div>
 
             <div style="margin-top: 32px; padding: 16px; background: #fafafa; border-radius: 6px; border-left: 3px solid #d4b26f;">
@@ -347,6 +456,9 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
 }
 
 export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
+  const currencyCode = (order.currency || "GBP").toUpperCase();
+  const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+
   return `
     <!DOCTYPE html>
     <html>
@@ -363,7 +475,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
             <p style="margin-top: 0;">A new paid order was just placed on the Wall Bed King storefront:</p>
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #fbfbfb; border: 1px solid #eee; border-radius: 4px;">
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Order ID:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: bold;">#${order.id}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Total Paid:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 16px; font-weight: bold; color: #111;">£${Number(order.total_amount || 0).toFixed(2)}</td></tr>
+              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Total Paid:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 16px; font-weight: bold; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Name:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_name || "N/A"}</td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;"><a href="mailto:${order.customer_email}">${order.customer_email}</a></td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Phone:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_phone || "Not provided"}</td></tr>
@@ -412,17 +524,30 @@ export function getCarrierDisplayName(carrier) {
   return carrier || "Specialist Delivery Service";
 }
 
-export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber = "1Z9999999999999999", carrier = "UPS") {
+export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber = "1Z9999999999999999", carrier = "UPS", isUpdate = false) {
   const ownFleet = isOwnDelivery(carrier);
   const carrierName = getCarrierDisplayName(carrier);
   const trackingUrl = !ownFleet ? getCarrierTrackingUrl(carrier, trackingNumber) : null;
+  const loc = resolveOrderLocale(order);
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+
+  const updateBannerHtml = isUpdate ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  ` : "";
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>Order Dispatched - #${order.id}</title>
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}Order Dispatched - #${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -438,9 +563,10 @@ export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber
         <div class="container">
           <div class="header">
             <h1>Wall Bed King</h1>
-            <p>Dispatch Notification</p>
+            <p>${isUpdate ? `${upd.badge}` : "Dispatch Notification"}</p>
           </div>
           <div class="content">
+            ${updateBannerHtml}
             <h2 style="color: #111; font-size: 20px; margin-top: 0; font-weight: 600;">Your Order is On Its Way! 🚚</h2>
             <p style="color: #555; font-size: 14px; line-height: 1.6;">
               Great news, <strong>${order.customer_name || "Customer"}</strong>! Your wall bed order <strong style="color: #111;">#${order.id}</strong> has been carefully packed and handed over for delivery.
@@ -787,13 +913,13 @@ export function getAdminNewReviewAlertHtml(review = SAMPLE_REVIEW) {
 /**
  * 1. Customer Order Confirmation Email
  */
-export async function sendOrderConfirmationEmail(order, locale = null) {
+export async function sendOrderConfirmationEmail(order, locale = null, isUpdate = false) {
   if (!order || !order.customer_email) return { success: false, error: "Missing recipient" };
 
-  const effectiveLocale = locale || order.locale || "en";
+  const effectiveLocale = resolveOrderLocale(order, locale);
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.log(`[Email Service: Mock] Order Confirmation (${effectiveLocale}) for ${order.id} to ${order.customer_email}`);
+    console.log(`[Email Service: Mock] Order Confirmation (${effectiveLocale}) for ${order.id} to ${order.customer_email} (isUpdate: ${isUpdate})`);
     return {
       success: true,
       mode: "mock",
@@ -805,20 +931,24 @@ export async function sendOrderConfirmationEmail(order, locale = null) {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const htmlContent = getOrderConfirmationHtml(order, effectiveLocale);
+    const htmlContent = getOrderConfirmationHtml(order, effectiveLocale, isUpdate);
     const i18n = CONFIRMATION_I18N[effectiveLocale.toLowerCase()] || CONFIRMATION_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: ADMIN_EMAIL,
       reply_to: ADMIN_EMAIL,
-      subject: `${i18n.subjectPrefix} - #${order.id}`,
+      subject: `${subjectPrefix}${i18n.subjectPrefix} - #${order.id}`,
       html: htmlContent,
     });
 
-    // Also trigger admin notification in parallel
-    await sendAdminOrderAlert(order).catch((err) => console.error("Admin order email alert failed:", err));
+    // Also trigger admin notification in parallel on initial order creation
+    if (!isUpdate) {
+      await sendAdminOrderAlert(order).catch((err) => console.error("Admin order email alert failed:", err));
+    }
 
     return { success: true, data };
   } catch (error) {
@@ -838,12 +968,15 @@ export async function sendAdminOrderAlert(order) {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
+    const adminCurr = (order.currency || "GBP").toUpperCase();
+    const adminSymbol = adminCurr === "EUR" ? "€" : adminCurr === "USD" ? "$" : "£";
+
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [ADMIN_EMAIL],
       replyTo: order.customer_email,
       reply_to: order.customer_email,
-      subject: `🚨 NEW ORDER RECEIVED: #${order.id} (£${Number(order.total_amount || 0).toFixed(2)})`,
+      subject: `🚨 NEW ORDER RECEIVED: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)})`,
       html: getAdminOrderAlertHtml(order),
     });
 
@@ -857,12 +990,13 @@ export async function sendAdminOrderAlert(order) {
 /**
  * 3. Customer Shipping / Tracking Notification Email
  */
-export async function sendShippingNotificationEmail(order, trackingNumber, carrier) {
+export async function sendShippingNotificationEmail(order, trackingNumber, carrier, isUpdate = false) {
   if (!order || !order.customer_email) return { success: false, error: "Missing recipient" };
 
+  const effectiveLocale = resolveOrderLocale(order);
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.log(`[Email Service: Mock] Dispatch Notification for ${order.id} to ${order.customer_email}`);
+    console.log(`[Email Service: Mock] Dispatch Notification for ${order.id} to ${order.customer_email} (isUpdate: ${isUpdate})`);
     return {
       success: true,
       mode: "mock",
@@ -874,13 +1008,17 @@ export async function sendShippingNotificationEmail(order, trackingNumber, carri
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
+    const i18n = SHIPPING_I18N[effectiveLocale] || SHIPPING_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: ADMIN_EMAIL,
       reply_to: ADMIN_EMAIL,
-      subject: `Your Wall Bed King Order #${order.id} Has Been Dispatched!`,
-      html: getShippingNotificationHtml(order, trackingNumber, carrier),
+      subject: `${subjectPrefix}${i18n.subject(order.id)}`,
+      html: getShippingNotificationHtml(order, trackingNumber, carrier, isUpdate),
     });
 
     return { success: true, data };
@@ -1170,6 +1308,512 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
     return { success: true, data };
   } catch (error) {
     console.error("[Restock Email Error]", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ==========================================
+// 8. MULTILINGUAL ORDER STATUS NOTIFICATIONS
+// ==========================================
+
+export const PRODUCTION_I18N = {
+  en: {
+    subject: (id) => `Your Wall Bed King Order #${id} is Now in Production! ⚙️`,
+    badge: "In Production",
+    headline: "Your Wall Bed System is Being Crafted",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) => `Great news! Your custom order #${id} has entered our production and precision engineering stage. Our team is now preparing the laser-cut steel framing and German gas-piston lifting mechanisms for your wall bed.`,
+    step1: "Precision Steel Fabrication & Frame Assembly",
+    step2: "Piston Counterbalance Calibration & Load Testing",
+    step3: "Final Multi-Point Quality Inspection & Protective Crating",
+    whatNextTitle: "What happens next?",
+    whatNextDesc: "Once manufacturing and quality checks are completed, your order will be scheduled with our freight partners. You will receive an automated dispatch notification with full tracking details as soon as it leaves our warehouse.",
+    supportNotice: "Have questions about delivery prep or room measurements? Our specialists are here to help.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
+    footerHelp: "Need assistance? Contact us at",
+  },
+  us: {
+    subject: (id) => `Your Wall Bed King Order #${id} is Now in Production! ⚙️`,
+    badge: "In Production",
+    headline: "Your Murphy Bed is Being Built",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) => `Great news! Your custom order #${id} has entered our production stage. Our team is now preparing the heavy-duty steel frame and gas-piston lifting mechanisms for your Murphy bed.`,
+    step1: "Precision Steel Fabrication & Frame Assembly",
+    step2: "Piston Counterbalance Calibration & Testing",
+    step3: "Final Multi-Point Quality Inspection & Protective Crating",
+    whatNextTitle: "What happens next?",
+    whatNextDesc: "Once built and inspected, your Murphy bed will be handed over to our freight carrier. You will receive a dispatch notice with tracking information as soon as it ships.",
+    supportNotice: "Have questions about room prep or delivery? Our support team is ready to assist.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Warranty",
+    footerHelp: "Need assistance? Contact us at",
+  },
+  de: {
+    subject: (id) => `Ihre Wall Bed King Bestellung #${id} ist jetzt in Produktion! ⚙️`,
+    badge: "In Produktion",
+    headline: "Ihr Schrankbett wird jetzt gefertigt",
+    greeting: (name) => `Guten Tag ${name || "Kunde"},`,
+    intro: (id) => `Gute Neuigkeiten! Ihre Bestellung #${id} befindet sich jetzt in der Fertigung. Unser Ingenieurteam bereitet den Präzisionsstahlrahmen und die deutschen Gasdruckkolben für Ihr Schrankbett vor.`,
+    step1: "Präzisionsstahlfertigung & Rahmenmontage",
+    step2: "Kalibrierung & Belastungstest der Gasdruckfedern",
+    step3: "Umfassende Qualitätsprüfung & sichere Schutzverpackung",
+    whatNextTitle: "Wie geht es weiter?",
+    whatNextDesc: "Sobald Ihr Möbelstück die Endkontrolle durchlaufen hat, übergeben wir es an unsere Spedition. Sie erhalten umgehend eine Versandbestätigung mit Trackinglink.",
+    supportNotice: "Haben Sie Fragen zur Raumvorbereitung oder Lieferung? Unser Kundenservice berät Sie gerne.",
+    footerGuarantee: "Wall Bed King • Premium Schrankbetten • Lebenslange Mechanik-Garantie",
+    footerHelp: "Brauchen Sie Hilfe? Kontaktieren Sie uns unter",
+  },
+  fr: {
+    subject: (id) => `Votre commande Wall Bed King #${id} est en cours de fabrication ! ⚙️`,
+    badge: "En Fabrication",
+    headline: "Votre lit escamotable est en cours de fabrication",
+    greeting: (name) => `Bonjour ${name || "Cher Client"},`,
+    intro: (id) => `Excellente nouvelle ! Votre commande #${id} est entrée dans notre atelier de fabrication. Notre équipe prépare le cadre en acier de précision et les vérins à gaz allemands de votre lit escamotable.`,
+    step1: "Fabrication de précision & assemblage du châssis",
+    step2: "Calibrage & test de résistance des pistons à gaz",
+    step3: "Contrôle qualité rigoureux & emballage de protection renforcé",
+    whatNextTitle: "Quelle est la suite ?",
+    whatNextDesc: "Dès que votre meuble a passé avec succès tous les contrôles qualité, il est confié à notre transporteur spécialisé. Vous recevrez un e-mail d'expédition avec le suivi.",
+    supportNotice: "Une question concernant la préparation de votre pièce ou la livraison ? Notre équipe est à votre disposition.",
+    footerGuarantee: "Wall Bed King • Lits Escamotables Premium • Garantie Mécanisme à Vie",
+    footerHelp: "Besoin d'aide ? Contactez-nous à",
+  },
+  es: {
+    subject: (id) => `¡Su pedido Wall Bed King #${id} está en producción! ⚙️`,
+    badge: "En Producción",
+    headline: "Su cama abatible está en proceso de fabricación",
+    greeting: (name) => `Hola ${name || "Cliente"},`,
+    intro: (id) => `¡Buenas noticias! Su pedido #${id} ha entrado en la fase de fabricación e ingeniería. Nuestro equipo está preparando la estructura de acero de precisión y los pistones de gas alemanes de su cama abatible.`,
+    step1: "Fabricación de precisión y ensamblaje de la estructura",
+    step2: "Calibración y pruebas de resistencia de los pistones",
+    step3: "Inspección de calidad exhaustiva y embalaje de protección",
+    whatNextTitle: "¿Qué sucede a continuación?",
+    whatNextDesc: "Una vez completada la fabricación y las pruebas de calidad, su pedido será programado con nuestra agencia de transporte. Recibirá un aviso de envío con número de seguimiento.",
+    supportNotice: "¿Tiene alguna duda sobre el espacio o la entrega? Nuestro equipo de soporte está a su entera disposición.",
+    footerGuarantee: "Wall Bed King • Camas Abatibles Premium • Garantía Mecanismo de por Vida",
+    footerHelp: "¿Necesita ayuda? Contáctenos en",
+  },
+  it: {
+    subject: (id) => `Il tuo ordine Wall Bed King #${id} è ora in produzione! ⚙️`,
+    badge: "In Produzione",
+    headline: "Il tuo letto a scomparsa è in produzione",
+    greeting: (name) => `Gentile ${name || "Cliente"},`,
+    intro: (id) => `Ottime notizie! Il tuo ordine #${id} è entrato nella fase di produzione e assemblaggio. Il nostro team sta preparando il telaio in acciaio ad alta precisione e i pistoni a gas tedeschi per il tuo letto.`,
+    step1: "Lavorazione laser dell'acciaio e montaggio del telaio",
+    step2: "Calibrazione e collaudo dei pistoni a gas",
+    step3: "Controllo qualità multipunto e imballaggio protettivo rinforzato",
+    whatNextTitle: "Cosa succede ora?",
+    whatNextDesc: "Non appena il mobile supera i controlli qualità, verrà affidato ai nostri corrieri specializzati. Riceverai un'email di spedizione con il link di tracciamento.",
+    supportNotice: "Hai domande sull'installazione o sulla consegna? Il nostro team di supporto è a tua completa disposizione.",
+    footerGuarantee: "Wall Bed King • Letti a Scomparsa Premium • Garanzia Meccanismo a Vita",
+    footerHelp: "Hai bisogno di assistenza? Contattaci a",
+  },
+  hu: {
+    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése gyártás alatt áll! ⚙️`,
+    badge: "Gyártás Alatt",
+    headline: "Lenyitható ágya gyártásba került",
+    greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
+    intro: (id) => `Nagyszerű hír! A(z) #${id} számú rendelése megérkezett műszaki és gyártási részlegünkhöz. Munkatársaink megkezdték a precíziós acélkeret és a német gázteleszkópos mechanizmus összeszerelését és tesztelését.`,
+    step1: "Lézervágott acélszerkezet precíziós összeszerelése",
+    step2: "Német gázteleszkópok kalibrálása és teherbírási tesztje",
+    step3: "Többpontos minőségellenőrzés és biztonságos védőcsomagolás",
+    whatNextTitle: "Mi történik ezután?",
+    whatNextDesc: "Amint az ágyrendszer átment a szigorú minőségellenőrzésen, átadjuk a szállítmányozó partnerünknek. Amint feladásra kerül, automatikus értesítő emailt küldünk a csomagszámmal és a kézbesítés részleteivel.",
+    supportNotice: "Kérdése merült fel a telepítéssel vagy szállítással kapcsolatban? Ügyfélszolgálatunk készséggel áll rendelkezésére.",
+    footerGuarantee: "Wall Bed King • Prémium Lenyitható Ágyak • Élethosszig Tartó Mechanika Garancia",
+    footerHelp: "Segítségre van szüksége? Írjon nekünk:",
+  },
+};
+
+export const DELIVERY_I18N = {
+  en: {
+    subject: (id) => `Your Wall Bed King Order #${id} Has Been Delivered! 🏡✨`,
+    badge: "Delivered",
+    headline: "Your Murphy Bed Has Arrived!",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) => `We are delighted to confirm that your order #${id} has been delivered! We hope your new space-saving wall bed system transforms your home with unmatched style and function.`,
+    supportTitle: "Assembly & Installation Assistance",
+    supportDesc: "All assembly manuals, clear step-by-step PDF diagrams, and video assembly tutorials are available 24/7 on our website. Take your time during installation, and remember our support team is on hand if you have any questions.",
+    manualsBtn: "View Installation Manuals & Video Guides",
+    warrantyReminder: "🛡️ <strong>Lifetime Mechanism Guarantee:</strong> Remember that all steel framing and gas-strut lift mechanisms are covered by our comprehensive lifetime warranty.",
+    reviewInvite: "⭐ <strong>We'd love to see your new room!</strong> Once your bed is installed, feel free to share a photo and review with our community.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
+    footerHelp: "Need assistance? Contact us at",
+  },
+  us: {
+    subject: (id) => `Your Wall Bed King Order #${id} Has Been Delivered! 🏡✨`,
+    badge: "Delivered",
+    headline: "Your Murphy Bed Has Arrived!",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) => `We are pleased to confirm that your order #${id} has been successfully delivered! We hope your new Murphy bed helps you make the absolute most of your living space.`,
+    supportTitle: "Assembly & Installation Support",
+    supportDesc: "Step-by-step PDF installation guides and video tutorials are available on our website anytime. Please reach out if you need guidance with mounting or assembly.",
+    manualsBtn: "View Installation Guides & Videos",
+    warrantyReminder: "🛡️ <strong>Lifetime Mechanism Warranty:</strong> Your frame and piston mechanisms are backed by our lifetime warranty.",
+    reviewInvite: "⭐ <strong>Share your new space!</strong> Once set up, we invite you to leave a review and share a picture of your room.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Warranty",
+    footerHelp: "Need assistance? Contact us at",
+  },
+  de: {
+    subject: (id) => `Ihre Wall Bed King Bestellung #${id} wurde zugestellt! 🏡✨`,
+    badge: "Zugestellt",
+    headline: "Ihr Schrankbett ist angekommen!",
+    greeting: (name) => `Guten Tag ${name || "Kunde"},`,
+    intro: (id) => `Wir freuen uns, Ihnen mitteilen zu können, dass Ihre Bestellung #${id} erfolgreich zugestellt wurde! Wir hoffen, dass Ihr neues platzsparendes Schrankbett Ihr Zuhause bereichert.`,
+    supportTitle: "Aufbauanleitung & Montageunterstützung",
+    supportDesc: "Alle Aufbauanleitungen, Schritt-für-Schritt-Pläne und Videoanleitungen stehen Ihnen jederzeit rund um die Uhr auf unserer Website zur Verfügung.",
+    manualsBtn: "Montageanleitungen & Videos ansehen",
+    warrantyReminder: "🛡️ <strong>Lebenslange Mechanik-Garantie:</strong> Der Stahlrahmen und die Gasdruckfedern sind durch unsere lebenslange Garantie geschützt.",
+    reviewInvite: "⭐ <strong>Wir freuen uns auf Ihr Feedback!</strong> Sobald Ihr Bett aufgebaut ist, teilen Sie gerne Ihre Erfahrungen und Fotos mit uns.",
+    footerGuarantee: "Wall Bed King • Premium Schrankbetten • Lebenslange Mechanik-Garantie",
+    footerHelp: "Brauchen Sie Hilfe? Kontaktieren Sie uns unter",
+  },
+  fr: {
+    subject: (id) => `Votre commande Wall Bed King #${id} a été livrée ! 🏡✨`,
+    badge: "Livré",
+    headline: "Votre lit escamotable est bien arrivé !",
+    greeting: (name) => `Bonjour ${name || "Cher Client"},`,
+    intro: (id) => `Nous avons le plaisir de vous confirmer que votre commande #${id} a bien été livrée ! Nous espérons que votre nouveau lit escamotable saura transformer et optimiser votre espace de vie.`,
+    supportTitle: "Aide au montage & guides d'installation",
+    supportDesc: "Toutes nos notices de montage en PDF, schémas détaillés et vidéos tutorielles d'assemblage sont accessibles 24h/24 et 7j/7 sur notre site internet.",
+    manualsBtn: "Voir les notices & vidéos de montage",
+    warrantyReminder: "🛡️ <strong>Garantie Mécanisme à Vie :</strong> Le châssis en acier et les pistons à gaz bénéficient de notre garantie intégrale à vie.",
+    reviewInvite: "⭐ <strong>Partagez votre avis !</strong> Une fois votre lit installé, n'hésitez pas à nous laisser un commentaire avec vos photos.",
+    footerGuarantee: "Wall Bed King • Lits Escamotables Premium • Garantie Mécanisme à Vie",
+    footerHelp: "Besoin d'aide ? Contactez-nous à",
+  },
+  es: {
+    subject: (id) => `¡Su pedido Wall Bed King #${id} ha sido entregado! 🏡✨`,
+    badge: "Entregado",
+    headline: "¡Su cama abatible ha llegado!",
+    greeting: (name) => `Hola ${name || "Cliente"},`,
+    intro: (id) => `¡Nos complace confirmarle que su pedido #${id} ha sido entregado con éxito! Esperamos que su nueva cama abatible transforme su hogar brindándole el máximo espacio y confort.`,
+    supportTitle: "Guías y asistencia de montaje",
+    supportDesc: "Todos los manuales de montaje, esquemas explicativos en PDF y tutoriales en vídeo están a su disposición las 24 horas en nuestra web.",
+    manualsBtn: "Ver guías de montaje y vídeos",
+    warrantyReminder: "🛡️ <strong>Garantía de Mecanismo de por Vida:</strong> Todos los herrajes de acero y pistones hidráulicos cuentan con garantía vitalicia.",
+    reviewInvite: "⭐ <strong>¡Queremos ver su espacio!</strong> Cuando instale la cama, le animamos a compartir una reseña y fotografías con nuestra comunidad.",
+    footerGuarantee: "Wall Bed King • Camas Abatibles Premium • Garantía Mecanismo de por Vida",
+    footerHelp: "¿Necesita ayuda? Contáctenos en",
+  },
+  it: {
+    subject: (id) => `Il tuo ordine Wall Bed King #${id} è stato consegnato! 🏡✨`,
+    badge: "Consegnato",
+    headline: "Il tuo letto a scomparsa è arrivato!",
+    greeting: (name) => `Gentile ${name || "Cliente"},`,
+    intro: (id) => `Siamo lieti di confermarti che il tuo ordine #${id} è stato consegnato con successo! Ci auguriamo che il tuo nuovo letto a scomparsa ottimizzi al meglio i tuoi spazi quotidiani.`,
+    supportTitle: "Manuali e supporto al montaggio",
+    supportDesc: "Tutti i manuali in PDF, gli schemi di montaggio e i video tutorial passo-passo sono disponibili in ogni momento sul nostro sito web.",
+    manualsBtn: "Guarda le guide e i video di montaggio",
+    warrantyReminder: "🛡️ <strong>Garanzia Meccanismo a Vita:</strong> Il telaio in acciaio e i pistoni a gas sono garantiti a vita da Wall Bed King.",
+    reviewInvite: "⭐ <strong>Condividi la tua opinione!</strong> Una volta montato il letto, raccontaci la tua esperienza e carica le foto della tua stanza.",
+    footerGuarantee: "Wall Bed King • Letti a Scomparsa Premium • Garanzia Meccanismo a Vita",
+    footerHelp: "Hai bisogno di assistenza? Contattaci a",
+  },
+  hu: {
+    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése kézbesítésre került! 🏡✨`,
+    badge: "Kézbesítve",
+    headline: "Lenyitható ágya megérkezett!",
+    greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
+    intro: (id) => `Örömmel értesítjük, hogy a(z) #${id} számú rendelése sikeresen kézbesítésre került! Reméljük, hogy új helytakarékos ágymechanizmusa maximális kényelmet és prémium helykihasználást nyújt otthonában.`,
+    supportTitle: "Összeszerelési segédlet és útmutatók",
+    supportDesc: "Az összeszereléshez szükséges részletes magyar és angol nyelvű PDF útmutatók, rajzok és lépésről-lépésre videós segédletek bármikor elérhetőek a weboldalunkon.",
+    manualsBtn: "Szerelési útmutatók és videók megtekintése",
+    warrantyReminder: "🛡️ <strong>Élethosszig Tartó Mechanika Garancia:</strong> A tömör acélkeretre és a prémium gázteleszkópokra teljes élethosszig tartó garanciát biztosítunk.",
+    reviewInvite: "⭐ <strong>Ossza meg véleményét!</strong> Amint elkészült a beépítés, örömmel fogadjuk visszajelzését és fotóit a megújult szobáról.",
+    footerGuarantee: "Wall Bed King • Prémium Lenyitható Ágyak • Élethosszig Tartó Mechanika Garancia",
+    footerHelp: "Segítségre van szüksége? Írjon nekünk:",
+  },
+};
+
+export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en", isUpdate = false) {
+  const loc = resolveOrderLocale(order, locale);
+  const t = PRODUCTION_I18N[loc] || PRODUCTION_I18N.en;
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+  const currencyCode = (order.currency || (loc === "en" ? "GBP" : "EUR")).toUpperCase();
+  const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+
+  const itemsList = (order.items || [])
+    .map(
+      (item) => `
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 12px 0;">
+            <strong style="color: #111; font-size: 13px;">${item.name || item.title || "Wall Bed"}</strong>
+            ${item.variant || item.options?.size || item.options?.orientation ? `<br><span style="font-size: 11px; color: #777;">${item.variant || [item.options?.size, item.options?.orientation].filter(Boolean).join(" • ")}</span>` : ""}
+          </td>
+          <td style="padding: 12px 0; text-align: center; color: #444; font-size: 13px;">${item.quantity || 1}</td>
+          <td style="padding: 12px 0; text-align: right; color: #111; font-weight: 600; font-size: 13px;">${currencySymbol}${Number(item.price || 0).toFixed(2)}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const updateBannerHtml = isUpdate ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  ` : "";
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - #${order.id}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
+          .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+          .header { background: #111111; color: #ffffff; padding: 28px 24px; text-align: center; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+          .header p { margin: 6px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; }
+          .content { padding: 32px 28px; }
+          .steps-card { background: #faf9f7; border: 1px solid #eeeae3; border-radius: 6px; padding: 20px; margin: 24px 0; }
+          .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 20px; text-align: center; font-size: 12px; color: #777; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Wall Bed King</h1>
+            <p>${isUpdate ? `${upd.badge}` : t.badge}</p>
+          </div>
+          <div class="content">
+            ${updateBannerHtml}
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #1e3a8a; background: #dbeafe; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
+              ⚙️ ${t.badge}
+            </span>
+            <h2 style="color: #111; font-size: 22px; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <p style="color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+              ${t.greeting(order.customer_name)}<br><br>
+              ${t.intro(order.id)}
+            </p>
+
+            <div class="steps-card">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 12px; font-weight: 600;">
+                Production Milestones
+              </div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #333;">
+                <tr>
+                  <td style="padding: 6px 10px 6px 0; width: 24px; vertical-align: top; color: #2e7d32; font-weight: bold;">✓</td>
+                  <td style="padding: 6px 0; line-height: 1.4;">${t.step1}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 10px 6px 0; width: 24px; vertical-align: top; color: #b89c66; font-weight: bold;">⚙️</td>
+                  <td style="padding: 6px 0; line-height: 1.4;">${t.step2}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 10px 6px 0; width: 24px; vertical-align: top; color: #888; font-weight: bold;">📦</td>
+                  <td style="padding: 6px 0; line-height: 1.4;">${t.step3}</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-top: 28px; margin-bottom: 8px;">Order Details (#${order.id})</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 2px solid #111; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666;">
+                  <th style="padding-bottom: 10px;">Item</th>
+                  <th style="padding-bottom: 10px; text-align: center;">Qty</th>
+                  <th style="padding-bottom: 10px; text-align: right;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsList || '<tr><td colspan="3" style="padding:14px 0;">Wall Bed System & Accessories</td></tr>'}
+              </tbody>
+            </table>
+
+            <div style="margin-top: 28px; padding: 16px; background: #fafafa; border-radius: 6px; border-left: 3px solid #d4b26f;">
+              <p style="margin: 0; font-size: 12px; color: #444; line-height: 1.5;">
+                <strong>${t.whatNextTitle}</strong> ${t.whatNextDesc}
+              </p>
+            </div>
+
+            <p style="font-size: 12px; color: #777; margin-top: 20px; line-height: 1.5;">
+              ${t.supportNotice}
+            </p>
+          </div>
+          <div class="footer">
+            <p style="margin: 0 0 6px; font-weight: 500; color: #333;">${t.footerGuarantee}</p>
+            <p style="margin: 0;">${t.footerHelp} <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${STORE_PHONE}</strong> (${STORE_HOURS}).</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+export function getDeliveryNotificationHtml(order = SAMPLE_ORDER, locale = "en", isUpdate = false) {
+  const loc = resolveOrderLocale(order, locale);
+  const t = DELIVERY_I18N[loc] || DELIVERY_I18N.en;
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
+  const localePrefix = loc && loc !== "en" ? `/${loc}` : "";
+  const guidesUrl = `${siteUrl}${localePrefix}/support/installation-guides`;
+
+  const updateBannerHtml = isUpdate ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  ` : "";
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - #${order.id}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
+          .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+          .header { background: #111111; color: #ffffff; padding: 28px 24px; text-align: center; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+          .header p { margin: 6px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; }
+          .content { padding: 32px 28px; }
+          .support-card { background: #faf9f7; border: 1px solid #eeeae3; border-radius: 6px; padding: 22px 20px; margin: 24px 0; text-align: center; }
+          .cta-btn { display: inline-block; background: #111111; color: #ffffff !important; text-decoration: none; padding: 13px 28px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+          .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 20px; text-align: center; font-size: 12px; color: #777; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Wall Bed King</h1>
+            <p>${isUpdate ? `${upd.badge}` : t.badge}</p>
+          </div>
+          <div class="content">
+            ${updateBannerHtml}
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
+              ✅ ${t.badge}
+            </span>
+            <h2 style="color: #111; font-size: 22px; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <p style="color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+              ${t.greeting(order.customer_name)}<br><br>
+              ${t.intro(order.id)}
+            </p>
+
+            <div class="support-card">
+              <div style="font-size: 15px; font-weight: 700; color: #111; margin-bottom: 8px;">
+                ${t.supportTitle}
+              </div>
+              <p style="margin: 0 auto 18px; font-size: 13px; color: #555; line-height: 1.6; max-width: 480px;">
+                ${t.supportDesc}
+              </p>
+              <div>
+                <a href="${guidesUrl}" target="_blank" rel="noopener noreferrer" class="cta-btn">
+                  ${t.manualsBtn} →
+                </a>
+              </div>
+            </div>
+
+            <div style="margin: 20px 0; padding: 14px 16px; background: #fdfbf7; border: 1px solid #f3ebe0; border-radius: 6px; font-size: 12px; color: #555; line-height: 1.5;">
+              ${t.warrantyReminder}
+            </div>
+
+            <div style="margin: 20px 0; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #334155; line-height: 1.5;">
+              ${t.reviewInvite}
+            </div>
+          </div>
+          <div class="footer">
+            <p style="margin: 0 0 6px; font-weight: 500; color: #333;">${t.footerGuarantee}</p>
+            <p style="margin: 0;">${t.footerHelp} <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${STORE_PHONE}</strong> (${STORE_HOURS}).</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Send "In Production" Notification Email via Resend
+ */
+export async function sendProductionNotificationEmail(order, locale = null, isUpdate = false) {
+  if (!order || !order.customer_email) return { success: false, error: "Missing recipient email" };
+
+  const effectiveLocale = resolveOrderLocale(order, locale);
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log(`[Email Service: Mock] In Production Notification for #${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
+    return {
+      success: true,
+      mode: "mock",
+      message: "Production notification logged in dev mode.",
+    };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    const i18n = PRODUCTION_I18N[effectiveLocale.toLowerCase()] || PRODUCTION_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+    const htmlContent = getProductionNotificationHtml(order, effectiveLocale, isUpdate);
+
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [order.customer_email],
+      replyTo: ADMIN_EMAIL,
+      reply_to: ADMIN_EMAIL,
+      subject: `${subjectPrefix}${i18n.subject(order.id)}`,
+      html: htmlContent,
+    });
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("[Production Email Error]", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send "Delivered" Notification Email via Resend
+ */
+export async function sendDeliveryNotificationEmail(order, locale = null, isUpdate = false) {
+  if (!order || !order.customer_email) return { success: false, error: "Missing recipient email" };
+
+  const effectiveLocale = resolveOrderLocale(order, locale);
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log(`[Email Service: Mock] Delivery Notification for #${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
+    return {
+      success: true,
+      mode: "mock",
+      message: "Delivery notification logged in dev mode.",
+    };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    const i18n = DELIVERY_I18N[effectiveLocale.toLowerCase()] || DELIVERY_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+    const htmlContent = getDeliveryNotificationHtml(order, effectiveLocale, isUpdate);
+
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [order.customer_email],
+      replyTo: ADMIN_EMAIL,
+      reply_to: ADMIN_EMAIL,
+      subject: `${subjectPrefix}${i18n.subject(order.id)}`,
+      html: htmlContent,
+    });
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("[Delivery Email Error]", error);
     return { success: false, error: error.message };
   }
 }

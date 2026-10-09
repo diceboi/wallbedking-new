@@ -7,7 +7,20 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { orderId, paypalOrderId, payer, shipping, captureData, locale, currency, companyEntity } = body || {};
+    const {
+      orderId,
+      paypalOrderId,
+      payer,
+      shipping,
+      customer,
+      shippingAddress: customShippingAddress,
+      captureData,
+      items,
+      total,
+      locale,
+      currency,
+      companyEntity,
+    } = body || {};
 
     if (!orderId && !paypalOrderId) {
       return NextResponse.json(
@@ -16,37 +29,112 @@ export async function POST(request) {
       );
     }
 
-    const targetOrderId = orderId;
-    console.log(`[PayPal Capture] Finalizing payment for order: ${targetOrderId} (Entity: ${companyEntity || "N/A"}, Currency: ${currency || "N/A"})`);
+    const effectiveLocale = locale || "en";
+    const effectiveCurrency = (currency || (effectiveLocale === "en" ? "GBP" : "EUR")).toUpperCase();
+    console.log(`[PayPal Capture] Finalizing payment for order: ${orderId || "new"} (PayPal TX: ${paypalOrderId}, Entity: ${companyEntity || "N/A"}, Currency: ${effectiveCurrency})`);
 
-    if (supabaseAdmin && targetOrderId) {
-      // 1. Fetch current order
-      const { data: order } = await supabaseAdmin
-        .from("orders")
-        .select("*")
-        .eq("id", targetOrderId)
-        .maybeSingle();
+    let finalOrder = null;
 
-      // 2. Mark order as paid and store payment details
-      const updatePayload = {
-        status: "paid",
-        payment_status: "paid",
-        payment_method: "paypal",
-        payment_id: paypalOrderId || captureData?.id || null,
-        updated_at: new Date().toISOString(),
-      };
-      if (companyEntity) updatePayload.company_entity = companyEntity;
-      if (currency) updatePayload.currency = currency.toUpperCase();
-      if (locale) updatePayload.locale = locale;
+    if (supabaseAdmin) {
+      // 1. Fetch current order if orderId was provided
+      let order = null;
+      if (orderId) {
+        const { data: existingOrder } = await supabaseAdmin
+          .from("orders")
+          .select("*")
+          .eq("id", orderId)
+          .maybeSingle();
+        order = existingOrder;
+      }
 
-      await supabaseAdmin
-        .from("orders")
-        .update(updatePayload)
-        .eq("id", targetOrderId);
+      const paymentTxId = paypalOrderId || captureData?.id || null;
 
-      // 3. Decrement stock
-      if (order && Array.isArray(order.items)) {
-        for (const it of order.items) {
+      if (order) {
+        // 2a. Update existing order to paid
+        const updatePayload = {
+          status: "paid",
+          payment_status: "paid",
+          payment_method: "paypal",
+          payment_id: paymentTxId,
+          updated_at: new Date().toISOString(),
+        };
+        if (effectiveCurrency) updatePayload.currency = effectiveCurrency;
+        if (companyEntity || locale) {
+          updatePayload.admin_notes = `[Entity: ${companyEntity || "N/A"}] [Locale: ${effectiveLocale}]`;
+        }
+        if (!order.user_id && customer?.userId) {
+          updatePayload.user_id = customer.userId;
+        }
+        if (customer?.email && (!order.customer_email || order.customer_email.includes("paypal"))) {
+          updatePayload.customer_email = customer.email.trim().toLowerCase();
+        }
+        if (customer?.name && (!order.customer_name || order.customer_name === "Valued Customer")) {
+          updatePayload.customer_name = customer.name;
+        }
+
+        await supabaseAdmin
+          .from("orders")
+          .update(updatePayload)
+          .eq("id", order.id);
+
+        finalOrder = { ...order, ...updatePayload };
+      } else {
+        // 2b. If order record was not pre-created in DB, create it now so it is never lost
+        const customerName =
+          customer?.name ||
+          [payer?.name?.given_name, payer?.name?.surname].filter(Boolean).join(" ") ||
+          "Valued Customer";
+        const customerEmail =
+          (customer?.email || payer?.email_address || "").trim().toLowerCase();
+        const customerPhone = customer?.phone || payer?.phone?.phone_number?.national_number || "";
+        const shippingAddr = customShippingAddress || {
+          address: shipping?.address?.address_line_1 || "PayPal Address",
+          city: shipping?.address?.admin_area_2 || shipping?.address?.admin_area_1 || "City",
+          postal_code: shipping?.address?.postal_code || "N/A",
+          country: shipping?.address?.country_code || (effectiveLocale === "en" ? "United Kingdom" : "International"),
+          locale: effectiveLocale,
+          company_entity: companyEntity || "INTERNATIONAL",
+        };
+
+        const newOrderId = orderId || `WBK-${Math.floor(100000 + Math.random() * 900000)}`;
+        const orderAmount = Number(total || captureData?.amount?.value || 0);
+
+        const newOrderRecord = {
+          id: newOrderId,
+          user_id: customer?.userId || null,
+          status: "paid",
+          payment_status: "paid",
+          payment_method: "paypal",
+          payment_id: paymentTxId,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          shipping_address: shippingAddr,
+          billing_address: shippingAddr,
+          items: Array.isArray(items) ? items : [],
+          currency: effectiveCurrency,
+          subtotal: orderAmount,
+          total_amount: orderAmount,
+          admin_notes: `[Entity: ${companyEntity || "INTERNATIONAL"}] [Locale: ${effectiveLocale}]`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: insertErr } = await supabaseAdmin
+          .from("orders")
+          .insert([newOrderRecord]);
+
+        if (insertErr) {
+          console.error("[PayPal Capture] Fallback insert error:", insertErr.message);
+        } else {
+          console.log(`[PayPal Capture] Successfully created fallback order ${newOrderId} in Supabase.`);
+        }
+        finalOrder = newOrderRecord;
+      }
+
+      // 3. Decrement stock for ordered items
+      if (finalOrder && Array.isArray(finalOrder.items)) {
+        for (const it of finalOrder.items) {
           const rawId = it.rawId || it.id;
           const qty = Number(it.quantity) || 1;
           if (rawId) {
@@ -69,15 +157,22 @@ export async function POST(request) {
             }
           }
         }
+      }
 
-        // 4. Send email confirmation (logs or sends)
-        await sendOrderConfirmationEmail(order);
+      // 4. Send email confirmation to customer & alert to admin
+      if (finalOrder && finalOrder.customer_email) {
+        console.log(`[PayPal Capture] Dispatching order confirmation email to ${finalOrder.customer_email} (${effectiveLocale})...`);
+        try {
+          await sendOrderConfirmationEmail(finalOrder, effectiveLocale);
+        } catch (emailErr) {
+          console.error("[PayPal Capture] Confirmation email error:", emailErr);
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
-      orderId: targetOrderId,
+      orderId: finalOrder?.id || orderId || "WBK-UNKNOWN",
       status: "paid",
     });
   } catch (err) {

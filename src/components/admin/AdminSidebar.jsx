@@ -19,6 +19,7 @@ import {
   IconStar,
   IconBookmark,
   IconFileSpreadsheet,
+  IconLayoutNavbar,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -71,6 +72,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Product Tags",
     href: "/admin/categories?tab=tags",
     icon: IconBookmark,
+  },
+  {
+    id: "navigation",
+    label: "Navigation Menu",
+    href: "/admin/navigation",
+    icon: IconLayoutNavbar,
   },
   {
     id: "users",

@@ -46,6 +46,8 @@ export const getStorefrontProducts = unstable_cache(
       // Normalize fields for storefront compatibility
       return rows.map((p) => ({
         ...p,
+        installation_manual: p.installation_manual || null,
+        installation_video: p.installation_video || null,
         hoverImage: p.hoverImage || p.hover_image,
         available_locales:
           Array.isArray(p.available_locales) && p.available_locales.length > 0
@@ -58,7 +60,7 @@ export const getStorefrontProducts = unstable_cache(
       return null;
     }
   },
-  ["storefront-products-catalog-v1"],
+  ["storefront-products-catalog-v2"],
   { tags: ["products"], revalidate: 3600 }
 );
 

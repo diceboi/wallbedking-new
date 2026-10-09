@@ -6,7 +6,8 @@ import { MenuContext } from "@/context/MenuContext";
 import { MainMenuItem } from "./MainMenuItem";
 
 export function MainMenu() {
-  const { cancelCloseSubmenu } = useContext(MenuContext);
+  const { cancelCloseSubmenu, navItems } = useContext(MenuContext);
+  const items = navItems || MAIN_NAV_ITEMS;
 
   return (
     <div
@@ -16,7 +17,7 @@ export function MainMenu() {
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-stretch justify-between h-full">
         {/* Main navigation item tabs */}
         <div className="flex items-stretch flex-wrap h-full">
-          {MAIN_NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <MainMenuItem key={item.id} item={item} />
           ))}
         </div>

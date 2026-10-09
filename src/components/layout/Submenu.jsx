@@ -6,22 +6,14 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
-import { SUBMENU_DATA } from "@/data/navigation";
+import { SUBMENU_DATA, MAIN_NAV_ITEMS } from "@/data/navigation";
 import { SubmenuItem } from "./SubmenuItem";
 
 // Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 
-const NAV_ORDER = [
-  "beds",
-  "sofas",
-  "tables",
-  "cabinets",
-  "mattresses",
-  "extras",
-  "support",
-];
+const NAV_ORDER = MAIN_NAV_ITEMS.map((item) => item.slug || item.id);
 
 const slideVariants = {
   enter: (dir) => ({
@@ -177,10 +169,13 @@ function SubmenuSectionRow({ section, onSelect }) {
 }
 
 export function Submenu() {
-  const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu } =
+  const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu, navItems } =
     useContext(MenuContext);
+  const items = navItems || MAIN_NAV_ITEMS;
 
-  const activeData = subMenu ? SUBMENU_DATA[subMenu] : null;
+  const activeData = subMenu
+    ? (SUBMENU_DATA[subMenu] || SUBMENU_DATA[items.find((it) => it.slug === subMenu || it.id === subMenu)?.category_id])
+    : null;
   const shouldShow = Boolean(activeData);
 
   // Swiper instance & scroll states
@@ -224,7 +219,8 @@ export function Submenu() {
   }, [subMenu]);
 
   // Track hover direction between submenu categories
-  const currentIndex = subMenu ? NAV_ORDER.indexOf(subMenu) : -1;
+  const navOrder = items.map((item) => item.slug || item.category_id || item.id);
+  const currentIndex = subMenu ? navOrder.indexOf(subMenu) : -1;
   const prevIndexRef = useRef(currentIndex);
   const [direction, setDirection] = useState(0);
 

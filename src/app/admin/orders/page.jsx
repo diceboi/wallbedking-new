@@ -17,6 +17,7 @@ import {
   IconPrinter,
   IconLoader2,
   IconRefresh,
+  IconMail,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -45,6 +46,8 @@ export default function AdminOrdersPage() {
   const [editTrackingNumber, setEditTrackingNumber] = useState("");
   const [editTrackingCarrier, setEditTrackingCarrier] = useState("UPS");
   const [editAdminNotes, setEditAdminNotes] = useState("");
+  const [sendUpdateEmail, setSendUpdateEmail] = useState(false);
+  const [resendingEmailType, setResendingEmailType] = useState(null);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -81,6 +84,8 @@ export default function AdminOrdersPage() {
     setEditTrackingNumber(order.tracking_number || "");
     setEditTrackingCarrier(order.tracking_carrier || "UPS");
     setEditAdminNotes(order.admin_notes || "");
+    setSendUpdateEmail(false);
+    setResendingEmailType(null);
   };
 
   const handleCloseDrawer = () => {
@@ -101,6 +106,7 @@ export default function AdminOrdersPage() {
           trackingNumber: editTrackingNumber,
           trackingCarrier: editTrackingCarrier,
           adminNotes: editAdminNotes,
+          sendUpdateEmail,
         }),
       });
 
@@ -108,6 +114,7 @@ export default function AdminOrdersPage() {
       if (data.success && data.order) {
         setSelectedOrder(data.order);
         setOrders((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
+        setSendUpdateEmail(false);
         showToast(data.message || "Order status and tracking updated successfully!");
       } else {
         alert(data.error || "Failed to update order");
@@ -117,6 +124,57 @@ export default function AdminOrdersPage() {
       alert("Error saving order changes");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleResendEmail = async (emailType, isUpdate = true) => {
+    if (!selectedOrder) return;
+    const labels = {
+      confirmation: "Order Confirmation",
+      production: "In Production",
+      shipped: "Dispatch & Tracking",
+      delivery: "Delivered & Guides",
+    };
+    const typeLabel = labels[emailType] || emailType;
+
+    const noticeText = isUpdate
+      ? "marked with [UPDATED] tag and top update notice banner"
+      : "in original standard format";
+
+    if (
+      !window.confirm(
+        `Are you sure you want to resend this notification email to ${selectedOrder.customer_email}?\n\nEmail Type: ${typeLabel}\nFormat: ${noticeText}`
+      )
+    ) {
+      return;
+    }
+
+    setResendingEmailType(emailType);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: selectedOrder.id,
+          action: "resend_email",
+          emailType,
+          isUpdate,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.order) {
+        setSelectedOrder(data.order);
+        setOrders((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
+        showToast(data.message || `${typeLabel} email resent successfully!`);
+      } else {
+        alert(data.error || "Failed to resend email");
+      }
+    } catch (err) {
+      console.error("Failed to resend email:", err);
+      alert("Error occurred while resending email");
+    } finally {
+      setResendingEmailType(null);
     }
   };
 
@@ -375,107 +433,459 @@ export default function AdminOrdersPage() {
 
             {/* Drawer Body (Scrollable) */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-wbk-brown font-poppins">
-              {/* Status & Carrier Control Box */}
-              <div className="bg-[#FAF8F5] border border-wbk-lightgrey p-5 space-y-4">
-                <h3 className="font-poppins text-base text-wbk-black font-semibold">
-                  Update Fulfillment & Tracking
-                </h3>
+              {(() => {
+                const sentHistory = selectedOrder.shipping_address?.notifications_sent || {};
+                const wasProcessingSent = Boolean(sentHistory.processing);
+                const wasShippedSent = Boolean(selectedOrder.dispatched_at || sentHistory.shipped);
+                const wasDeliveredSent = Boolean(selectedOrder.delivered_at || sentHistory.completed);
+                const wasConfirmationSent = Boolean(sentHistory.confirmation);
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
-                      Fulfillment Status
-                    </label>
-                    <select
-                      value={editStatus}
-                      onChange={(e) => setEditStatus(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
-                    >
-                      <option value="pending">Pending Payment</option>
-                      <option value="paid">Paid / Confirmed</option>
-                      <option value="processing">In Production</option>
-                      <option value="shipped">Dispatched (Carrier Transit)</option>
-                      <option value="completed">Delivered & Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="refunded">Refunded</option>
-                    </select>
-                  </div>
+                const formatNotificationDate = (isoString) => {
+                  if (!isoString) return "";
+                  try {
+                    const d = new Date(isoString);
+                    return d.toLocaleString("en-GB", {
+                      year: "numeric",
+                      month: "short",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  } catch (e) {
+                    return isoString;
+                  }
+                };
 
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
-                      Carrier Partner
-                    </label>
-                    <select
-                      value={editTrackingCarrier}
-                      onChange={(e) => setEditTrackingCarrier(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
-                    >
-                      <option value="UPS">UPS (United Parcel Service)</option>
-                      <option value="DHL">DHL Express / Logistics</option>
-                      <option value="Own Delivery">Wall Bed King Dedicated Delivery (Internal Fleet)</option>
-                    </select>
-                  </div>
+                return (
+                  <>
+                    {/* Status & Carrier Control Box */}
+                    <div className="bg-[#FAF8F5] border border-wbk-lightgrey p-5 space-y-4">
+                      <h3 className="font-poppins text-base text-wbk-black font-semibold">
+                        Update Fulfillment & Tracking
+                      </h3>
 
-                  {editTrackingCarrier === "Own Delivery" ? (
-                    <div className="sm:col-span-2 p-3 bg-amber-50/80 border border-amber-200 text-amber-900 rounded text-xs flex items-start gap-2.5">
-                      <IconTruck size={17} className="shrink-0 mt-0.5 text-amber-700" />
-                      <div className="space-y-0.5">
-                        <span className="font-semibold block text-[11px] uppercase tracking-wider text-amber-900">
-                          Internal Dedicated Delivery Fleet
-                        </span>
-                        <p className="text-[11px] text-amber-800 leading-relaxed">
-                          Internal dedicated fleet delivery does not use external tracking numbers. The customer dispatch notification email will automatically include direct logistics delivery information and phone/SMS scheduling details.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
-                          Tracking Reference / Waybill Number ({editTrackingCarrier})
-                        </label>
-                        {editTrackingNumber && (
-                          <a
-                            href={
-                              editTrackingCarrier.toLowerCase().includes("ups")
-                                ? `https://www.ups.com/track?track=yes&trackNums=${encodeURIComponent(editTrackingNumber)}`
-                                : `https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(editTrackingNumber)}&brand=DHL`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] text-wbk-gold hover:underline flex items-center gap-0.5"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
+                            Fulfillment Status
+                          </label>
+                          <select
+                            value={editStatus}
+                            onChange={(e) => {
+                              setEditStatus(e.target.value);
+                              setSendUpdateEmail(false);
+                            }}
+                            className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
                           >
-                            <span>Open {editTrackingCarrier} tracker ↗</span>
-                          </a>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        placeholder={
-                          editTrackingCarrier.toLowerCase().includes("ups")
-                            ? "e.g. 1Z9999999999999999"
-                            : "e.g. 1234567890"
-                        }
-                        value={editTrackingNumber}
-                        onChange={(e) => setEditTrackingNumber(e.target.value)}
-                        className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs font-mono text-wbk-black focus:border-wbk-black focus:outline-none"
-                      />
-                    </div>
-                  )}
-                </div>
+                            <option value="pending">Pending Payment</option>
+                            <option value="paid">Paid / Confirmed</option>
+                            <option value="processing">In Production</option>
+                            <option value="shipped">Dispatched (Carrier Transit)</option>
+                            <option value="completed">Delivered & Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="refunded">Refunded</option>
+                          </select>
+                        </div>
 
-                <div className="flex items-center justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveOrderChanges}
-                    disabled={isUpdating}
-                    className="px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isUpdating ? <IconLoader2 size={15} className="animate-spin" /> : <IconCheck size={15} />}
-                    <span>Save Order Changes</span>
-                  </button>
-                </div>
-              </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
+                            Carrier Partner
+                          </label>
+                          <select
+                            value={editTrackingCarrier}
+                            onChange={(e) => setEditTrackingCarrier(e.target.value)}
+                            className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
+                          >
+                            <option value="UPS">UPS (United Parcel Service)</option>
+                            <option value="DHL">DHL Express / Logistics</option>
+                            <option value="Own Delivery">Wall Bed King Dedicated Delivery (Internal Fleet)</option>
+                          </select>
+                        </div>
+
+                        {editTrackingCarrier === "Own Delivery" ? (
+                          <div className="sm:col-span-2 p-3 bg-amber-50/80 border border-amber-200 text-amber-900 rounded text-xs flex items-start gap-2.5">
+                            <IconTruck size={17} className="shrink-0 mt-0.5 text-amber-700" />
+                            <div className="space-y-0.5">
+                              <span className="font-semibold block text-[11px] uppercase tracking-wider text-amber-900">
+                                Internal Dedicated Delivery Fleet
+                              </span>
+                              <p className="text-[11px] text-amber-800 leading-relaxed">
+                                Internal dedicated fleet delivery does not use external tracking numbers. The customer dispatch notification email will automatically include direct logistics delivery information and phone/SMS scheduling details.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="sm:col-span-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black">
+                                Tracking Reference / Waybill Number ({editTrackingCarrier})
+                              </label>
+                              {editTrackingNumber && (
+                                <a
+                                  href={
+                                    editTrackingCarrier.toLowerCase().includes("ups")
+                                      ? `https://www.ups.com/track?track=yes&trackNums=${encodeURIComponent(editTrackingNumber)}`
+                                      : `https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(editTrackingNumber)}&brand=DHL`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-wbk-gold hover:underline flex items-center gap-0.5"
+                                >
+                                  <span>Open {editTrackingCarrier} tracker ↗</span>
+                                </a>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder={
+                                editTrackingCarrier.toLowerCase().includes("ups")
+                                  ? "e.g. 1Z9999999999999999"
+                                  : "e.g. 1234567890"
+                              }
+                              value={editTrackingNumber}
+                              onChange={(e) => setEditTrackingNumber(e.target.value)}
+                              className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs font-mono text-wbk-black focus:border-wbk-black focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1">
+                            Internal Admin Notes
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={editAdminNotes}
+                            onChange={(e) => setEditAdminNotes(e.target.value)}
+                            placeholder="Private administrative notes (not visible to customer)..."
+                            className="w-full px-3 py-2 border border-wbk-lightgrey bg-white text-xs text-wbk-black focus:border-wbk-black focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Smart Status Notification Logic */}
+                      {editStatus === "processing" && (
+                        <>
+                          {!wasProcessingSent ? (
+                            <div className="p-3 bg-blue-50/90 border border-blue-200 text-blue-900 text-xs flex items-start gap-2.5">
+                              <IconPackage size={17} className="shrink-0 mt-0.5 text-blue-600" />
+                              <div className="space-y-0.5">
+                                <span className="font-semibold block text-[11px] uppercase tracking-wider text-blue-900">
+                                  ⚡ First-Time Status Change: Automatic Customer Notification
+                                </span>
+                                <p className="text-[11px] text-blue-800 leading-relaxed">
+                                  When saving this order, the customer will automatically receive the official <strong>"In Production"</strong> email. <strong>No checkbox needed!</strong>
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-amber-50/90 border border-amber-200 text-amber-950 text-xs space-y-2">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                  <span>✉️ In Production email already sent on</span>
+                                </span>
+                                <span className="font-mono text-amber-800 text-[10px]">
+                                  {formatNotificationDate(sentHistory.processing)}
+                                </span>
+                              </div>
+                              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={sendUpdateEmail}
+                                  onChange={(e) => setSendUpdateEmail(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-wbk-gold focus:ring-wbk-gold cursor-pointer"
+                                />
+                                <div className="space-y-0.5">
+                                  <span className="font-semibold text-wbk-black block text-xs">
+                                    Send update notification email to customer (marked as [UPDATED])
+                                  </span>
+                                  <span className="text-[11px] text-amber-800/90 block leading-normal">
+                                    Tick this box if order details or production schedules changed and you want to resend an updated notification email. The customer will see a prominent update banner and an <strong>[UPDATED]</strong> subject tag.
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {editStatus === "shipped" && (
+                        <>
+                          {!wasShippedSent ? (
+                            <div className="p-3 bg-purple-50/90 border border-purple-200 text-purple-900 text-xs flex items-start gap-2.5">
+                              <IconTruck size={17} className="shrink-0 mt-0.5 text-purple-600" />
+                              <div className="space-y-0.5">
+                                <span className="font-semibold block text-[11px] uppercase tracking-wider text-purple-900">
+                                  ⚡ First Dispatch: Automatic Tracking Notification
+                                </span>
+                                <p className="text-[11px] text-purple-800 leading-relaxed">
+                                  When saving this order, the customer will automatically receive the dispatch notification email ({editTrackingCarrier}{editTrackingNumber ? ` - ${editTrackingNumber}` : ""}). <strong>No checkbox needed!</strong>
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-amber-50/90 border border-amber-200 text-amber-950 text-xs space-y-2">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                  <span>✉️ Dispatch notification already sent on</span>
+                                </span>
+                                <span className="font-mono text-amber-800 text-[10px]">
+                                  {formatNotificationDate(selectedOrder.dispatched_at || sentHistory.shipped)}
+                                </span>
+                              </div>
+                              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={sendUpdateEmail}
+                                  onChange={(e) => setSendUpdateEmail(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-wbk-gold focus:ring-wbk-gold cursor-pointer"
+                                />
+                                <div className="space-y-0.5">
+                                  <span className="font-semibold text-wbk-black block text-xs">
+                                    Send updated dispatch notification to customer (marked as [UPDATED])
+                                  </span>
+                                  <span className="text-[11px] text-amber-800/90 block leading-normal">
+                                    Tick this box if the tracking number or courier service changed and you want to notify the customer with the new logistics details.
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {editStatus === "completed" && (
+                        <>
+                          {!wasDeliveredSent ? (
+                            <div className="p-3 bg-emerald-50/90 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5">
+                              <IconCheck size={17} className="shrink-0 mt-0.5 text-emerald-600" />
+                              <div className="space-y-0.5">
+                                <span className="font-semibold block text-[11px] uppercase tracking-wider text-emerald-900">
+                                  ⚡ First Completion: Automatic Delivery Confirmation
+                                </span>
+                                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                  When saving this order, the customer will automatically receive the delivery confirmation email with installation guides and warranty details. <strong>No checkbox needed!</strong>
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-amber-50/90 border border-amber-200 text-amber-950 text-xs space-y-2">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                  <span>✉️ Delivery confirmation already sent on</span>
+                                </span>
+                                <span className="font-mono text-amber-800 text-[10px]">
+                                  {formatNotificationDate(selectedOrder.delivered_at || sentHistory.completed)}
+                                </span>
+                              </div>
+                              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={sendUpdateEmail}
+                                  onChange={(e) => setSendUpdateEmail(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-wbk-gold focus:ring-wbk-gold cursor-pointer"
+                                />
+                                <div className="space-y-0.5">
+                                  <span className="font-semibold text-wbk-black block text-xs">
+                                    Send updated delivery confirmation to customer (marked as [UPDATED])
+                                  </span>
+                                  <span className="text-[11px] text-amber-800/90 block leading-normal">
+                                    Tick this box if you wish to resend the delivery confirmation email to the customer.
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <div className="flex items-center justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveOrderChanges}
+                          disabled={isUpdating}
+                          className="px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {isUpdating ? <IconLoader2 size={15} className="animate-spin" /> : <IconCheck size={15} />}
+                          <span>Save Order Changes</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Customer Email Notifications & Quick Resend Panel */}
+                    <div className="bg-white border border-wbk-lightgrey/80 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider flex items-center gap-1.5">
+                          <IconMail size={14} className="text-wbk-black" />
+                          <span>Customer Notification Emails & Quick Resend</span>
+                        </span>
+                        <span className="text-[10px] text-wbk-brown/70 font-mono">
+                          {selectedOrder.customer_email}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5 divide-y divide-wbk-lightgrey/40 text-xs">
+                        {/* 1. Confirmation */}
+                        <div className="pt-2 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>1. Order Confirmation</span>
+                              {wasConfirmationSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(sentHistory.confirmation)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Automated on Checkout
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Payment receipt with itemized cart and delivery address.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("confirmation", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend email with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "confirmation" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("confirmation", false)}
+                              className="px-2 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-[11px] font-medium rounded transition-colors disabled:opacity-50"
+                              title="Resend original standard email"
+                            >
+                              <span>Standard</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 2. In Production */}
+                        <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>2. In Production</span>
+                              {wasProcessingSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(sentHistory.processing)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Not sent yet
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Steel framing fabrication & gas piston calibration update.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("production", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend email with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "production" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 3. Dispatch & Tracking */}
+                        <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>3. Dispatch & Tracking</span>
+                              {wasShippedSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(selectedOrder.dispatched_at || sentHistory.shipped)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Not sent yet
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Courier details ({selectedOrder.tracking_carrier || "UPS"}) and tracking number.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("shipped", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend email with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "shipped" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 4. Delivered */}
+                        <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>4. Delivered & Guarantee</span>
+                              {wasDeliveredSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(selectedOrder.delivered_at || sentHistory.completed)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Not sent yet
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Assembly manuals, lifetime guarantee, and review invite.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("delivery", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend email with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "delivery" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Customer & Shipping Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

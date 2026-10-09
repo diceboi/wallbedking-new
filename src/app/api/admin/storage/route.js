@@ -13,19 +13,108 @@ function naturalSortFiles(a, b) {
   return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
 }
 
+let cachedFolders = null;
+let lastFoldersFetch = 0;
+
+/**
+ * Recursively discover all non-hidden folders in the bucket (up to 3 levels)
+ */
+async function discoverFolders(prefix = "", depth = 0) {
+  if (depth > 3) return [];
+  const { data, error } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .list(prefix, { limit: 100 });
+  if (error || !Array.isArray(data)) return [];
+  const folders = [];
+  for (const item of data) {
+    if (!item.id && !item.metadata && !item.name.startsWith(".")) {
+      const fullPath = prefix ? `${prefix}/${item.name}` : item.name;
+      folders.push(fullPath);
+      const sub = await discoverFolders(fullPath, depth + 1);
+      folders.push(...sub);
+    }
+  }
+  return folders;
+}
+
+async function getAvailableFolders(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && cachedFolders && now - lastFoldersFetch < 60000) {
+    return cachedFolders;
+  }
+  const discovered = await discoverFolders("");
+  // Ensure default expected categories exist in list if discovered is empty
+  const folderSet = new Set(discovered);
+  ["wallbeds/1K", "wallbeds/2K", "mattresses", "sofas", "tables", "cabinets"].forEach((d) => folderSet.add(d));
+  const sorted = Array.from(folderSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  cachedFolders = sorted;
+  lastFoldersFetch = now;
+  return sorted;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const folder = (searchParams.get("folder") || "wallbeds/1K").replace(/^\/+|\/+$/g, "");
+    const targetBucket = searchParams.get("bucket") || BUCKET;
+    const folderParam = searchParams.get("folder");
+    const defaultFolder = targetBucket === "SupportFiles" ? "InstallationManuals" : "wallbeds/1K";
+    const folder = (folderParam === "root" || folderParam === "" ? "" : (folderParam || defaultFolder)).replace(/^\/+|\/+$/g, "");
     const search = searchParams.get("search") || "";
     const limit = parseInt(searchParams.get("limit") || "500", 10);
     const matchPrefix = searchParams.get("matchPrefix");
     const getPrefixes = searchParams.get("prefixes") === "true";
+    const getFolders = searchParams.get("folders") === "true";
+    const getManuals = searchParams.get("manuals") === "true";
+    const forceRefresh = searchParams.get("refresh") === "true";
+
+    // Dedicated Installation Manuals listing
+    if (getManuals) {
+      const { data, error } = await supabaseAdmin.storage
+        .from("SupportFiles")
+        .list("InstallationManuals", {
+          limit: 200,
+          sortBy: { column: "name", order: "asc" },
+        });
+
+      if (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      }
+
+      const manuals = (data || [])
+        .filter((item) => item.name && !item.name.startsWith("."))
+        .map((item) => {
+          const filePath = `InstallationManuals/${item.name}`;
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/SupportFiles/${filePath}`;
+          return {
+            name: item.name,
+            path: filePath,
+            url: publicUrl,
+            size: item.metadata?.size || item.size || 0,
+            updatedAt: item.updated_at || item.created_at,
+          };
+        });
+
+      return NextResponse.json({
+        success: true,
+        bucket: "SupportFiles",
+        folder: "InstallationManuals",
+        manuals,
+      });
+    }
+
+    // 0. Return all dynamically discovered folders
+    if (getFolders) {
+      const folders = await getAvailableFolders(forceRefresh);
+      return NextResponse.json({
+        success: true,
+        folders,
+      });
+    }
 
     // 1. Return all available Morphy / Product image prefixes in the storage
     if (getPrefixes) {
       const { data, error } = await supabaseAdmin.storage
-        .from(BUCKET)
+        .from(targetBucket)
         .list("wallbeds/1K", { limit: 1000 });
 
       if (error) {
@@ -123,7 +212,7 @@ export async function GET(request) {
 
     // 3. Regular folder browsing & search
     const { data, error } = await supabaseAdmin.storage
-      .from(BUCKET)
+      .from(targetBucket)
       .list(folder, {
         limit,
         search: search.trim() || undefined,
@@ -152,9 +241,10 @@ export async function GET(request) {
       }
 
       const filePath = folder ? `${folder}/${item.name}` : item.name;
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${filePath}`;
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${targetBucket}/${filePath}`;
       const ext = item.name.split(".").pop()?.toLowerCase();
       const isImage = ["webp", "png", "jpg", "jpeg", "svg", "avif", "gif"].includes(ext);
+      const isPdf = ext === "pdf";
 
       files.push({
         name: item.name,
@@ -164,6 +254,7 @@ export async function GET(request) {
         mimetype: item.metadata?.mimetype,
         updatedAt: item.updated_at || item.created_at,
         isImage,
+        isPdf,
       });
     });
 
@@ -171,11 +262,12 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      bucket: BUCKET,
+      bucket: targetBucket,
       folder,
       subfolders,
       files,
       total: files.length,
+      availableFolders: await getAvailableFolders(forceRefresh),
     });
   } catch (error) {
     console.error("[Storage API Exception]:", error);

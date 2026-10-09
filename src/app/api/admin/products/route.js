@@ -23,7 +23,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
-  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
+  "installation_manual", "installation_video"
 ]);
 
 export async function GET(request) {

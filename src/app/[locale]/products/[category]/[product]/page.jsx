@@ -26,6 +26,11 @@ import {
   IconPhoto,
   IconCheck,
   IconBell,
+  IconFileText,
+  IconDownload,
+  IconExternalLink,
+  IconClock,
+  IconBrandYoutube,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
@@ -45,7 +50,9 @@ import { WaitlistModal } from "@/components/product/WaitlistModal";
 import {
   getLocalizedProductName,
   getLocalizedProductGtin,
+  parseYouTubeVideo,
 } from "@/lib/products";
+import { getMorphyFaqs } from "@/data/morphyFaq";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -64,7 +71,7 @@ const ConfiguratorCanvas = dynamic(
 );
 
 export default function ProductDetailPage() {
-  const { locale, t } = useLocale();
+  const { locale, t, localizedHref } = useLocale();
   const { findProductBySlug: catalogFindBySlug, getProductVariants: catalogGetVariants } =
     useProductCatalog();
   const params = useParams();
@@ -520,6 +527,16 @@ export default function ProductDetailPage() {
           activeProduct.defaultSizeSlug,
         );
       }
+      if (!targetVariant && activeProduct) {
+        const activeSizeSlug =
+          activeProduct.sizeSlug ||
+          (activeProduct.width && activeProduct.length
+            ? `${Math.round(Math.min(activeProduct.width, activeProduct.length) / 10)}x${Math.round(Math.max(activeProduct.width, activeProduct.length) / 10)}`
+            : null);
+        if (activeSizeSlug) {
+          targetVariant = findMatchingVariant(familyVariants, activeSizeSlug);
+        }
+      }
       if (!targetVariant && familyVariants.length > 0) {
         targetVariant =
           findMatchingVariant(familyVariants, "135x190") ||
@@ -561,6 +578,43 @@ export default function ProductDetailPage() {
     familyVariants,
     findMatchingVariant,
   ]);
+
+  // Canonical bed URL normalization:
+  // If the visitor opens a variant slug directly (e.g. european-double-long-vertical-classic-bed-140x200),
+  // silently replace the browser URL with the canonical flagship page + ?size=${sizeSlug}
+  useEffect(() => {
+    if (!mounted || !activeProduct || categorySlug !== "beds") return;
+
+    const isMorphy = Boolean(
+      activeProduct?.isMorphy ??
+      ((activeProduct?.name || "").includes("MORPHY") || (activeProduct?.category || "").includes("MORPHY"))
+    );
+    const o = (activeProduct.orientation || "Vertical").toLowerCase();
+    const style = (activeProduct.sub_category || activeProduct.type || "Classic").toLowerCase();
+
+    let canonicalSlug = "classic-vertical-wall-bed";
+    if (isMorphy) {
+      if (style.includes("integrated")) canonicalSlug = `integrated-${o}-wall-bed`;
+      else if (style.includes("studio")) canonicalSlug = `studio-${o}-wall-bed`;
+      else canonicalSlug = `classic-${o}-wall-bed`;
+    } else {
+      if (style.includes("studio")) canonicalSlug = `studio-${o}-traditional-bed`;
+      else canonicalSlug = `classic-${o}-traditional-bed`;
+    }
+
+    if (productSlug && productSlug !== canonicalSlug) {
+      const minDim = Math.min(Number(activeProduct.width) || 0, Number(activeProduct.length) || 0);
+      const maxDim = Math.max(Number(activeProduct.width) || 0, Number(activeProduct.length) || 0);
+      const sizeSlug = (minDim && maxDim)
+        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+        : (activeProduct.sizeSlug || searchParams?.get("size") || "");
+      const query = sizeSlug ? `?size=${sizeSlug}` : "";
+      const canonicalPath = `/${locale || "en"}/products/beds/${canonicalSlug}${query}`;
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", canonicalPath);
+      }
+    }
+  }, [mounted, activeProduct, productSlug, categorySlug, locale, searchParams]);
 
   // Review auto-open trigger from post-purchase emails or direct rating links
   useEffect(() => {
@@ -790,14 +844,14 @@ export default function ProductDetailPage() {
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
               <Link
-                href="/products"
+                href={localizedHref ? localizedHref("/products") : "/products"}
                 className="hover:text-wbk-black transition-colors"
               >
-                Products
+                {t("nav.allWallBeds", "Products")}
               </Link>
               <span>/</span>
               <Link
-                href={`/products/${categorySlug}`}
+                href={localizedHref ? localizedHref(`/products/${categorySlug}`) : `/products/${categorySlug}`}
                 className="capitalize hover:text-wbk-black transition-colors"
               >
                 {categorySlug.replace("-", " ")}
@@ -878,14 +932,14 @@ export default function ProductDetailPage() {
               <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
                   <Link
-                    href="/products"
+                    href={localizedHref ? localizedHref("/products") : "/products"}
                     className="hover:text-wbk-black transition-colors"
                   >
-                    Products
+                    {t("nav.allWallBeds", "Products")}
                   </Link>
                   <span>/</span>
                   <Link
-                    href={`/products/${categorySlug}`}
+                    href={localizedHref ? localizedHref(`/products/${categorySlug}`) : `/products/${categorySlug}`}
                     className="capitalize hover:text-wbk-black transition-colors"
                   >
                     {categorySlug.replace("-", " ")}
@@ -1051,7 +1105,7 @@ export default function ProductDetailPage() {
                 {availableSizes.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      Size:
+                      {t("product.sizeLabel", "Size:")}
                     </label>
                     <button
                       type="button"
@@ -1110,7 +1164,7 @@ export default function ProductDetailPage() {
                 {has3D && (
                   <div className="pt-1">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      + Sofa:
+                      {t("common.frontSofa", "+ Sofa")}:
                     </label>
                     <div className="relative inline-flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0]">
                       <button
@@ -1194,7 +1248,7 @@ export default function ProductDetailPage() {
 
                   {productPricing.isOnSale && (
                     <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold uppercase tracking-wider rounded">
-                      Sale
+                      {t("product.sale", "Sale")}
                     </span>
                   )}
                 </div>
@@ -1635,19 +1689,25 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 bg-white border border-wbk-lightgrey/50 p-8 rounded-none shadow-xs">
           <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4 border-b md:border-b-0 md:border-r border-wbk-lightgrey/30 pb-6 md:pb-0 md:pr-8">
             <div className="text-5xl font-semibold font-poppins text-wbk-black tracking-tight">
-              4,9
+              {locale === "en" || locale === "us" ? "4.9" : "4,9"}
             </div>
             <div className="space-y-1">
               <div className="text-[#D2AA7C] text-xl tracking-wider select-none">
                 ★★★★★
               </div>
               <div className="text-[11px] text-wbk-brown font-poppins">
-                Rated by{" "}
-                <span className="font-semibold text-wbk-black">742 buyers</span>
+                {t("reviews.ratedByCount", "Rated by")}{" "}
+                <span className="font-semibold text-wbk-black">
+                  742 {t("reviews.buyers", "buyers")}
+                </span>
               </div>
             </div>
-            <button className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer">
-              Write a review
+            <button
+              type="button"
+              onClick={() => setActiveTab("reviews")}
+              className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer"
+            >
+              {t("reviews.writeReview", "Write a review")}
             </button>
           </div>
 
@@ -1688,7 +1748,7 @@ export default function ProductDetailPage() {
               <div>
                 <div className="font-semibold text-wbk-black text-sm">98%</div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  proportion recommended by our users
+                  {t("reviews.recommendedRate", "proportion recommended by our users")}
                 </div>
               </div>
             </div>
@@ -1699,10 +1759,10 @@ export default function ProductDetailPage() {
               </div>
               <div>
                 <div className="font-semibold text-wbk-black text-sm">
-                  0,06%
+                  {locale === "en" || locale === "us" ? "0.06%" : "0,06%"}
                 </div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  extremely low warranty claim rate
+                  {t("reviews.warrantyClaimRate", "extremely low warranty claim rate")}
                 </div>
               </div>
             </div>
@@ -1714,7 +1774,7 @@ export default function ProductDetailPage() {
               <div>
                 <div className="font-semibold text-wbk-black text-sm">201</div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  written customer evaluations
+                  {t("reviews.writtenEvaluations", "written customer evaluations")}
                 </div>
               </div>
             </div>
@@ -1866,7 +1926,7 @@ export default function ProductDetailPage() {
               >
                 <div className="space-y-6">
                   <h3 className="font-new-york text-2xl text-wbk-black">
-                    About {localizedProductName}
+                    {t("product.aboutProduct", "About")} {localizedProductName}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
                     {displayProduct.description ||
@@ -1875,27 +1935,29 @@ export default function ProductDetailPage() {
                   <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      Premium solid carbon steel metal framework
+                      {t("product.bulletSteel", "Premium solid carbon steel metal framework")}
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      Heavy duty counter-balance mechanism (10,000+ cycle test)
+                      {t("product.bulletMechanism", "Heavy duty counter-balance mechanism (10,000+ cycle test)")}
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      Automatic self-folding leg system for safety and ease
+                      {t("product.bulletLegs", "Automatic self-folding leg system for safety and ease")}
                     </li>
                   </ul>
                 </div>
                 <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40">
                   <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-black mb-6">
-                    Technical Specifications
+                    {t("product.specifications", "Technical Specifications")}
                   </h4>
                   <table className="w-full text-xs font-poppins text-wbk-black/80 space-y-3">
                     <tbody>
                       {displayProduct.sku && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">SKU / Model</td>
+                          <td className="py-2.5 font-medium">
+                            {t("product.sku", "SKU / Model")}
+                          </td>
                           <td className="py-2.5 text-right font-mono font-medium text-wbk-black">
                             {displayProduct.sku}
                           </td>
@@ -1905,8 +1967,8 @@ export default function ProductDetailPage() {
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
                             {locale === "us"
-                              ? "GTIN / UPC"
-                              : "Barcode (GTIN / EAN)"}
+                              ? t("product.barcodeUs", "GTIN / UPC")
+                              : t("product.barcode", "Barcode (GTIN / EAN)")}
                           </td>
                           <td className="py-2.5 text-right font-mono text-wbk-brown">
                             {currentEan}
@@ -1927,13 +1989,13 @@ export default function ProductDetailPage() {
                         displayProduct.package_dimensions) && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium align-top">
-                            Packaging (Boxes)
+                            {t("product.packaging", "Packaging (Boxes)")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {displayProduct.pack_1 ? (
                               <div className="space-y-0.5 text-xs font-mono">
                                 <div>
-                                  Box 1:{" "}
+                                  {t("product.box", "Box")} 1:{" "}
                                   {formatSizeLabel(
                                     displayProduct.pack_1,
                                     locale,
@@ -1941,7 +2003,7 @@ export default function ProductDetailPage() {
                                 </div>
                                 {displayProduct.pack_2 && (
                                   <div>
-                                    Box 2:{" "}
+                                    {t("product.box", "Box")} 2:{" "}
                                     {formatSizeLabel(
                                       displayProduct.pack_2,
                                       locale,
@@ -1950,7 +2012,7 @@ export default function ProductDetailPage() {
                                 )}
                                 {displayProduct.pack_3 && (
                                   <div>
-                                    Box 3:{" "}
+                                    {t("product.box", "Box")} 3:{" "}
                                     {formatSizeLabel(
                                       displayProduct.pack_3,
                                       locale,
@@ -1959,7 +2021,7 @@ export default function ProductDetailPage() {
                                 )}
                                 {displayProduct.pack_4 && (
                                   <div>
-                                    Box 4:{" "}
+                                    {t("product.box", "Box")} 4:{" "}
                                     {formatSizeLabel(
                                       displayProduct.pack_4,
                                       locale,
@@ -1979,15 +2041,17 @@ export default function ProductDetailPage() {
                         </tr>
                       )}
                       <tr className="border-b border-wbk-lightgrey/40">
-                        <td className="py-2.5 font-medium">Mechanism</td>
+                        <td className="py-2.5 font-medium">
+                          {t("product.mechanism", "Mechanism")}
+                        </td>
                         <td className="py-2.5 text-right text-wbk-brown">
-                          Gas Piston Cylinder System
+                          {t("product.gasPistonVal", "Gas Piston Cylinder System")}
                         </td>
                       </tr>
                       {displayProduct.width && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Mattress Size (W x L)
+                            {t("product.mattressSize", "Mattress Size (W x L)")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {isUS
@@ -1998,7 +2062,9 @@ export default function ProductDetailPage() {
                       )}
                       {displayProduct.frame_width && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">Frame width</td>
+                          <td className="py-2.5 font-medium">
+                            {t("product.frameWidth", "Frame width")}
+                          </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatMm(displayProduct.frame_width)}
                           </td>
@@ -2007,7 +2073,7 @@ export default function ProductDetailPage() {
                       {displayProduct.folded_up_height && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Folded up height
+                            {t("product.foldedUpHeight", "Folded up height")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatMm(displayProduct.folded_up_height)}
@@ -2017,7 +2083,7 @@ export default function ProductDetailPage() {
                       {displayProduct.folded_up_projection && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Bed depth (Folded)
+                            {t("product.bedDepthFolded", "Bed depth (Folded)")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatMm(displayProduct.folded_up_projection)}
@@ -2027,7 +2093,7 @@ export default function ProductDetailPage() {
                       {displayProduct.folded_down_projection && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Bed depth (Open)
+                            {t("product.bedDepthOpen", "Bed depth (Open)")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatMm(displayProduct.folded_down_projection)}
@@ -2037,7 +2103,7 @@ export default function ProductDetailPage() {
                       {displayProduct.mounting_frame_height && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Mounting frame height
+                            {t("product.mountingFrameHeight", "Mounting frame height")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {formatMm(displayProduct.mounting_frame_height)}
@@ -2047,20 +2113,22 @@ export default function ProductDetailPage() {
                       {displayProduct.maximum_mattress_depth && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
-                            Max mattress thickness
+                            {t("product.maxMattressThickness", "Max mattress thickness")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
                             {isUS
-                              ? `Up to ${(displayProduct.maximum_mattress_depth / 25.4).toFixed(1)}" (${displayProduct.maximum_mattress_depth / 10} cm)`
-                              : `Up to ${displayProduct.maximum_mattress_depth / 10} cm`}
+                              ? `${t("product.upTo", "Up to")} ${(displayProduct.maximum_mattress_depth / 25.4).toFixed(1)}" (${displayProduct.maximum_mattress_depth / 10} cm)`
+                              : `${t("product.upTo", "Up to")} ${displayProduct.maximum_mattress_depth / 10} cm`}
                           </td>
                         </tr>
                       )}
                       <tr>
-                        <td className="py-2.5 font-medium">Warranty</td>
+                        <td className="py-2.5 font-medium">
+                          {t("product.warranty", "Warranty")}
+                        </td>
                         <td className="py-2.5 text-right text-wbk-brown">
                           {displayProduct.warranty ||
-                            "Lifetime mechanism warranty"}
+                            t("product.lifetimeMechanism", "Lifetime mechanism warranty")}
                         </td>
                       </tr>
                     </tbody>
@@ -2079,7 +2147,7 @@ export default function ProductDetailPage() {
               >
                 <div className="space-y-6">
                   <h3 className="font-new-york text-xl text-wbk-black">
-                    Official Product Gallery
+                    {t("product.officialGallery", "Official Product Gallery")}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {galleryImages.map((img, idx) => (
@@ -2095,7 +2163,7 @@ export default function ProductDetailPage() {
                         />
                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <span className="text-white text-xs font-semibold uppercase tracking-wider font-poppins">
-                            View
+                            {t("product.view", "View")}
                           </span>
                         </div>
                       </div>
@@ -2108,11 +2176,13 @@ export default function ProductDetailPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <h3 className="font-new-york text-xl text-wbk-black">
-                        Customer Setup Gallery
+                        {t("product.customerGallery", "Customer Setup Gallery")}
                       </h3>
                       <p className="text-xs text-wbk-brown font-poppins">
-                        See how other customers styled their WallBedKing product
-                        in their homes.
+                        {t(
+                          "product.customerGallerySub",
+                          "See how other customers styled their WallBedKing product in their homes.",
+                        )}
                       </p>
                     </div>
                     <div>
@@ -2127,7 +2197,7 @@ export default function ProductDetailPage() {
                         onClick={() => fileInputRef.current.click()}
                         className="px-5 py-2.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[10px] font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-sm cursor-pointer"
                       >
-                        Share your setup photo
+                        {t("product.shareSetupPhoto", "Share your setup photo")}
                       </button>
                     </div>
                   </div>
@@ -2141,10 +2211,10 @@ export default function ProductDetailPage() {
                         📸
                       </span>
                       <span className="text-xs font-semibold text-wbk-black font-poppins uppercase tracking-wider">
-                        Upload Setup Photo
+                        {t("product.uploadSetupPhoto", "Upload Setup Photo")}
                       </span>
                       <span className="text-[10px] text-wbk-brown font-poppins mt-1">
-                        Show off your room design
+                        {t("product.showOffDesign", "Show off your room design")}
                       </span>
                     </div>
 
@@ -2179,87 +2249,329 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Setup Video Guide */}
-                <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40 text-center space-y-4 max-w-2xl mx-auto">
-                  <h4 className="font-new-york text-xl text-wbk-black">
-                    Watch setup guide
-                  </h4>
-                  <p className="text-xs font-poppins text-wbk-brown leading-relaxed">
-                    See how easily you can customize, open, and close the
-                    WallBedKing system in real-time.
-                  </p>
-                  <div className="relative aspect-video bg-[#E4E0DE] rounded-none flex items-center justify-center overflow-hidden border border-wbk-lightgrey group cursor-pointer shadow-sm max-w-lg mx-auto">
-                    <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
-                      <span className="text-wbk-black ml-1 text-lg">▶</span>
+                {(() => {
+                  const mediaVideoInput =
+                    displayProduct?.installation_video ||
+                    selectedVariant?.installation_video ||
+                    activeProduct?.installation_video ||
+                    null;
+                  const parsedMediaVideo = parseYouTubeVideo(mediaVideoInput);
+
+                  if (parsedMediaVideo) {
+                    return (
+                      <div className="bg-[#F4F2F0]/60 p-6 sm:p-8 rounded-none border border-wbk-lightgrey/40 text-center space-y-4 max-w-3xl mx-auto">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider font-poppins bg-red-50 px-2 py-0.5 border border-red-200/80 rounded-xs">
+                            {t("product.officialVideoBadge", "Official Video Walkthrough")}
+                          </span>
+                          <h4 className="font-new-york text-xl sm:text-2xl text-wbk-black">
+                            {t("product.watchSetupGuide", "Watch Setup & Assembly Guide")}
+                          </h4>
+                          <p className="text-xs font-poppins text-wbk-brown leading-relaxed max-w-lg mx-auto">
+                            {t(
+                              "product.watchSetupSub",
+                              "See how easily you can customize, assemble, and operate the WallBedKing system.",
+                            )}
+                          </p>
+                        </div>
+                        <div className="relative aspect-video bg-black rounded-none overflow-hidden border border-wbk-lightgrey shadow-md max-w-2xl mx-auto">
+                          <iframe
+                            src={parsedMediaVideo.embedUrl}
+                            title="Product Setup Guide"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="absolute inset-0 w-full h-full border-0"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab("support")}
+                            className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer font-medium"
+                          >
+                            <span>
+                              {t(
+                                "product.downloadMatchingPdf",
+                                "Download matching PDF installation manuals in Support & Guides →",
+                              )}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40 text-center space-y-4 max-w-2xl mx-auto">
+                      <h4 className="font-new-york text-xl text-wbk-black">
+                        {t("product.watchSetupPlaceholder", "Watch setup guide")}
+                      </h4>
+                      <p className="text-xs font-poppins text-wbk-brown leading-relaxed">
+                        {t(
+                          "product.watchSetupPlaceholderSub",
+                          "Follow our official guides under the Support & Guides tab to view full technical assembly videos and PDF manuals.",
+                        )}
+                      </p>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </motion.div>
             )}
 
             {/* Support & Guides Tab */}
-            {activeTab === "support" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="space-y-8"
-              >
-                <div className="space-y-2">
-                  <h3 className="font-new-york text-2xl text-wbk-black">
-                    Guides & Downloads
-                  </h3>
-                  <p className="font-poppins text-xs text-wbk-brown max-w-2xl leading-relaxed">
-                    Download official step-by-step manuals, structural
-                    guidelines, and requirements in PDF format.
-                  </p>
-                </div>
+            {activeTab === "support" && (() => {
+              const currentManualUrl =
+                displayProduct?.installation_manual ||
+                selectedVariant?.installation_manual ||
+                activeProduct?.installation_manual ||
+                (() => {
+                  if (!familyVariants || !familyVariants.length) return null;
+                  const matchInFamily = familyVariants.find(
+                    (v) => (v.id === displayProduct?.id || v.id === selectedVariant?.id) && v.installation_manual
+                  );
+                  if (matchInFamily?.installation_manual) return matchInFamily.installation_manual;
+                  const activeW = Math.min(
+                    Number(displayProduct?.width || selectedVariant?.width || 0),
+                    Number(displayProduct?.length || selectedVariant?.length || 0)
+                  );
+                  if (activeW > 0) {
+                    const matchSize = familyVariants.find(
+                      (v) =>
+                        Math.min(Number(v.width || 0), Number(v.length || 0)) === activeW &&
+                        v.installation_manual
+                    );
+                    if (matchSize?.installation_manual) return matchSize.installation_manual;
+                  }
+                  return null;
+                })() ||
+                null;
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    {
-                      title: "Wall Bed Installation & Assembly Manual",
-                      size: "PDF, 4.2 MB",
-                      desc: "Complete guide on drilling, frame assembly, and wall fixation.",
-                    },
-                    {
-                      title: "Gas Piston Adjustment & Tensioning Sheet",
-                      size: "PDF, 1.8 MB",
-                      desc: "Tension calculation guidelines for custom mattress loads.",
-                    },
-                    {
-                      title: "Cabinetry Mounting Specifications",
-                      size: "PDF, 2.5 MB",
-                      desc: "Clearance requirements and mounting configurations for side cabinets.",
-                    },
-                    {
-                      title: "Sofa Mechanism Integration Guide",
-                      size: "PDF, 3.1 MB",
-                      desc: "Assembly checklist for attaching and aligning the front sofa base.",
-                    },
-                  ].map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start justify-between p-6 bg-[#F4F2F0]/50 rounded-none border border-wbk-lightgrey/40 hover:border-wbk-gold transition-colors group"
-                    >
-                      <div className="space-y-1.5 max-w-[70%]">
-                        <span className="text-[10px] font-semibold text-wbk-gold uppercase tracking-wider font-poppins">
-                          {doc.size}
-                        </span>
-                        <h4 className="font-poppins font-medium text-sm text-wbk-black">
-                          {doc.title}
+              const currentVideoInput =
+                displayProduct?.installation_video ||
+                selectedVariant?.installation_video ||
+                activeProduct?.installation_video ||
+                (() => {
+                  if (!familyVariants || !familyVariants.length) return null;
+                  const matchInFamily = familyVariants.find(
+                    (v) => (v.id === displayProduct?.id || v.id === selectedVariant?.id) && v.installation_video
+                  );
+                  if (matchInFamily?.installation_video) return matchInFamily.installation_video;
+                  const matchAnyInFamily = familyVariants.find((v) => v.installation_video);
+                  if (matchAnyInFamily?.installation_video) return matchAnyInFamily.installation_video;
+                  return null;
+                })() ||
+                null;
+
+              const parsedVideo = parseYouTubeVideo(currentVideoInput);
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-8"
+                >
+                  <div className="space-y-2">
+                    <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                      {t("product.supportHeading", "Support & Installation Guides")}
+                    </h3>
+                    <p className="font-poppins text-xs sm:text-sm text-wbk-brown max-w-2xl leading-relaxed">
+                      {t(
+                        "product.supportSubheading",
+                        "Follow our official step-by-step video walkthroughs and download precision PDF assembly manuals to ensure seamless and safe installation.",
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Section 1: Official YouTube Installation Video */}
+                  <div className="max-w-3xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <IconBrandYoutube size={20} className="text-red-600" />
+                        <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
+                          {t("product.videoWalkthrough", "Video Walkthrough")}
                         </h4>
-                        <p className="text-xs text-wbk-brown font-poppins leading-relaxed">
-                          {doc.desc}
-                        </p>
                       </div>
-                      <button className="flex items-center gap-1.5 px-4 py-2 border border-wbk-black text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full hover:bg-wbk-black hover:text-white transition-all duration-300 shrink-0 cursor-pointer">
-                        Download
-                      </button>
+                      {parsedVideo && (
+                        <a
+                          href={parsedVideo.watchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-red-600 transition-colors font-medium"
+                        >
+                          <span>{t("product.watchOnYoutube", "Watch on YouTube")}</span>
+                          <IconExternalLink size={14} />
+                        </a>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+
+                    {parsedVideo ? (
+                      <div className="bg-white border border-wbk-lightgrey/70 shadow-sm overflow-hidden">
+                        {/* 16:9 Responsive Video Player */}
+                        <div className="relative aspect-video w-full bg-black">
+                          <iframe
+                            src={parsedVideo.embedUrl}
+                            title="WallBedKing Installation Guide"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            className="absolute inset-0 w-full h-full border-0"
+                            loading="lazy"
+                          />
+                        </div>
+
+                        {/* Video Meta Bar */}
+                        <div className="p-4 sm:p-5 bg-[#FAF9F8] border-t border-wbk-lightgrey/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider font-poppins bg-red-50 px-2 py-0.5 border border-red-200/80 rounded-xs">
+                                {t("product.youtubeTutorial", "YouTube Tutorial")}
+                              </span>
+                              <span className="text-[11px] text-wbk-brown font-mono">
+                                {t("product.officialAssemblyGuide", "Official Assembly Guide")}
+                              </span>
+                            </div>
+                            <p className="text-xs text-wbk-brown leading-relaxed">
+                              {t(
+                                "product.videoMetaDesc",
+                                "Watch the step-by-step frame assembly, wall fixing anchors, and counterbalance piston calibration.",
+                              )}
+                            </p>
+                          </div>
+
+                          <a
+                            href={parsedVideo.watchUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider transition-colors shrink-0 cursor-pointer shadow-2xs"
+                          >
+                            <IconBrandYoutube size={16} className="text-red-600" />
+                            <span>{t("product.openInApp", "Open in App")}</span>
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                          <div className="w-10 h-10 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
+                            <IconBrandYoutube size={22} stroke={1.6} />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
+                              {t("product.comingSoon", "Coming soon")}
+                            </span>
+                            <h5 className="font-poppins font-medium text-sm text-wbk-black mt-1">
+                              {t("product.videoComingSoonTitle", "Video walkthrough for this model")}
+                            </h5>
+                            <p className="text-xs text-wbk-brown mt-0.5">
+                              {t(
+                                "product.videoComingSoonDesc",
+                                "Our engineering team is producing an updated video guide for this configuration. In the meantime, please refer to the PDF assembly manual below.",
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section 2: PDF Download Manual */}
+                  <div className="max-w-3xl space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                      <IconFileText size={20} className="text-wbk-gold" />
+                      <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
+                        {t("product.pdfManualHeading", "PDF Assembly Manual")}
+                      </h4>
+                    </div>
+
+                    {currentManualUrl ? (
+                      <div className="p-6 sm:p-7 bg-white border border-wbk-lightgrey/60 hover:border-wbk-gold transition-all duration-300 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 group">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-sm bg-[#F5F2EF] text-wbk-gold flex items-center justify-center shrink-0 border border-wbk-lightgrey/50 group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
+                            <IconFileText size={26} stroke={1.6} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-semibold text-wbk-gold uppercase tracking-wider font-poppins bg-[#FAF8F5] px-2 py-0.5 border border-wbk-gold/30 rounded-xs">
+                                {t("product.pdfDocument", "PDF Document")}
+                              </span>
+                              <span className="text-[11px] text-wbk-brown/70 font-mono">
+                                {t("product.officialAssemblyGuide", "Official Assembly Guide")}
+                              </span>
+                            </div>
+                            <h4 className="font-poppins font-medium text-base text-wbk-black">
+                              {t("product.pdfManualTitle", "Wall Bed Installation & Assembly Manual")}
+                            </h4>
+                            <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
+                              {t(
+                                "product.pdfManualDesc",
+                                "Complete illustrated guide covering wall fixation, frame assembly, gas piston calibration, and safety precautions.",
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-wbk-lightgrey/40">
+                          <a
+                            href={currentManualUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold text-white hover:text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-xs cursor-pointer"
+                          >
+                            <IconDownload size={15} />
+                            <span>{t("product.downloadPdf", "Download PDF")}</span>
+                          </a>
+                          <a
+                            href={currentManualUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 border border-wbk-lightgrey/80 text-wbk-brown hover:text-wbk-black hover:border-wbk-black rounded-full transition-colors cursor-pointer"
+                            title={t("product.openInNewTab", "Open in new tab")}
+                          >
+                            <IconExternalLink size={16} />
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 sm:p-7 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 rounded-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
+                            <IconClock size={24} stroke={1.6} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
+                                {t("product.inProgress", "In progress")}
+                              </span>
+                              <span className="text-[11px] text-wbk-brown font-poppins">
+                                {t("product.preparationUnderWay", "Preparation under way")}
+                              </span>
+                            </div>
+                            <h4 className="font-poppins font-medium text-base text-wbk-black">
+                              {t("product.pdfManualTitle", "Wall Bed Installation & Assembly Manual")}
+                            </h4>
+                            <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
+                              {t(
+                                "product.manualInProgressDesc",
+                                "The official assembly guide for this specific model and size is currently in progress and will be available for download here shortly. If you need immediate assistance or assembly advice, please reach out to our team.",
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 pt-2 sm:pt-0">
+                          <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-lightgrey/40 text-wbk-brown text-xs font-medium rounded-full">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                            <span>{t("product.inProgress", "In progress")}</span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })()}
 
             {/* Reviews Tab */}
             {activeTab === "reviews" && (
@@ -2302,14 +2614,16 @@ export default function ProductDetailPage() {
             {/* Section Header */}
             <div className="text-center max-w-3xl mx-auto space-y-4">
               <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                System Innovations & Features
+                {t("morphy.featuresBadge", "System Innovations & Features")}
               </span>
               <h2 className="font-new-york text-4xl sm:text-5xl lg:text-6xl text-wbk-black leading-tight tracking-tight">
-                Say hello to Morphy
+                {t("morphy.heroTitle", "Say hello to Morphy")}
               </h2>
               <p className="font-poppins text-sm text-wbk-brown leading-relaxed">
-                The next generation of modular and adaptable wall bed systems by
-                Wall Bed King.
+                {t(
+                  "morphy.heroSubtitle",
+                  "The next generation of modular and adaptable wall bed systems by Wall Bed King.",
+                )}
               </p>
             </div>
 
@@ -2346,22 +2660,20 @@ export default function ProductDetailPage() {
                   {/* Overlaid Title Content */}
                   <div className="absolute inset-0 p-8 sm:p-12 md:p-16 flex flex-col justify-end items-center">
                     <span className="text-[11px] sm:text-xs uppercase tracking-widest font-semibold text-wbk-gold font-poppins mb-2 drop-shadow-sm">
-                      Flexibility
+                      {t("morphy.twoWaysBadge", "Flexibility")}
                     </span>
-                    <h3 className="font-new-york text-3xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight max-w-3xl drop-shadow-md">
-                      Two ways to flex your space
+                    <h3 className="font-new-york text-3xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight max-w-3xl drop-shadow-md text-center">
+                      {t("morphy.twoWaysTitle", "Two ways to flex your space")}
                     </h3>
                   </div>
                 </div>
 
                 {/* Subtitle / Paragraph Description below the video in container width */}
                 <p className="font-poppins text-sm sm:text-sm text-wbk-black/85 leading-relaxed text-center">
-                  Morphy isn’t just a bed — it’s a complete, next-generation
-                  modular sleeping system designed to adapt to your life. With
-                  our SizeFlex™ and TypeFlex™ innovations, one frame can
-                  transform, resize, and reimagine itself. Whether you move
-                  homes, grow your family, or simply want a new look, your
-                  Morphy evolves with you — without compromise.
+                  {t(
+                    "morphy.twoWaysDesc",
+                    "Morphy isn’t just a bed — it’s a complete, next-generation modular sleeping system designed to adapt to your life. With our SizeFlex™ and TypeFlex™ innovations, one frame can transform, resize, and reimagine itself. Whether you move homes, grow your family, or simply want a new look, your Morphy evolves with you — without compromise.",
+                  )}
                 </p>
               </div>
 
@@ -2378,21 +2690,19 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="lg:col-span-5 space-y-4 lg:order-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    SizeFlex™ Innovation
+                    {t("morphy.sizeFlexBadge", "SizeFlex™ Innovation")}
                   </span>
                   <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    SizeFlex™ — your bed that grows with you
+                    {t(
+                      "morphy.sizeFlexTitle",
+                      "SizeFlex™ — your bed that grows with you",
+                    )}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Why buy a new bed every time your needs change? With
-                    SizeFlex™, your Morphy can grow from Single to Double,
-                    Queen, or even King size — all using the same base
-                    components. Our modular frame system features universal
-                    parts that connect and expand easily. When you’re ready for
-                    a bigger bed, simply order the additional modules you need
-                    and reconfigure your existing frame — no need to replace the
-                    whole system. Morphy currently supports 16 different size
-                    configurations.
+                    {t(
+                      "morphy.sizeFlexDesc",
+                      "Why buy a new bed every time your needs change? With SizeFlex™, your Morphy can grow from Single to Double, Queen, or even King size — all using the same base components. Our modular frame system features universal parts that connect and expand easily. When you’re ready for a bigger bed, simply order the additional modules you need and reconfigure your existing frame — no need to replace the whole system. Morphy currently supports 16 different size configurations.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -2401,19 +2711,19 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
                 <div className="lg:col-span-5 space-y-4">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    TypeFlex™ Adaptability
+                    {t("morphy.typeFlexBadge", "TypeFlex™ Adaptability")}
                   </span>
                   <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    TypeFlex™ — reimagine your space, your way
+                    {t(
+                      "morphy.typeFlexTitle",
+                      "TypeFlex™ — reimagine your space, your way",
+                    )}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Your Morphy isn’t limited to one purpose. With TypeFlex™,
-                    the same base can be transformed into a wall bed, storage
-                    bed, ottoman bed, or even a bunk bed. Start simple — then
-                    upgrade at your own pace. Add panels to turn it into a
-                    Morphy Studio wall bed, or add modules such as desks,
-                    cabinets, or sofas. Every component connects seamlessly,
-                    giving you complete freedom to design your perfect setup.
+                    {t(
+                      "morphy.typeFlexDesc",
+                      "Your Morphy isn’t limited to one purpose. With TypeFlex™, the same base can be transformed into a wall bed, storage bed, ottoman bed, or even a bunk bed. Start simple — then upgrade at your own pace. Add panels to turn it into a Morphy Studio wall bed, or add modules such as desks, cabinets, or sofas. Every component connects seamlessly, giving you complete freedom to design your perfect setup.",
+                    )}
                   </p>
                 </div>
                 <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
@@ -2440,17 +2750,19 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="lg:col-span-5 space-y-4 lg:order-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    Orientation
+                    {t("morphy.orientationBadge", "Orientation")}
                   </span>
                   <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    Endless possibilities with Flexible Orientation
+                    {t(
+                      "morphy.orientationTitle",
+                      "Endless possibilities with Flexible Orientation",
+                    )}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Change your mind, not your furniture. Morphy’s universal
-                    base lets you install the same bed vertically or
-                    horizontally—even years after your purchase. Avoid costly
-                    exchanges, adapt your bed with ease, and make any room truly
-                    yours.
+                    {t(
+                      "morphy.orientationDesc",
+                      "Change your mind, not your furniture. Morphy’s universal base lets you install the same bed vertically or horizontally—even years after your purchase. Avoid costly exchanges, adapt your bed with ease, and make any room truly yours.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -2459,17 +2771,19 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
                 <div className="lg:col-span-5 space-y-4">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    Upgradeable
+                    {t("morphy.upgradeableBadge", "Upgradeable")}
                   </span>
                   <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    Modular & Upgradeable System
+                    {t(
+                      "morphy.upgradeableTitle",
+                      "Modular & Upgradeable System",
+                    )}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Start with a simple Classic and upgrade anytime: add a
-                    cabinet, switch to Studio, or integrate side units, sofas,
-                    or desks (module options launching soon!). With Morphy, your
-                    bed isn’t fixed—it evolves alongside your needs, giving you
-                    total control and lasting value.
+                    {t(
+                      "morphy.upgradeableDesc",
+                      "Start with a simple Classic and upgrade anytime: add a cabinet, switch to Studio, or integrate side units, sofas, or desks (module options launching soon!). With Morphy, your bed isn’t fixed—it evolves alongside your needs, giving you total control and lasting value.",
+                    )}
                   </p>
                 </div>
                 <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
@@ -2496,18 +2810,19 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="lg:col-span-5 space-y-4 lg:order-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    Quality
+                    {t("morphy.warrantyBadge", "Quality")}
                   </span>
                   <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    Lifetime Warranty & Sustainable Quality
+                    {t(
+                      "morphy.warrantyTitle",
+                      "Lifetime Warranty & Sustainable Quality",
+                    )}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    Morphy isn’t locked into one purpose. Transform it from a
-                    wall bed to an ottoman, bunk, or traditional frame as life
-                    changes. Lifetime warranty means long-lasting quality, and
-                    modular reuse means you’ll never need to discard your bed
-                    when styles or needs change. Choose sustainability, choose
-                    Morphy.
+                    {t(
+                      "morphy.warrantyDesc",
+                      "Morphy isn’t locked into one purpose. Transform it from a wall bed to an ottoman, bunk, or traditional frame as life changes. Lifetime warranty means long-lasting quality, and modular reuse means you’ll never need to discard your bed when styles or needs change. Choose sustainability, choose Morphy.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -2515,17 +2830,19 @@ export default function ProductDetailPage() {
               {/* Card 7: Modules Coming Soon */}
               <div className="py-8 space-y-3">
                 <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                  Modules Coming Soon
+                  {t("morphy.modulesSoonBadge", "Modules Coming Soon")}
                 </span>
                 <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                  Elevate Your Morphy Experience
+                  {t(
+                    "morphy.modulesSoonTitle",
+                    "Elevate Your Morphy Experience",
+                  )}
                 </h3>
                 <p className="font-poppins text-sm leading-relaxed text-wbk-brown max-w-3xl">
-                  Get ready to personalize your space like never before! Our
-                  sleek new sofa module, versatile desk module, and smart
-                  storage units are designed to perfectly complement and expand
-                  your Morphy bed—effortlessly transforming your space for work,
-                  rest, and play.
+                  {t(
+                    "morphy.modulesSoonDesc",
+                    "Get ready to personalize your space like never before! Our sleek new sofa module, versatile desk module, and smart storage units are designed to perfectly complement and expand your Morphy bed—effortlessly transforming your space for work, rest, and play.",
+                  )}
                 </p>
               </div>
             </div>
@@ -2534,88 +2851,15 @@ export default function ProductDetailPage() {
             <div className="pt-8 border-t border-wbk-lightgrey/40 space-y-8">
               <div className="space-y-2 text-center mx-auto">
                 <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                  Got Questions?
+                  {t("morphy.faqBadge", "Got Questions?")}
                 </span>
                 <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                  Frequently Asked Questions
+                  {t("morphy.faqTitle", "Frequently Asked Questions")}
                 </h3>
               </div>
 
               <div className="divide-y divide-wbk-lightgrey/40 mx-auto">
-                {[
-                  {
-                    q: "What is Morphy?",
-                    a: "Morphy is the next-generation modular wall bed system by WallBedKing — designed to save space, adapt to any room, and evolve with your life. It can be wall or floor mounted, or built into a cabinet body. Unlike traditional folding beds, it features a modular base, bolt-on legs, and interchangeable parts you can reconfigure anytime.",
-                  },
-                  {
-                    q: "What makes Morphy different from other wall beds?",
-                    a: "Traditional wall beds have fixed-size frames when installed. Morphy is fully modular — you can install it vertically or horizontally, change sizes, add cabinets or sofas later, and even convert it into other bed types. It’s the world’s first wall bed that grows and transforms with you.",
-                  },
-                  {
-                    q: "What is SizeFlex™?",
-                    a: "SizeFlex™ lets you use the same core parts to build different bed sizes — from Single to Double to King, we have 16 different sizes available. When your needs change, you simply add or remove modules instead of buying a whole new frame.",
-                  },
-                  {
-                    q: "What is TypeFlex™?",
-                    a: "TypeFlex™ means your Morphy base isn’t limited to one bed type. It can become a wall bed, storage bed, ottoman bed, or even a bunk. One system, endless options.",
-                  },
-                  {
-                    q: "Can I install Morphy vertically or horizontally?",
-                    a: "Yes! Morphy’s universal base allows both orientations — so you can switch from vertical to horizontal installation at any time without needing a new frame.",
-                  },
-                  {
-                    q: "Can I add more modules later?",
-                    a: "Absolutely. Start simple with a Classic model and expand whenever you’re ready — add the front panels to turn it instantly into a Studio wall bed, or add cabinets, a sofa, a desk, and side units (modules launching soon). You can always purchase additional parts directly from us, saving money and avoiding waste.",
-                  },
-                  {
-                    q: "Are all parts compatible with future Morphy upgrades?",
-                    a: "Yes. Every Morphy component is designed to work seamlessly with future upgrades and new modules — ensuring your bed stays compatible for years to come.",
-                  },
-                  {
-                    q: "Are replacement parts always available?",
-                    a: "We make every effort to keep all replacement parts in stock, so you can easily order what you need, whenever you need it.",
-                  },
-                  {
-                    q: "How will I know which parts I need to upgrade my bed?",
-                    a: "We’ll guide you through it. Just tell us what you currently have and what you’d like to upgrade to, and we’ll make sure you get every part you need for a smooth transition.",
-                  },
-                  {
-                    q: "Can I install a Morphy wall bed myself?",
-                    a: "Yes — installation of the Morphy Classic and Morphy Studio is similar to our other models and comes with detailed instructions. For built-in or cabinet installations, we recommend a professional installer or carpenter — unless you are very good at DIY.",
-                  },
-                  {
-                    q: "Do I need special tools to reconfigure or upgrade?",
-                    a: "No. Morphy arrives flat-packed for easy self-assembly, and reconfiguration can be done with basic tools — no professional installation required.",
-                  },
-                  {
-                    q: "Is Morphy compatible with any mattress?",
-                    a: "Yes. Morphy fits all standard mattress sizes and thicknesses, up to 30 cm / 12 in. You can keep your favourite mattress or replace it anytime without changing the bed frame.",
-                  },
-                  {
-                    q: "How durable is the Morphy system?",
-                    a: "Extremely. Morphy is built from premium, long-lasting materials and powered by a German gas piston system for smooth, safe operation. Every structural component is backed by a lifetime warranty — built to last, built for life.",
-                  },
-                  {
-                    q: "What does the lifetime warranty cover?",
-                    a: "The lifetime warranty covers all structural parts of your Morphy bed — including the frame, joints, and mechanical components. If a component ever fails due to manufacturing defects, we’ll replace it free of charge.",
-                  },
-                  {
-                    q: "Is it sustainable?",
-                    a: "Yes. Morphy’s modularity means you’ll never need to throw away your bed when your space or style changes. By upgrading instead of replacing, you save resources, reduce waste, and support long-term sustainability.",
-                  },
-                  {
-                    q: "Is Morphy available worldwide?",
-                    a: "Yes — we offer fast, reliable, worldwide shipping, with all systems shipped factory-direct for the best value for money.",
-                  },
-                  {
-                    q: "How can I stay tuned for new modules and updates?",
-                    a: "Follow us on social media or visit our website regularly for the latest product launches, new module announcements, and exclusive offers.",
-                  },
-                  {
-                    q: "Why should I choose Morphy?",
-                    a: "Because Morphy gives you freedom. Freedom to adapt your home, your way — to upgrade, resize, or restyle your bed at any time. It’s smarter, more sustainable, and built to last a lifetime.",
-                  },
-                ].map((faq, idx) => {
+                {getMorphyFaqs(locale).map((faq, idx) => {
                   const isOpen = openFaqIndex === idx;
                   return (
                     <div key={idx} className="py-4">

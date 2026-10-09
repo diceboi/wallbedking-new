@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
+import { useLocale } from "@/context/LocaleContext";
 import {
   IconStar,
   IconShieldCheck,
@@ -23,6 +24,7 @@ export function ProductReviewsSection({
   initialCustomerName = "",
   initialCustomerEmail = "",
 }) {
+  const { t, locale } = useLocale();
   const searchParams = useSearchParams();
   const urlReview = searchParams?.get("review");
   const urlRating = searchParams?.get("rating") ? parseInt(searchParams.get("rating"), 10) : null;
@@ -117,7 +119,10 @@ export function ProductReviewsSection({
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!authorName.trim() || !content.trim()) {
-      setFormFeedback({ type: "error", message: "Please provide your name and review details." });
+      setFormFeedback({
+        type: "error",
+        message: t("reviews.errorRequired", "Please provide your name and review details."),
+      });
       return;
     }
 
@@ -147,8 +152,10 @@ export function ProductReviewsSection({
 
       setFormFeedback({
         type: "success",
-        message:
-          "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it.",
+        message: t(
+          "reviews.successSubmitted",
+          "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it."
+        ),
       });
 
       // Reset fields after short delay
@@ -167,6 +174,21 @@ export function ProductReviewsSection({
     }
   };
 
+  const dateLocale =
+    locale === "us"
+      ? "en-US"
+      : locale === "de"
+      ? "de-DE"
+      : locale === "fr"
+      ? "fr-FR"
+      : locale === "es"
+      ? "es-ES"
+      : locale === "por"
+      ? "pt-PT"
+      : locale === "it"
+      ? "it-IT"
+      : "en-GB";
+
   return (
     <div className="space-y-8 font-poppins">
       {/* Top Header & Write Review Action */}
@@ -178,11 +200,14 @@ export function ProductReviewsSection({
               {"☆".repeat(5 - Math.round(stats.avgRating || 5))}
             </div>
             <span className="font-semibold text-sm text-wbk-black">
-              {stats.avgRating || "5.0"} out of 5
+              {stats.avgRating || "5.0"} {t("reviews.outOfFive", "out of 5")}
             </span>
           </div>
           <p className="text-xs text-wbk-brown">
-            Based on {stats.totalCount || reviews.length} verified customer reviews and installations.
+            {t("reviews.basedOnReviews", "Based on {count} verified customer reviews and installations.").replace(
+              "{count}",
+              stats.totalCount || reviews.length
+            )}
           </p>
         </div>
 
@@ -192,7 +217,7 @@ export function ProductReviewsSection({
           className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs self-start sm:self-auto"
         >
           <IconPlus size={15} />
-          <span>Write a Review</span>
+          <span>{t("reviews.writeReviewBtn", "Write a Review")}</span>
         </button>
       </div>
 
@@ -200,13 +225,15 @@ export function ProductReviewsSection({
       {loading ? (
         <div className="p-12 text-center text-wbk-brown text-xs">
           <div className="w-8 h-8 border-2 border-wbk-gold border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          Loading customer reviews...
+          {t("reviews.loadingReviews", "Loading customer reviews...")}
         </div>
       ) : reviews.length === 0 ? (
         <div className="p-8 bg-white border border-wbk-lightgrey text-center space-y-2">
-          <p className="text-sm font-medium text-wbk-black">Be the first to review this bed!</p>
+          <p className="text-sm font-medium text-wbk-black">
+            {t("reviews.beFirst", "Be the first to review this bed!")}
+          </p>
           <p className="text-xs text-wbk-brown">
-            Share your experience with installation, space-saving benefits, and daily comfort.
+            {t("reviews.beFirstDesc", "Share your experience with installation, space-saving benefits, and daily comfort.")}
           </p>
         </div>
       ) : (
@@ -223,7 +250,7 @@ export function ProductReviewsSection({
                   </div>
 
                   <span className="text-[10px] text-wbk-brown uppercase">
-                    {new Date(rev.created_at || Date.now()).toLocaleDateString("en-GB", {
+                    {new Date(rev.created_at || Date.now()).toLocaleDateString(dateLocale, {
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
@@ -245,7 +272,7 @@ export function ProductReviewsSection({
                 {Array.isArray(rev.photos) && rev.photos.length > 0 && (
                   <div className="pt-2">
                     <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block mb-1.5">
-                      Customer Photos ({rev.photos.length}):
+                      {t("reviews.customerPhotos", "Customer Photos ({count}):").replace("{count}", rev.photos.length)}
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {rev.photos.map((photoUrl, pIdx) => (
@@ -274,7 +301,7 @@ export function ProductReviewsSection({
                 {rev.verified_buyer && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded">
                     <IconShieldCheck size={12} className="text-emerald-600" />
-                    <span>Verified Buyer</span>
+                    <span>{t("reviews.verifiedBuyer", "Verified Buyer")}</span>
                   </span>
                 )}
               </div>
@@ -298,10 +325,10 @@ export function ProductReviewsSection({
               <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-wbk-lightgrey/60 shrink-0 bg-white">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-gold block">
-                    Feedback
+                    {t("reviews.modalFeedbackBadge", "Feedback")}
                   </span>
                   <h3 className="font-new-york text-xl text-wbk-black">
-                    Write a Product Review
+                    {t("reviews.modalTitle", "Write a Product Review")}
                   </h3>
                 </div>
                 <button
@@ -320,7 +347,7 @@ export function ProductReviewsSection({
                   {/* Star Rating Picker */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                      Your Overall Rating *
+                      {t("reviews.overallRating", "Your Overall Rating *")}
                     </label>
                     <div className="flex items-center gap-1 text-2xl">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -336,7 +363,7 @@ export function ProductReviewsSection({
                         </button>
                       ))}
                       <span className="ml-3 text-xs font-semibold text-wbk-black">
-                        {rating} of 5 Stars
+                        {t("reviews.ofFiveStars", "{rating} of 5 Stars").replace("{rating}", rating)}
                       </span>
                     </div>
                   </div>
@@ -345,12 +372,12 @@ export function ProductReviewsSection({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                        Your Name *
+                        {t("reviews.yourName", "Your Name *")}
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Sarah Jenkins"
+                        placeholder={t("reviews.namePlaceholder", "e.g. Sarah Jenkins")}
                         value={authorName}
                         onChange={(e) => setAuthorName(e.target.value)}
                         className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
@@ -358,7 +385,7 @@ export function ProductReviewsSection({
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                        Your Email (not shown publicly)
+                        {t("reviews.yourEmail", "Your Email (not shown publicly)")}
                       </label>
                       <input
                         type="email"
@@ -373,11 +400,11 @@ export function ProductReviewsSection({
                   {/* Review Title */}
                   <div>
                     <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                      Headline / Summary (Optional)
+                      {t("reviews.headline", "Headline / Summary (Optional)")}
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Smooth mechanism, huge space saver!"
+                      placeholder={t("reviews.headlinePlaceholder", "e.g. Smooth mechanism, huge space saver!")}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
@@ -387,12 +414,12 @@ export function ProductReviewsSection({
                   {/* Review Content */}
                   <div>
                     <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                      Your Review *
+                      {t("reviews.yourReview", "Your Review *")}
                     </label>
                     <textarea
                       rows={4}
                       required
-                      placeholder="Tell us about the installation, build quality, and how the wall bed has improved your room..."
+                      placeholder={t("reviews.reviewPlaceholder", "Tell us about the installation, build quality, and how the wall bed has improved your room...")}
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors leading-relaxed"
@@ -402,7 +429,7 @@ export function ProductReviewsSection({
                   {/* Photo Upload with Previews */}
                   <div>
                     <label className="block text-[11px] font-medium text-wbk-black mb-1.5">
-                      Attach Setup Photos (Optional - Max 4)
+                      {t("reviews.attachPhotos", "Attach Setup Photos (Optional - Max 4)")}
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
                       {photos.map((p, idx) => (
@@ -421,7 +448,7 @@ export function ProductReviewsSection({
                       {photos.length < 4 && (
                         <label className="w-16 h-16 border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-lg flex flex-col items-center justify-center text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors bg-[#FBF9F8] hover:bg-white">
                           <IconUpload size={16} />
-                          <span className="text-[9px] mt-1 font-medium">Add</span>
+                          <span className="text-[9px] mt-1 font-medium">{t("reviews.add", "Add")}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -462,14 +489,14 @@ export function ProductReviewsSection({
                       {submitting ? (
                         <>
                           <IconLoader2 size={16} className="animate-spin" />
-                          <span>Submitting for Review...</span>
+                          <span>{t("reviews.submittingReview", "Submitting for Review...")}</span>
                         </>
                       ) : (
-                        <span>Submit Review for Approval</span>
+                        <span>{t("reviews.submitReview", "Submit Review for Approval")}</span>
                       )}
                     </button>
                     <p className="text-[10px] text-wbk-brown text-center mt-2">
-                      All reviews are verified by our team before publishing to protect against spam.
+                      {t("reviews.verificationNote", "All reviews are verified by our team before publishing to protect against spam.")}
                     </p>
                   </div>
                 </form>

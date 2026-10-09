@@ -33,28 +33,47 @@ function ThanksContent() {
   const orderId = searchParams.get("order_id") || "";
   const cartId = searchParams.get("cart_id") || searchParams.get("cartIdFORM") || "";
   const amt = searchParams.get("amtFORM") || "";
-  const rawEmail = searchParams.get("payerEmail") || "";
+  const rawEmail = searchParams.get("payerEmail") || searchParams.get("email") || "";
   const rawFirstName = searchParams.get("firstName") || "";
   const rawLastName = searchParams.get("lastName") || "";
+  const rawFullName = searchParams.get("fullName") || searchParams.get("name") || "";
   const street = searchParams.get("street") || "";
   const city = searchParams.get("city") || "";
   const zip = searchParams.get("zip") || "";
   const country = searchParams.get("country") || "United Kingdom";
 
-  // Decode base64 helpers safely
+  // Decode helper: safely handles plain text (UTF-8) and legacy base64
   const decodeSafe = (val) => {
     if (!val) return "";
-    try {
-      return decodeURIComponent(escape(atob(val)));
-    } catch {
+    // If string already contains non-base64 characters like '@', spaces, or non-ASCII letters
+    if (/[@\s\-_.,]/.test(val) || /[^\x00-\x7F]/.test(val)) {
       return val;
     }
+    // Only attempt atob if it strictly looks like base64 with padding
+    if (val.length % 4 === 0 && /^[A-Za-z0-9+/]+={1,2}$/.test(val)) {
+      try {
+        const decoded = decodeURIComponent(
+          atob(val)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        if (decoded && /^[\p{L}\p{N}\p{P}\p{Z}@.-]+$/u.test(decoded)) {
+          return decoded;
+        }
+      } catch {
+        // Fall back to raw val
+      }
+    }
+    return val;
   };
 
   const emailParam = decodeSafe(rawEmail);
   const firstNameParam = decodeSafe(rawFirstName);
   const lastNameParam = decodeSafe(rawLastName);
-  const fullNameParam = [firstNameParam, lastNameParam].filter(Boolean).join(" ");
+  const fullNameParam =
+    decodeSafe(rawFullName) ||
+    [firstNameParam, lastNameParam].filter(Boolean).join(" ");
 
   // Clear cart on successful order confirmation
   useEffect(() => {

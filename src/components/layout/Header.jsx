@@ -9,7 +9,6 @@ import {
   IconShoppingBag,
   IconUser,
   IconChevronDown,
-  Icon3dCubeSphere,
 } from "@tabler/icons-react";
 import { TopMenu } from "./TopMenu";
 import { ContactInfo } from "./ContactInfo";
@@ -277,21 +276,13 @@ export function Header() {
             <ContactInfo />
           </div>
 
-          {/* Center: Live instant product search */}
-          <div className="hidden md:flex flex-1 justify-center max-w-sm lg:max-w-md xl:max-w-lg px-2">
+          {/* Center: Live instant product search (expands to fill available width) */}
+          <div className="hidden md:flex flex-1 items-center px-4 lg:px-8 min-w-0">
             <SearchBar />
           </div>
 
-          {/* Right section: CTA, Language, Cart, Account, MobileToggle */}
+          {/* Right section: Language, Cart, Account, MobileToggle */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            {/* 3D Configurator CTA */}
-            <Link
-              href={localizedHref("/configurator")}
-              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 bg-wbk-green hover:bg-wbk-black border border-wbk-green hover:border-wbk-black text-wbk-white text-xs font-medium tracking-[0.14em] uppercase transition-colors shadow-xs rounded-full"
-            >
-              <Icon3dCubeSphere size={15} />
-              <span>{t("header.configuratorCta", "Configurator")}</span>
-            </Link>
 
             {/* Language Selector Dropdown */}
             <div

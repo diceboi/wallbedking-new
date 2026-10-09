@@ -23,7 +23,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "sku", "ean_uk", "ean_us", "ean_de", "ean_fr", "ean_es", "ean_it", "ean_pt",
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
-  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it"
+  "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
+  "installation_manual", "installation_video"
 ]);
 
 export async function POST(request) {
@@ -165,7 +166,7 @@ export async function POST(request) {
         payload.hover_image = item.hoverImage;
       }
 
-      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${item.id}`, {
+      let patchRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${item.id}`, {
         method: "PATCH",
         headers: {
           ...headers,
@@ -173,6 +174,29 @@ export async function POST(request) {
         },
         body: JSON.stringify(payload),
       });
+
+      if (!patchRes.ok) {
+        const err = await patchRes.text();
+        let retryNeeded = false;
+        if (err.includes("installation_video") && payload.installation_video !== undefined) {
+          delete payload.installation_video;
+          retryNeeded = true;
+        }
+        if (err.includes("installation_manual") && payload.installation_manual !== undefined) {
+          delete payload.installation_manual;
+          retryNeeded = true;
+        }
+        if (retryNeeded) {
+          patchRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${item.id}`, {
+            method: "PATCH",
+            headers: {
+              ...headers,
+              Prefer: "return=representation",
+            },
+            body: JSON.stringify(payload),
+          });
+        }
+      }
 
       if (patchRes.ok) {
         updatedProducts.push(item);

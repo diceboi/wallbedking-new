@@ -187,13 +187,12 @@ export async function POST(request) {
       billing_address: customer_address && customer_address.line1 !== "N/A" ? customer_address : (existingOrder?.billing_address || {}),
       items: parsedItems,
       currency: targetCurrency,
-      company_entity: paymentConfig.entity,
-      locale: locale || "en",
+      admin_notes: `[Entity: ${paymentConfig.entity}] [Locale: ${locale || "en"}]`,
       total_amount: Number(amount_total || existingOrder?.total_amount || 0),
       updated_at: new Date().toISOString(),
     };
 
-    let alreadyEmailed = Boolean(existingOrder?.email_sent);
+    let alreadyEmailed = false;
 
     // Save/upsert to Supabase
     if (supabaseAdmin) {
@@ -214,7 +213,6 @@ export async function POST(request) {
             .eq("id", existingOrder.id);
         } else {
           orderRecord.created_at = new Date().toISOString();
-          orderRecord.email_sent = false;
           await supabaseAdmin.from("orders").insert([orderRecord]);
         }
       } catch (insertErr) {

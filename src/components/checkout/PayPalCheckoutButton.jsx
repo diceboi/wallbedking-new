@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { IconLoader2, IconAlertCircle } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useAuth } from "@/context/AuthContext";
 import { getPaymentConfig } from "@/lib/payments";
 
 export function PayPalCheckoutButton({ disabled = false, customerDetails = null, onBeforeCheckout = null }) {
+  const { user } = useAuth();
   const { locale, market } = useLocale();
   const paymentConfig = getPaymentConfig(locale, market?.currency);
   const paypalClientId = paymentConfig.paypalClientId;
@@ -30,10 +32,10 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Keep references to latest cart and payment values inside PayPal callbacks
-  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout });
+  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user });
   useEffect(() => {
-    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout };
-  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout]);
+    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user };
+  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user]);
 
   // Load PayPal SDK Script dynamically based on selected market / entity
   useEffect(() => {
@@ -167,7 +169,79 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
               const shipping = pu.shipping || {};
               const current = cartRef.current;
 
-              // Save order and capture payment in Supabase database
+              // Determine effective customer identity:
+              // Prioritize checkout form input > logged-in store account > PayPal payer info
+              const effectiveEmail = (
+                current.customerDetails?.email ||
+                current.user?.email ||
+                payer.email_address ||
+                ""
+              ).trim().toLowerCase();
+
+              const formFullName = `${current.customerDetails?.firstName || ""} ${current.customerDetails?.lastName || ""}`.trim();
+              const userFullName =
+                current.user?.user_metadata?.full_name ||
+                `${current.user?.user_metadata?.first_name || ""} ${current.user?.user_metadata?.last_name || ""}`.trim();
+              const payerFullName = `${payer.name?.given_name || ""} ${payer.name?.surname || ""}`.trim();
+
+              const effectiveFirstName = (
+                current.customerDetails?.firstName ||
+                current.user?.user_metadata?.first_name ||
+                (userFullName ? userFullName.split(" ")[0] : "") ||
+                payer.name?.given_name ||
+                ""
+              ).trim();
+
+              const effectiveLastName = (
+                current.customerDetails?.lastName ||
+                current.user?.user_metadata?.last_name ||
+                (userFullName ? userFullName.split(" ").slice(1).join(" ") : "") ||
+                payer.name?.surname ||
+                ""
+              ).trim();
+
+              const effectiveFullName =
+                formFullName ||
+                userFullName ||
+                [effectiveFirstName, effectiveLastName].filter(Boolean).join(" ") ||
+                payerFullName ||
+                "Valued Customer";
+
+              const effectivePhone =
+                current.customerDetails?.phone ||
+                payer.phone?.phone_number?.national_number ||
+                "";
+
+              const effectiveUserId =
+                current.customerDetails?.userId ||
+                current.user?.id ||
+                null;
+
+              const effectiveShippingAddress = {
+                firstName: effectiveFirstName,
+                lastName: effectiveLastName,
+                address1:
+                  current.customerDetails?.address1 ||
+                  shipping.address?.address_line_1 ||
+                  shipping.address?.street ||
+                  "Address provided via PayPal",
+                city:
+                  current.customerDetails?.city ||
+                  shipping.address?.admin_area_2 ||
+                  shipping.address?.admin_area_1 ||
+                  "City",
+                postcode:
+                  current.customerDetails?.postcode ||
+                  shipping.address?.postal_code ||
+                  "N/A",
+                country:
+                  current.customerDetails?.country ||
+                  shipping.address?.country_code ||
+                  (current.locale === "en" ? "United Kingdom" : "International"),
+                phone: effectivePhone,
+              };
+
+              // 1. Save order in Supabase database
               let confirmedOrderId = null;
               try {
                 const orderRes = await fetch("/api/checkout/create-order", {
@@ -176,21 +250,16 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
                   body: JSON.stringify({
                     items: current.items,
                     customer: {
-                      email: payer.email_address || "",
-                      phone: payer.phone?.phone_number?.national_number || "",
-                      name: `${payer.name?.given_name || ""} ${payer.name?.surname || ""}`.trim(),
+                      email: effectiveEmail,
+                      phone: effectivePhone,
+                      name: effectiveFullName,
+                      firstName: effectiveFirstName,
+                      lastName: effectiveLastName,
                     },
-                    shippingAddress: {
-                      firstName: payer.name?.given_name || "",
-                      lastName: payer.name?.surname || "",
-                      address1: shipping.address?.address_line_1 || "",
-                      city: shipping.address?.admin_area_2 || "",
-                      postcode: shipping.address?.postal_code || "",
-                      country: shipping.address?.country_code || (current.locale === "en" ? "United Kingdom" : "International"),
-                    },
+                    shippingAddress: effectiveShippingAddress,
                     deliveryOption: current.deliveryOption,
                     paymentMethod: "paypal",
-                    userId: current.customerDetails?.userId || null,
+                    userId: effectiveUserId,
                     locale: current.locale,
                     currency: current.paypalCurrency,
                     companyEntity: current.paymentConfig.entity,
@@ -199,35 +268,57 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
                 const orderJson = await orderRes.json();
                 if (orderJson.success && orderJson.orderId) {
                   confirmedOrderId = orderJson.orderId;
-                  await fetch("/api/checkout/paypal/capture", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      orderId: confirmedOrderId,
-                      paypalOrderId: orderData.id,
-                      captureData: pu.payments?.captures?.[0],
-                      locale: current.locale,
-                      currency: current.paypalCurrency,
-                      companyEntity: current.paymentConfig.entity,
-                    }),
-                  });
                 }
               } catch (errDb) {
                 console.warn("PayPal database order sync notice:", errDb);
               }
 
-              // Redirect to thank you page in customer's selected language
+              // 2. Finalize payment, update DB status, and trigger confirmation email
+              try {
+                await fetch("/api/checkout/paypal/capture", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    orderId: confirmedOrderId,
+                    paypalOrderId: orderData.id,
+                    captureData: pu.payments?.captures?.[0],
+                    customer: {
+                      email: effectiveEmail,
+                      name: effectiveFullName,
+                      firstName: effectiveFirstName,
+                      lastName: effectiveLastName,
+                      phone: effectivePhone,
+                      userId: effectiveUserId,
+                    },
+                    shippingAddress: effectiveShippingAddress,
+                    payer,
+                    shipping,
+                    items: current.items,
+                    total: pu.amount?.value || current.total,
+                    locale: current.locale,
+                    currency: current.paypalCurrency,
+                    companyEntity: current.paymentConfig.entity,
+                  }),
+                });
+              } catch (errCapture) {
+                console.warn("PayPal capture sync notice:", errCapture);
+              }
+
+              // 3. Redirect to thank you page in customer's selected language
+              // Parameters are standard UTF-8 URL encoded via URLSearchParams (NO base64 / btoa)
               const params = new URLSearchParams({
                 tx: orderData.id || "",
+                order_id: confirmedOrderId || "",
                 cartIdFORM: current.customCartId || "",
                 amtFORM: pu.amount?.value || String(current.total),
-                payerEmail: btoa(payer.email_address || ""),
-                firstName: btoa(payer.name?.given_name || ""),
-                lastName: btoa(payer.name?.surname || ""),
-                street: shipping.address?.address_line_1 || "",
-                zip: shipping.address?.postal_code || "",
-                city: shipping.address?.admin_area_2 || "",
-                country: shipping.address?.country_code || (current.locale === "en" ? "GB" : "EU"),
+                payerEmail: effectiveEmail,
+                firstName: effectiveFirstName,
+                lastName: effectiveLastName,
+                fullName: effectiveFullName,
+                street: effectiveShippingAddress.address1 || "",
+                zip: effectiveShippingAddress.postcode || "",
+                city: effectiveShippingAddress.city || "",
+                country: effectiveShippingAddress.country || (current.locale === "en" ? "GB" : "EU"),
               });
 
               window.location.href = `/${current.locale}/thanks?${params.toString()}`;

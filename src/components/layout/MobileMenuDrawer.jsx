@@ -11,7 +11,6 @@ import {
   IconShoppingBag,
   IconUser,
   IconPhone,
-  Icon3dCubeSphere,
   IconTruck,
   IconShieldCheck,
   IconTools,
@@ -36,7 +35,8 @@ const LANGUAGES = [
 ];
 
 export function MobileMenuDrawer() {
-  const { isMobileOpen, closeMobileMenu } = useContext(MenuContext);
+  const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
+  const items = navItems || MAIN_NAV_ITEMS;
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
   const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
@@ -73,7 +73,9 @@ export function MobileMenuDrawer() {
     setLevel(0);
   };
 
-  const activeCategoryData = activeCategorySlug ? SUBMENU_DATA[activeCategorySlug] : null;
+  const activeCategoryData = activeCategorySlug
+    ? (SUBMENU_DATA[activeCategorySlug] || SUBMENU_DATA[items.find((it) => it.slug === activeCategorySlug || it.id === activeCategorySlug)?.category_id])
+    : null;
 
   return (
     <AnimatePresence>
@@ -173,8 +175,11 @@ export function MobileMenuDrawer() {
                     className="flex flex-col divide-y divide-wbk-lightgrey/70"
                   >
                     {/* Catalog Categories */}
-                    {MAIN_NAV_ITEMS.map((item) => {
-                      const hasSub = item.hasSubmenu && SUBMENU_DATA[item.slug];
+                    {items.map((item) => {
+                      const submenuKey = item.slug || item.category_id || item.id;
+                      const hasSub =
+                        Boolean(item.hasSubmenu ?? item.has_submenu) &&
+                        Boolean(SUBMENU_DATA[submenuKey]);
                       return (
                         <div
                           key={item.id}
@@ -183,15 +188,20 @@ export function MobileMenuDrawer() {
                           <Link
                             href={localizedHref(item.href)}
                             onClick={closeMobileMenu}
-                            className="flex-1 py-3.5 px-4 text-xs font-medium uppercase tracking-[0.14em] text-wbk-black hover:text-wbk-green transition-colors"
+                            className="flex-1 py-3.5 px-4 text-xs font-medium uppercase tracking-[0.14em] text-wbk-black hover:text-wbk-green transition-colors flex items-center gap-2"
                           >
-                            {t(`nav.${item.id}`, item.title)}
+                            <span>{t(`nav.${item.id}`, item.title)}</span>
+                            {item.badge && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-wbk-gold/20 text-wbk-black tracking-wider uppercase">
+                                {item.badge}
+                              </span>
+                            )}
                           </Link>
 
                           {hasSub && (
                             <button
                               type="button"
-                              onClick={() => goToCategory(item.slug)}
+                              onClick={() => goToCategory(submenuKey)}
                               className="px-4 border-l border-wbk-lightgrey/60 text-wbk-brown hover:text-wbk-green hover:bg-[#F4F2F0] flex items-center justify-center transition-colors"
                               aria-label={`Open ${item.title} subcategories`}
                             >
@@ -201,18 +211,6 @@ export function MobileMenuDrawer() {
                         </div>
                       );
                     })}
-
-                    {/* 3D Configurator CTA */}
-                    <div className="p-4 bg-[#F4F2F0]">
-                      <Link
-                        href={localizedHref("/configurator")}
-                        onClick={closeMobileMenu}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-wbk-green text-wbk-white hover:bg-wbk-black text-xs font-medium uppercase tracking-[0.14em] shadow-sm transition-colors rounded-full"
-                      >
-                        <Icon3dCubeSphere size={16} />
-                        <span>{t("header.configuratorCta", "Interactive 3D Configurator")}</span>
-                      </Link>
-                    </div>
 
                     {/* User & Cart shortcuts */}
                     <div className="grid grid-cols-2 divide-x divide-wbk-lightgrey/70 bg-wbk-white">
@@ -271,19 +269,20 @@ export function MobileMenuDrawer() {
                     {/* Secondary Information & Support Links */}
                     <div className="px-4 py-3 bg-[#FBF9F8] border-t border-wbk-lightgrey flex items-center justify-around text-xs text-wbk-brown font-medium">
                       <Link
+                        href={localizedHref("/support/delivery")}
+                        onClick={closeMobileMenu}
+                        className="hover:text-wbk-black transition-colors py-1 flex items-center gap-1"
+                      >
+                        <IconTruck size={14} className="text-wbk-gold" />
+                        <span>{t("topbar.delivery", "Delivery")}</span>
+                      </Link>
+                      <span className="text-wbk-lightgrey">|</span>
+                      <Link
                         href={localizedHref("/support/faq")}
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >
                         {t("topbar.faq", "FAQ")}
-                      </Link>
-                      <span className="text-wbk-lightgrey">|</span>
-                      <Link
-                        href={localizedHref("/support/installation-guides")}
-                        onClick={closeMobileMenu}
-                        className="hover:text-wbk-black transition-colors py-1"
-                      >
-                        {t("topbar.installation", "Installation")}
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link
@@ -297,12 +296,16 @@ export function MobileMenuDrawer() {
 
                     {/* Brand Trust Assurances */}
                     <div className="p-4 bg-[#F4F2F0] border-t border-wbk-lightgrey/70 space-y-2.5 text-[11px] text-wbk-brown">
-                      <div className="flex items-center gap-2">
+                      <Link
+                        href={localizedHref("/support/delivery")}
+                        onClick={closeMobileMenu}
+                        className="flex items-center gap-2 hover:text-wbk-black transition-colors"
+                      >
                         <IconTruck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
                         <span className="text-wbk-black/80 font-medium">
                           {t("topbar.freeDelivery", "Free UK Mainland Delivery")}
                         </span>
-                      </div>
+                      </Link>
                       <div className="flex items-center gap-2">
                         <IconShieldCheck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
                         <span className="text-wbk-black/80 font-medium">

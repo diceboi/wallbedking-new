@@ -13,7 +13,10 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-    const targetFolder = (formData.get("folder") || "wallbeds").toString().replace(/^\/+|\/+$/g, "");
+    const targetBucket = (formData.get("bucket") || "ProductImages").toString();
+    const targetFolder = (formData.get("folder") || (targetBucket === "SupportFiles" ? "InstallationManuals" : "wallbeds"))
+      .toString()
+      .replace(/^\/+|\/+$/g, "");
 
     if (!file || typeof file === "string") {
       return NextResponse.json(
@@ -30,15 +33,21 @@ export async function POST(request) {
       svg: "image/svg+xml",
       avif: "image/avif",
       gif: "image/gif",
+      pdf: "application/pdf",
     };
 
-    const originalName = file.name || "image.webp";
+    const originalName = file.name || (targetBucket === "SupportFiles" ? "manual.pdf" : "image.webp");
     const extension = originalName.split(".").pop().toLowerCase();
-    const resolvedMime = (file.type && file.type.startsWith("image/")) ? file.type : MIME_MAP[extension];
+    const isPdf = extension === "pdf" || file.type === "application/pdf";
+    const resolvedMime = isPdf
+      ? "application/pdf"
+      : (file.type && file.type.startsWith("image/"))
+      ? file.type
+      : MIME_MAP[extension];
 
     if (!resolvedMime) {
       return NextResponse.json(
-        { success: false, error: "File must be an image (WebP, PNG, JPEG, SVG, AVIF, GIF)." },
+        { success: false, error: "File must be an image (WebP, PNG, JPEG, SVG, AVIF, GIF) or a PDF manual." },
         { status: 400 }
       );
     }
@@ -56,7 +65,7 @@ export async function POST(request) {
     const buffer = Buffer.from(arrayBuffer);
 
     const { data, error } = await supabaseAdmin.storage
-      .from("ProductImages")
+      .from(targetBucket)
       .upload(storagePath, buffer, {
         contentType: resolvedMime,
         upsert: true,
@@ -70,7 +79,7 @@ export async function POST(request) {
       );
     }
 
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/ProductImages/${data.path}`;
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${targetBucket}/${data.path}`;
 
     return NextResponse.json({
       success: true,

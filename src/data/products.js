@@ -6,6 +6,9 @@ export const RAW_CATALOG = catalog;
 export const SUPABASE_PRODUCT_IMAGES_BASE =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
 
+export const SUPABASE_CABINET_IMAGES_BASE =
+  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets";
+
 export const getMorphyGallery2K = (
   sizeKey = "160x200",
   typeCode = "IV",
@@ -17,6 +20,20 @@ export const getMorphyGallery2K = (
     { src: `${base}_1-m.webp`, alt: `${title} - With Mattress` },
   ];
   for (let i = 2; i <= 12; i++) {
+    gallery.push({ src: `${base}_${i}.webp`, alt: `${title} - View ${i}` });
+  }
+  return gallery;
+};
+
+export const getTraditionalGallery1K = (
+  sizeKey = "160x200",
+  typeCode = "CV",
+  title = "Traditional Wall Bed",
+  count = 9
+) => {
+  const base = `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/${sizeKey}-${typeCode}-TRADITIONAL`;
+  const gallery = [];
+  for (let i = 1; i <= count; i++) {
     gallery.push({ src: `${base}_${i}.webp`, alt: `${title} - View ${i}` });
   }
   return gallery;
@@ -67,7 +84,7 @@ export const CATEGORIES_INFO = {
     title: "Cabinets & Storage Units",
     slug: "cabinets",
     description: "Coordinated timber cabinetry, vertical and horizontal enclosures, extensions and side wardrobe units.",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    image: `${SUPABASE_CABINET_IMAGES_BASE}/1K/160x200-KV-WHITE-CABINET_ANGLE_1.webp`,
     subcategories: ["Vertical", "Horizontal", "Extensions", "Side Units"]
   },
   extras: {
@@ -85,7 +102,7 @@ export const OTHER_CATEGORIES_LIST = [
   { slug: "sofas", label: "Sofas", image: "/sofa1.webp" },
   { slug: "tables", label: "Smart Tables", image: "/sofa1.webp" },
   { slug: "mattresses", label: "Mattresses", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp" },
-  { slug: "cabinets", label: "Cabinets", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
+  { slug: "cabinets", label: "Cabinets", image: `${SUPABASE_CABINET_IMAGES_BASE}/1K/160x200-KV-WHITE-CABINET_ANGLE_1.webp` },
   { slug: "extras", label: "Extras", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
 ];
 
@@ -505,9 +522,10 @@ export const FLAGSHIP_BEDS = [
       "The time-tested Traditional Classic Vertical Wall Bed. Proven counterbalanced gas pistons and solid construction for dependable everyday use.",
     tagline: "Original mechanism, vertical fold",
     badge: "Traditional",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
+    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
+    gallery: getTraditionalGallery1K("160x200", "CV", "Classic Vertical Wall Bed (Traditional)", 9),
     price_gbp: 570,
     price_euro: 570,
     price_usd: 570,
@@ -541,9 +559,10 @@ export const FLAGSHIP_BEDS = [
       "Traditional side-folding fold-away wall bed mechanism designed for lower ceilings and compact rooms.",
     tagline: "Original mechanism, horizontal fold",
     badge: "Traditional",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_1.webp`,
+    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_2.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_2.webp`,
+    gallery: getTraditionalGallery1K("160x200", "CH", "Classic Horizontal Wall Bed (Traditional)", 9),
     price_gbp: 570,
     price_euro: 570,
     price_usd: 570,
@@ -577,9 +596,10 @@ export const FLAGSHIP_BEDS = [
       "Traditional Studio series wall bed featuring standard front panels and proven lifting pistons.",
     tagline: "Front panel vertical design",
     badge: "Traditional",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_1.webp`,
+    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_2.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_2.webp`,
+    gallery: getTraditionalGallery1K("150x200", "SV", "Studio Vertical Wall Bed (Traditional)", 7),
     price_gbp: 710,
     price_euro: 710,
     price_usd: 710,
@@ -613,9 +633,10 @@ export const FLAGSHIP_BEDS = [
       "Traditional Studio series horizontal fold-away bed mechanism with front decorative panel.",
     tagline: "Front panel horizontal design",
     badge: "Traditional",
-    image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    hover_image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-    hoverImage: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_1.webp`,
+    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_2.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_2.webp`,
+    gallery: getTraditionalGallery1K("150x200", "SH", "Studio Horizontal Wall Bed (Traditional)", 7),
     price_gbp: 710,
     price_euro: 710,
     price_usd: 710,
@@ -985,8 +1006,29 @@ export function getDynamicFlagships(templates, rawItems, category) {
       ])
     ).filter(Boolean);
 
+    const defaultVariant = matching.find((m) => {
+      const minDim = Math.min(Number(m.width) || 0, Number(m.length) || 0);
+      const maxDim = Math.max(Number(m.width) || 0, Number(m.length) || 0);
+      const slug = `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`;
+      return slug === template.defaultSizeSlug;
+    }) || matching[0];
+
+    const manualUrl =
+      defaultVariant?.installation_manual ||
+      template.installation_manual ||
+      matching.find((m) => m.installation_manual)?.installation_manual ||
+      null;
+
+    const videoUrl =
+      defaultVariant?.installation_video ||
+      template.installation_video ||
+      matching.find((m) => m.installation_video)?.installation_video ||
+      null;
+
     return {
       ...template,
+      installation_manual: manualUrl,
+      installation_video: videoUrl,
       tags: collectedTags,
       price_gbp: minGbp,
       price_euro: minEuro,
