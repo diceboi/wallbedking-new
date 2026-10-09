@@ -25,6 +25,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
+  "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
+  "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it",
   "installation_manual", "installation_video"
 ]);
 
@@ -87,6 +89,14 @@ export async function PATCH(request, { params }) {
       if (err.includes("installation_video") && supabasePayload.installation_video !== undefined) {
         console.warn("[Admin PATCH] installation_video column not in Supabase yet. Retrying without it...");
         delete supabasePayload.installation_video;
+        shouldRetry = true;
+      }
+      if (err.includes("description_") || err.includes("extended_description_")) {
+        console.warn("[Admin PATCH] description localized columns not in Supabase yet. Retrying without them...");
+        [
+          "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
+          "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it"
+        ].forEach(k => delete supabasePayload[k]);
         shouldRetry = true;
       }
 

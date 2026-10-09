@@ -395,7 +395,13 @@
     "selectAssemblyVideo": "Sélectionner une vidéo de montage",
     "officialYoutube": "Chaîne YouTube officielle",
     "officialYoutubeDesc": "Abonnez-vous à notre chaîne YouTube pour découvrir les nouveautés, conseils et réalisations chez nos clients.",
-    "visitYoutube": "Visiter la chaîne YouTube"
+    "visitYoutube": "Visiter la chaîne YouTube",
+    "faqNoQuestions": "Aucune question correspondante trouvée",
+    "faqNoQuestionsDesc": "Essayez de modifier vos critères de recherche ou contactez notre équipe d'assistance.",
+    "faqClearSearch": "Effacer la recherche",
+    "faqAnswersCount": "réponses",
+    "faqAnswerCount": "réponse",
+    "faqShowing": "Affichage de"
   },
   "footer": {
     "tagline": "Premier fabricant européen de mécanismes de lits escamotables modulaires.",
@@ -436,15 +442,6 @@
     "noAccount": "Vous n'avez pas de compte ?",
     "alreadyAccount": "Vous avez déjà un compte ?",
     "rememberPassword": "Vous vous souvenez de votre mot de passe ?"
-  },
-  "reviews": {
-    "title": "Avis Clients",
-    "allReviews": "Tous les avis",
-    "subtitle": "Retours d'expérience vérifiés de propriétaires partout en Europe.",
-    "verifiedCustomer": "Client vérifié",
-    "ratingSummary": "Noté 4,9/5 par des propriétaires vérifiés",
-    "writeReview": "Rédiger un avis",
-    "allModels": "Tous les modèles"
   },
   "about": {
     "title": "Conception de Lits Escamotables de Précision pour la Vie Moderne",

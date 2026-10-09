@@ -83,6 +83,11 @@ export function SearchBar({ className = "", onSelect = null }) {
       const searchable = normalizeStr(
         [
           item.name,
+          item.name_de,
+          item.name_fr,
+          item.name_es,
+          item.name_it,
+          item.name_por,
           item.slug,
           item.parent_category,
           catSynonyms,
@@ -94,6 +99,11 @@ export function SearchBar({ className = "", onSelect = null }) {
           item.meta_title,
           item.meta_description,
           item.description,
+          item.description_de,
+          item.description_fr,
+          item.description_es,
+          item.description_it,
+          item.description_por,
           item.product_image_alt,
           item.ean,
           item.ean_uk,

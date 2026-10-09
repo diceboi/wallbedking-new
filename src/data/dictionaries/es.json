@@ -395,7 +395,13 @@
     "selectAssemblyVideo": "Seleccionar vídeo de montaje",
     "officialYoutube": "Canal oficial de YouTube",
     "officialYoutubeDesc": "Suscríbete al canal de YouTube de Wall Bed King para descubrir novedades, consejos y transformaciones reales.",
-    "visitYoutube": "Visitar canal de YouTube"
+    "visitYoutube": "Visitar canal de YouTube",
+    "faqNoQuestions": "No se encontraron preguntas coincidentes",
+    "faqNoQuestionsDesc": "Pruebe a modificar los términos de búsqueda o contacte con nuestro equipo de atención.",
+    "faqClearSearch": "Limpiar búsqueda",
+    "faqAnswersCount": "respuestas",
+    "faqAnswerCount": "respuesta",
+    "faqShowing": "Mostrando"
   },
   "footer": {
     "tagline": "El fabricante líder europeo de mecanismos modulares para camas abatibles.",
@@ -436,15 +442,6 @@
     "noAccount": "¿No tienes cuenta?",
     "alreadyAccount": "¿Ya tienes cuenta?",
     "rememberPassword": "¿Recuerdas tu contraseña?"
-  },
-  "reviews": {
-    "title": "Opiniones de Clientes",
-    "allReviews": "Todas las opiniones",
-    "subtitle": "Comentarios reales de propietarios verificados.",
-    "verifiedCustomer": "Cliente verificado",
-    "ratingSummary": "Valorado con 4,9/5 por propietarios verificados",
-    "writeReview": "Escribir opinión",
-    "allModels": "Todos los modelos"
   },
   "about": {
     "title": "Camas Abatibles de Precisión para la Vida Moderna",

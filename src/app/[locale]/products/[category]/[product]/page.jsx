@@ -50,6 +50,8 @@ import { WaitlistModal } from "@/components/product/WaitlistModal";
 import {
   getLocalizedProductName,
   getLocalizedProductGtin,
+  getLocalizedProductDescription,
+  getLocalizedProductExtendedDescription,
   parseYouTubeVideo,
 } from "@/lib/products";
 import { getMorphyFaqs } from "@/data/morphyFaq";
@@ -837,6 +839,8 @@ export default function ProductDetailPage() {
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
   const currentEan = getLocalizedProductGtin(displayProduct, locale);
+  const localizedDescription = getLocalizedProductDescription(displayProduct, locale);
+  const localizedExtendedDescription = getLocalizedProductExtendedDescription(displayProduct, locale);
 
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {
@@ -850,7 +854,202 @@ export default function ProductDetailPage() {
     const subCat = (displayProduct.sub_category || displayProduct.type || "").toLowerCase();
 
     if (cat === "cabinets") {
-      if (subCat.includes("horiz")) {
+      const isHoriz = subCat.includes("horiz");
+      const isExt = subCat.includes("ext");
+      const isSide = subCat.includes("side");
+
+      if (locale === "de") {
+        if (isHoriz) {
+          return [
+            "Türen: 90 Grad Öffnungswinkel",
+            "Material: Melaminharzbeschichtete Möbelbauplatte",
+            "Passend für horizontale Classic Double und King Schrankbettrahmen",
+            "Flach verpackt für einfache Selbstmontage",
+            "Garantie: 1 Jahr auf Herstellungsfehler",
+          ];
+        }
+        if (isExt) {
+          return [
+            "Speziell entwickelt für horizontale Double und King Schränke",
+            "Gleicht den Höhenunterschied zu den Seitenschränken perfekt aus",
+            "Material: Melaminharzbeschichtete Möbelbauplatte",
+            "Flach verpackt für einfache Selbstmontage",
+            "Garantie: 1 Jahr auf Herstellungsfehler",
+          ];
+        }
+        if (isSide) {
+          return [
+            "Höhe: Abgestimmt auf vertikale Schränke und horizontale Schränke mit Aufsatz",
+            "Breite: 50 cm, Tiefe: 52 cm",
+            "Wahlweise: Schranktür mit Kleiderstange (90° Öffnung) oder offene Regale",
+            "Material: Melaminharzbeschichtete Möbelbauplatte",
+            "Flach verpackt für einfache Selbstmontage",
+            "Garantie: 1 Jahr auf Herstellungsfehler",
+          ];
+        }
+        return [
+          "Türen: 170 Grad Weitwinkelöffnung für bequemen und weiten Zugang",
+          "Material: Melaminharzbeschichtete Möbelbauplatte",
+          "Passend für vertikale Classic Single, Small Double, Double und King Schrankbetten",
+          "Flach verpackt für einfache Selbstmontage",
+          "Garantie: 1 Jahr auf Herstellungsfehler",
+        ];
+      }
+
+      if (locale === "fr") {
+        if (isHoriz) {
+          return [
+            "Portes : Ouverture à 90 degrés",
+            "Matériau : Panneau de particules mélaminé haute densité",
+            "Adapté aux cadres de lit escamotable horizontaux Classic Double et King",
+            "Livré à plat pour un montage aisé",
+            "Garantie : 1 an contre les défauts de fabrication",
+          ];
+        }
+        if (isExt) {
+          return [
+            "Spécialement développé pour les armoires horizontales Double et King",
+            "Compense la différence de hauteur pour s'aligner parfaitement aux meubles latéraux",
+            "Matériau : Panneau de particules mélaminé haute densité",
+            "Livré à plat pour un montage aisé",
+            "Garantie : 1 an contre les défauts de fabrication",
+          ];
+        }
+        if (isSide) {
+          return [
+            "Hauteur : Aligné sur les armoires verticales et horizontales avec rehausse",
+            "Largeur : 50 cm, Profondeur : 52 cm",
+            "Au choix : Porte avec penderie (ouverture 90°) ou étagères ouvertes",
+            "Matériau : Panneau de particules mélaminé haute densité",
+            "Livré à plat pour un montage aisé",
+            "Garantie : 1 an contre les défauts de fabrication",
+          ];
+        }
+        return [
+          "Portes : Ouverture à 170 degrés pour un accès large et facile",
+          "Matériau : Panneau de particules mélaminé haute densité",
+          "Adapté aux lits escamotables verticaux Classic Single, Small Double, Double et King",
+          "Livré à plat pour un montage aisé",
+          "Garantie : 1 an contre les défauts de fabrication",
+        ];
+      }
+
+      if (locale === "es") {
+        if (isHoriz) {
+          return [
+            "Puertas: Apertura a 90 grados",
+            "Material: Tablero de partículas con acabado melamínico",
+            "Apto para camas abatibles horizontales Classic Double y King",
+            "Embalaje plano para un montaje sencillo",
+            "Garantía: 1 año contra defectos de fabricación",
+          ];
+        }
+        if (isExt) {
+          return [
+            "Diseñado específicamente para armarios horizontales Double y King",
+            "Nivela la diferencia de altura para alinearse perfectamente con los muebles laterales",
+            "Material: Tablero de partículas con acabado melamínico",
+            "Embalaje plano para un montaje sencillo",
+            "Garantía: 1 año contra defectos de fabricación",
+          ];
+        }
+        if (isSide) {
+          return [
+            "Altura: Coincide con armarios verticales y horizontales con extensión",
+            "Anchura: 50 cm, Profundidad: 52 cm",
+            "Opciones: Puerta con barra de colgar (apertura 90°) o estantes abiertos",
+            "Material: Tablero de partículas con acabado melamínico",
+            "Embalaje plano para un montaje sencillo",
+            "Garantía: 1 año contra defectos de fabricación",
+          ];
+        }
+        return [
+          "Puertas: Apertura a 170 grados para un acceso amplio y cómodo",
+          "Material: Tablero de partículas con acabado melamínico",
+          "Apto para camas abatibles verticales Classic Single, Small Double, Double y King",
+          "Embalaje plano para un montaje sencillo",
+          "Garantía: 1 año contra defectos de fabricación",
+        ];
+      }
+
+      if (locale === "it") {
+        if (isHoriz) {
+          return [
+            "Ante: Apertura a 90 gradi",
+            "Materiale: Pannello nobilitato melaminico di alta qualità",
+            "Adatto a telai orizzontali Classic Double e King",
+            "Imballato piatto per un facile montaggio",
+            "Garanzia: 1 anno contro i difetti di fabbricazione",
+          ];
+        }
+        if (isExt) {
+          return [
+            "Sviluppato specificamente per armadi orizzontali Double e King",
+            "Compensa la differenza di altezza allineandosi alle colonne laterali",
+            "Materiale: Pannello nobilitato melaminico di alta qualità",
+            "Imballato piatto per un facile montaggio",
+            "Garanzia: 1 anno contro i difetti di fabbricazione",
+          ];
+        }
+        if (isSide) {
+          return [
+            "Altezza: Allineata agli armadi verticali e orizzontali con rialzo",
+            "Larghezza: 50 cm, Profondità: 52 cm",
+            "Versioni: Anta con asta appendiabiti (apertura 90°) o ripiani a giorno",
+            "Materiale: Pannello nobilitato melaminico di alta qualità",
+            "Imballato piatto per un facile montaggio",
+            "Garanzia: 1 anno contro i difetti di fabbricazione",
+          ];
+        }
+        return [
+          "Ante: Apertura a 170 gradi per un accesso ampio e agevole",
+          "Materiale: Pannello nobilitato melaminico di alta qualità",
+          "Adatto a letti a scomparsa verticali Classic Single, Small Double, Double e King",
+          "Imballato piatto per un facile montaggio",
+          "Garanzia: 1 anno contro i difetti di fabbricazione",
+        ];
+      }
+
+      if (locale === "por" || locale === "pt") {
+        if (isHoriz) {
+          return [
+            "Portas: Abertura a 90 graus",
+            "Material: Painel de aglomerado com acabamento melamínico",
+            "Adequado para camas rebatíveis horizontais Classic Double e King",
+            "Embalagem plana para fácil montagem",
+            "Garantia: 1 ano contra defeitos de fabrico",
+          ];
+        }
+        if (isExt) {
+          return [
+            "Desenvolvido especificamente para os armários horizontais Double e King",
+            "Compensa a diferença de altura alinhando perfeitamente com os módulos laterais",
+            "Material: Painel de aglomerado com acabamento melamínico",
+            "Embalagem plana para fácil montagem",
+            "Garantia: 1 ano contra defeitos de fabrico",
+          ];
+        }
+        if (isSide) {
+          return [
+            "Altura: Alinhada com armários verticais e horizontais com módulo superior",
+            "Largura: 50 cm, Profundidade: 52 cm",
+            "Opções: Porta com varão para cabides (abertura 90°) ou prateleiras abertas",
+            "Material: Painel de aglomerado com acabamento melamínico",
+            "Embalagem plana para fácil montagem",
+            "Garantia: 1 ano contra defeitos de fabrico",
+          ];
+        }
+        return [
+          "Portas: Abertura a 170 graus para acesso amplo e confortável",
+          "Material: Painel de aglomerado com acabamento melamínico",
+          "Adequado para camas rebatíveis verticais Classic Single, Small Double, Double e King",
+          "Embalagem plana para fácil montagem",
+          "Garantia: 1 ano contra defeitos de fabrico",
+        ];
+      }
+
+      // Default UK/US English
+      if (isHoriz) {
         return [
           "Doors: 90 degrees opening",
           "Material: Melamine-faced furniture board",
@@ -859,7 +1058,7 @@ export default function ProductDetailPage() {
           "Warranty: 1 year for manufacturing defects",
         ];
       }
-      if (subCat.includes("ext")) {
+      if (isExt) {
         return [
           "Specifically developed for the horizontal Double and King cabinets",
           "Makes up the height difference to align perfectly with side units",
@@ -868,7 +1067,7 @@ export default function ProductDetailPage() {
           "Warranty: 1 year for manufacturing defects",
         ];
       }
-      if (subCat.includes("side")) {
+      if (isSide) {
         return [
           "Height: Matches vertical Double/King cabinets and horizontal cabinets with extension",
           "Width: 50cm, Depth: 52cm",
@@ -888,7 +1087,166 @@ export default function ProductDetailPage() {
     }
 
     if (cat === "mattresses") {
-      if (subCat.includes("supreme")) {
+      const isSupreme = subCat.includes("supreme");
+      const isLuxury = subCat.includes("luxury");
+
+      if (locale === "de") {
+        if (isSupreme) {
+          return [
+            '25 cm (10") Matratzenhöhe',
+            "1.500 einzeln ummantelte Tonnentaschenfedern mit Memory-Schaum",
+            "Motion Isolation Technology™ verhindert Bewegungsübertragung",
+            "Sanfte Körperanpassung und gezielte Druckentlastung",
+            "30 Tage Geld-zurück-Garantie",
+            "Garantie: 1 Jahr auf Herstellungsfehler",
+          ];
+        }
+        if (isLuxury) {
+          return [
+            '25 cm (10") Matratzenhöhe',
+            '75 mm (3") Memory-Schaum-Schicht für tiefen Liegekomfort',
+            "Dicker Memory-Schaum kombiniert mit hochelastischem Kaltschaumkern",
+            "Mittelfeste orthopädische Stützung der Wirbelsäule",
+            "30 Tage Geld-zurück-Garantie",
+            "Garantie: 1 Jahr auf Herstellungsfehler",
+          ];
+        }
+        return [
+          '20 cm (8") Profilhöhe für nahtloses Schließen des Schrankbettes',
+          '50 mm (2") Memory-Schaum für druckentlastenden Komfort',
+          "Hochverdichteter Schaumstoffkern für langlebigen Halt",
+          "Speziell für den täglichen Schlaf in Schrankbetten entwickelt",
+          "30 Tage Geld-zurück-Garantie",
+          "Garantie: 1 Jahr auf Herstellungsfehler",
+        ];
+      }
+
+      if (locale === "fr") {
+        if (isSupreme) {
+          return [
+            'Épaisseur de 25 cm (10")',
+            "1 500 ressorts ensachés individuels combinés à de la mousse à mémoire de forme",
+            "Technologie Motion Isolation™ pour éliminer les mouvements du partenaire",
+            "Confort enveloppant haut de gamme et soulagement ciblé de la pression",
+            "Garantie satisfait ou remboursé de 30 jours",
+            "Garantie : 1 an contre les défauts de fabrication",
+          ];
+        }
+        if (isLuxury) {
+          return [
+            'Épaisseur de 25 cm (10")',
+            'Couche de 75 mm (3") de mousse à mémoire de forme pour un confort profond',
+            "Mousse viscoélastique épaisse combinée à une base reflex haute résilience",
+            "Soutien orthopédique mi-ferme pour l'alignement de la colonne",
+            "Garantie satisfait ou remboursé de 30 jours",
+            "Garantie : 1 an contre les défauts de fabrication",
+          ];
+        }
+        return [
+          'Épaisseur de 20 cm (8") pour un pliage fluide dans le lit escamotable',
+          'Couche de 50 mm (2") de mousse à mémoire de forme ergonomique',
+          "Base haute densité assurant un soutien dorsal durable",
+          "Conçu pour un sommeil réparateur quotidien dans les lits escamotables",
+          "Garantie satisfait ou remboursé de 30 jours",
+          "Garantie : 1 an contre les défauts de fabrication",
+        ];
+      }
+
+      if (locale === "es") {
+        if (isSupreme) {
+          return [
+            'Perfil de 25 cm (10") de grosor',
+            "1.500 muelles ensacados independientes combinados con espuma viscoelástica",
+            "Tecnología Motion Isolation™ para eliminar las molestias del movimiento",
+            "Adaptabilidad de lujo y alivio de presión anatómico",
+            "Garantía de reembolso de 30 días",
+            "Garantía: 1 año contra defectos de fabricación",
+          ];
+        }
+        if (isLuxury) {
+          return [
+            'Perfil de 25 cm (10") de grosor',
+            'Capa de 75 mm (3") de viscoelástica para un confort de alivio profundo',
+            "Viscoelástica de alta calidad combinada con núcleo de espuma reflex",
+            "Soporte ortopédico de firmeza media para alineación espinal",
+            "Garantía de reembolso de 30 días",
+            "Garantía: 1 año contra defectos de fabricación",
+          ];
+        }
+        return [
+          'Perfil de 20 cm (8") de grosor para plegado perfecto en la cama abatible',
+          'Capa de 50 mm (2") de viscoelástica para confort y alivio de presión',
+          "Núcleo de alta densidad para un soporte duradero de la columna",
+          "Diseñado para un descanso reparador diario en camas abatibles",
+          "Garantía de reembolso de 30 días",
+          "Garantía: 1 año contra defectos de fabricación",
+        ];
+      }
+
+      if (locale === "it") {
+        if (isSupreme) {
+          return [
+            'Altezza di 25 cm (10")',
+            "1.500 molle insacchettate indipendenti unite a memory foam",
+            "Tecnologia Motion Isolation™ per isolare i movimenti notturni",
+            "Adattabilità anatomica superiore e sollievo mirato dalla pressione",
+            "Garanzia di rimborso completo di 30 giorni",
+            "Garanzia: 1 anno contro i difetti di fabbricazione",
+          ];
+        }
+        if (isLuxury) {
+          return [
+            'Altezza di 25 cm (10")',
+            'Strato di memory foam da 75 mm (3") per un comfort profondo',
+            "Spesso memory foam combinato con base reflex ad alta elasticità",
+            "Sostegno ortopedico medio-rigido per l'allineamento della colonna",
+            "Garanzia di rimborso completo di 30 giorni",
+            "Garanzia: 1 anno contro i difetti di fabbricazione",
+          ];
+        }
+        return [
+          'Altezza di 20 cm (8") per una chiusura perfetta nel letto a scomparsa',
+          'Strato di memory foam da 50 mm (2") per un comfort avvolgente',
+          "Base in schiuma ad alta densità per un supporto duraturo",
+          "Studiato per il riposo quotidiano nei letti a ribalta",
+          "Garanzia di rimborso completo di 30 giorni",
+          "Garanzia: 1 anno contro i difetti di fabbricazione",
+        ];
+      }
+
+      if (locale === "por" || locale === "pt") {
+        if (isSupreme) {
+          return [
+            'Espessura de 25 cm (10")',
+            "1.500 molas ensacadas individuais aliadas a espuma viscoelástica",
+            "Motion Isolation Technology™ para eliminar a perturbação de movimentos",
+            "Acolhimento de luxo e alívio de pressão direcionado",
+            "Garantia de reembolso total de 30 dias",
+            "Garantia: 1 ano contra defeitos de fabrico",
+          ];
+        }
+        if (isLuxury) {
+          return [
+            'Espessura de 25 cm (10")',
+            'Camada de 75 mm (3") de viscoelástica para conforto de alívio profundo',
+            "Espuma viscoelástica combinada com base de alta resiliência",
+            "Suporte ortopédico de firmeza média para alinhamento da coluna",
+            "Garantia de reembolso total de 30 dias",
+            "Garantia: 1 ano contra defeitos de fabrico",
+          ];
+        }
+        return [
+          'Espessura de 20 cm (8") para recolha perfeita na cama rebatível',
+          'Camada de 50 mm (2") de viscoelástica para alívio de pressão',
+          "Base de alta densidade para suporte duradouro da coluna",
+          "Concebido para um sono reparador diário em camas rebatíveis",
+          "Garantia de reembolso total de 30 dias",
+          "Garantia: 1 ano contra defeitos de fabrico",
+        ];
+      }
+
+      // Default UK/US English
+      if (isSupreme) {
         return [
           '10" (25cm) thickness profile',
           "1,500 individually wrapped pocket springs combined with memory foam",
@@ -898,7 +1256,7 @@ export default function ProductDetailPage() {
           "Warranty: 1 year for manufacturing defects",
         ];
       }
-      if (subCat.includes("luxury")) {
+      if (isLuxury) {
         return [
           '10" (25cm) thickness profile',
           '3" layer of memory foam for deep pressure-relieving comfort',
@@ -924,7 +1282,7 @@ export default function ProductDetailPage() {
       t("product.bulletMechanism", "Heavy duty counter-balance mechanism (10,000+ cycle test)"),
       t("product.bulletLegs", "Automatic self-folding leg system for safety and ease"),
     ];
-  }, [displayProduct, activeProduct, categorySlug, t]);
+  }, [displayProduct, activeProduct, categorySlug, locale, t]);
 
   // ── CART INTEGRATION ──
   const { addItem } = useCart();
@@ -1607,7 +1965,8 @@ export default function ProductDetailPage() {
               {/* Spec description */}
               <div className="pt-2">
                 <p className="text-[13px] text-wbk-black/90 leading-relaxed font-poppins">
-                  {displayProduct.description ||
+                  {localizedDescription ||
+                    displayProduct.description ||
                     "The Classic Wall Bed is a practical and durable space-saving solution for bedrooms, guest rooms and multifunctional spaces."}
                 </p>
               </div>
@@ -2217,12 +2576,13 @@ export default function ProductDetailPage() {
                     {t("product.aboutProduct", "About")} {localizedProductName}
                   </h3>
                   <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    {displayProduct.description ||
+                    {localizedDescription ||
+                      displayProduct.description ||
                       "The Morphy Wall Bed is a flexible modular sleeping system designed to adapt to changing spaces and needs."}
                   </p>
-                  {displayProduct.extended_description && (
+                  {localizedExtendedDescription && (
                     <p className="font-poppins text-sm leading-relaxed text-wbk-black/75">
-                      {displayProduct.extended_description}
+                      {localizedExtendedDescription}
                     </p>
                   )}
                   <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
@@ -2970,7 +3330,7 @@ export default function ProductDetailPage() {
                 <ProductReviewsSection
                   productSlug={productSlug}
                   productName={
-                    activeProduct?.name || "Wall Bed King Murphy Bed"
+                    localizedProductName || activeProduct?.name || "Wall Bed King Murphy Bed"
                   }
                   initialOpen={
                     searchParams?.get("review") === "true" ||

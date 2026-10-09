@@ -18,6 +18,7 @@ import {
   IconMail,
 } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { getFaqs } from "@/data/faqs";
 
 const FAQ_CATEGORIES = [
   { id: "all", label: "All Questions", labelKey: "support.faqCatAll", icon: IconHelpCircle },
@@ -29,130 +30,16 @@ const FAQ_CATEGORIES = [
   { id: "warranty", label: "Warranty & Guarantee", labelKey: "support.faqCatWarranty", icon: IconShieldCheck },
 ];
 
-const FAQ_ITEMS = [
-  // Payments
-  {
-    category: "payments",
-    question: "What payment methods do you accept?",
-    answer:
-      "Wall Bed King accepts all major credit and debit cards (Visa, MasterCard, Maestro, American Express) as well as PayPal and PayPal Credit. All transactions are processed using high-grade SSL encryption through trusted online payment gateways for maximum security.",
-  },
-  {
-    category: "payments",
-    question: "What is your refund and return policy?",
-    answer:
-      "All our wall beds are backed by a no-quibble 30-day money back guarantee. If for any reason you wish to return your items within 30 days of receipt, we will issue a refund of the purchase price once the goods are returned to our warehouse. Please note that return delivery charges are not refundable and items should be in good, resalable condition. Missing original packaging is not a problem.",
-  },
-  {
-    category: "payments",
-    question: "Can I pay over the telephone or upon collection?",
-    answer:
-      "Yes! If you prefer not to order online, our customer service specialists can take your order and payment directly over the telephone during business hours. Alternatively, if you choose Click & Collect from our Harlow warehouse, you can pay in advance or inspect upon arrival.",
-  },
-  {
-    category: "payments",
-    question: "How secure are my personal details?",
-    answer:
-      "Online security is our utmost priority. Our store utilizes 256-bit SSL encryption to guarantee that all personal and payment information is completely protected. We never store credit card numbers on our servers.",
-  },
-
-  // Deliveries
-  {
-    category: "deliveries",
-    question: "What shipping options are available and how long does delivery take?",
-    answer:
-      "We offer three delivery options for mainland UK:\n• Economy (Free): 2 to 4 weeks delivery time.\n• Standard (£49): 1 to 2 weeks delivery time.\n• Express (£79): 2 to 5 working days (subject to in-stock availability).\nWe also offer Click & Collect free of charge directly from our Harlow, Essex warehouse (CM20 2HU).",
-  },
-  {
-    category: "deliveries",
-    question: "Do you deliver outside of the United Kingdom?",
-    answer:
-      "Yes! We regularly deliver across the European Union and internationally. Because international freight depends on dimensions and destination postal code, please contact our support team before placing your order so we can calculate and confirm your tailored shipping rate.",
-  },
-  {
-    category: "deliveries",
-    question: "How will my wall bed be packaged?",
-    answer:
-      "Wall Bed King frames are flat-packed into heavy-duty reinforced corrugated cartons with internal protective padding. This ensures compact transport that easily fits through standard doorways, elevators, and narrow stairwells.",
-  },
-
-  // Mattresses
-  {
-    category: "mattresses",
-    question: "Can I use my existing standard mattress on a Wall Bed King?",
-    answer:
-      "Yes! All our bed frames are engineered to standard UK and European mattress sizes (Small Single, Single, Small Double, Double, King, and Super King). You can use any standard coil, pocket sprung, or memory foam mattress up to 30cm (12 inches) thick. Alternatively, you can pair your frame with our specially weighted Comfort, Luxury, or Supreme wall bed mattresses.",
-  },
-  {
-    category: "mattresses",
-    question: "Do wall bed frames come with a mattress included?",
-    answer:
-      "Our bed frame kits include the complete structural mechanism, sprung birch slats, and hardware, but mattresses are sold separately. This allows you to either reuse your current mattress or select from our Comfort, Luxury, and Supreme models designed specifically for vertical and horizontal fold-away operation.",
-  },
-
-  // Installation
-  {
-    category: "installation",
-    question: "Does my bed need to be fixed to a wall, the floor, or both?",
-    answer:
-      "Unlike many older Murphy bed systems that strictly require masonry walls, Wall Bed King’s versatile mounting brackets allow you to fix the mechanism to a solid wall, to the floor, or to both. If you have stud walls (plasterboard), you can easily attach the brackets into timber/metal studs or anchor the frame directly into the subfloor.",
-  },
-  {
-    category: "installation",
-    question: "How difficult is it to assemble and install the bed?",
-    answer:
-      "Our mechanism is designed for DIY assembly with clear, step-by-step illustrated manuals and video tutorials. On average, two people can assemble and mount the entire bed frame in about 1 to 2 hours using standard household tools (screwdriver, wrench/spanner, drill, and spirit level).",
-  },
-  {
-    category: "installation",
-    question: "Can I remove or relocate the bed if I move home?",
-    answer:
-      "Absolutely. The entire system can be unbolted and disassembled without damaging your room. Many of our customers take their Wall Bed King with them when moving house or relocate it between bedrooms as their family's needs evolve.",
-  },
-
-  // Everyday Usage
-  {
-    category: "usage",
-    question: "Are Wall Bed King beds designed for everyday, permanent use?",
-    answer:
-      "Yes, 100%! Unlike temporary sofa beds or folding cots with thin wire springs, our wall beds feature heavy-gauge cold-rolled steel construction and individually cushioned sprung birch slats. When paired with a quality mattress, they provide the exact same orthopedic comfort and spinal support as a luxury fixed bed.",
-  },
-  {
-    category: "usage",
-    question: "Can I leave sheets, blankets, and pillows on the bed when folding it away?",
-    answer:
-      "Yes! Our mechanism includes dedicated quick-release mattress retaining straps. You can leave your fitted sheet, duvet, and pillows neatly made up on the mattress, buckle the strap across, and fold the bed away in seconds.",
-  },
-  {
-    category: "usage",
-    question: "How easy is it to raise and lower the bed?",
-    answer:
-      "Thanks to our high-precision German-engineered gas piston cylinders, the bed frame is virtually weightless during operation. Lowering or lifting takes less than 5 seconds and can be done effortlessly with just one hand.",
-  },
-
-  // Warranty
-  {
-    category: "warranty",
-    question: "What warranty do you offer on your wall beds?",
-    answer:
-      "We provide an industry-leading Lifetime Mechanism Warranty on all Wall Bed King steel frames and gas piston systems. While competitors typically offer 1 to 5 years, we stand behind our European engineering with complete confidence.",
-  },
-  {
-    category: "warranty",
-    question: "Do you manufacture these beds or are you a reseller?",
-    answer:
-      "Wall Bed King is a direct European manufacturer. We design, precision-engineer, and produce all our mechanisms in our own facilities. There are no middlemen or external distributors, which allows us to offer industrial-grade quality at direct factory prices.",
-  },
-];
-
 export default function FAQPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, locale } = useLocale();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [openIndex, setOpenIndex] = useState(0);
 
+  const faqItems = useMemo(() => getFaqs(locale), [locale]);
+
   const filteredFAQs = useMemo(() => {
-    return FAQ_ITEMS.filter((item) => {
+    return faqItems.filter((item) => {
       const matchesCategory =
         activeCategory === "all" || item.category === activeCategory;
       const q = searchQuery.toLowerCase().trim();
@@ -163,7 +50,14 @@ export default function FAQPage() {
         item.answer.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [faqItems, activeCategory, searchQuery]);
+
+  const activeCategoryObj = FAQ_CATEGORIES.find((c) => c.id === activeCategory);
+  const activeCategoryLabel = activeCategoryObj
+    ? activeCategoryObj.labelKey
+      ? t(activeCategoryObj.labelKey, activeCategoryObj.label)
+      : activeCategoryObj.label
+    : t("support.faqCatAll", "Questions");
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24">
@@ -188,7 +82,10 @@ export default function FAQPage() {
               {t("support.faqTitle", "Frequently Asked Questions")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown font-poppins leading-relaxed">
-              {t("support.faqSubtitle", "Find quick, comprehensive answers regarding our space-saving Murphy beds, installation requirements, delivery timelines, and lifetime warranty.")}
+              {t(
+                "support.faqSubtitle",
+                "Find quick, comprehensive answers regarding our space-saving Murphy beds, installation requirements, delivery timelines, and lifetime warranty."
+              )}
             </p>
 
             {/* Instant search inside FAQ */}
@@ -201,7 +98,10 @@ export default function FAQPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("support.faqSearchPlaceholder", "Search questions (e.g. wall fixing, mattress thickness, delivery)...")}
+                placeholder={t(
+                  "support.faqSearchPlaceholder",
+                  "Search questions (e.g. wall fixing, mattress thickness, delivery)..."
+                )}
                 className="w-full h-12 pl-12 pr-4 text-xs sm:text-sm bg-white border border-wbk-lightgrey rounded-none font-poppins text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none focus:border-wbk-black shadow-xs transition-colors"
               />
             </div>
@@ -224,8 +124,8 @@ export default function FAQPage() {
                   const isActive = activeCategory === cat.id;
                   const count =
                     cat.id === "all"
-                      ? FAQ_ITEMS.length
-                      : FAQ_ITEMS.filter((i) => i.category === cat.id).length;
+                      ? faqItems.length
+                      : faqItems.filter((i) => i.category === cat.id).length;
 
                   return (
                     <button
@@ -265,7 +165,10 @@ export default function FAQPage() {
                   {t("support.stillHaveQuestions", "Still have questions?")}
                 </p>
                 <p className="mt-1 text-[11px] text-wbk-brown font-poppins leading-relaxed">
-                  {t("support.stillHaveQuestionsDesc", "Our wall bed specialists are available to assist with room measurements and specifications.")}
+                  {t(
+                    "support.stillHaveQuestionsDesc",
+                    "Our wall bed specialists are available to assist with room measurements and specifications."
+                  )}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
                   <a
@@ -291,26 +194,34 @@ export default function FAQPage() {
           <main className="lg:col-span-8">
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-wbk-lightgrey/60">
               <h2 className="font-new-york text-2xl text-wbk-black">
-                {FAQ_CATEGORIES.find((c) => c.id === activeCategory)?.label || "Questions"}
+                {activeCategoryLabel}
               </h2>
               <span className="text-xs font-poppins text-wbk-brown">
-                Showing {filteredFAQs.length} {filteredFAQs.length === 1 ? "answer" : "answers"}
+                {t("support.faqShowing", "Showing")} {filteredFAQs.length}{" "}
+                {filteredFAQs.length === 1
+                  ? t("support.faqAnswerCount", "answer")
+                  : t("support.faqAnswersCount", "answers")}
               </span>
             </div>
 
             {filteredFAQs.length === 0 ? (
               <div className="py-16 text-center bg-[#FBF9F8] rounded-none border border-wbk-lightgrey/80 p-8">
                 <IconHelpCircle size={36} className="mx-auto text-wbk-brown/60 mb-3" />
-                <p className="font-new-york text-xl text-wbk-black">No matching questions found</p>
+                <p className="font-new-york text-xl text-wbk-black">
+                  {t("support.faqNoQuestions", "No matching questions found")}
+                </p>
                 <p className="mt-2 text-xs font-poppins text-wbk-brown">
-                  Try adjusting your search terms or contact our support team directly.
+                  {t(
+                    "support.faqNoQuestionsDesc",
+                    "Try adjusting your search terms or contact our support team directly."
+                  )}
                 </p>
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
                   className="mt-5 px-5 py-2 text-xs font-medium rounded-full bg-wbk-black text-white hover:bg-wbk-green transition-colors cursor-pointer"
                 >
-                  Clear search
+                  {t("support.faqClearSearch", "Clear search")}
                 </button>
               </div>
             ) : (
@@ -320,7 +231,7 @@ export default function FAQPage() {
 
                   return (
                     <div
-                      key={faq.question}
+                      key={faq.id || faq.question}
                       className="border border-wbk-lightgrey rounded-none bg-white overflow-hidden transition-shadow hover:shadow-xs"
                     >
                       <button

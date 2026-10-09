@@ -30,7 +30,11 @@ import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { getProductPrice } from "@/lib/i18n";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
-import { isProductAvailableInLocale } from "@/lib/products";
+import {
+  isProductAvailableInLocale,
+  getLocalizedProductName,
+  getLocalizedProductDescription,
+} from "@/lib/products";
 
 // Multi-language string normalization for Hungarian and English search
 const normalizeStr = (s) =>
@@ -306,6 +310,7 @@ function ProductsSearchContent() {
       const searchableText = normalizeStr(
         [
           prod.name,
+          getLocalizedProductName(prod, locale),
           prod.title,
           prod.slug,
           prod.parent_category,
@@ -313,6 +318,7 @@ function ProductsSearchContent() {
           prod.sub_category,
           prod.orientation,
           prod.description,
+          getLocalizedProductDescription(prod, locale),
           prod.tagline,
           prod.badge,
           catSynonyms,

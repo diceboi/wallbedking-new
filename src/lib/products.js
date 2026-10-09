@@ -192,6 +192,102 @@ export function getLocalizedProductGtin(product, locale = "en") {
 }
 
 /**
+ * Resolves the localized product description for a specific storefront locale / market.
+ * Priority rule: Database localized column takes precedence, followed by localized catalog fallback.
+ */
+export function getLocalizedProductDescription(product, locale = "en") {
+  if (!product) return "";
+  const normLocale = (locale || "en").toLowerCase();
+  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+
+  // 1. Direct column on the current product object
+  const directDesc = check(product[`description_${normLocale}`]);
+  if (directDesc) return directDesc;
+
+  // 2. Portuguese alias handling (por <-> pt)
+  if (normLocale === "por" || normLocale === "pt") {
+    const val = check(product.description_por) || check(product.description_pt);
+    if (val) return val;
+  }
+
+  // 3. English aliases (en <-> uk)
+  if (normLocale === "en" || normLocale === "uk") {
+    const val = check(product.description_en) || check(product.description_uk);
+    if (val) return val;
+  }
+
+  // 4. Fallback to catalog definition if product is from DB and columns are not yet filled
+  if (product.slug) {
+    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    if (catFallback && catFallback !== product) {
+      const fbDirect = check(catFallback[`description_${normLocale}`]);
+      if (fbDirect) return fbDirect;
+      if (normLocale === "por" || normLocale === "pt") {
+        const fbPor = check(catFallback.description_por) || check(catFallback.description_pt);
+        if (fbPor) return fbPor;
+      }
+      if (normLocale === "en" || normLocale === "uk") {
+        const fbEn = check(catFallback.description_en) || check(catFallback.description_uk);
+        if (fbEn) return fbEn;
+      }
+    }
+  }
+
+  // 5. Default fallback to description_en, then generic description
+  return (
+    check(product.description_en) ||
+    check(product.description) ||
+    ""
+  );
+}
+
+/**
+ * Resolves the localized extended product description (technical specs & details)
+ * for a specific storefront locale / market.
+ */
+export function getLocalizedProductExtendedDescription(product, locale = "en") {
+  if (!product) return "";
+  const normLocale = (locale || "en").toLowerCase();
+  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+
+  // 1. Direct column on current object
+  const directExt = check(product[`extended_description_${normLocale}`]);
+  if (directExt) return directExt;
+
+  // 2. Portuguese alias
+  if (normLocale === "por" || normLocale === "pt") {
+    const val = check(product.extended_description_por) || check(product.extended_description_pt);
+    if (val) return val;
+  }
+
+  // 3. English alias
+  if (normLocale === "en" || normLocale === "uk") {
+    const val = check(product.extended_description_en);
+    if (val) return val;
+  }
+
+  // 4. Fallback to catalog definition
+  if (product.slug) {
+    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    if (catFallback && catFallback !== product) {
+      const fbDirect = check(catFallback[`extended_description_${normLocale}`]);
+      if (fbDirect) return fbDirect;
+      if (normLocale === "por" || normLocale === "pt") {
+        const fbPor = check(catFallback.extended_description_por) || check(catFallback.extended_description_pt);
+        if (fbPor) return fbPor;
+      }
+    }
+  }
+
+  // 5. Default fallback to extended_description_en, then generic extended_description
+  return (
+    check(product.extended_description_en) ||
+    check(product.extended_description) ||
+    ""
+  );
+}
+
+/**
  * Resolves the storefront URL for any product or variant.
  * Maps bed models to their flagship page with the exact ?size= query parameter,
  * and handles sofas, mattresses, cabinets, and tables.

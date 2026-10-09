@@ -310,8 +310,8 @@
     "yourEmail": "Ihre E-Mail (wird nicht veröffentlicht)",
     "headline": "Überschrift / Zusammenfassung (optional)",
     "headlinePlaceholder": "z.B. Sanfter Mechanismus, enorme Platzersparnis!",
-    "yourReview": "Ihre Bewertung *"
-    ,"reviewPlaceholder": "Erzählen Sie uns von der Montage, der Verarbeitungsqualität und dem Komfort...",
+    "yourReview": "Ihre Bewertung *",
+    "reviewPlaceholder": "Erzählen Sie uns von der Montage, der Verarbeitungsqualität und dem Komfort...",
     "attachPhotos": "Fotos hinzufügen (optional - max. 4)",
     "add": "Hinzufügen",
     "submittingReview": "Bewertung wird übermittelt...",
@@ -395,7 +395,13 @@
     "selectAssemblyVideo": "Montagevideo auswählen",
     "officialYoutube": "Offizieller YouTube-Kanal",
     "officialYoutubeDesc": "Abonnieren Sie unseren YouTube-Kanal für Produktneuheiten, Tipps und Raumtransformationen unserer Kunden.",
-    "visitYoutube": "YouTube-Kanal besuchen"
+    "visitYoutube": "YouTube-Kanal besuchen",
+    "faqNoQuestions": "Keine passenden Fragen gefunden",
+    "faqNoQuestionsDesc": "Versuchen Sie Ihre Suchbegriffe anzupassen oder kontaktieren Sie unseren Kundenservice.",
+    "faqClearSearch": "Suche zurücksetzen",
+    "faqAnswersCount": "Antworten",
+    "faqAnswerCount": "Antwort",
+    "faqShowing": "Angezeigt werden"
   },
   "footer": {
     "tagline": "Europas führender Hersteller hochwertiger modularer Schrankbettmechanismen.",
@@ -436,15 +442,6 @@
     "noAccount": "Noch kein Konto?",
     "alreadyAccount": "Bereits ein Konto?",
     "rememberPassword": "Passwort wieder eingefallen?"
-  },
-  "reviews": {
-    "title": "Kundenbewertungen",
-    "allReviews": "Alle Bewertungen",
-    "subtitle": "Echtes Feedback von verifizierten Hausbesitzern.",
-    "verifiedCustomer": "Verifizierter Kunde",
-    "ratingSummary": "Mit 4,9/5 von verifizierten Kunden bewertet",
-    "writeReview": "Bewertung schreiben",
-    "allModels": "Alle Modelle"
   },
   "about": {
     "title": "Präzisionsgefertigte Schrankbetten für modernes Wohnen",

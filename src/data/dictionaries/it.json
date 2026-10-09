@@ -395,7 +395,13 @@
     "selectAssemblyVideo": "Seleziona video di montaggio",
     "officialYoutube": "Canale YouTube ufficiale",
     "officialYoutubeDesc": "Iscriviti al canale YouTube di Wall Bed King per scoprire novità, consigli e trasformazioni dei nostri clienti.",
-    "visitYoutube": "Visita il canale YouTube"
+    "visitYoutube": "Visita il canale YouTube",
+    "faqNoQuestions": "Nessuna domanda corrispondente trovata",
+    "faqNoQuestionsDesc": "Prova a modificare i termini di ricerca o contatta il nostro supporto.",
+    "faqClearSearch": "Cancella ricerca",
+    "faqAnswersCount": "risposte",
+    "faqAnswerCount": "risposta",
+    "faqShowing": "Mostrando"
   },
   "footer": {
     "tagline": "Produttore leader europeo di meccanismi modulari per letti a scomparsa.",
@@ -436,15 +442,6 @@
     "noAccount": "Non hai ancora un account?",
     "alreadyAccount": "Hai già un account?",
     "rememberPassword": "Ti ricordi la password?"
-  },
-  "reviews": {
-    "title": "Recensioni Clienti",
-    "allReviews": "Tutte le recensioni",
-    "subtitle": "Feedback autentico da proprietari di casa verificati.",
-    "verifiedCustomer": "Cliente verificato",
-    "ratingSummary": "Valutato 4,9/5 da acquirenti verificati",
-    "writeReview": "Scrivi una recensione",
-    "allModels": "Tutti i modelli"
   },
   "about": {
     "title": "Letti a Scomparsa di Precisione per l'Abitare Moderno",

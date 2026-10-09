@@ -200,7 +200,9 @@ export function ProductReviewsSection({
               {"☆".repeat(5 - Math.round(stats.avgRating || 5))}
             </div>
             <span className="font-semibold text-sm text-wbk-black">
-              {stats.avgRating || "5.0"} {t("reviews.outOfFive", "out of 5")}
+              {locale === "en" || locale === "us"
+                ? String(stats.avgRating || "5.0")
+                : String(stats.avgRating || "5").replace(".", ",")} {t("reviews.outOfFive", "out of 5")}
             </span>
           </div>
           <p className="text-xs text-wbk-brown">

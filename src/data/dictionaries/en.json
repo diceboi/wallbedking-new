@@ -471,7 +471,13 @@
     "selectAssemblyVideo": "Select Assembly Video",
     "officialYoutube": "Official YouTube Channel",
     "officialYoutubeDesc": "Subscribe to the Wall Bed King YouTube channel for new design releases, tips, and customer room transformations.",
-    "visitYoutube": "Visit YouTube Channel"
+    "visitYoutube": "Visit YouTube Channel",
+    "faqNoQuestions": "No matching questions found",
+    "faqNoQuestionsDesc": "Try adjusting your search terms or contact our support team directly.",
+    "faqClearSearch": "Clear search",
+    "faqAnswersCount": "answers",
+    "faqAnswerCount": "answer",
+    "faqShowing": "Showing"
   },
   "footer": {
     "tagline": "The UK's leading manufacturer of high-quality modular wall bed mechanisms.",

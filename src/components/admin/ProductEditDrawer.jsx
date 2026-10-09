@@ -56,6 +56,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
   const [isQuickTagOpen, setIsQuickTagOpen] = useState(false);
   const [quickTagName, setQuickTagName] = useState("");
   const [quickTagColor, setQuickTagColor] = useState("#D4AF37");
+  const [descLocaleTab, setDescLocaleTab] = useState("en");
 
   // Installation Manual states
   const [manualsList, setManualsList] = useState([]);
@@ -205,6 +206,22 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
         gtin_por: product.gtin_por ?? product.gtin_pt ?? product.ean_pt ?? masterEan,
         gtin_it: product.gtin_it ?? product.ean_it ?? masterEan,
 
+        description_en: product.description_en ?? product.description ?? "",
+        description_us: product.description_us ?? product.description_en ?? product.description ?? "",
+        description_de: product.description_de ?? product.description ?? "",
+        description_fr: product.description_fr ?? product.description ?? "",
+        description_es: product.description_es ?? product.description ?? "",
+        description_por: product.description_por ?? product.description_pt ?? product.description ?? "",
+        description_it: product.description_it ?? product.description ?? "",
+
+        extended_description_en: product.extended_description_en ?? product.extended_description ?? "",
+        extended_description_us: product.extended_description_us ?? product.extended_description_en ?? product.extended_description ?? "",
+        extended_description_de: product.extended_description_de ?? "",
+        extended_description_fr: product.extended_description_fr ?? "",
+        extended_description_es: product.extended_description_es ?? "",
+        extended_description_por: product.extended_description_por ?? product.extended_description_pt ?? "",
+        extended_description_it: product.extended_description_it ?? "",
+
         tags: Array.isArray(product.tags) ? product.tags : [],
         available_locales:
           Array.isArray(product.available_locales) && product.available_locales.length > 0
@@ -245,6 +262,21 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
       name_es: baseName,
       name_por: baseName,
       name_it: baseName,
+    }));
+  };
+
+  const handleCopyBaseDescToAll = () => {
+    const baseDesc = formData?.description_en || formData?.description || "";
+    if (!baseDesc) return;
+    setFormData((prev) => ({
+      ...prev,
+      description_en: baseDesc,
+      description_us: baseDesc,
+      description_de: baseDesc,
+      description_fr: baseDesc,
+      description_es: baseDesc,
+      description_por: baseDesc,
+      description_it: baseDesc,
     }));
   };
 
@@ -1773,18 +1805,109 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
               </div>
             </div>
 
-            {/* Description Textarea */}
-            <div>
-              <label className="block text-xs font-medium text-wbk-black mb-1">
-                Product Description
-              </label>
-              <textarea
-                rows={4}
-                value={formData.description || ""}
-                onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Detailed description of the product mechanism, materials, and warranty..."
-                className="w-full p-2.5 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins leading-relaxed"
-              />
+            {/* Localized Descriptions Section */}
+            <div className="bg-[#FAF9F7] p-3.5 border border-wbk-lightgrey/80 rounded-none space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-2">
+                <div>
+                  <label className="block text-xs font-semibold text-wbk-black">
+                    Product Description (Multi-Market)
+                  </label>
+                  <p className="text-[10px] text-wbk-brown/70 font-poppins">
+                    Localized descriptions displayed on product detail pages and buy box.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyBaseDescToAll}
+                  className="text-[10px] font-medium text-wbk-green hover:underline flex items-center gap-1 self-start sm:self-auto"
+                >
+                  <span>📋</span>
+                  <span>Copy English description to all markets</span>
+                </button>
+              </div>
+
+              {/* Market Language Pills */}
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { id: "en", flag: "🇬🇧", label: "UK / EN" },
+                  { id: "us", flag: "🇺🇸", label: "US" },
+                  { id: "de", flag: "🇩🇪", label: "DE (German)" },
+                  { id: "fr", flag: "🇫🇷", label: "FR (French)" },
+                  { id: "es", flag: "🇪🇸", label: "ES (Spanish)" },
+                  { id: "por", flag: "🇵🇹", label: "POR (Portuguese)" },
+                  { id: "it", flag: "🇮🇹", label: "IT (Italian)" },
+                ].map((market) => (
+                  <button
+                    key={market.id}
+                    type="button"
+                    onClick={() => setDescLocaleTab(market.id)}
+                    className={`px-2.5 py-1 text-[11px] font-medium border flex items-center gap-1.5 transition-colors ${
+                      descLocaleTab === market.id
+                        ? "bg-wbk-black text-white border-wbk-black"
+                        : "bg-white text-wbk-black/80 border-wbk-lightgrey hover:bg-[#F0EDE8]"
+                    }`}
+                  >
+                    <span>{market.flag}</span>
+                    <span>{market.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Active Market Description Textarea */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-wbk-brown uppercase tracking-wider">
+                  Main Description ({descLocaleTab.toUpperCase()})
+                </label>
+                <textarea
+                  rows={3}
+                  value={
+                    formData[`description_${descLocaleTab}`] ??
+                    (descLocaleTab === "en" ? formData.description : "") ??
+                    ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleChange(`description_${descLocaleTab}`, val);
+                    if (descLocaleTab === "en") {
+                      handleChange("description", val);
+                      handleChange("description_en", val);
+                    }
+                    if (descLocaleTab === "por") {
+                      handleChange("description_pt", val);
+                    }
+                  }}
+                  placeholder={`Detailed description for ${descLocaleTab.toUpperCase()} market...`}
+                  className="w-full p-2.5 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins leading-relaxed"
+                />
+              </div>
+
+              {/* Extended Description (Technical specs & details) */}
+              <div className="space-y-1 pt-1">
+                <label className="text-[10px] font-semibold text-wbk-brown uppercase tracking-wider">
+                  Extended Description / Materials & Specs ({descLocaleTab.toUpperCase()})
+                </label>
+                <textarea
+                  rows={2}
+                  value={
+                    formData[`extended_description_${descLocaleTab}`] ??
+                    (descLocaleTab === "en" ? formData.extended_description : "") ??
+                    ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleChange(`extended_description_${descLocaleTab}`, val);
+                    if (descLocaleTab === "en") {
+                      handleChange("extended_description", val);
+                      handleChange("extended_description_en", val);
+                    }
+                    if (descLocaleTab === "por") {
+                      handleChange("extended_description_pt", val);
+                    }
+                  }}
+                  placeholder={`Optional extended description (for cabinets, mattresses, etc.) in ${descLocaleTab.toUpperCase()}...`}
+                  className="w-full p-2.5 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins leading-relaxed"
+                />
+              </div>
             </div>
 
             {/* Hidden file inputs */}

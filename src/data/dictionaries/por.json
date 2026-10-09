@@ -286,7 +286,7 @@
     "subtitle": "Experiências reais de proprietários satisfeitos.",
     "verifiedCustomer": "Comprador verificado",
     "ratingSummary": "Classificado com 4,9/5 por clientes verificados",
-    "writeReview": "Escrever uma avaliação",
+    "writeReview": "Escrever avaliação",
     "allModels": "Todos os modelos",
     "ratedByCount": "Avaliado por",
     "buyers": "compradores",
@@ -395,7 +395,13 @@
     "selectAssemblyVideo": "Selecionar vídeo de montagem",
     "officialYoutube": "Canal oficial do YouTube",
     "officialYoutubeDesc": "Subscreva o canal do YouTube da Wall Bed King para ver novidades, dicas e transformações de quartos.",
-    "visitYoutube": "Visitar canal do YouTube"
+    "visitYoutube": "Visitar canal do YouTube",
+    "faqNoQuestions": "Nenhuma pergunta correspondente encontrada",
+    "faqNoQuestionsDesc": "Tente ajustar a sua pesquisa ou contacte diretamente a nossa equipa de apoio.",
+    "faqClearSearch": "Limpar pesquisa",
+    "faqAnswersCount": "respostas",
+    "faqAnswerCount": "resposta",
+    "faqShowing": "A mostrar"
   },
   "footer": {
     "tagline": "O fabricante líder europeu de mecanismos modulares para camas rebatíveis.",
@@ -436,15 +442,6 @@
     "noAccount": "Ainda não tem conta?",
     "alreadyAccount": "Já tem uma conta?",
     "rememberPassword": "Lembrou-se da sua palavra-passe?"
-  },
-  "reviews": {
-    "title": "Avaliações de Clientes",
-    "allReviews": "Todas as avaliações",
-    "subtitle": "Opiniões reais de proprietários verificados.",
-    "verifiedCustomer": "Cliente verificado",
-    "ratingSummary": "Avaliado em 4,9/5 por proprietários verificados",
-    "writeReview": "Escrever avaliação",
-    "allModels": "Todos os modelos"
   },
   "about": {
     "title": "Camas Rebatíveis de Precisão para a Vida Moderna",
