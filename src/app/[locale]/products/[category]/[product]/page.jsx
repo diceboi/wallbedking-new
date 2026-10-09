@@ -838,6 +838,94 @@ export default function ProductDetailPage() {
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
   const currentEan = getLocalizedProductGtin(displayProduct, locale);
 
+  // Dynamic product features / specs bullets based on active product category & model
+  const productFeatures = useMemo(() => {
+    if (displayProduct.features && displayProduct.features.length > 0) {
+      return displayProduct.features;
+    }
+    if (activeProduct?.features && activeProduct.features.length > 0) {
+      return activeProduct.features;
+    }
+    const cat = (displayProduct.parent_category || categorySlug || "").toLowerCase();
+    const subCat = (displayProduct.sub_category || displayProduct.type || "").toLowerCase();
+
+    if (cat === "cabinets") {
+      if (subCat.includes("horiz")) {
+        return [
+          "Doors: 90 degrees opening",
+          "Material: Melamine-faced furniture board",
+          "Suitable for horizontal Classic Double and King wall bed frames",
+          "Flat-packed for easy assembly",
+          "Warranty: 1 year for manufacturing defects",
+        ];
+      }
+      if (subCat.includes("ext")) {
+        return [
+          "Specifically developed for the horizontal Double and King cabinets",
+          "Makes up the height difference to align perfectly with side units",
+          "Material: Melamine-faced furniture board",
+          "Flat-packed for easy assembly",
+          "Warranty: 1 year for manufacturing defects",
+        ];
+      }
+      if (subCat.includes("side")) {
+        return [
+          "Height: Matches vertical Double/King cabinets and horizontal cabinets with extension",
+          "Width: 50cm, Depth: 52cm",
+          "Style choices: Wardrobe door with hanging rail (90° opening) or open shelving",
+          "Material: Melamine-faced furniture board",
+          "Flat-packed for easy assembly",
+          "Warranty: 1 year for manufacturing defects",
+        ];
+      }
+      return [
+        "Doors: 170 degrees opening for wide, easy access",
+        "Material: Melamine-faced furniture board",
+        "Suitable for Classic Vertical Single, Small Double, Double and King wall beds",
+        "Flat-packed for easy assembly",
+        "Warranty: 1 year for manufacturing defects",
+      ];
+    }
+
+    if (cat === "mattresses") {
+      if (subCat.includes("supreme")) {
+        return [
+          '10" (25cm) thickness profile',
+          "1,500 individually wrapped pocket springs combined with memory foam",
+          "Motion Isolation Technology™ to eliminate partner disturbance",
+          "Cloud-like luxury contouring and targeted pressure relief",
+          "30-day complete money back guarantee",
+          "Warranty: 1 year for manufacturing defects",
+        ];
+      }
+      if (subCat.includes("luxury")) {
+        return [
+          '10" (25cm) thickness profile',
+          '3" layer of memory foam for deep pressure-relieving comfort',
+          "Thick memory foam combined with a high-resilience reflex foam base",
+          "Medium-firm orthopaedic support for spinal alignment",
+          "30-day complete money back guarantee",
+          "Warranty: 1 year for manufacturing defects",
+        ];
+      }
+      return [
+        '8" (20cm) thickness profile for seamless wall bed folding',
+        '2" layer of memory foam for pressure-relieving comfort',
+        "High-density foam base for durable spinal support",
+        "Engineered for everyday restful sleep in wall beds",
+        "30-day complete money back guarantee",
+        "Warranty: 1 year for manufacturing defects",
+      ];
+    }
+
+    // Default for wall beds
+    return [
+      t("product.bulletSteel", "Premium solid carbon steel metal framework"),
+      t("product.bulletMechanism", "Heavy duty counter-balance mechanism (10,000+ cycle test)"),
+      t("product.bulletLegs", "Automatic self-folding leg system for safety and ease"),
+    ];
+  }, [displayProduct, activeProduct, categorySlug, t]);
+
   // ── CART INTEGRATION ──
   const { addItem } = useCart();
   const [isAdded, setIsAdded] = useState(false);
@@ -2132,19 +2220,18 @@ export default function ProductDetailPage() {
                     {displayProduct.description ||
                       "The Morphy Wall Bed is a flexible modular sleeping system designed to adapt to changing spaces and needs."}
                   </p>
+                  {displayProduct.extended_description && (
+                    <p className="font-poppins text-sm leading-relaxed text-wbk-black/75">
+                      {displayProduct.extended_description}
+                    </p>
+                  )}
                   <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      {t("product.bulletSteel", "Premium solid carbon steel metal framework")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      {t("product.bulletMechanism", "Heavy duty counter-balance mechanism (10,000+ cycle test)")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold" />
-                      {t("product.bulletLegs", "Automatic self-folding leg system for safety and ease")}
-                    </li>
+                    {productFeatures.map((feat, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold shrink-0" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
                 <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40">
@@ -2240,15 +2327,93 @@ export default function ProductDetailPage() {
                           </td>
                         </tr>
                       )}
-                      <tr className="border-b border-wbk-lightgrey/40">
-                        <td className="py-2.5 font-medium">
-                          {t("product.mechanism", "Mechanism")}
-                        </td>
-                        <td className="py-2.5 text-right text-wbk-brown">
-                          {t("product.gasPistonVal", "Gas Piston Cylinder System")}
-                        </td>
-                      </tr>
-                      {displayProduct.width && (
+
+                      {/* Bed-Specific: Mechanism */}
+                      {displayProduct.parent_category === "beds" && (
+                        <tr className="border-b border-wbk-lightgrey/40">
+                          <td className="py-2.5 font-medium">
+                            {t("product.mechanism", "Mechanism")}
+                          </td>
+                          <td className="py-2.5 text-right text-wbk-brown">
+                            {t("product.gasPistonVal", "Gas Piston Cylinder System")}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Cabinet-Specific: Material, Door Opening, Assembly */}
+                      {displayProduct.parent_category === "cabinets" && (
+                        <>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Material</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.material || "Melamine-faced furniture board"}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Door Opening</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.door_opening ||
+                                (displayProduct.sub_category === "Vertical"
+                                  ? "170 degrees opening"
+                                  : displayProduct.sub_category === "Horizontal"
+                                  ? "90 degrees opening"
+                                  : displayProduct.sub_category === "Side Units"
+                                  ? "90 degrees opening / Open shelving"
+                                  : "Top overhead clearance")}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Assembly</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.assembly || "Flat-packed for easy assembly"}
+                            </td>
+                          </tr>
+                        </>
+                      )}
+
+                      {/* Mattress-Specific: Thickness, Construction, Comfort Layer, Trial */}
+                      {displayProduct.parent_category === "mattresses" && (
+                        <>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Mattress Depth / Profile</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.thickness ||
+                                (displayProduct.sub_category === "Comfort"
+                                  ? "8” (20cm)"
+                                  : "10” (25cm)")}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Comfort Layer</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.sub_category === "Comfort"
+                                ? "2” Memory Foam Layer"
+                                : displayProduct.sub_category === "Luxury"
+                                ? "3” Memory Foam Layer"
+                                : "Memory Foam + Motion Isolation Technology™"}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Core Construction</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.sub_category === "Comfort"
+                                ? "High-Density Foam Support Base"
+                                : displayProduct.sub_category === "Luxury"
+                                ? "High-Resilience Reflex Foam Base"
+                                : "1,500 Individual Pocket Springs"}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">Trial Period</td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              30-Day Money Back Guarantee
+                            </td>
+                          </tr>
+                        </>
+                      )}
+
+                      {/* Dimensions for Beds and Mattresses */}
+                      {displayProduct.width && displayProduct.parent_category !== "cabinets" && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
                             {t("product.mattressSize", "Mattress Size (W x L)")}
@@ -2260,75 +2425,96 @@ export default function ProductDetailPage() {
                           </td>
                         </tr>
                       )}
-                      {displayProduct.frame_width && (
+
+                      {/* Cabinet Dimensions */}
+                      {displayProduct.parent_category === "cabinets" && displayProduct.width && (
                         <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.frameWidth", "Frame width")}
-                          </td>
+                          <td className="py-2.5 font-medium">Cabinet Dimensions (H x W x D)</td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {formatMm(displayProduct.frame_width)}
+                            {displayProduct.height && displayProduct.length
+                              ? `H${displayProduct.height / 10}cm x W${displayProduct.width / 10}cm x D${displayProduct.length / 10}cm`
+                              : `${formatCm(displayProduct.width / 10)}`}
                           </td>
                         </tr>
                       )}
-                      {displayProduct.folded_up_height && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.foldedUpHeight", "Folded up height")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {formatMm(displayProduct.folded_up_height)}
-                          </td>
-                        </tr>
+
+                      {/* Bed Frame Specifications (only for beds) */}
+                      {displayProduct.parent_category === "beds" && (
+                        <>
+                          {displayProduct.frame_width && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.frameWidth", "Frame width")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {formatMm(displayProduct.frame_width)}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.folded_up_height && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.foldedUpHeight", "Folded up height")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {formatMm(displayProduct.folded_up_height)}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.folded_up_projection && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.bedDepthFolded", "Bed depth (Folded)")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {formatMm(displayProduct.folded_up_projection)}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.folded_down_projection && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.bedDepthOpen", "Bed depth (Open)")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {formatMm(displayProduct.folded_down_projection)}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.mounting_frame_height && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.mountingFrameHeight", "Mounting frame height")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {formatMm(displayProduct.mounting_frame_height)}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.maximum_mattress_depth && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.maxMattressThickness", "Max mattress thickness")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {isUS
+                                  ? `${t("product.upTo", "Up to")} ${(displayProduct.maximum_mattress_depth / 25.4).toFixed(1)}" (${displayProduct.maximum_mattress_depth / 10} cm)`
+                                  : `${t("product.upTo", "Up to")} ${displayProduct.maximum_mattress_depth / 10} cm`}
+                              </td>
+                            </tr>
+                          )}
+                        </>
                       )}
-                      {displayProduct.folded_up_projection && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.bedDepthFolded", "Bed depth (Folded)")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {formatMm(displayProduct.folded_up_projection)}
-                          </td>
-                        </tr>
-                      )}
-                      {displayProduct.folded_down_projection && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.bedDepthOpen", "Bed depth (Open)")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {formatMm(displayProduct.folded_down_projection)}
-                          </td>
-                        </tr>
-                      )}
-                      {displayProduct.mounting_frame_height && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.mountingFrameHeight", "Mounting frame height")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {formatMm(displayProduct.mounting_frame_height)}
-                          </td>
-                        </tr>
-                      )}
-                      {displayProduct.maximum_mattress_depth && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.maxMattressThickness", "Max mattress thickness")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {isUS
-                              ? `${t("product.upTo", "Up to")} ${(displayProduct.maximum_mattress_depth / 25.4).toFixed(1)}" (${displayProduct.maximum_mattress_depth / 10} cm)`
-                              : `${t("product.upTo", "Up to")} ${displayProduct.maximum_mattress_depth / 10} cm`}
-                          </td>
-                        </tr>
-                      )}
+
                       <tr>
                         <td className="py-2.5 font-medium">
                           {t("product.warranty", "Warranty")}
                         </td>
                         <td className="py-2.5 text-right text-wbk-brown">
                           {displayProduct.warranty ||
-                            t("product.lifetimeMechanism", "Lifetime mechanism warranty")}
+                            (displayProduct.parent_category === "beds"
+                              ? t("product.lifetimeMechanism", "Lifetime mechanism warranty")
+                              : "1 year for manufacturing defects")}
                         </td>
                       </tr>
                     </tbody>
