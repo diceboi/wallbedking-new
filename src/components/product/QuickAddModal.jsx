@@ -29,6 +29,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
@@ -55,11 +56,28 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     return ["Vertical", "Horizontal"];
   }, [product]);
 
+  // Available colors
+  const availableColors = useMemo(() => {
+    if (!product || !variants || variants.length === 0) return [];
+    const cols = Array.from(new Set(variants.map((v) => v.color).filter(Boolean)));
+    const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
+    cols.sort((a, b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return cols;
+  }, [product, variants]);
+
   // Initialize selected variant and format on open
   useEffect(() => {
     if (product && isOpen) {
       const initialFmt = product.orientation || "Vertical";
       setSelectedFormat(initialFmt);
+      setSelectedColor(product.color || "Oak");
       setQuantity(1);
       setIsAdded(false);
 
@@ -117,10 +135,13 @@ export function QuickAddModal({ isOpen, onClose, product }) {
   // Active product to display details for
   const activeProduct = selectedVariant || product;
 
-  // Sizes available for the active format / type
+  // Sizes available for the active format / type & color
   const availableSizes = variants.filter((v) => {
     if (product.parent_category === "beds" && selectedFormat) {
       return (v.orientation || "Vertical").toLowerCase() === selectedFormat.toLowerCase();
+    }
+    if (availableColors.length > 1 && selectedColor) {
+      return (v.color || "").toLowerCase() === selectedColor.toLowerCase();
     }
     return true;
   });
@@ -144,6 +165,36 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
   const handleSelectSize = (variant) => {
     setSelectedVariant(variant);
+    if (variant.color) {
+      setSelectedColor(variant.color);
+    }
+  };
+
+  const handleSelectColor = (newColor) => {
+    if (!newColor) return;
+    setSelectedColor(newColor);
+    const currentSizeLabel = activeProduct.sizeLabel || activeProduct.size;
+    const currentStyle = activeProduct.style || activeProduct.sub_category;
+    let match = variants.find(
+      (v) =>
+        (v.color || "").toLowerCase() === newColor.toLowerCase() &&
+        (v.sizeLabel === currentSizeLabel || v.size === activeProduct.size)
+    );
+    if (!match && currentStyle) {
+      match = variants.find(
+        (v) =>
+          (v.color || "").toLowerCase() === newColor.toLowerCase() &&
+          (v.style === currentStyle || v.sub_category === currentStyle)
+      );
+    }
+    if (!match) {
+      match = variants.find(
+        (v) => (v.color || "").toLowerCase() === newColor.toLowerCase()
+      );
+    }
+    if (match) {
+      setSelectedVariant(match);
+    }
   };
 
   const handleSelectFormat = (fmt) => {
@@ -170,7 +221,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
     const sizeStr = activeProduct.sizeLabel || activeProduct.size || "Standard";
     const itemToAdd = {
-      id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${sizeStr}-${activeProduct.orientation || "Vertical"}-${activeProduct.type || "Classic"}`,
+      id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${sizeStr}-${activeProduct.orientation || "Vertical"}-${activeProduct.type || "Classic"}-${activeProduct.color || selectedColor || ""}`,
       productId: activeProduct.slug || activeProduct.rawId || activeProduct.id,
       title: getLocalizedProductName(activeProduct, locale) || getLocalizedProductName(product, locale),
       image:
@@ -182,6 +233,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
         size: formatSizeLabel(sizeStr, locale),
         orientation: activeProduct.orientation || selectedFormat || "Vertical",
         type: activeProduct.type || activeProduct.sub_category || "Classic",
+        color: activeProduct.color || selectedColor || undefined,
         sku: activeProduct.sku || product.sku || "",
       },
       href: `/products/${product.parent_category || "beds"}/${activeProduct.slug || product.slug}`,
@@ -320,6 +372,56 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                       }`}
                     >
                       {fmt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Finish / Colour Selector */}
+          {availableColors.length > 1 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
+                <span>{t("product.finish", "Finish / Colour")}</span>
+                <span className="text-wbk-brown font-normal text-[11px]">
+                  {selectedColor || activeProduct?.color || availableColors[0]}
+                </span>
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                {availableColors.map((col) => {
+                  const currentColor =
+                    selectedColor || activeProduct?.color || availableColors[0];
+                  const isSelected =
+                    currentColor?.toLowerCase() === col.toLowerCase();
+                  const colorHexMap = {
+                    Oak: "#BCA37F",
+                    Beech: "#D8AC78",
+                    Pine: "#E8CE9B",
+                    White: "#FFFFFF",
+                    Black: "#090A0A",
+                    Beige: "#D2AA7C",
+                    Grey: "#A5988E",
+                  };
+                  const hex = colorHexMap[col] || "#BCA37F";
+                  return (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => handleSelectColor(col)}
+                      className={`flex items-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-full border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-wbk-black text-white border-wbk-black shadow-xs font-semibold ring-1 ring-wbk-black"
+                          : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
+                      }`}
+                    >
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
+                          col === "White" ? "border-black/30" : "border-black/20"
+                        }`}
+                        style={{ backgroundColor: hex }}
+                      />
+                      <span>{col}</span>
                     </button>
                   );
                 })}

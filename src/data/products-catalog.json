@@ -16215,11 +16215,10 @@
     "visibility": "Visible",
     "warranty": "1 year for manufacturing defects",
     "description": "Our Mattress Range is designed to provide the perfect balance of comfort, support and practicality for modern wall bed systems. Available in a variety of sizes and comfort options, these mattresses are suitable for both occasional guests and regular everyday sleeping. Carefully selected materials provide comfortable pressure relief and reliable support, while the wall-bed-friendly dimensions allow the mattress to remain conveniently in place when the bed is folded away. A practical and comfortable choice for creating a complete space-saving sleeping solution.",
-    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp",
     "hover_image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     "product_images": [
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp"
     ],
     "product_image_alt": "Single Comfort Mattress 90x190x20 White",
     "meta_title": "Single Comfort Mattress 90x190x20",
@@ -16242,7 +16241,19 @@
     "gtin_por": "5013938608196",
     "gtin_it": "5013938608196",
     "installation_manual": null,
-    "installation_video": null
+    "installation_video": null,
+    "tags": [],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "name_pt": "Single Comfort Mattress",
+    "gtin_pt": "5013938608196"
   },
   {
     "id": 184,
@@ -16294,11 +16305,10 @@
     "visibility": "Visible",
     "warranty": "1 year for manufacturing defects",
     "description": "Our Mattress Range is designed to provide the perfect balance of comfort, support and practicality for modern wall bed systems. Available in a variety of sizes and comfort options, these mattresses are suitable for both occasional guests and regular everyday sleeping. Carefully selected materials provide comfortable pressure relief and reliable support, while the wall-bed-friendly dimensions allow the mattress to remain conveniently in place when the bed is folded away. A practical and comfortable choice for creating a complete space-saving sleeping solution.",
-    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp",
     "hover_image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     "product_images": [
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp"
     ],
     "product_image_alt": "Small double Comfort Mattress 120x190x20 White",
     "meta_title": "Small double Comfort Mattress 120x190x20",
@@ -16321,7 +16331,19 @@
     "gtin_por": "5000827581201",
     "gtin_it": "5000827581201",
     "installation_manual": null,
-    "installation_video": null
+    "installation_video": null,
+    "tags": [],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "name_pt": "Small double Comfort Mattress",
+    "gtin_pt": "5000827581201"
   },
   {
     "id": 185,
@@ -16373,11 +16395,10 @@
     "visibility": "Visible",
     "warranty": "1 year for manufacturing defects",
     "description": "Our Mattress Range is designed to provide the perfect balance of comfort, support and practicality for modern wall bed systems. Available in a variety of sizes and comfort options, these mattresses are suitable for both occasional guests and regular everyday sleeping. Carefully selected materials provide comfortable pressure relief and reliable support, while the wall-bed-friendly dimensions allow the mattress to remain conveniently in place when the bed is folded away. A practical and comfortable choice for creating a complete space-saving sleeping solution.",
-    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp",
     "hover_image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     "product_images": [
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp"
     ],
     "product_image_alt": "Double Comfort Mattress 135x190x20 White",
     "meta_title": "Double Comfort Mattress 135x190x20",
@@ -16400,7 +16421,19 @@
     "gtin_por": "5089775919234",
     "gtin_it": "5089775919234",
     "installation_manual": null,
-    "installation_video": null
+    "installation_video": null,
+    "tags": [],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "name_pt": "Double Comfort Mattress",
+    "gtin_pt": "5089775919234"
   },
   {
     "id": 186,
@@ -16452,12 +16485,9 @@
     "visibility": "Visible",
     "warranty": "1 year for manufacturing defects",
     "description": "Our Mattress Range is designed to provide the perfect balance of comfort, support and practicality for modern wall bed systems. Available in a variety of sizes and comfort options, these mattresses are suitable for both occasional guests and regular everyday sleeping. Carefully selected materials provide comfortable pressure relief and reliable support, while the wall-bed-friendly dimensions allow the mattress to remain conveniently in place when the bed is folded away. A practical and comfortable choice for creating a complete space-saving sleeping solution.",
-    "image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses/comfort.webp",
     "hover_image": "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    "product_images": [
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
-      "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp"
-    ],
+    "product_images": [],
     "product_image_alt": "King Comfort Mattress 150x200x20 White",
     "meta_title": "King Comfort Mattress 150x200x20",
     "meta_description": "Our Mattress Range is designed to provide the perfect balance of comfort, support and practicality for modern wall bed systems. Available in a variety of sizes and comfort options, these mattresses are suitable for both occasional guests and regular everyday sleeping. Carefully selected materials provide comfortable pressure relief and reliable support, while the wall-bed-friendly dimensions allow the mattress to remain conveniently in place when the bed is folded away. A practical and comfortable choice for creating a complete space-saving sleeping solution.",
@@ -16479,7 +16509,19 @@
     "gtin_por": "5016418528338",
     "gtin_it": "5016418528338",
     "installation_manual": null,
-    "installation_video": null
+    "installation_video": null,
+    "tags": [],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "name_pt": "King Comfort Mattress",
+    "gtin_pt": "5016418528338"
   },
   {
     "id": 187,

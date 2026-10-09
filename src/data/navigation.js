@@ -25,6 +25,7 @@ export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS
   .sort((a, b) => (a.order || 0) - (b.order || 0));
 
 const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
+const SUPABASE_MATTRESSES_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
 
 export const SUBMENU_DATA = {
   beds: {
@@ -289,14 +290,16 @@ export const SUBMENU_DATA = {
   mattresses: {
     parent: {
       title: "All Mattresses",
-      image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+      image: `${SUPABASE_MATTRESSES_STORAGE_URL}/comfort.webp`,
+      hoverImage: `${SUPABASE_MATTRESSES_STORAGE_URL}/luxury.webp`,
       href: "/products/mattresses",
       tagline: "Engineered for foldaway beds",
     },
     items: [
       {
         title: "Comfort Pocket Sprung Mattress",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+        image: `${SUPABASE_MATTRESSES_STORAGE_URL}/comfort.webp`,
+        hoverImage: `${SUPABASE_MATTRESSES_STORAGE_URL}/comfort.webp`,
         href: "/products/mattresses/comfort-mattress",
         type: "Comfort",
         sizeRange: "90x190 – 150x200 cm",
@@ -304,7 +307,8 @@ export const SUBMENU_DATA = {
       },
       {
         title: "Luxury Orthopaedic Mattress",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+        image: `${SUPABASE_MATTRESSES_STORAGE_URL}/luxury.webp`,
+        hoverImage: `${SUPABASE_MATTRESSES_STORAGE_URL}/luxury.webp`,
         href: "/products/mattresses/luxury-mattress",
         type: "Luxury",
         sizeRange: "90x190 – 150x200 cm",
@@ -312,7 +316,8 @@ export const SUBMENU_DATA = {
       },
       {
         title: "Supreme Hybrid Mattress",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+        image: `${SUPABASE_MATTRESSES_STORAGE_URL}/supreme.webp`,
+        hoverImage: `${SUPABASE_MATTRESSES_STORAGE_URL}/supreme.webp`,
         href: "/products/mattresses/supreme-mattress",
         type: "Supreme",
         sizeRange: "90x190 – 150x200 cm",
@@ -323,38 +328,43 @@ export const SUBMENU_DATA = {
   cabinets: {
     parent: {
       title: "All Cabinets",
-      image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+      image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
+      hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
       href: "/products/cabinets",
       tagline: "Tailored modular cabinetry",
     },
     items: [
       {
         title: "Vertical Enclosure Cabinet",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
+        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/vertical-wall-bed-cabinet",
         badge: "Vertical Beds",
         price: "from £649",
       },
       {
         title: "Horizontal Enclosure Cabinet",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_1.webp",
+        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/horizontal-wall-bed-cabinet",
         badge: "Horizontal Beds",
-        price: "from £829",
-      },
-      {
-        title: "Side Storage & Wardrobe Unit",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-        href: "/products/cabinets/side-storage-wardrobe-cabinet",
-        badge: "Side Storage",
-        price: "from £459",
+        price: "from £799",
       },
       {
         title: "Overhead Bridge Extension",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_1.webp",
+        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/overhead-storage-extension-cabinet",
         badge: "Top Bridge",
-        price: "from £499",
+        price: "from £469",
+      },
+      {
+        title: "Side Storage & Wardrobe Unit",
+        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_1.webp",
+        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_2.webp",
+        href: "/products/cabinets/side-storage-wardrobe-cabinet",
+        badge: "Side Storage",
+        price: "from £439",
       },
     ],
   },

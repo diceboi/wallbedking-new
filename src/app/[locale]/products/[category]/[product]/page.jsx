@@ -161,6 +161,7 @@ export default function ProductDetailPage() {
   const [formatOpen, setFormatOpen] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
@@ -172,6 +173,21 @@ export default function ProductDetailPage() {
   const desktopAddToCartRef = useRef(null);
   const [isDesktopAddToCartVisible, setIsDesktopAddToCartVisible] = useState(true);
   const [isDesktop, setIsDesktop] = useState(false);
+
+  // Ref to close open customizer dropdowns on outside click
+  const dropdownsRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownsRef.current && !dropdownsRef.current.contains(e.target)) {
+        setFormatOpen(false);
+        setStyleOpen(false);
+        setSizeOpen(false);
+        setColorOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Left column height tracking to lock gallery & center image height
   const leftColRef = useRef(null);
@@ -502,6 +518,25 @@ export default function ProductDetailPage() {
     return result;
   }, [familyVariants, activeProduct, selectedVariant?.color]);
 
+  const availableColors = useMemo(() => {
+    if (!familyVariants || familyVariants.length === 0) {
+      return activeProduct?.color ? [activeProduct.color] : [];
+    }
+    const colors = Array.from(
+      new Set(familyVariants.map((v) => v.color).filter(Boolean)),
+    );
+    const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
+    colors.sort((a, b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return colors;
+  }, [familyVariants, activeProduct?.color]);
+
   // Initialize/sync customizer states when route parameters or size change
   useEffect(() => {
     if (!productSlug) return;
@@ -518,8 +553,22 @@ export default function ProductDetailPage() {
       // Find matching size variant from familyVariants
       let targetVariant = null;
       const sizeQuery = searchParams?.get("size");
-      if (sizeQuery) {
+      const colorQuery = searchParams?.get("color");
+
+      if (colorQuery && sizeQuery) {
+        targetVariant = familyVariants.find(
+          (v) =>
+            v.color?.toLowerCase() === colorQuery.toLowerCase() &&
+            (v.sizeSlug === sizeQuery || v.slug === sizeQuery || v.sizeLabel === sizeQuery)
+        );
+      }
+      if (!targetVariant && sizeQuery) {
         targetVariant = findMatchingVariant(familyVariants, sizeQuery);
+      }
+      if (!targetVariant && colorQuery) {
+        targetVariant = familyVariants.find(
+          (v) => v.color?.toLowerCase() === colorQuery.toLowerCase()
+        );
       }
       if (!targetVariant && activeProduct.defaultSizeSlug) {
         targetVariant = findMatchingVariant(
@@ -693,10 +742,22 @@ export default function ProductDetailPage() {
 
     if (newSizeLabel !== undefined) {
       setProductSize(newSizeLabel);
+      const currentColor = selectedVariant?.color || activeProduct?.color;
       const match =
+        familyVariants.find((v) => {
+          const matchSize =
+            v.sizeLabel === newSizeLabel ||
+            v.name === newSizeLabel ||
+            v.size === newSizeLabel;
+          const matchColor =
+            !currentColor ||
+            v.color?.toLowerCase() === currentColor.toLowerCase();
+          return matchSize && matchColor;
+        }) ||
         familyVariants.find(
           (v) => v.sizeLabel === newSizeLabel || v.name === newSizeLabel,
-        ) || familyVariants.find((v) => v.size === newSizeLabel);
+        ) ||
+        familyVariants.find((v) => v.size === newSizeLabel);
       if (match) {
         setSelectedVariant(match);
         if (match.sizeLabel) setProductSize(match.sizeLabel);
@@ -707,8 +768,41 @@ export default function ProductDetailPage() {
           if (match.sizeSlug) {
             url.searchParams.set("size", match.sizeSlug);
           }
+          if (match.color) {
+            url.searchParams.set("color", match.color.toLowerCase());
+          }
           window.history.replaceState(null, "", url.toString());
         }
+      }
+    }
+  };
+
+  const handleColorChange = (newColor) => {
+    if (!newColor) return;
+    setSelectedImageIndex(0);
+    const currentSize = productSize;
+    const match =
+      familyVariants.find((v) => {
+        const matchColor = v.color?.toLowerCase() === newColor.toLowerCase();
+        const matchSize =
+          v.sizeLabel === currentSize ||
+          v.size === currentSize ||
+          v.sizeSlug === selectedVariant?.sizeSlug;
+        return matchColor && matchSize;
+      }) ||
+      familyVariants.find(
+        (v) => v.color?.toLowerCase() === newColor.toLowerCase(),
+      );
+
+    if (match) {
+      setSelectedVariant(match);
+      if (match.sizeLabel) setProductSize(match.sizeLabel);
+
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (match.sizeSlug) url.searchParams.set("size", match.sizeSlug);
+        if (match.color) url.searchParams.set("color", match.color.toLowerCase());
+        window.history.replaceState(null, "", url.toString());
       }
     }
   };
@@ -1016,7 +1110,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Dropdowns */}
-              <div className="space-y-3">
+              <div className="space-y-3" ref={dropdownsRef}>
                 {/* Format / Orientation */}
                 {availableFormats.length > 0 && (
                   <div className="relative">
@@ -1029,6 +1123,7 @@ export default function ProductDetailPage() {
                         setFormatOpen(!formatOpen);
                         setStyleOpen(false);
                         setSizeOpen(false);
+                        setColorOpen(false);
                       }}
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
@@ -1063,7 +1158,9 @@ export default function ProductDetailPage() {
                 {availableStyles.length > 0 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {t("product.styleLabel", "Style:")}
+                      {activeProduct?.parent_category === "cabinets"
+                        ? t("product.cabinetType", "Cabinet Type:")
+                        : t("product.styleLabel", "Style:")}
                     </label>
                     <button
                       type="button"
@@ -1071,6 +1168,7 @@ export default function ProductDetailPage() {
                         setStyleOpen(!styleOpen);
                         setFormatOpen(false);
                         setSizeOpen(false);
+                        setColorOpen(false);
                       }}
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
@@ -1101,6 +1199,107 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
+                {/* Color / Finish Selector */}
+                {availableColors.length > 1 && (
+                  <div className="relative">
+                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
+                      {t("product.colorLabel", "Finish / Colour:")}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setColorOpen(!colorOpen);
+                        setFormatOpen(false);
+                        setStyleOpen(false);
+                        setSizeOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        {(() => {
+                          const currentColor =
+                            selectedVariant?.color ||
+                            activeProduct?.color ||
+                            availableColors[0];
+                          const colorHexMap = {
+                            Oak: "#BCA37F",
+                            Beech: "#D8AC78",
+                            Pine: "#E8CE9B",
+                            White: "#FFFFFF",
+                            Black: "#090A0A",
+                            Beige: "#D2AA7C",
+                            Grey: "#A5988E",
+                          };
+                          const hex = colorHexMap[currentColor] || "#BCA37F";
+                          return (
+                            <>
+                              <span
+                                className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
+                                  currentColor === "White"
+                                    ? "border-black/30"
+                                    : "border-black/20"
+                                }`}
+                                style={{ backgroundColor: hex }}
+                              />
+                              <span className="truncate">{currentColor}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <IconChevronDown size={14} className="text-wbk-brown shrink-0 ml-1" />
+                    </button>
+                    {colorOpen && (
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
+                        {availableColors.map((colorName) => {
+                          const currentColor =
+                            selectedVariant?.color ||
+                            activeProduct?.color ||
+                            availableColors[0];
+                          const isSelected =
+                            currentColor?.toLowerCase() === colorName.toLowerCase();
+                          const colorHexMap = {
+                            Oak: "#BCA37F",
+                            Beech: "#D8AC78",
+                            Pine: "#E8CE9B",
+                            White: "#FFFFFF",
+                            Black: "#090A0A",
+                            Beige: "#D2AA7C",
+                            Grey: "#A5988E",
+                          };
+                          const hex = colorHexMap[colorName] || "#BCA37F";
+                          return (
+                            <button
+                              key={colorName}
+                              type="button"
+                              onClick={() => {
+                                handleColorChange(colorName);
+                                setColorOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                                isSelected
+                                  ? "text-wbk-gold font-semibold bg-[#F4F2F0]/60"
+                                  : "text-wbk-black"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <span
+                                  className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
+                                    colorName === "White"
+                                      ? "border-black/30"
+                                      : "border-black/20"
+                                  }`}
+                                  style={{ backgroundColor: hex }}
+                                />
+                                <span>{colorName}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Size */}
                 {availableSizes.length > 0 && (
                   <div className="relative">
@@ -1113,6 +1312,7 @@ export default function ProductDetailPage() {
                         setSizeOpen(!sizeOpen);
                         setFormatOpen(false);
                         setStyleOpen(false);
+                        setColorOpen(false);
                       }}
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
