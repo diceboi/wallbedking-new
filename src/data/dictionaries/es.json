@@ -166,6 +166,8 @@
     "explore": "Explorar"
   },
   "categories": {
+    "morphyBeds": "Camas Abatibles MORPHY™",
+    "traditionalBeds": "Camas Tradicionales",
     "classicBeds": "Camas clásicas",
     "studioBeds": "Camas escritorio Studio",
     "sofas": "Sofás frontales",

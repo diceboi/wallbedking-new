@@ -10,7 +10,9 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { getStorefrontProducts } from "@/lib/products-db";
+import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
+import { CategoriesProvider } from "@/context/CategoriesContext";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -37,7 +39,10 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const initialProducts = await getStorefrontProducts();
+  const [initialProducts, initialCategories] = await Promise.all([
+    getStorefrontProducts(),
+    getStorefrontCategories(),
+  ]);
 
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
@@ -46,16 +51,18 @@ export default async function RootLayout({ children }) {
         <AuthProvider>
           <LocaleProvider>
             <ProductCatalogProvider initialProducts={initialProducts}>
-              <CartProvider>
-                <MenuContextProvider>
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                  <CartDrawer />
-                  <UserDrawer />
-                  <CookieConsent />
-                </MenuContextProvider>
-              </CartProvider>
+              <CategoriesProvider initialCategories={initialCategories}>
+                <CartProvider>
+                  <MenuContextProvider>
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                    <CartDrawer />
+                    <UserDrawer />
+                    <CookieConsent />
+                  </MenuContextProvider>
+                </CartProvider>
+              </CategoriesProvider>
             </ProductCatalogProvider>
           </LocaleProvider>
         </AuthProvider>

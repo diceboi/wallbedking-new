@@ -14,9 +14,17 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const targetBucket = (formData.get("bucket") || "ProductImages").toString();
-    const targetFolder = (formData.get("folder") || (targetBucket === "SupportFiles" ? "InstallationManuals" : "wallbeds"))
-      .toString()
-      .replace(/^\/+|\/+$/g, "");
+    const folderParam = formData.get("folder");
+    let targetFolder = "";
+    if (folderParam !== null && folderParam !== undefined) {
+      targetFolder = folderParam.toString().replace(/^\/+|\/+$/g, "");
+    } else if (targetBucket === "SupportFiles") {
+      targetFolder = "InstallationManuals";
+    } else if (targetBucket === "CategoryImages") {
+      targetFolder = "";
+    } else {
+      targetFolder = "wallbeds";
+    }
 
     if (!file || typeof file === "string") {
       return NextResponse.json(

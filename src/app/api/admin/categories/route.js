@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { revalidateCategoriesCache } from "@/lib/categories-db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -124,10 +125,12 @@ export async function POST(request) {
       .replace(/^-|-$/g, "");
 
     const newCategory = {
+      ...body,
       id: categorySlug,
       name: categoryName,
       title: title || categoryName,
-      slug: categorySlug,
+      slug: body.slug || categorySlug,
+      href: body.href || `/products/${body.slug || categorySlug}`,
       description: description || "",
       subcategories: Array.isArray(subcategories)
         ? subcategories
@@ -136,6 +139,7 @@ export async function POST(request) {
         : [],
       image: image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       display_order: Number(display_order || 0),
+      is_visible: body.is_visible !== false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -171,6 +175,8 @@ export async function POST(request) {
         console.warn("[Admin Categories API] Supabase POST warning:", sbErr.message);
       }
     }
+
+    await revalidateCategoriesCache();
 
     return NextResponse.json({
       success: true,

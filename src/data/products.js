@@ -1103,7 +1103,16 @@ export const FLAGSHIP_CABINETS = [
  * based on the cheapest matching product variant in Supabase / catalog.
  */
 export function getDynamicFlagships(templates, rawItems, category) {
-  const catItems = rawItems.filter((p) => p.parent_category === category);
+  const catItems = rawItems.filter((p) => {
+    if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
+      return (
+        p.parent_category === "beds" ||
+        p.parent_category === "morphy-beds" ||
+        p.parent_category === "traditional-beds"
+      );
+    }
+    return p.parent_category === category;
+  });
 
   return templates.map((template) => {
     const matching = catItems.filter((item) => {
@@ -1408,12 +1417,17 @@ export const ALL_FLAGSHIP_PRODUCTS = [
 
 // All bed variants for internal lookups and configurator sizing
 export const ALL_BED_VARIANTS = RAW_CATALOG.filter(
-  (p) => p.parent_category === "beds"
+  (p) =>
+    p.parent_category === "beds" ||
+    p.parent_category === "morphy-beds" ||
+    p.parent_category === "traditional-beds"
 ).map(formatCatalogItem);
 
 // Categorized product arrays
 export const ALL_PRODUCTS = {
   beds: DYNAMIC_FLAGSHIP_BEDS,
+  "morphy-beds": DYNAMIC_FLAGSHIP_BEDS.filter((b) => b.isMorphy),
+  "traditional-beds": DYNAMIC_FLAGSHIP_BEDS.filter((b) => !b.isMorphy),
   sofas: DYNAMIC_FLAGSHIP_SOFAS,
   tables: DYNAMIC_FLAGSHIP_TABLES,
   mattresses: DYNAMIC_FLAGSHIP_MATTRESSES,
@@ -1442,8 +1456,13 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
     ...dynamicFlagshipExtras,
   ];
 
+  const dynamicFlagshipMorphyBeds = dynamicFlagshipBeds.filter((b) => b.isMorphy);
+  const dynamicFlagshipTraditionalBeds = dynamicFlagshipBeds.filter((b) => !b.isMorphy);
+
   const allProducts = {
     beds: dynamicFlagshipBeds,
+    "morphy-beds": dynamicFlagshipMorphyBeds,
+    "traditional-beds": dynamicFlagshipTraditionalBeds,
     sofas: dynamicFlagshipSofas,
     tables: dynamicFlagshipTables,
     mattresses: dynamicFlagshipMattresses,
@@ -1452,7 +1471,12 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
   };
 
   const allBedVariants = (rawItems || [])
-    .filter((p) => p.parent_category === "beds")
+    .filter(
+      (p) =>
+        p.parent_category === "beds" ||
+        p.parent_category === "morphy-beds" ||
+        p.parent_category === "traditional-beds"
+    )
     .map(formatCatalogItem);
 
   return {

@@ -56,9 +56,13 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const targetBucket = searchParams.get("bucket") || BUCKET;
-    const folderParam = searchParams.get("folder");
-    const defaultFolder = targetBucket === "SupportFiles" ? "InstallationManuals" : "wallbeds/1K";
-    const folder = (folderParam === "root" || folderParam === "" ? "" : (folderParam || defaultFolder)).replace(/^\/+|\/+$/g, "");
+    const defaultFolder =
+      targetBucket === "SupportFiles"
+        ? "InstallationManuals"
+        : targetBucket === "CategoryImages"
+        ? ""
+        : "wallbeds/1K";
+    const folder = (folderParam === "root" || folderParam === "" || (targetBucket === "CategoryImages" && !folderParam) ? "" : (folderParam || defaultFolder)).replace(/^\/+|\/+$/g, "");
     const search = searchParams.get("search") || "";
     const limit = parseInt(searchParams.get("limit") || "500", 10);
     const matchPrefix = searchParams.get("matchPrefix");

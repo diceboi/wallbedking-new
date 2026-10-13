@@ -166,6 +166,8 @@
     "explore": "Explorer"
   },
   "categories": {
+    "morphyBeds": "Lits Escamotables MORPHY™",
+    "traditionalBeds": "Lits Traditionnels",
     "classicBeds": "Lits classiques",
     "studioBeds": "Lits bureau Studio",
     "sofas": "Canapés frontaux",

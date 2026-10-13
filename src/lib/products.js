@@ -15,7 +15,11 @@ export async function getProducts({
     let query = supabase.from('products').select('*');
 
     if (category && category !== 'all') {
-      query = query.eq('parent_category', category);
+      if (category === 'beds') {
+        query = query.in('parent_category', ['beds', 'morphy-beds', 'traditional-beds']);
+      } else {
+        query = query.eq('parent_category', category);
+      }
     }
     if (orientation && orientation !== 'All') {
       query = query.eq('orientation', orientation);

@@ -849,6 +849,11 @@ export default function ProductDetailPage() {
   const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
 
+  const localizedProductName = getLocalizedProductName(displayProduct, locale);
+  const currentEan = getLocalizedProductGtin(displayProduct, locale);
+  const localizedDescription = getLocalizedProductDescription(displayProduct, locale);
+  const localizedExtendedDescription = getLocalizedProductExtendedDescription(displayProduct, locale);
+
   const categoryBreadcrumbHref = useMemo(() => {
     if (categorySlug === "beds") {
       return isMorphyBed ? "/products/beds?collection=morphy" : "/products/beds?collection=traditional";
@@ -914,10 +919,6 @@ export default function ProductDetailPage() {
     ];
   }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName]);
 
-  const localizedProductName = getLocalizedProductName(displayProduct, locale);
-  const currentEan = getLocalizedProductGtin(displayProduct, locale);
-  const localizedDescription = getLocalizedProductDescription(displayProduct, locale);
-  const localizedExtendedDescription = getLocalizedProductExtendedDescription(displayProduct, locale);
 
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {

@@ -27,6 +27,7 @@ import {
 } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { useCategories } from "@/context/CategoriesContext";
 import { getProductPrice } from "@/lib/i18n";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
@@ -35,6 +36,7 @@ import {
   getLocalizedProductName,
   getLocalizedProductDescription,
 } from "@/lib/products";
+import { getLocalizedCategoryTitle } from "@/lib/categories-utils";
 
 // Multi-language string normalization for Hungarian and English search
 const normalizeStr = (s) =>
@@ -45,6 +47,7 @@ function ProductsSearchContent() {
   const searchParams = useSearchParams();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const { rawCatalog, allFlagships } = useProductCatalog();
+  const { categories: allDbCategories } = useCategories();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -1341,24 +1344,33 @@ function ProductsSearchContent() {
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {OTHER_CATEGORIES_LIST.map((cat) => (
-              <Link
-                key={cat.id || cat.slug}
-                href={localizedHref(`/products/${cat.slug}`)}
-                className="group flex flex-col items-center text-center p-3 rounded-xl border border-wbk-lightgrey/50 hover:border-wbk-black bg-white hover:shadow-sm transition-all"
-              >
-                <div className="relative aspect-square w-full overflow-hidden bg-[#F8F7F5] flex items-center justify-center p-3 rounded-lg mb-2">
-                  <img
-                    src={cat.image}
-                    alt={cat.label}
-                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <span className="text-xs font-medium uppercase tracking-wider text-wbk-black group-hover:text-wbk-green transition-colors">
-                  {cat.titleKey ? t(cat.titleKey, cat.label) : t(`categories.${cat.slug}`, cat.label)}
-                </span>
-              </Link>
-            ))}
+            {allDbCategories
+              .filter((c) => c.is_visible !== false && c.is_featured !== false && c.id !== "beds")
+              .slice(0, 4)
+              .map((cat) => {
+                const href = cat.href || (cat.slug?.startsWith("/") ? cat.slug : `/products/${cat.slug || cat.id}`);
+                const title = getLocalizedCategoryTitle(cat, locale) || t(`categories.${cat.key}`, cat.title || cat.name);
+                const imageSrc = cat.grid_image || cat.image;
+
+                return (
+                  <Link
+                    key={cat.id || cat.slug}
+                    href={localizedHref(href)}
+                    className="group flex flex-col items-center text-center p-3 rounded-none border border-wbk-lightgrey/50 hover:border-wbk-black bg-white hover:shadow-sm transition-all"
+                  >
+                    <div className="relative aspect-square w-full overflow-hidden bg-[#F8F7F5] flex items-center justify-center p-3 rounded-none mb-2">
+                      <img
+                        src={imageSrc}
+                        alt={title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <span className="text-xs font-medium uppercase tracking-wider text-wbk-black group-hover:text-wbk-green transition-colors">
+                      {title}
+                    </span>
+                  </Link>
+                );
+              })}
           </div>
 
         </div>

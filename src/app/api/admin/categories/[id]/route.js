@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { revalidateCategoriesCache } from "@/lib/categories-db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -116,6 +117,8 @@ export async function PATCH(request, { params }) {
       }
     }
 
+    await revalidateCategoriesCache();
+
     return NextResponse.json({
       success: true,
       category: updatedCat,
@@ -146,6 +149,8 @@ export async function DELETE(request, { params }) {
         console.warn("Supabase delete error:", err.message);
       }
     }
+
+    await revalidateCategoriesCache();
 
     return NextResponse.json({
       success: true,

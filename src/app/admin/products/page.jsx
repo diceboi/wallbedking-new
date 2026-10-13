@@ -104,6 +104,10 @@ export default function AdminProductsPage() {
       if (urlParams.get("action") === "export") {
         setIsExportOpen(true);
       }
+      const catParam = urlParams.get("category");
+      if (catParam) {
+        setSelectedCategory(catParam);
+      }
     }
   }, []);
 
@@ -180,6 +184,7 @@ export default function AdminProductsPage() {
         selectedCategory === "all" ||
         p.parent_category === selectedCategory ||
         (p.parent_category && p.parent_category.toLowerCase() === selectedCategory.toLowerCase()) ||
+        (selectedCategory === "beds" && (p.parent_category === "beds" || p.parent_category === "morphy-beds" || p.parent_category === "traditional-beds")) ||
         (p.category && p.category.toLowerCase().includes(selectedCategory.toLowerCase()));
       const matchesOrientation =
         selectedOrientation === "all" || p.orientation === selectedOrientation;

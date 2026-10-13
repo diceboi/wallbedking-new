@@ -24,15 +24,18 @@ import {
 import { MenuContext } from "@/context/MenuContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { useCategories } from "@/context/CategoriesContext";
 import { resolveCategory } from "@/data/slugs";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
 import { isProductAvailableInLocale } from "@/lib/products";
+import { getLocalizedCategoryTitle, getLocalizedCategoryDescription } from "@/lib/categories-utils";
 
 export default function CategoryArchivePage() {
   const params = useParams();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const { allProducts } = useProductCatalog();
+  const { categories: allDbCategories } = useCategories();
   const rawCategory = params?.category || "beds";
   const currentCategory = resolveCategory(rawCategory, params?.locale);
 
@@ -453,33 +456,47 @@ export default function CategoryArchivePage() {
 
   const categoryTitle = useMemo(() => {
     if (currentCategory === "beds") {
-      if (selectedCollection === "traditional") return t("nav.traditionalBeds", "Traditional Beds");
-      return t("nav.morphyBeds", "MORPHY™ Beds");
+      if (selectedCollection === "traditional") {
+        const found = allDbCategories.find((c) => c.id === "traditional-beds");
+        return getLocalizedCategoryTitle(found, locale) || t("nav.traditionalBeds", "Traditional Beds");
+      }
+      const found = allDbCategories.find((c) => c.id === "morphy-beds");
+      return getLocalizedCategoryTitle(found, locale) || t("nav.morphyBeds", "MORPHY™ Beds");
     }
-    return t(`categories.${currentCategory}`, catInfo.label);
-  }, [currentCategory, selectedCollection, t, catInfo]);
+    const found = allDbCategories.find((c) => c.id === currentCategory || c.slug === currentCategory);
+    return getLocalizedCategoryTitle(found, locale) || t(`categories.${currentCategory}`, catInfo.label);
+  }, [currentCategory, selectedCollection, t, catInfo, allDbCategories, locale]);
 
   const categoryDescription = useMemo(() => {
     if (currentCategory === "beds") {
       if (selectedCollection === "traditional") {
-        return t("nav.allTraditionalTagline", "Time-tested Traditional wall beds with proven mechanism and solid engineering.");
+        const found = allDbCategories.find((c) => c.id === "traditional-beds");
+        return getLocalizedCategoryDescription(found, locale) || t("nav.allTraditionalTagline", "Time-tested Traditional wall beds with proven mechanism and solid engineering.");
       }
-      return t("nav.allMorphyTagline", "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.");
+      const found = allDbCategories.find((c) => c.id === "morphy-beds");
+      return getLocalizedCategoryDescription(found, locale) || t("nav.allMorphyTagline", "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.");
     }
-    return t(`categories.${currentCategory}Desc`, catInfo.description);
-  }, [currentCategory, selectedCollection, t, catInfo]);
+    const found = allDbCategories.find((c) => c.id === currentCategory || c.slug === currentCategory);
+    return getLocalizedCategoryDescription(found, locale) || t(`categories.${currentCategory}Desc`, catInfo.description);
+  }, [currentCategory, selectedCollection, t, catInfo, allDbCategories, locale]);
 
   const otherCategoriesToDisplay = useMemo(() => {
-    return OTHER_CATEGORIES_LIST.filter((cat) => {
+    return allDbCategories.filter((cat) => {
+      // Only show visible and featured categories
+      if (cat.is_visible === false) return false;
+      if (cat.is_featured === false) return false;
+      // Exclude generic 'beds' container when displaying distinct categories
+      if (cat.id === "beds" && cat.slug === "beds") return false;
+
       if (currentCategory === "beds") {
         if (selectedCollection === "traditional") {
-          return cat.categoryKey !== "traditional";
+          return cat.id !== "traditional-beds" && !cat.slug?.includes("traditional");
         }
-        return cat.categoryKey !== "morphy";
+        return cat.id !== "morphy-beds" && !cat.slug?.includes("morphy");
       }
-      return cat.categoryKey !== currentCategory && cat.slug !== currentCategory;
+      return cat.id !== currentCategory && cat.slug !== currentCategory;
     });
-  }, [currentCategory, selectedCollection]);
+  }, [allDbCategories, currentCategory, selectedCollection]);
 
 
   if (!mounted) {
@@ -1077,26 +1094,34 @@ export default function CategoryArchivePage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {otherCategoriesToDisplay.map((otherCat) => (
-              <Link
-                key={otherCat.id || otherCat.slug}
-                href={localizedHref(otherCat.slug.startsWith("/") ? otherCat.slug : `/products/${otherCat.slug}`)}
-                className="group flex flex-col items-center text-center"
-              >
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center p-6 transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-none">
-                  <img
-                    src={otherCat.image}
-                    alt={otherCat.label}
-                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
-                  {otherCat.titleKey
-                    ? t(otherCat.titleKey, otherCat.label)
-                    : t(`categories.${otherCat.slug}`, otherCat.label)}
-                </span>
-              </Link>
-            ))}
+            {otherCategoriesToDisplay.map((otherCat) => {
+              const href = otherCat.href || (otherCat.slug?.startsWith("/") ? otherCat.slug : `/products/${otherCat.slug || otherCat.id}`);
+              const title =
+                getLocalizedCategoryTitle(otherCat, locale) ||
+                (otherCat.titleKey
+                  ? t(otherCat.titleKey, otherCat.title || otherCat.name || otherCat.label)
+                  : t(`categories.${otherCat.key || otherCat.slug}`, otherCat.title || otherCat.name || otherCat.label));
+              const imageSrc = otherCat.grid_image || otherCat.image;
+
+              return (
+                <Link
+                  key={otherCat.id || otherCat.slug}
+                  href={localizedHref(href)}
+                  className="group flex flex-col items-center text-center"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-none">
+                    <img
+                      src={imageSrc}
+                      alt={title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
+                    {title}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
 

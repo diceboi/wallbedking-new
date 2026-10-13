@@ -199,6 +199,8 @@
     "explore": "Explore"
   },
   "categories": {
+    "morphyBeds": "MORPHY™ Beds",
+    "traditionalBeds": "Traditional Beds",
     "classicBeds": "Classic beds",
     "studioBeds": "Studio Beds",
     "sofas": "Sofas",
