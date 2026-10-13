@@ -8,12 +8,12 @@ import { useLocale } from "@/context/LocaleContext";
 
 const FOOTER_LINKS = {
   Products: [
-    { label: "Murphy Beds",  href: "/products/beds", id: "beds" },
-    { label: "Sofas",        href: "/products/sofas", id: "sofas" },
-    { label: "Smart Tables", href: "/products/tables", id: "tables" },
-    { label: "Cabinets",     href: "/products/cabinets", id: "cabinets" },
-    { label: "Mattresses",   href: "/products/mattresses", id: "mattresses" },
-    { label: "Configurator", href: "/configurator", id: "configurator" },
+    { label: "MORPHY™ Beds",     href: "/products/beds?collection=morphy", id: "morphyBeds" },
+    { label: "Traditional Beds", href: "/products/beds?collection=traditional", id: "traditionalBeds" },
+    { label: "Cabinets",         href: "/products/cabinets", id: "cabinets" },
+    { label: "Mattresses",       href: "/products/mattresses", id: "mattresses" },
+    { label: "Smart Tables",     href: "/products/tables", id: "tables" },
+    { label: "Configurator",     href: "/configurator", id: "configurator" },
   ],
   Support: [
     { label: "Installation Guides", href: "/support/installation-guides", id: "guides" },

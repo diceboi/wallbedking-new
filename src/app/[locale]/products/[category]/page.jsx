@@ -57,12 +57,34 @@ export default function CategoryArchivePage() {
 
   const searchParams = useSearchParams();
 
+  // Helper to reliably check if a bed product is MORPHY™
+  const isMorphyBed = useCallback((prod) => {
+    if (!prod) return false;
+    if (prod.isMorphy === true || prod.isMorphy === "true") return true;
+    if (prod.isMorphy === false || prod.isMorphy === "false") return false;
+    const str = `${prod.name || ""} ${prod.title || ""} ${prod.slug || ""} ${prod.badge || ""} ${prod.sub_category || ""} ${prod.type || ""}`.toLowerCase();
+    if (str.includes("traditional")) return false;
+    if (str.includes("morphy")) return true;
+    return false;
+  }, []);
+
+  // Derive collection from query or category slug (defaults to Morphy for beds)
+  const activeCollectionParam = useMemo(() => {
+    const col = searchParams?.get("collection");
+    if (col) return col.toLowerCase();
+    const rawLower = String(rawCategory || "").toLowerCase();
+    if (rawLower.includes("traditional")) return "traditional";
+    if (rawLower.includes("morphy")) return "morphy";
+    if (currentCategory === "beds") return "morphy";
+    return "All";
+  }, [searchParams, rawCategory, currentCategory]);
+
   // ── FILTER STATES ──
   const [selectedOrientation, setSelectedOrientation] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [selectedTag, setSelectedTag] = useState("All");
-  const [selectedCollection, setSelectedCollection] = useState("All");
+  const [selectedCollection, setSelectedCollection] = useState(activeCollectionParam);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const formatTypeLabel = useCallback(
@@ -99,26 +121,37 @@ export default function CategoryArchivePage() {
     [t, formatPrice],
   );
 
+  // Products scoped to current collection (Morphy vs Traditional for beds)
+  const collectionScopedProducts = useMemo(() => {
+    if (currentCategory !== "beds") return rawCategoryProducts;
+    if (selectedCollection === "traditional") {
+      return rawCategoryProducts.filter((p) => !isMorphyBed(p));
+    }
+    return rawCategoryProducts.filter((p) => isMorphyBed(p));
+  }, [rawCategoryProducts, currentCategory, selectedCollection, isMorphyBed]);
+
   const distinctOrientations = useMemo(() => {
     const orients = Array.from(
       new Set(
-        rawCategoryProducts
+        collectionScopedProducts
           .map((p) => p.orientation)
           .filter(Boolean),
       ),
     );
     return ["All", ...orients];
-  }, [rawCategoryProducts]);
+  }, [collectionScopedProducts]);
 
   const distinctTypes = useMemo(() => {
-    const defined = catInfo?.subcategories || [];
-    const fromProducts = rawCategoryProducts
+    const defined = currentCategory === "beds"
+      ? (selectedCollection === "traditional" ? ["Classic", "Studio"] : ["Classic", "Studio", "Integrated"])
+      : (catInfo?.subcategories || []);
+    const fromProducts = collectionScopedProducts
       .map((p) => p.sub_category || p.type)
       .filter(Boolean);
 
     const combined = Array.from(new Set([...defined, ...fromProducts]));
     return ["All", ...combined];
-  }, [catInfo, rawCategoryProducts]);
+  }, [catInfo, collectionScopedProducts, currentCategory, selectedCollection]);
 
   const priceOptions = ["All", "Under £500", "£500 - £800", "Over £800"];
 
@@ -165,61 +198,64 @@ export default function CategoryArchivePage() {
       setSelectedTag("All");
     }
 
-    const col = searchParams?.get("collection");
-    if (col) {
-      setSelectedCollection(col.toLowerCase());
-    } else {
-      setSelectedCollection("All");
-    }
-  }, [searchParams, distinctOrientations, distinctTypes]);
+    setSelectedCollection(activeCollectionParam);
+  }, [searchParams, activeCollectionParam, distinctOrientations, distinctTypes]);
 
   // Sync state changes to URL query parameters
-  const updateUrlParams = useCallback((newOrientation, newType, newPrice, newTag, newCollection) => {
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    if (newOrientation && newOrientation !== "All") {
-      url.searchParams.set("orientation", newOrientation);
-    } else {
-      url.searchParams.delete("orientation");
-    }
-    if (newType && newType !== "All") {
-      url.searchParams.set("type", newType);
-    } else {
-      url.searchParams.delete("type");
-      url.searchParams.delete("sub_category");
-    }
-    if (newPrice && newPrice !== "All") {
-      url.searchParams.set("price", newPrice);
-    } else {
-      url.searchParams.delete("price");
-    }
-    const tagVal = newTag !== undefined ? newTag : selectedTag;
-    if (tagVal && tagVal !== "All") {
-      url.searchParams.set("tag", tagVal);
-    } else {
-      url.searchParams.delete("tag");
-    }
-    const colVal = newCollection !== undefined ? newCollection : selectedCollection;
-    if (colVal && colVal !== "All") {
-      url.searchParams.set("collection", colVal);
-    } else {
-      url.searchParams.delete("collection");
-    }
-    window.history.replaceState(null, "", url.toString());
-  }, [selectedTag, selectedCollection]);
+  const updateUrlParams = useCallback(
+    (newOrientation, newType, newPrice, newTag, newCollection) => {
+      if (typeof window === "undefined") return;
+      const url = new URL(window.location.href);
+      if (newOrientation && newOrientation !== "All") {
+        url.searchParams.set("orientation", newOrientation);
+      } else {
+        url.searchParams.delete("orientation");
+      }
+      if (newType && newType !== "All") {
+        url.searchParams.set("type", newType);
+      } else {
+        url.searchParams.delete("type");
+        url.searchParams.delete("sub_category");
+      }
+      if (newPrice && newPrice !== "All") {
+        url.searchParams.set("price", newPrice);
+      } else {
+        url.searchParams.delete("price");
+      }
+      const tagVal = newTag !== undefined ? newTag : selectedTag;
+      if (tagVal && tagVal !== "All") {
+        url.searchParams.set("tag", tagVal);
+      } else {
+        url.searchParams.delete("tag");
+      }
+      const colVal = newCollection !== undefined ? newCollection : selectedCollection;
+      if (currentCategory === "beds") {
+        if (colVal === "traditional") {
+          url.searchParams.set("collection", "traditional");
+        } else {
+          url.searchParams.set("collection", "morphy");
+        }
+      } else {
+        url.searchParams.delete("collection");
+      }
+      window.history.replaceState(null, "", url.toString());
+    },
+    [currentCategory, selectedTag, selectedCollection],
+  );
 
   // ── REAL FILTERING LOGIC ──
   const filteredProducts = useMemo(() => {
     const baseList = rawCategoryProducts;
 
     return baseList.filter((prod) => {
-      // Collection filter (Morphy vs Traditional)
-      if (selectedCollection !== "All") {
-        if (selectedCollection === "morphy" && prod.isMorphy !== true) {
-          return false;
-        }
-        if (selectedCollection === "traditional" && prod.isMorphy === true) {
-          return false;
+      // Collection filter (Strict separation: MORPHY™ vs Traditional for beds)
+      if (currentCategory === "beds") {
+        const isMorphy = isMorphyBed(prod);
+        if (selectedCollection === "traditional") {
+          if (isMorphy) return false;
+        } else {
+          // Default for beds is MORPHY™
+          if (!isMorphy) return false;
         }
       }
 
@@ -268,12 +304,15 @@ export default function CategoryArchivePage() {
     });
   }, [
     rawCategoryProducts,
+    currentCategory,
+    selectedCollection,
+    isMorphyBed,
     selectedOrientation,
     selectedType,
     selectedPrice,
     selectedTag,
-    selectedCollection,
   ]);
+
 
   const { isMenuVisible, subMenu } = useContext(MenuContext);
   const [isSticky, setIsSticky] = useState(false);
@@ -333,8 +372,7 @@ export default function CategoryArchivePage() {
     selectedOrientation !== "All" ||
     selectedType !== "All" ||
     selectedPrice !== "All" ||
-    selectedTag !== "All" ||
-    selectedCollection !== "All";
+    selectedTag !== "All";
 
   const productGridRef = useRef(null);
 
@@ -377,28 +415,28 @@ export default function CategoryArchivePage() {
 
   const handleSelectType = (opt) => {
     setSelectedType(opt);
-    updateUrlParams(selectedOrientation, opt, selectedPrice, selectedTag);
+    updateUrlParams(selectedOrientation, opt, selectedPrice, selectedTag, selectedCollection);
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectOrientation = (opt) => {
     setSelectedOrientation(opt);
-    updateUrlParams(opt, selectedType, selectedPrice, selectedTag);
+    updateUrlParams(opt, selectedType, selectedPrice, selectedTag, selectedCollection);
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectPrice = (opt) => {
     setSelectedPrice(opt);
-    updateUrlParams(selectedOrientation, selectedType, opt, selectedTag);
+    updateUrlParams(selectedOrientation, selectedType, opt, selectedTag, selectedCollection);
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectTag = (opt) => {
     setSelectedTag(opt);
-    updateUrlParams(selectedOrientation, selectedType, selectedPrice, opt);
+    updateUrlParams(selectedOrientation, selectedType, selectedPrice, opt, selectedCollection);
     setActiveDropdown(null);
     scrollToProducts();
   };
@@ -408,11 +446,41 @@ export default function CategoryArchivePage() {
     setSelectedType("All");
     setSelectedPrice("All");
     setSelectedTag("All");
-    setSelectedCollection("All");
-    updateUrlParams("All", "All", "All", "All", "All");
+    updateUrlParams("All", "All", "All", "All", selectedCollection);
     setActiveDropdown(null);
     scrollToProducts();
   };
+
+  const categoryTitle = useMemo(() => {
+    if (currentCategory === "beds") {
+      if (selectedCollection === "traditional") return t("nav.traditionalBeds", "Traditional Beds");
+      return t("nav.morphyBeds", "MORPHY™ Beds");
+    }
+    return t(`categories.${currentCategory}`, catInfo.label);
+  }, [currentCategory, selectedCollection, t, catInfo]);
+
+  const categoryDescription = useMemo(() => {
+    if (currentCategory === "beds") {
+      if (selectedCollection === "traditional") {
+        return t("nav.allTraditionalTagline", "Time-tested Traditional wall beds with proven mechanism and solid engineering.");
+      }
+      return t("nav.allMorphyTagline", "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.");
+    }
+    return t(`categories.${currentCategory}Desc`, catInfo.description);
+  }, [currentCategory, selectedCollection, t, catInfo]);
+
+  const otherCategoriesToDisplay = useMemo(() => {
+    return OTHER_CATEGORIES_LIST.filter((cat) => {
+      if (currentCategory === "beds") {
+        if (selectedCollection === "traditional") {
+          return cat.categoryKey !== "traditional";
+        }
+        return cat.categoryKey !== "morphy";
+      }
+      return cat.categoryKey !== currentCategory && cat.slug !== currentCategory;
+    });
+  }, [currentCategory, selectedCollection]);
+
 
   if (!mounted) {
     return (
@@ -437,14 +505,14 @@ export default function CategoryArchivePage() {
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                {t(`categories.${currentCategory}`, catInfo.label)}
+                {categoryTitle}
               </span>
             </nav>
             <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
-              {t(`categories.${currentCategory}`, catInfo.label)}
+              {categoryTitle}
             </h1>
             <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
-              {t(`categories.${currentCategory}Desc`, catInfo.description)}
+              {categoryDescription}
             </p>
           </div>
           <div className="text-xs text-wbk-brown font-poppins">
@@ -522,20 +590,14 @@ export default function CategoryArchivePage() {
                           activeDropdown === "collection" ? null : "collection",
                         )
                       }
-                      className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
-                        selectedCollection !== "All"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
-                          : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black shadow-2xs"
-                      }`}
+                      className="flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs font-poppins transition-all rounded-full cursor-pointer whitespace-nowrap select-none border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
                     >
                       <span>
                         {t("categories.collection", "Collection")}:{" "}
                         <strong className="font-semibold">
-                          {selectedCollection === "morphy"
-                            ? "MORPHY™"
-                            : selectedCollection === "traditional"
-                              ? t("nav.traditionalBeds", "Traditional")
-                              : t("categories.all", "All")}
+                          {selectedCollection === "traditional"
+                            ? t("nav.traditionalBeds", "Traditional")
+                            : "MORPHY™"}
                         </strong>
                       </span>
                       <IconChevronDown
@@ -552,20 +614,9 @@ export default function CategoryArchivePage() {
                       <div className="absolute top-full left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-none">
                         <button
                           type="button"
-                          onClick={() => handleSelectCollection("All")}
-                          className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-none transition-colors whitespace-nowrap cursor-pointer ${
-                            selectedCollection === "All"
-                              ? "bg-[#F4F2F0] font-semibold text-wbk-black"
-                              : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
-                          }`}
-                        >
-                          {t("categories.all", "All")}
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => handleSelectCollection("morphy")}
                           className={`w-full text-left px-4 py-2 text-xs font-poppins rounded-none transition-colors whitespace-nowrap cursor-pointer ${
-                            selectedCollection === "morphy"
+                            selectedCollection !== "traditional"
                               ? "bg-[#F4F2F0] font-semibold text-wbk-black"
                               : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                           }`}
@@ -899,7 +950,7 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedType("All");
-                    updateUrlParams(selectedOrientation, "All", selectedPrice);
+                    updateUrlParams(selectedOrientation, "All", selectedPrice, selectedTag, selectedCollection);
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
@@ -919,7 +970,7 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedOrientation("All");
-                    updateUrlParams("All", selectedType, selectedPrice);
+                    updateUrlParams("All", selectedType, selectedPrice, selectedTag, selectedCollection);
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
@@ -939,7 +990,7 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedPrice("All");
-                    updateUrlParams(selectedOrientation, selectedType, "All", selectedTag);
+                    updateUrlParams(selectedOrientation, selectedType, "All", selectedTag, selectedCollection);
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
@@ -959,7 +1010,7 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedTag("All");
-                    updateUrlParams(selectedOrientation, selectedType, selectedPrice, "All");
+                    updateUrlParams(selectedOrientation, selectedType, selectedPrice, "All", selectedCollection);
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
@@ -1025,13 +1076,11 @@ export default function CategoryArchivePage() {
             {t("categories.otherCategories", "Other categories")}
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {OTHER_CATEGORIES_LIST.filter(
-              (cat) => cat.slug !== currentCategory,
-            ).map((otherCat) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {otherCategoriesToDisplay.map((otherCat) => (
               <Link
-                key={otherCat.slug}
-                href={localizedHref(`/products/${otherCat.slug}`)}
+                key={otherCat.id || otherCat.slug}
+                href={localizedHref(otherCat.slug.startsWith("/") ? otherCat.slug : `/products/${otherCat.slug}`)}
                 className="group flex flex-col items-center text-center"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center p-6 transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-none">
@@ -1042,12 +1091,15 @@ export default function CategoryArchivePage() {
                   />
                 </div>
                 <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
-                  {t(`categories.${otherCat.slug}`, otherCat.label)}
+                  {otherCat.titleKey
+                    ? t(otherCat.titleKey, otherCat.label)
+                    : t(`categories.${otherCat.slug}`, otherCat.label)}
                 </span>
               </Link>
             ))}
           </div>
         </div>
+
       </Container>
     </div>
   );

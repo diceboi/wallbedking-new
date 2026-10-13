@@ -4,8 +4,8 @@ export const ALL_NAV_ITEMS = (
   Array.isArray(navMenuData) && navMenuData.length > 0
     ? navMenuData
     : [
-        { id: "beds", title: "Wall Beds", slug: "beds", href: "/products/beds", is_visible: true, order: 1, hasSubmenu: true, has_submenu: true },
-        { id: "sofas", title: "Sofas", slug: "sofas", href: "/products/sofas", is_visible: true, order: 2, hasSubmenu: true, has_submenu: true },
+        { id: "morphyBeds", title: "MORPHY™ Beds", slug: "morphy-beds", href: "/products/beds?collection=morphy", is_visible: true, order: 1, hasSubmenu: true, has_submenu: true, badge: "New Gen" },
+        { id: "traditionalBeds", title: "Traditional Beds", slug: "traditional-beds", href: "/products/beds?collection=traditional", is_visible: true, order: 2, hasSubmenu: true, has_submenu: true },
         { id: "cabinets", title: "Cabinets", slug: "cabinets", href: "/products/cabinets", is_visible: true, order: 3, hasSubmenu: true, has_submenu: true },
         { id: "mattresses", title: "Mattresses", slug: "mattresses", href: "/products/mattresses", is_visible: true, order: 4, hasSubmenu: true, has_submenu: true },
       ]
@@ -27,7 +27,111 @@ export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS
 const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
 const SUPABASE_MATTRESSES_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
 
+const morphySubmenu = {
+  parent: {
+    title: "All MORPHY™ Beds",
+    titleKey: "nav.allMorphyBeds",
+    image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
+    hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
+    href: "/products/beds?collection=morphy",
+    tagline: "Explore all MORPHY™ models",
+    taglineKey: "nav.allMorphyTagline",
+  },
+  items: [
+    {
+      title: "Classic Vertical MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
+      href: "/products/beds/classic-vertical-wall-bed",
+      price: "from £419",
+    },
+    {
+      title: "Classic Horizontal MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1-m.webp`,
+      href: "/products/beds/classic-horizontal-wall-bed",
+      price: "from £419",
+    },
+    {
+      title: "Studio Vertical MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1-m.webp`,
+      href: "/products/beds/studio-vertical-wall-bed",
+      price: "from £524",
+    },
+    {
+      title: "Studio Horizontal MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1-m.webp`,
+      href: "/products/beds/studio-horizontal-wall-bed",
+      price: "from £524",
+    },
+    {
+      title: "Integrated Vertical MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1-m.webp`,
+      href: "/products/beds/integrated-vertical-wall-bed",
+      price: "from £699",
+    },
+    {
+      title: "Integrated Horizontal MORPHY™ Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1-m.webp`,
+      href: "/products/beds/integrated-horizontal-wall-bed",
+      price: "from £699",
+    },
+  ],
+};
+
+const traditionalSubmenu = {
+  parent: {
+    title: "All Traditional Beds",
+    titleKey: "nav.allTraditionalBeds",
+    image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
+    hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
+    href: "/products/beds?collection=traditional",
+    tagline: "Explore classic wall bed models",
+    taglineKey: "nav.allTraditionalTagline",
+  },
+  items: [
+    {
+      title: "Classic Vertical Wall Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
+      href: "/products/beds/classic-vertical-traditional-bed",
+      price: "from £399",
+    },
+    {
+      title: "Classic Horizontal Wall Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_2.webp`,
+      href: "/products/beds/classic-horizontal-traditional-bed",
+      price: "from £399",
+    },
+    {
+      title: "Studio Vertical Wall Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_2.webp`,
+      href: "/products/beds/studio-vertical-traditional-bed",
+      price: "from £499",
+    },
+    {
+      title: "Studio Horizontal Wall Bed",
+      image: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_1.webp`,
+      hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_2.webp`,
+      href: "/products/beds/studio-horizontal-traditional-bed",
+      price: "from £499",
+    },
+  ],
+};
+
 export const SUBMENU_DATA = {
+  "morphy-beds": morphySubmenu,
+  morphyBeds: morphySubmenu,
+  morphy: morphySubmenu,
+  "traditional-beds": traditionalSubmenu,
+  traditionalBeds: traditionalSubmenu,
+  traditional: traditionalSubmenu,
   beds: {
     parent: {
       title: "All Wall Beds",
@@ -42,178 +146,19 @@ export const SUBMENU_DATA = {
         title: "MORPHY™ Beds",
         titleKey: "nav.morphyBeds",
         badge: "New Generation",
-        parent: {
-          title: "All MORPHY™ Beds",
-          titleKey: "nav.allMorphyBeds",
-          image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
-          hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
-          href: "/products/beds?collection=morphy",
-          tagline: "Explore all MORPHY™ models",
-          taglineKey: "nav.allMorphyTagline",
-        },
-        items: [
-          {
-            title: "Classic Vertical MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
-            href: "/products/beds/classic-vertical-wall-bed",
-            price: "from £419",
-          },
-          {
-            title: "Classic Horizontal MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1-m.webp`,
-            href: "/products/beds/classic-horizontal-wall-bed",
-            price: "from £419",
-          },
-          {
-            title: "Studio Vertical MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1-m.webp`,
-            href: "/products/beds/studio-vertical-wall-bed",
-            price: "from £524",
-          },
-          {
-            title: "Studio Horizontal MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1-m.webp`,
-            href: "/products/beds/studio-horizontal-wall-bed",
-            price: "from £524",
-          },
-          {
-            title: "Integrated Vertical MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1-m.webp`,
-            href: "/products/beds/integrated-vertical-wall-bed",
-            price: "from £699",
-          },
-          {
-            title: "Integrated Horizontal MORPHY™ Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1-m.webp`,
-            href: "/products/beds/integrated-horizontal-wall-bed",
-            price: "from £699",
-          },
-        ],
+        parent: morphySubmenu.parent,
+        items: morphySubmenu.items,
       },
       {
         id: "traditional",
         title: "Traditional Beds",
         titleKey: "nav.traditionalBeds",
         badge: "Classic Line",
-        parent: {
-          title: "All Traditional Beds",
-          titleKey: "nav.allTraditionalBeds",
-          image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
-          hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
-          href: "/products/beds?collection=traditional",
-          tagline: "Explore classic wall bed models",
-          taglineKey: "nav.allTraditionalTagline",
-        },
-        items: [
-          {
-            title: "Classic Vertical Wall Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
-            href: "/products/beds/classic-vertical-traditional-bed",
-            price: "from £399",
-          },
-          {
-            title: "Classic Horizontal Wall Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_2.webp`,
-            href: "/products/beds/classic-horizontal-traditional-bed",
-            price: "from £399",
-          },
-          {
-            title: "Studio Vertical Wall Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_2.webp`,
-            href: "/products/beds/studio-vertical-traditional-bed",
-            price: "from £499",
-          },
-          {
-            title: "Studio Horizontal Wall Bed",
-            image: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_1.webp`,
-            hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_2.webp`,
-            href: "/products/beds/studio-horizontal-traditional-bed",
-            price: "from £499",
-          },
-        ],
+        parent: traditionalSubmenu.parent,
+        items: traditionalSubmenu.items,
       },
     ],
-    items: [
-      {
-        title: "Classic Vertical MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
-        href: "/products/beds/classic-vertical-wall-bed",
-        price: "from £419",
-      },
-      {
-        title: "Classic Horizontal MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1-m.webp`,
-        href: "/products/beds/classic-horizontal-wall-bed",
-        price: "from £419",
-      },
-      {
-        title: "Studio Vertical MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1-m.webp`,
-        href: "/products/beds/studio-vertical-wall-bed",
-        price: "from £524",
-      },
-      {
-        title: "Studio Horizontal MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1-m.webp`,
-        href: "/products/beds/studio-horizontal-wall-bed",
-        price: "from £524",
-      },
-      {
-        title: "Integrated Vertical MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1-m.webp`,
-        href: "/products/beds/integrated-vertical-wall-bed",
-        price: "from £699",
-      },
-      {
-        title: "Integrated Horizontal MORPHY™ Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1-m.webp`,
-        href: "/products/beds/integrated-horizontal-wall-bed",
-        price: "from £699",
-      },
-      {
-        title: "Classic Vertical Wall Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
-        href: "/products/beds/classic-vertical-traditional-bed",
-        price: "from £399",
-      },
-      {
-        title: "Classic Horizontal Wall Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-TRADITIONAL_2.webp`,
-        href: "/products/beds/classic-horizontal-traditional-bed",
-        price: "from £399",
-      },
-      {
-        title: "Studio Vertical Wall Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SV-TRADITIONAL_2.webp`,
-        href: "/products/beds/studio-vertical-traditional-bed",
-        price: "from £499",
-      },
-      {
-        title: "Studio Horizontal Wall Bed",
-        image: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_1.webp`,
-        hoverImage: `${SUPABASE_STORAGE_URL}/1K/150x200-SH-TRADITIONAL_2.webp`,
-        href: "/products/beds/studio-horizontal-traditional-bed",
-        price: "from £499",
-      },
-    ],
+    items: [...morphySubmenu.items, ...traditionalSubmenu.items],
   },
   sofas: {
     parent: {

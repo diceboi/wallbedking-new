@@ -167,6 +167,7 @@ export default function ProductDetailPage() {
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [activeLightboxImages, setActiveLightboxImages] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
@@ -613,7 +614,7 @@ export default function ProductDetailPage() {
         );
       }
 
-      setSofaIncluded(activeProduct.has3D || false);
+      setSofaIncluded(false);
     }
 
     const timer = setTimeout(() => {
@@ -816,18 +817,29 @@ export default function ProductDetailPage() {
       displayProduct?.stock !== null &&
       Number(displayProduct.stock) <= 0) ||
     displayProduct?.in_stock === false;
-  const has3D = Boolean(
-    displayProduct?.has3D ||
-    displayProduct?.type === "Integrated" ||
-    activeProduct?.has3D ||
-    productSlug.includes("integrated") ||
-    productSlug === "integrated-bed",
-  );
+  const has3D = false;
+
+  const isMorphyBed = Boolean(
+    displayProduct?.isMorphy ||
+    activeProduct?.isMorphy ||
+    (displayProduct?.name || "").toUpperCase().includes("MORPHY") ||
+    (activeProduct?.name || "").toUpperCase().includes("MORPHY") ||
+    (displayProduct?.category || "").toUpperCase().includes("MORPHY") ||
+    (productSlug || "").includes("morphy") ||
+    [
+      "classic-vertical-wall-bed",
+      "classic-horizontal-wall-bed",
+      "studio-vertical-wall-bed",
+      "studio-horizontal-wall-bed",
+      "integrated-vertical-wall-bed",
+      "integrated-horizontal-wall-bed",
+    ].includes(productSlug)
+  ) && !(productSlug || "").includes("traditional");
 
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale);
   const sofaSurcharge =
-    has3D && sofaIncluded
+    isMorphyBed && sofaIncluded
       ? productPricing.currency === "GBP"
         ? 280
         : productPricing.currency === "USD"
@@ -836,6 +848,71 @@ export default function ProductDetailPage() {
       : 0;
   const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
+
+  const categoryBreadcrumbHref = useMemo(() => {
+    if (categorySlug === "beds") {
+      return isMorphyBed ? "/products/beds?collection=morphy" : "/products/beds?collection=traditional";
+    }
+    return `/products/${categorySlug}`;
+  }, [categorySlug, isMorphyBed]);
+
+  const categoryBreadcrumbLabel = useMemo(() => {
+    if (categorySlug === "beds") {
+      return isMorphyBed ? t("nav.morphyBeds", "MORPHY™ Beds") : t("nav.traditionalBeds", "Traditional Beds");
+    }
+    return t(`categories.${categorySlug}`, categorySlug.replace("-", " "));
+  }, [categorySlug, isMorphyBed, t]);
+
+  // Sofa combination image helpers (for Morphy beds with sofa option)
+  const getSofaImgSize = useCallback(() => {
+    let w = 0;
+    if (selectedVariant?.width || displayProduct?.width) {
+      const rawW = Number(selectedVariant?.width || displayProduct?.width);
+      w = rawW > 300 ? Math.round(rawW / 10) : Math.round(rawW);
+    }
+    if (!w) {
+      const m = (productSize || "").match(/(\d{2,3})\s*[xX×]\s*(\d{2,3})/);
+      if (m) w = parseInt(m[1], 10);
+    }
+    if (!w) w = 140;
+
+    if (w > 160) return "large";
+    if (w >= 135) return "double";
+    if (w >= 120) return "small-double";
+    return "small";
+  }, [selectedVariant, displayProduct, productSize]);
+
+  const getSofaImgStyle = useCallback(() => {
+    const s = (productStyle || displayProduct?.type || displayProduct?.sub_category || "").toLowerCase();
+    if (s.includes("studio")) return "studio";
+    return "classic";
+  }, [productStyle, displayProduct]);
+
+  const getSofaImgOrient = useCallback(() => {
+    const o = (productFormat || displayProduct?.orientation || "").toLowerCase();
+    if (o.includes("horizontal")) return "horizontal";
+    return "vertical";
+  }, [productFormat, displayProduct]);
+
+  const sofaImages = useMemo(() => {
+    const sz = getSofaImgSize();
+    const st = getSofaImgStyle();
+    const or = getSofaImgOrient();
+    return [
+      {
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-1.webp`,
+        alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 1`,
+      },
+      {
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-2.webp`,
+        alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 2`,
+      },
+      {
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-3.webp`,
+        alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 3`,
+      },
+    ];
+  }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName]);
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
   const currentEan = getLocalizedProductGtin(displayProduct, locale);
@@ -1337,15 +1414,17 @@ export default function ProductDetailPage() {
 
   const handlePrevImage = (e) => {
     e?.stopPropagation?.();
+    const list = activeLightboxImages || galleryImages;
     setLightboxIndex((prev) =>
-      prev === 0 ? galleryImages.length - 1 : prev - 1,
+      prev === 0 ? list.length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = (e) => {
     e?.stopPropagation?.();
+    const list = activeLightboxImages || galleryImages;
     setLightboxIndex((prev) =>
-      prev === galleryImages.length - 1 ? 0 : prev + 1,
+      prev === list.length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -1359,7 +1438,7 @@ export default function ProductDetailPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxIndex, galleryImages]);
+  }, [lightboxIndex, activeLightboxImages, galleryImages]);
 
   if (!mounted) {
     return (
@@ -1391,11 +1470,12 @@ export default function ProductDetailPage() {
               </Link>
               <span>/</span>
               <Link
-                href={localizedHref ? localizedHref(`/products/${categorySlug}`) : `/products/${categorySlug}`}
+                href={localizedHref ? localizedHref(categoryBreadcrumbHref) : categoryBreadcrumbHref}
                 className="capitalize hover:text-wbk-black transition-colors"
               >
-                {categorySlug.replace("-", " ")}
+                {categoryBreadcrumbLabel}
               </Link>
+
             </nav>
 
             {/* Title */}
@@ -1479,11 +1559,12 @@ export default function ProductDetailPage() {
                   </Link>
                   <span>/</span>
                   <Link
-                    href={localizedHref ? localizedHref(`/products/${categorySlug}`) : `/products/${categorySlug}`}
+                    href={localizedHref ? localizedHref(categoryBreadcrumbHref) : categoryBreadcrumbHref}
                     className="capitalize hover:text-wbk-black transition-colors"
                   >
-                    {categorySlug.replace("-", " ")}
+                    {categoryBreadcrumbLabel}
                   </Link>
+
                 </nav>
 
                 <div className="space-y-1">
@@ -1806,17 +1887,29 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-                {/* Sofa toggle (shown when 3D or sofa model) */}
-                {has3D && (
+                {/* Sofa toggle (shown for all Morphy beds) */}
+                {isMorphyBed && (
                   <div className="pt-1">
-                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {t("common.frontSofa", "+ Sofa")}:
-                    </label>
-                    <div className="relative inline-flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0]">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                        {t("common.frontSofa", "+ Front Sofa")}:
+                      </label>
+                      <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
+                        +{formatPrice(
+                          productPricing.currency === "GBP"
+                            ? 280
+                            : productPricing.currency === "USD"
+                              ? 350
+                              : 320,
+                          locale
+                        )}
+                      </span>
+                    </div>
+                    <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
                       <button
                         type="button"
                         onClick={() => setSofaIncluded(true)}
-                        className={`relative z-10 px-4 sm:px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                        className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
                           sofaIncluded
                             ? "text-white"
                             : "text-wbk-brown hover:text-wbk-black"
@@ -1840,7 +1933,7 @@ export default function ProductDetailPage() {
                       <button
                         type="button"
                         onClick={() => setSofaIncluded(false)}
-                        className={`relative z-10 px-4 sm:px-5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                        className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
                           !sofaIncluded
                             ? "text-white"
                             : "text-wbk-brown hover:text-wbk-black"
@@ -1858,10 +1951,59 @@ export default function ProductDetailPage() {
                           />
                         )}
                         <span className="relative z-10">
-                          {t("common.excludeSofa", "Exclude Sofa")}
+                          {t("common.bedOnly", "Bed Only")}
                         </span>
                       </button>
                     </div>
+
+                    {/* Sofa Combination Images (Displayed only when sofa is selected) */}
+                    <AnimatePresence>
+                      {sofaIncluded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                          animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                          transition={{ duration: 0.25, ease: "easeOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between pb-1.5 px-0.5">
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                              {t("product.sofaCombinationViews", "Bed & Sofa Views")}
+                            </span>
+                            <span className="text-[10px] text-wbk-brown/70 font-poppins flex items-center gap-1">
+                              <IconZoomIn size={11} />
+                              {t("product.clickToZoom", "Click to zoom")}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {sofaImages.map((img, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setActiveLightboxImages(sofaImages);
+                                  setLightboxIndex(idx);
+                                }}
+                                className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-wbk-lightgrey/80 hover:border-wbk-black bg-[#F4F2F0] p-1 transition-all duration-200 shadow-2xs hover:shadow-md cursor-zoom-in"
+                                title={`${img.alt} - Click to zoom`}
+                              >
+                                <img
+                                  src={img.src}
+                                  alt={img.alt}
+                                  className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white rounded-full p-1 shadow-sm">
+                                    <IconZoomIn size={12} />
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
               </div>
@@ -2017,7 +2159,10 @@ export default function ProductDetailPage() {
                 /* Non-3D Mode: High-Impact Center Main Image */
                 <div className="relative w-full h-full flex flex-col items-center justify-center p-0 lg:p-2 sm:p-4 pointer-events-auto">
                   <div
-                    onClick={() => setLightboxIndex(selectedImageIndex)}
+                    onClick={() => {
+                      setActiveLightboxImages(galleryImages);
+                      setLightboxIndex(selectedImageIndex);
+                    }}
                     className="relative group w-full lg:h-full aspect-[4/3] lg:aspect-auto sm:aspect-[16/11] lg:bg-transparent bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
                   >
                     <AnimatePresence mode="wait">
@@ -3644,83 +3789,86 @@ export default function ProductDetailPage() {
 
       {/* ── LIGHTBOX MODAL OVERLAY ── */}
       <AnimatePresence>
-        {lightboxIndex !== -1 && (
-          <motion.div
-            key="product-lightbox-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setLightboxIndex(-1)}
-            className="fixed inset-0 z-[999] bg-wbk-black/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setLightboxIndex(-1)}
-              className="absolute top-3 sm:top-6 right-3 sm:right-6 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-              aria-label="Close lightbox"
-            >
-              <IconX size={20} />
-            </button>
-
-            {/* Navigation buttons */}
-            {galleryImages.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-                  aria-label="Previous image"
-                >
-                  <IconChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-                  aria-label="Next image"
-                >
-                  <IconChevronRight size={24} />
-                </button>
-              </>
-            )}
-
-            {/* Modal Image Card with White Background */}
+        {lightboxIndex !== -1 && (() => {
+          const activeLightboxList = activeLightboxImages || galleryImages;
+          return (
             <motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
+              key="product-lightbox-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setLightboxIndex(-1)}
+              className="fixed inset-0 z-[999] bg-wbk-black/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
             >
-              <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={galleryImages[lightboxIndex]?.src || lightboxIndex}
-                    src={galleryImages[lightboxIndex]?.src}
-                    alt={galleryImages[lightboxIndex]?.alt}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
-                  />
-                </AnimatePresence>
-              </div>
+              {/* Close button */}
+              <button
+                onClick={() => setLightboxIndex(-1)}
+                className="absolute top-3 sm:top-6 right-3 sm:right-6 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                aria-label="Close lightbox"
+              >
+                <IconX size={20} />
+              </button>
 
-              {(galleryImages[lightboxIndex]?.alt ||
-                galleryImages.length > 1) && (
-                <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 w-full flex items-center justify-between text-xs text-wbk-brown font-poppins px-1">
-                  <p className="font-medium text-wbk-black truncate pr-4 text-xs">
-                    {galleryImages[lightboxIndex]?.alt}
-                  </p>
-                  <span className="font-semibold text-wbk-black/70 shrink-0 text-[11px] tracking-wider">
-                    {lightboxIndex + 1} / {galleryImages.length}
-                  </span>
-                </div>
+              {/* Navigation buttons */}
+              {activeLightboxList.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                    aria-label="Previous image"
+                  >
+                    <IconChevronLeft size={24} />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                    aria-label="Next image"
+                  >
+                    <IconChevronRight size={24} />
+                  </button>
+                </>
               )}
+
+              {/* Modal Image Card with White Background */}
+              <motion.div
+                initial={{ scale: 0.96, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.96, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
+              >
+                <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={activeLightboxList[lightboxIndex]?.src || lightboxIndex}
+                      src={activeLightboxList[lightboxIndex]?.src}
+                      alt={activeLightboxList[lightboxIndex]?.alt}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
+                    />
+                  </AnimatePresence>
+                </div>
+
+                {(activeLightboxList[lightboxIndex]?.alt ||
+                  activeLightboxList.length > 1) && (
+                  <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 w-full flex items-center justify-between text-xs text-wbk-brown font-poppins px-1">
+                    <p className="font-medium text-wbk-black truncate pr-4 text-xs">
+                      {activeLightboxList[lightboxIndex]?.alt}
+                    </p>
+                    <span className="font-semibold text-wbk-black/70 shrink-0 text-[11px] tracking-wider">
+                      {lightboxIndex + 1} / {activeLightboxList.length}
+                    </span>
+                  </div>
+                )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── PERSISTENT STICKY BOTTOM BAR: PRODUCT TITLE, SIZE, TOTAL PRICE & ADD TO CART ── */}

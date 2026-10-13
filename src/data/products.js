@@ -55,6 +55,24 @@ export const CATEGORIES_INFO = {
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     subcategories: ["Classic", "Studio", "Integrated"]
   },
+  "morphy-beds": {
+    label: "MORPHY™ Beds",
+    title: "MORPHY™ Beds",
+    slug: "beds?collection=morphy",
+    description: "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
+    subcategories: ["Classic", "Studio", "Integrated"]
+  },
+  "traditional-beds": {
+    label: "Traditional Beds",
+    title: "Traditional Beds",
+    slug: "beds?collection=traditional",
+    description: "Time-tested Traditional wall beds with proven mechanism and solid engineering.",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
+    subcategories: ["Classic", "Studio"]
+  },
   sofas: {
     label: "Sofas",
     title: "Sofas & Seating Modules",
@@ -101,13 +119,40 @@ export const SUPABASE_MATTRESS_IMAGES_BASE =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
 
 export const OTHER_CATEGORIES_LIST = [
-  { slug: "beds", label: "Wall Beds", image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp` },
-  { slug: "sofas", label: "Sofas", image: "/sofa1.webp" },
-  { slug: "tables", label: "Smart Tables", image: "/sofa1.webp" },
-  { slug: "mattresses", label: "Mattresses", image: `${SUPABASE_MATTRESS_IMAGES_BASE}/comfort.webp` },
-  { slug: "cabinets", label: "Cabinets", image: `${SUPABASE_CABINET_IMAGES_BASE}/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp` },
-  { slug: "extras", label: "Extras", image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp" },
+  {
+    id: "morphyBeds",
+    slug: "beds?collection=morphy",
+    categoryKey: "morphy",
+    label: "MORPHY™ Beds",
+    titleKey: "nav.morphyBeds",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+  },
+  {
+    id: "traditionalBeds",
+    slug: "beds?collection=traditional",
+    categoryKey: "traditional",
+    label: "Traditional Beds",
+    titleKey: "nav.traditionalBeds",
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
+  },
+  {
+    id: "cabinets",
+    slug: "cabinets",
+    categoryKey: "cabinets",
+    label: "Cabinets",
+    titleKey: "nav.cabinets",
+    image: `${SUPABASE_CABINET_IMAGES_BASE}/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp`,
+  },
+  {
+    id: "mattresses",
+    slug: "mattresses",
+    categoryKey: "mattresses",
+    label: "Mattresses",
+    titleKey: "nav.mattresses",
+    image: `${SUPABASE_MATTRESS_IMAGES_BASE}/comfort.webp`,
+  },
 ];
+
 
 // Helpers to derive clean dimensions, size labels and slugs across all product categories
 export const getCleanBedDimensions = (item) => {
@@ -452,9 +497,9 @@ export const FLAGSHIP_BEDS = [
     parent_category: "beds",
     isMorphy: true,
     description:
-      "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Supports full 3D interactive customization.",
+      "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Precision gas piston counterbalanced mechanism.",
     tagline: "Cabinetry & wardrobe ready",
-    badge: "MORPHY™ 3D",
+    badge: "MORPHY™ Integrated",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
@@ -471,8 +516,8 @@ export const FLAGSHIP_BEDS = [
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
-    has_3d: true,
-    has3D: true,
+    has_3d: false,
+    has3D: false,
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
     link: "/products/beds/integrated-vertical-wall-bed",
   },
@@ -491,7 +536,7 @@ export const FLAGSHIP_BEDS = [
     description:
       "Side-folding mechanism engineered for low-profile horizontal cabinetry, bookshelf integration, and low-ceiling built-ins.",
     tagline: "Horizontal cabinetry integration",
-    badge: "MORPHY™ 3D",
+    badge: "MORPHY™ Integrated",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
@@ -508,8 +553,8 @@ export const FLAGSHIP_BEDS = [
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
-    has_3d: true,
-    has3D: true,
+    has_3d: false,
+    has3D: false,
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
     link: "/products/beds/integrated-horizontal-wall-bed",
   },

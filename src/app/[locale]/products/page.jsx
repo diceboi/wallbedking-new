@@ -1340,10 +1340,10 @@ function ProductsSearchContent() {
             {t("categories.otherCategories", "Explore Categories")}
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {OTHER_CATEGORIES_LIST.map((cat) => (
               <Link
-                key={cat.slug}
+                key={cat.id || cat.slug}
                 href={localizedHref(`/products/${cat.slug}`)}
                 className="group flex flex-col items-center text-center p-3 rounded-xl border border-wbk-lightgrey/50 hover:border-wbk-black bg-white hover:shadow-sm transition-all"
               >
@@ -1355,11 +1355,12 @@ function ProductsSearchContent() {
                   />
                 </div>
                 <span className="text-xs font-medium uppercase tracking-wider text-wbk-black group-hover:text-wbk-green transition-colors">
-                  {t(`categories.${cat.slug}`, cat.label)}
+                  {cat.titleKey ? t(cat.titleKey, cat.label) : t(`categories.${cat.slug}`, cat.label)}
                 </span>
               </Link>
             ))}
           </div>
+
         </div>
       </Container>
     </div>

@@ -156,6 +156,9 @@ for (const [canonical, mapping] of Object.entries(STATIC_PAGE_SLUGS)) {
 export function resolveCategory(rawSlug, locale) {
   if (!rawSlug) return "beds";
   const lower = rawSlug.toLowerCase();
+  if (lower === "morphy-beds" || lower === "traditional-beds" || lower === "morphy" || lower === "traditional") {
+    return "beds";
+  }
   if (locale && REVERSE_CATEGORY_MAP[`${locale}:${lower}`]) {
     return REVERSE_CATEGORY_MAP[`${locale}:${lower}`];
   }
@@ -205,8 +208,14 @@ export function mapUrlToLocale(currentPath, targetLocale) {
   const normTarget = normalizeLocale(targetLocale);
   if (!currentPath || currentPath === "/") return `/${normTarget}`;
 
+  // Separate hash and search query before path processing
+  const [pathAndQuery, hash] = currentPath.split("#");
+  const [pathOnly, search] = pathAndQuery.split("?");
+  const querySuffix = search ? `?${search}` : "";
+  const hashSuffix = hash ? `#${hash}` : "";
+
   // Split path parts
-  const parts = currentPath.split("/").filter(Boolean);
+  const parts = pathOnly.split("/").filter(Boolean);
   let currentLoc = DEFAULT_LOCALE;
   let subParts = parts;
 
@@ -217,7 +226,7 @@ export function mapUrlToLocale(currentPath, targetLocale) {
   }
 
   if (subParts.length === 0) {
-    return `/${normTarget}`;
+    return `/${normTarget}${querySuffix}${hashSuffix}`;
   }
 
   const subPath = subParts.join("/");
@@ -228,21 +237,28 @@ export function mapUrlToLocale(currentPath, targetLocale) {
     const canonicalCat = resolveCategory(rawCat, currentLoc);
     const targetCatSlug = getCategorySlug(canonicalCat, normTarget);
 
+    let effectiveQuery = querySuffix;
+    if (!search) {
+      if (rawCat === "morphy-beds" || rawCat === "morphy") effectiveQuery = "?collection=morphy";
+      else if (rawCat === "traditional-beds" || rawCat === "traditional") effectiveQuery = "?collection=traditional";
+    }
+
     if (subParts.length === 2) {
-      return `/${normTarget}/products/${targetCatSlug}`;
+      return `/${normTarget}/products/${targetCatSlug}${effectiveQuery}${hashSuffix}`;
     }
     // Product detail: products/[category]/[product]
     const productSlug = subParts.slice(2).join("/");
-    return `/${normTarget}/products/${targetCatSlug}/${productSlug}`;
+    return `/${normTarget}/products/${targetCatSlug}/${productSlug}${querySuffix}${hashSuffix}`;
   }
 
   // 2. Check if it's a static page (e.g. about, contact, reviews, support/delivery)
   const canonicalStatic = resolveStaticPage(subPath, currentLoc);
   if (canonicalStatic && STATIC_PAGE_SLUGS[canonicalStatic]) {
     const targetSlug = getStaticPageSlug(canonicalStatic, normTarget);
-    return `/${normTarget}/${targetSlug}`;
+    return `/${normTarget}/${targetSlug}${querySuffix}${hashSuffix}`;
   }
 
   // Fallback: preserve subPath with new locale prefix
-  return `/${normTarget}/${subPath}`;
+  return `/${normTarget}/${subPath}${querySuffix}${hashSuffix}`;
 }
+

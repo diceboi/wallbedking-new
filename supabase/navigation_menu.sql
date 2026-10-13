@@ -46,13 +46,15 @@ CREATE POLICY "Authenticated users full access on navigation" ON public.navigati
 -- 5. Seed initial menu items
 INSERT INTO public.navigation_menu (id, title, type, category_id, slug, href, order_index, is_visible, has_submenu, badge)
 VALUES
-  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 1, true, true, ''),
-  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 2, true, true, ''),
+  ('morphyBeds', 'MORPHY™ Beds', 'category', 'beds', 'morphy-beds', '/products/beds?collection=morphy', 1, true, true, 'New Gen'),
+  ('traditionalBeds', 'Traditional Beds', 'category', 'beds', 'traditional-beds', '/products/beds?collection=traditional', 2, true, true, ''),
   ('cabinets', 'Cabinets', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, ''),
   ('mattresses', 'Mattresses', 'category', 'mattresses', 'mattresses', '/products/mattresses', 4, true, true, ''),
-  ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 5, false, true, ''),
-  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 6, false, true, ''),
-  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 7, false, true, '')
+  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 5, false, true, ''),
+  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 6, false, true, ''),
+  ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 7, false, true, ''),
+  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 8, false, true, ''),
+  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 9, false, true, '')
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   type = EXCLUDED.type,
