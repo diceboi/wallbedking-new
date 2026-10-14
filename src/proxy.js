@@ -1,6 +1,29 @@
 import { NextResponse } from "next/server";
-import { LOCALES, DEFAULT_LOCALE } from "./lib/i18n";
+import { LOCALES } from "./lib/i18n";
 import { resolveStaticPage } from "./data/slugs";
+
+// On .com, active locales are US and EU (UK is hosted separately on wallbedking.co.uk)
+const COM_LOCALES = ["us", "de", "fr", "es", "por", "it"];
+const DEFAULT_COM_LOCALE = "de"; // Default to Germany storefront for .com
+
+function detectLocaleFromAcceptLanguage(acceptLanguageHeader) {
+  if (!acceptLanguageHeader) return null;
+  const tokens = acceptLanguageHeader
+    .split(",")
+    .map((part) => part.split(";")[0].trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const token of tokens) {
+    if (token.startsWith("de")) return "de";
+    if (token.startsWith("fr")) return "fr";
+    if (token.startsWith("es")) return "es";
+    if (token.startsWith("it")) return "it";
+    if (token.startsWith("pt")) return "por";
+    if (token === "en-us" || token.startsWith("en-us")) return "us";
+    if (token === "en-gb" || token === "en-ie") return "uk_redirect";
+  }
+  return null;
+}
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
@@ -29,7 +52,14 @@ export function proxy(request) {
     return NextResponse.redirect(request.nextUrl);
   }
 
-  // 3. Check if pathname already starts with a supported locale
+  // 3. For .com / non-UK storefronts: NEVER allow /en!
+  // If user requests /en, redirect directly to the live UK storefront (wallbedking.co.uk)
+  if (!isUkDomain && (pathname === "/en" || pathname.startsWith("/en/"))) {
+    const rest = pathname.replace(/^\/en/, "");
+    return NextResponse.redirect(new URL(`https://wallbedking.co.uk${rest}`));
+  }
+
+  // 4. Check if pathname already starts with a supported locale
   const pathnameHasLocale = LOCALES.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
   );
@@ -59,18 +89,41 @@ export function proxy(request) {
     return response;
   }
 
-  // 4. If missing locale:
+  // 5. If missing locale (e.g. root '/' or static path without locale prefix):
   // On .co.uk domain, default is always 'en'
-  // On .com domain, detect from cookie or default to 'en'
-  let targetLocale = DEFAULT_LOCALE;
-  if (!isUkDomain) {
-    const savedLocale = request.cookies.get("NEXT_LOCALE")?.value;
-    if (LOCALES.includes(savedLocale)) {
-      targetLocale = savedLocale;
-    }
+  if (isUkDomain) {
+    const targetPath = pathname === "/" ? "/en" : `/en${pathname}`;
+    request.nextUrl.pathname = targetPath;
+    return NextResponse.redirect(request.nextUrl);
   }
 
-  const targetPath = pathname === "/" ? `/${targetLocale}` : `/${targetLocale}${pathname}`;
+  // On .com / international domain:
+  // A. Check saved cookie
+  const savedLocale = request.cookies.get("NEXT_LOCALE")?.value?.toLowerCase();
+  if (savedLocale === "en") {
+    // If previously saved cookie was UK 'en', redirect to live UK site
+    return NextResponse.redirect(new URL("https://wallbedking.co.uk"));
+  }
+  if (COM_LOCALES.includes(savedLocale)) {
+    const targetPath = pathname === "/" ? `/${savedLocale}` : `/${savedLocale}${pathname}`;
+    request.nextUrl.pathname = targetPath;
+    return NextResponse.redirect(request.nextUrl);
+  }
+
+  // B. Check browser language (Accept-Language)
+  const acceptLang = request.headers.get("accept-language");
+  const detected = detectLocaleFromAcceptLanguage(acceptLang);
+  if (detected === "uk_redirect") {
+    return NextResponse.redirect(new URL("https://wallbedking.co.uk"));
+  }
+  if (detected && COM_LOCALES.includes(detected)) {
+    const targetPath = pathname === "/" ? `/${detected}` : `/${detected}${pathname}`;
+    request.nextUrl.pathname = targetPath;
+    return NextResponse.redirect(request.nextUrl);
+  }
+
+  // C. Fallback: Default to Germany (/de) as requested
+  const targetPath = pathname === "/" ? `/${DEFAULT_COM_LOCALE}` : `/${DEFAULT_COM_LOCALE}${pathname}`;
   request.nextUrl.pathname = targetPath;
   return NextResponse.redirect(request.nextUrl);
 }

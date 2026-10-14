@@ -17,6 +17,8 @@ const variants = {
     "bg-transparent text-wbk-black hover:text-wbk-green border border-transparent hover:border-wbk-green",
   white:
     "bg-wbk-white text-wbk-black hover:bg-wbk-lightgrey border border-wbk-white hover:border-swbk-lightgrey",
+  black:
+    "bg-wbk-black text-wbk-white border border-wbk-black hover:bg-wbk-green hover:border-wbk-green hover:text-wbk-black",
 };
 
 const sizes = {

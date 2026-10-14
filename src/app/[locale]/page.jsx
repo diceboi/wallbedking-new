@@ -48,11 +48,11 @@ export default async function HomePage({ params }) {
 
   return (
     <>
-      {/* 3D Sticky Scroll-driven Hero */}
+      {/* Static Hero Section */}
       <HeroSection />
 
-      {/* Following Section – slides up over the fixed hero */}
-      <div className="relative z-30 -mt-[20vh] bg-wbk-white rounded-none shadow-[0_-20px_50px_rgba(0,0,0,0.08)]">
+      {/* Main Content Flow */}
+      <div className="relative z-30 bg-wbk-white rounded-none">
         {/* About / Intro Section */}
         <section className="py-24 border-b border-wbk-lightgrey">
           <Container className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
