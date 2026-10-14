@@ -47,11 +47,14 @@ export default function CartPage() {
     removePromoCode,
     totalItems,
     isMounted,
+    isStripeEnabled,
+    isPayPalEnabled,
+    isQuickPayEnabled,
   } = useCart();
 
   const [inputCode, setInputCode] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
-  const isStripeAvailable = locale === "en" || locale === "us";
+  const isStripeAvailable = isStripeEnabled;
 
   if (!isMounted) {
     return (
@@ -458,22 +461,25 @@ export default function CartPage() {
                     />
                   </Link>
 
-                  {/* Express Checkout Divider */}
-                  <div className="relative flex items-center justify-center py-1">
-                    <div className="border-t border-wbk-lightgrey w-full"></div>
-                    <span className="bg-[#FBF9F8] px-3 text-[10px] font-medium uppercase tracking-widest text-wbk-brown shrink-0">
-                      Or Quick Pay With
-                    </span>
-                    <div className="border-t border-wbk-lightgrey w-full"></div>
-                  </div>
+                  {/* Express Checkout Divider & Instant Buttons */}
+                  {isQuickPayEnabled && (isStripeAvailable || isPayPalEnabled) && (
+                    <>
+                      <div className="relative flex items-center justify-center py-1">
+                        <div className="border-t border-wbk-lightgrey w-full"></div>
+                        <span className="bg-[#FBF9F8] px-3 text-[10px] font-medium uppercase tracking-widest text-wbk-brown shrink-0">
+                          Or Quick Pay With
+                        </span>
+                        <div className="border-t border-wbk-lightgrey w-full"></div>
+                      </div>
 
-                  {/* Express Instant Checkout Buttons */}
-                  <div className="space-y-2.5">
-                    {isStripeAvailable && (
-                      <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
-                    )}
-                    <PayPalCheckoutButton />
-                  </div>
+                      <div className="space-y-2.5">
+                        {isStripeAvailable && (
+                          <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
+                        )}
+                        {isPayPalEnabled && <PayPalCheckoutButton />}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Accepted Payment Icons */}

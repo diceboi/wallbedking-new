@@ -20,6 +20,7 @@ import {
   IconBookmark,
   IconFileSpreadsheet,
   IconLayoutNavbar,
+  IconTruck,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -60,6 +61,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Pricing & Discounts",
     href: "/admin/pricing",
     icon: IconTag,
+  },
+  {
+    id: "shipping-payment",
+    label: "Shipping & Payment",
+    href: "/admin/shipping-payment",
+    icon: IconTruck,
   },
   {
     id: "categories",

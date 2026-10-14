@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { useLocale } from "@/context/LocaleContext";
+import defaultSettingsData from "@/data/shipping_payment_settings.json";
 
 const CartContext = createContext(null);
 
@@ -63,6 +65,99 @@ export function CartProvider({ children }) {
   const [promoError, setPromoError] = useState("");
   const [deliveryOption, setDeliveryOption] = useState("delivery_option_economy");
   const [isMounted, setIsMounted] = useState(false);
+  const [remoteSettings, setRemoteSettings] = useState(null);
+
+  // Safely extract locale from LocaleContext
+  let activeLocale = "en";
+  try {
+    const loc = useLocale();
+    if (loc?.locale) activeLocale = loc.locale.toLowerCase();
+  } catch (e) {
+    // fallback to "en"
+  }
+
+  // Fetch updated settings from API when mounted or locale changes
+  useEffect(() => {
+    let isMountedLocal = true;
+    fetch(`/api/checkout/settings?locale=${activeLocale}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMountedLocal && data.success && data.config) {
+          setRemoteSettings(data.config);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMountedLocal = false;
+    };
+  }, [activeLocale]);
+
+  // Combine default JSON with remote settings for active market
+  const checkoutSettings = useMemo(() => {
+    return (
+      remoteSettings ||
+      defaultSettingsData[activeLocale] ||
+      defaultSettingsData.en ||
+      {}
+    );
+  }, [remoteSettings, activeLocale]);
+
+  // Dynamic delivery options for the active market, filtered to enabled options only
+  const deliveryOptions = useMemo(() => {
+    const shippingConfig =
+      checkoutSettings?.shipping || defaultSettingsData.en.shipping;
+    const symbol = checkoutSettings?.currencySymbol || "£";
+    const result = {};
+
+    Object.entries(shippingConfig).forEach(([key, opt]) => {
+      if (opt.enabled) {
+        result[key] = {
+          id: key,
+          key: key,
+          label: opt.label,
+          menu:
+            opt.cost === 0
+              ? opt.label
+              : `${opt.label} ${symbol}${opt.cost}`,
+          cost: Number(opt.cost) || 0,
+          code:
+            key === "delivery_option_express"
+              ? 3
+              : key === "delivery_option_standard"
+              ? 2
+              : 1,
+          message: opt.message,
+          enabled: true,
+        };
+      }
+    });
+
+    if (Object.keys(result).length === 0) {
+      result.delivery_option_economy = {
+        id: "delivery_option_economy",
+        key: "delivery_option_economy",
+        label: "Free delivery",
+        menu: "Free delivery",
+        cost: 0,
+        code: 1,
+        message: "Delivery within 2 - 4 weeks",
+        enabled: true,
+      };
+    }
+
+    return result;
+  }, [checkoutSettings]);
+
+  // If currently selected deliveryOption is not enabled for this market, fallback to first enabled option
+  useEffect(() => {
+    if (deliveryOptions && !deliveryOptions[deliveryOption]) {
+      const firstKey = Object.keys(deliveryOptions)[0];
+      if (firstKey) {
+        setDeliveryOption(firstKey);
+      }
+    }
+  }, [deliveryOptions, deliveryOption]);
 
   // Load cart from localStorage on mount (prevents SSR hydration mismatch)
   useEffect(() => {
@@ -244,12 +339,18 @@ export function CartProvider({ children }) {
 
   // Shipping option details
   const selectedDeliveryDetails = useMemo(() => {
-    return DELIVERY_OPTIONS[deliveryOption] || DELIVERY_OPTIONS.delivery_option_economy;
-  }, [deliveryOption]);
+    return deliveryOptions[deliveryOption] || Object.values(deliveryOptions)[0];
+  }, [deliveryOptions, deliveryOption]);
 
   const shipping = useMemo(() => {
     return selectedDeliveryDetails?.cost ?? 0;
   }, [selectedDeliveryDetails]);
+
+  // Payment gateway status flags for current market
+  const isStripeEnabled = Boolean(checkoutSettings?.payments?.stripe?.enabled);
+  const isPayPalEnabled = Boolean(checkoutSettings?.payments?.paypal?.enabled);
+  const isQuickPayEnabled = Boolean(checkoutSettings?.payments?.quickPayInCart?.enabled);
+  const isBankTransferEnabled = Boolean(checkoutSettings?.payments?.bankTransfer?.enabled);
 
   // Calculate discount based on active promo code
   const discount = useMemo(() => {
@@ -309,7 +410,12 @@ export function CartProvider({ children }) {
     deliveryOption,
     setDeliveryOption,
     selectedDeliveryDetails,
-    deliveryOptions: DELIVERY_OPTIONS,
+    deliveryOptions,
+    checkoutSettings,
+    isStripeEnabled,
+    isPayPalEnabled,
+    isQuickPayEnabled,
+    isBankTransferEnabled,
     customCartId,
     discount,
     vatIncluded,

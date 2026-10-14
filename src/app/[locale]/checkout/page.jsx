@@ -25,6 +25,7 @@ import {
   IconLoader2,
   IconBookmark,
   IconHome,
+  IconBuildingBank,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -52,10 +53,24 @@ export default function CheckoutPage() {
     activePromoDetails,
     clearCart,
     isMounted,
+    isStripeEnabled,
+    isPayPalEnabled,
+    isBankTransferEnabled,
+    checkoutSettings,
   } = useCart();
 
   const finalTotal = total;
-  const isStripeAvailable = locale === "en" || locale === "us";
+  const isStripeAvailable = isStripeEnabled;
+  const isPayPalAvailable = isPayPalEnabled;
+  const isBankTransferAvailable = isBankTransferEnabled;
+
+  const initialMethod = isStripeAvailable
+    ? "card"
+    : isPayPalAvailable
+    ? "paypal"
+    : isBankTransferAvailable
+    ? "bank"
+    : "card";
 
   // Form states
   const [formData, setFormData] = useState({
@@ -68,7 +83,7 @@ export default function CheckoutPage() {
     city: "",
     postcode: "",
     country: "United Kingdom",
-    paymentMethod: isStripeAvailable ? "card" : "paypal", // 'card' | 'klarna' | 'paypal'
+    paymentMethod: initialMethod, // 'card' | 'paypal' | 'bank'
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
@@ -76,12 +91,25 @@ export default function CheckoutPage() {
     agreeTerms: true,
   });
 
-  // Ensure non-UK/US locales always fall back to PayPal when Stripe is restricted
+  // Ensure active payment method stays valid if gateway availability changes
   useEffect(() => {
     if (!isStripeAvailable && formData.paymentMethod === "card") {
-      setFormData((prev) => ({ ...prev, paymentMethod: "paypal" }));
+      setFormData((prev) => ({
+        ...prev,
+        paymentMethod: isPayPalAvailable ? "paypal" : isBankTransferAvailable ? "bank" : "paypal",
+      }));
+    } else if (!isPayPalAvailable && formData.paymentMethod === "paypal") {
+      setFormData((prev) => ({
+        ...prev,
+        paymentMethod: isStripeAvailable ? "card" : isBankTransferAvailable ? "bank" : "card",
+      }));
+    } else if (!isBankTransferAvailable && formData.paymentMethod === "bank") {
+      setFormData((prev) => ({
+        ...prev,
+        paymentMethod: isStripeAvailable ? "card" : isPayPalAvailable ? "paypal" : "card",
+      }));
     }
-  }, [isStripeAvailable, formData.paymentMethod]);
+  }, [isStripeAvailable, isPayPalAvailable, isBankTransferAvailable, formData.paymentMethod]);
 
   // Non-blocking Inline Auth States
   const [isAuthExpanded, setIsAuthExpanded] = useState(false);
@@ -1244,75 +1272,169 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {/* Payment method selector tabs */}
-                  {isStripeAvailable ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleChange("paymentMethod", "card")}
-                        className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
-                          formData.paymentMethod === "card"
-                            ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
-                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
-                        }`}
-                      >
-                        <IconCreditCard
-                          size={20}
-                          className="mx-auto mb-1 text-wbk-black"
-                        />
-                        <span className="block">
-                          {t("checkout.paymentCard", "Credit / Debit Card")}
-                        </span>
-                        <span className="text-[10px] text-wbk-brown font-normal">
-                          Stripe & Apple Pay
-                        </span>
-                      </button>
+                  {/* Dynamic Payment method selector tabs */}
+                  {(() => {
+                    const availableCount =
+                      (isStripeAvailable ? 1 : 0) +
+                      (isPayPalAvailable ? 1 : 0) +
+                      (isBankTransferAvailable ? 1 : 0);
 
-                      <button
-                        type="button"
-                        onClick={() => handleChange("paymentMethod", "paypal")}
-                        className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
-                          formData.paymentMethod === "paypal"
-                            ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
-                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
-                        }`}
-                      >
-                        <IconBrandPaypal
-                          size={20}
-                          className="mx-auto mb-1 text-[#003087]"
-                        />
-                        <span className="block font-semibold text-[#003087]">
-                          {t("checkout.paymentPaypal", "PayPal")}
-                        </span>
-                        <span className="text-[10px] text-wbk-brown font-normal">
-                          Express & Pay in 3
-                        </span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-full">
-                      <button
-                        type="button"
-                        onClick={() => handleChange("paymentMethod", "paypal")}
-                        className="w-full p-3.5 text-left border border-wbk-black bg-[#FBF9F8] text-wbk-black shadow-xs flex items-center justify-between gap-3 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <IconBrandPaypal size={24} className="text-[#003087] shrink-0" />
-                          <div>
-                            <span className="block font-semibold text-sm text-[#003087]">
-                              {t("checkout.paymentPaypal", "PayPal Checkout")}
-                            </span>
-                            <span className="text-[11px] text-wbk-brown font-normal">
-                              {t("checkout.paypalAvailable", "Pay safely with PayPal balance, Credit / Debit Card or Bank Account")}
-                            </span>
-                          </div>
+                    if (availableCount > 1) {
+                      return (
+                        <div
+                          className={`grid gap-3 ${
+                            availableCount === 3
+                              ? "grid-cols-1 sm:grid-cols-3"
+                              : "grid-cols-1 sm:grid-cols-2"
+                          }`}
+                        >
+                          {isStripeAvailable && (
+                            <button
+                              type="button"
+                              onClick={() => handleChange("paymentMethod", "card")}
+                              className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
+                                formData.paymentMethod === "card"
+                                  ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
+                                  : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                              }`}
+                            >
+                              <IconCreditCard
+                                size={20}
+                                className="mx-auto mb-1 text-wbk-black"
+                              />
+                              <span className="block">
+                                {checkoutSettings?.payments?.stripe?.label ||
+                                  t("checkout.paymentCard", "Credit / Debit Card")}
+                              </span>
+                              <span className="text-[10px] text-wbk-brown font-normal">
+                                {checkoutSettings?.payments?.stripe?.sublabel ||
+                                  "Stripe & Apple Pay"}
+                              </span>
+                            </button>
+                          )}
+
+                          {isPayPalAvailable && (
+                            <button
+                              type="button"
+                              onClick={() => handleChange("paymentMethod", "paypal")}
+                              className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
+                                formData.paymentMethod === "paypal"
+                                  ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
+                                  : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                              }`}
+                            >
+                              <IconBrandPaypal
+                                size={20}
+                                className="mx-auto mb-1 text-[#003087]"
+                              />
+                              <span className="block font-semibold text-[#003087]">
+                                {checkoutSettings?.payments?.paypal?.label ||
+                                  t("checkout.paymentPaypal", "PayPal")}
+                              </span>
+                              <span className="text-[10px] text-wbk-brown font-normal">
+                                {checkoutSettings?.payments?.paypal?.sublabel ||
+                                  "Express & Pay in 3"}
+                              </span>
+                            </button>
+                          )}
+
+                          {isBankTransferAvailable && (
+                            <button
+                              type="button"
+                              onClick={() => handleChange("paymentMethod", "bank")}
+                              className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
+                                formData.paymentMethod === "bank"
+                                  ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
+                                  : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                              }`}
+                            >
+                              <IconBuildingBank
+                                size={20}
+                                className="mx-auto mb-1 text-emerald-700"
+                              />
+                              <span className="block">
+                                {checkoutSettings?.payments?.bankTransfer?.label ||
+                                  "Bank Transfer"}
+                              </span>
+                              <span className="text-[10px] text-wbk-brown font-normal">
+                                {checkoutSettings?.payments?.bankTransfer?.sublabel ||
+                                  "Direct Wire / BACS"}
+                              </span>
+                            </button>
+                          )}
                         </div>
-                        <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-white border border-wbk-lightgrey text-wbk-black shrink-0 font-semibold">
-                          Selected
-                        </span>
-                      </button>
-                    </div>
-                  )}
+                      );
+                    }
+
+                    if (availableCount === 1) {
+                      return (
+                        <div className="w-full">
+                          {isPayPalAvailable && (
+                            <div className="w-full p-3.5 border border-wbk-black bg-[#FBF9F8] text-wbk-black shadow-xs flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <IconBrandPaypal size={24} className="text-[#003087] shrink-0" />
+                                <div>
+                                  <span className="block font-semibold text-sm text-[#003087]">
+                                    {checkoutSettings?.payments?.paypal?.label || "PayPal Checkout"}
+                                  </span>
+                                  <span className="text-[11px] text-wbk-brown font-normal">
+                                    {t("checkout.paypalAvailable", "Pay safely with PayPal balance, Card or Bank Account")}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-white border border-wbk-lightgrey text-wbk-black shrink-0 font-semibold">
+                                Active
+                              </span>
+                            </div>
+                          )}
+
+                          {isStripeAvailable && (
+                            <div className="w-full p-3.5 border border-wbk-black bg-[#FBF9F8] text-wbk-black shadow-xs flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <IconCreditCard size={24} className="text-[#635BFF] shrink-0" />
+                                <div>
+                                  <span className="block font-semibold text-sm text-wbk-black">
+                                    {checkoutSettings?.payments?.stripe?.label || "Credit / Debit Card"}
+                                  </span>
+                                  <span className="text-[11px] text-wbk-brown font-normal">
+                                    Secure Stripe card payment (Visa, Mastercard, AMEX, Apple Pay)
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-white border border-wbk-lightgrey text-wbk-black shrink-0 font-semibold">
+                                Active
+                              </span>
+                            </div>
+                          )}
+
+                          {isBankTransferAvailable && (
+                            <div className="w-full p-3.5 border border-wbk-black bg-[#FBF9F8] text-wbk-black shadow-xs flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <IconBuildingBank size={24} className="text-emerald-700 shrink-0" />
+                                <div>
+                                  <span className="block font-semibold text-sm text-wbk-black">
+                                    {checkoutSettings?.payments?.bankTransfer?.label || "Bank Wire Transfer"}
+                                  </span>
+                                  <span className="text-[11px] text-wbk-brown font-normal">
+                                    Pay directly into our bank account
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-white border border-wbk-lightgrey text-wbk-black shrink-0 font-semibold">
+                                Active
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="p-4 bg-amber-50 text-amber-800 text-xs border border-amber-200">
+                        No payment gateways are currently enabled for this country. Please contact support.
+                      </div>
+                    );
+                  })()}
 
                   {/* Stripe Payment Box */}
                   {isStripeAvailable && formData.paymentMethod === "card" && (
@@ -1360,7 +1482,7 @@ export default function CheckoutPage() {
                   )}
 
                   {/* PayPal Payment Box */}
-                  {formData.paymentMethod === "paypal" && (
+                  {isPayPalAvailable && formData.paymentMethod === "paypal" && (
                     <div className="p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
                       <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
                         <span className="font-semibold text-wbk-black">
@@ -1384,6 +1506,48 @@ export default function CheckoutPage() {
                           }}
                           onBeforeCheckout={persistAddressToAccountIfNeeded}
                         />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bank Transfer Payment Box */}
+                  {isBankTransferAvailable && formData.paymentMethod === "bank" && (
+                    <div className="p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
+                      <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <IconBuildingBank size={18} className="text-emerald-700" />
+                          <span>
+                            {checkoutSettings?.payments?.bankTransfer?.label || "Bank Wire Transfer"}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200 font-semibold">
+                          Manual Wire Payment
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-wbk-brown leading-relaxed">
+                        {checkoutSettings?.payments?.bankTransfer?.instructions ||
+                          "Click the button below to complete your order reservation. You will immediately receive our official bank transfer details (HSBC) and your unique order reference code by email."}
+                      </p>
+
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={handleSubmitOrder}
+                          disabled={isSubmitting}
+                          className="w-full py-3.5 px-4 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                        >
+                          {isSubmitting ? (
+                            <IconLoader2 size={16} className="animate-spin" />
+                          ) : (
+                            <IconCheck size={16} />
+                          )}
+                          <span>
+                            {isSubmitting
+                              ? "Processing Order..."
+                              : `Place Order via Bank Transfer (${formatPrice(finalTotal)})`}
+                          </span>
+                        </button>
                       </div>
                     </div>
                   )}
