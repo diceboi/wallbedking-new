@@ -372,12 +372,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 599,
     price_euro: 599,
     price_usd: 599,
-    sale_percent: 30,
-    sale_price_gbp: 419,
-    sale_price_euro: 419,
-    sale_price_usd: 419,
-    price: "from £419",
-    numericPrice: 419,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £599",
+    numericPrice: 599,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -409,12 +409,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 599,
     price_euro: 599,
     price_usd: 599,
-    sale_percent: 30,
-    sale_price_gbp: 419,
-    sale_price_euro: 419,
-    sale_price_usd: 419,
-    price: "from £419",
-    numericPrice: 419,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £599",
+    numericPrice: 599,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -446,12 +446,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 749,
     price_euro: 749,
     price_usd: 749,
-    sale_percent: 30,
-    sale_price_gbp: 524,
-    sale_price_euro: 524,
-    sale_price_usd: 524,
-    price: "from £524",
-    numericPrice: 524,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £749",
+    numericPrice: 749,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -483,12 +483,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 749,
     price_euro: 749,
     price_usd: 749,
-    sale_percent: 30,
-    sale_price_gbp: 524,
-    sale_price_euro: 524,
-    sale_price_usd: 524,
-    price: "from £524",
-    numericPrice: 524,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £749",
+    numericPrice: 749,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -520,12 +520,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 999,
     price_euro: 999,
     price_usd: 999,
-    sale_percent: 30,
-    sale_price_gbp: 699,
-    sale_price_euro: 699,
-    sale_price_usd: 699,
-    price: "from £699",
-    numericPrice: 699,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £999",
+    numericPrice: 999,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -557,12 +557,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 999,
     price_euro: 999,
     price_usd: 999,
-    sale_percent: 30,
-    sale_price_gbp: 699,
-    sale_price_euro: 699,
-    sale_price_usd: 699,
-    price: "from £699",
-    numericPrice: 699,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £999",
+    numericPrice: 999,
     size: "19 Sizes",
     sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
     defaultSizeSlug: "160x200",
@@ -596,12 +596,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 570,
     price_euro: 570,
     price_usd: 570,
-    sale_percent: 30,
-    sale_price_gbp: 399,
-    sale_price_euro: 399,
-    sale_price_usd: 399,
-    price: "from £399",
-    numericPrice: 399,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £570",
+    numericPrice: 570,
     size: "13 Sizes",
     sizeLabel: "13 Available Sizes (76x190 - 180x200 cm)",
     defaultSizeSlug: "135x190",
@@ -633,12 +633,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 570,
     price_euro: 570,
     price_usd: 570,
-    sale_percent: 30,
-    sale_price_gbp: 399,
-    sale_price_euro: 399,
-    sale_price_usd: 399,
-    price: "from £399",
-    numericPrice: 399,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £570",
+    numericPrice: 570,
     size: "11 Sizes",
     sizeLabel: "11 Available Sizes (76x190 - 180x200 cm)",
     defaultSizeSlug: "135x190",
@@ -670,12 +670,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 710,
     price_euro: 710,
     price_usd: 710,
-    sale_percent: 30,
-    sale_price_gbp: 499,
-    sale_price_euro: 499,
-    sale_price_usd: 499,
-    price: "from £499",
-    numericPrice: 499,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £710",
+    numericPrice: 710,
     size: "11 Sizes",
     sizeLabel: "11 Available Sizes (76x190 - 180x200 cm)",
     defaultSizeSlug: "135x190",
@@ -707,12 +707,12 @@ export const FLAGSHIP_BEDS = [
     price_gbp: 710,
     price_euro: 710,
     price_usd: 710,
-    sale_percent: 30,
-    sale_price_gbp: 499,
-    sale_price_euro: 499,
-    sale_price_usd: 499,
-    price: "from £499",
-    numericPrice: 499,
+    sale_percent: null,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    price: "from £710",
+    numericPrice: 710,
     size: "11 Sizes",
     sizeLabel: "11 Available Sizes (76x190 - 180x200 cm)",
     defaultSizeSlug: "135x190",
@@ -1174,16 +1174,48 @@ export function getDynamicFlagships(templates, rawItems, category) {
     const minEuro = euroList.length > 0 ? Math.min(...euroList) : template.price_euro;
     const minUsd = usdList.length > 0 ? Math.min(...usdList) : template.price_usd;
 
-    // Sale prices
-    const saleGbpList = matching.map((m) => m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
-    const saleEuroList = matching.map((m) => m.sale_price_euro ?? m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
-    const saleUsdList = matching.map((m) => m.sale_price_usd ?? m.sale_price_gbp).filter((v) => v != null && !isNaN(v));
+    // Dynamic Sale Calculations from matching variants in database
+    const salePercents = matching
+      .map((m) => Number(m.sale_percent))
+      .filter((v) => !isNaN(v) && v > 0);
+    const dynamicSalePercent = salePercents.length > 0 ? Math.max(...salePercents) : null;
+
+    const saleGbpList = matching
+      .map((m) => Number(m.sale_price_gbp))
+      .filter((v) => !isNaN(v) && v > 0);
+    const saleEuroList = matching
+      .map((m) => Number(m.sale_price_euro ?? m.sale_price_gbp))
+      .filter((v) => !isNaN(v) && v > 0);
+    const saleUsdList = matching
+      .map((m) => Number(m.sale_price_usd ?? m.sale_price_gbp))
+      .filter((v) => !isNaN(v) && v > 0);
 
     const minSaleGbp = saleGbpList.length > 0 ? Math.min(...saleGbpList) : null;
     const minSaleEuro = saleEuroList.length > 0 ? Math.min(...saleEuroList) : null;
     const minSaleUsd = saleUsdList.length > 0 ? Math.min(...saleUsdList) : null;
 
-    const bestPrice = minSaleGbp || minGbp;
+    const saleFixGbpList = matching
+      .map((m) => Number(m.sale_fix_gbp))
+      .filter((v) => !isNaN(v) && v > 0);
+    const saleFixEuroList = matching
+      .map((m) => Number(m.sale_fix_euro))
+      .filter((v) => !isNaN(v) && v > 0);
+    const saleFixUsdList = matching
+      .map((m) => Number(m.sale_fix_usd))
+      .filter((v) => !isNaN(v) && v > 0);
+
+    const maxSaleFixGbp = saleFixGbpList.length > 0 ? Math.max(...saleFixGbpList) : null;
+    const maxSaleFixEuro = saleFixEuroList.length > 0 ? Math.max(...saleFixEuroList) : null;
+    const maxSaleFixUsd = saleFixUsdList.length > 0 ? Math.max(...saleFixUsdList) : null;
+
+    let effectiveStartingPriceGbp = minGbp;
+    if (minSaleGbp != null && minGbp != null && minSaleGbp < minGbp) {
+      effectiveStartingPriceGbp = minSaleGbp;
+    } else if (dynamicSalePercent != null && minGbp != null) {
+      effectiveStartingPriceGbp = Math.round(minGbp * (1 - dynamicSalePercent / 100));
+    } else if (maxSaleFixGbp != null && minGbp != null) {
+      effectiveStartingPriceGbp = Math.max(0, minGbp - maxSaleFixGbp);
+    }
 
     const collectedTags = Array.from(
       new Set([
@@ -1237,9 +1269,12 @@ export function getDynamicFlagships(templates, rawItems, category) {
       sale_price_gbp: minSaleGbp,
       sale_price_euro: minSaleEuro,
       sale_price_usd: minSaleUsd,
-      numericPrice: bestPrice,
-      price: `from £${bestPrice}`,
-      sale_percent: template.sale_percent,
+      sale_fix_gbp: maxSaleFixGbp,
+      sale_fix_euro: maxSaleFixEuro,
+      sale_fix_usd: maxSaleFixUsd,
+      numericPrice: effectiveStartingPriceGbp,
+      price: `from £${effectiveStartingPriceGbp}`,
+      sale_percent: dynamicSalePercent,
     };
   }).filter(Boolean);
 }
