@@ -163,7 +163,9 @@
     "morphySofa": "Morphy™ Sofa",
     "clothTexture": "Stofftextur in vielen Farben",
     "startConfigurator": "Konfigurator starten",
-    "explore": "Entdecken"
+    "explore": "Entdecken",
+    "addToExistingBed": "Zu deinem bestehenden Bett hinzufügen",
+    "viewMorphyBeds": "MORPHY™ Betten entdecken"
   },
   "categories": {
     "morphyBeds": "MORPHY™ Schrankbetten",

@@ -260,25 +260,20 @@ export function NewProductSection() {
         </div>
       </div>
 
-      {/* ── Action Buttons Container ── */}
-      <div className="relative z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-[320px] sm:max-w-md px-4 mt-8 md:mt-12">
+      {/* ── Action CTA Container ── */}
+      <div className="relative z-30 flex flex-col items-center justify-center text-center gap-3 w-full max-w-md px-4 mt-8 md:mt-12">
+        <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-wbk-brown">
+          {t("home.addToExistingBed", "Add to your existing bed")}
+        </p>
+
         <Button
           as="link"
-          href={localizedHref("/configurator")}
+          href={localizedHref("/products/beds?collection=morphy")}
           variant="primary"
           size="md"
-          className="w-full sm:w-auto text-center justify-center bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-xs font-semibold uppercase tracking-wider py-3.5"
+          className="w-full sm:w-auto text-center justify-center bg-wbk-green hover:bg-wbk-black border-wbk-green hover:border-wbk-black text-xs font-semibold uppercase tracking-wider py-3.5 px-8 shadow-sm"
         >
-          {t("home.startConfigurator", "Start configurator")}
-        </Button>
-        <Button
-          as="link"
-          href={localizedHref("/products/beds")}
-          variant="secondary"
-          size="md"
-          className="w-full sm:w-auto text-center justify-center bg-white/90 backdrop-blur-sm border-wbk-brown/30 text-xs font-semibold uppercase tracking-wider py-3.5"
-        >
-          {t("home.explore", "Explore")}
+          {t("home.viewMorphyBeds", "Explore MORPHY™ Beds")}
         </Button>
       </div>
     </section>

@@ -163,7 +163,9 @@
     "morphySofa": "Canapé Morphy™",
     "clothTexture": "Tissu disponible en plusieurs coloris",
     "startConfigurator": "Lancer le configurateur",
-    "explore": "Explorer"
+    "explore": "Explorer",
+    "addToExistingBed": "Ajoutez à votre lit existant",
+    "viewMorphyBeds": "Découvrir les lits MORPHY™"
   },
   "categories": {
     "morphyBeds": "Lits Escamotables MORPHY™",

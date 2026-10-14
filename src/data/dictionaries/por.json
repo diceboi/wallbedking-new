@@ -163,7 +163,9 @@
     "morphySofa": "Sofá Morphy™",
     "clothTexture": "Tecido disponível em várias cores",
     "startConfigurator": "Iniciar configurador",
-    "explore": "Explorar"
+    "explore": "Explorar",
+    "addToExistingBed": "Adicione à sua cama existente",
+    "viewMorphyBeds": "Descobrir camas MORPHY™"
   },
   "categories": {
     "morphyBeds": "Camas Rebatíveis MORPHY™",

@@ -3644,14 +3644,12 @@ export default function ProductDetailPage() {
 
               {/* Card 2: SizeFlex™ */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
-                  <span className="text-3xl mb-2">📐</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
-                    Image Slot — SizeFlex™
-                  </span>
-                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
-                    Add custom image here
-                  </span>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md lg:order-1">
+                  <img
+                    src="/sizeflex.jpg"
+                    alt="Morphy SizeFlex™ Innovation"
+                    className="w-full h-full object-cover select-none"
+                  />
                 </div>
                 <div className="lg:col-span-5 space-y-4 lg:order-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
@@ -3691,27 +3689,23 @@ export default function ProductDetailPage() {
                     )}
                   </p>
                 </div>
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
-                  <span className="text-3xl mb-2">🔄</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
-                    Image Slot — TypeFlex™
-                  </span>
-                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
-                    Add custom image here
-                  </span>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md">
+                  <img
+                    src="/typeflex.jpg"
+                    alt="Morphy TypeFlex™ Adaptability"
+                    className="w-full h-full object-cover select-none"
+                  />
                 </div>
               </div>
 
               {/* Card 4: Flexible Orientation */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
-                  <span className="text-3xl mb-2">↕️</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
-                    Image Slot — Flexible Orientation
-                  </span>
-                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
-                    Add custom image here
-                  </span>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md lg:order-1">
+                  <img
+                    src="/endless.webp"
+                    alt="Endless possibilities with Flexible Orientation"
+                    className="w-full h-full object-cover select-none"
+                  />
                 </div>
                 <div className="lg:col-span-5 space-y-4 lg:order-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
@@ -3751,45 +3745,35 @@ export default function ProductDetailPage() {
                     )}
                   </p>
                 </div>
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown">
-                  <span className="text-3xl mb-2">🛋️</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
-                    Image Slot — Modular Upgrades
-                  </span>
-                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
-                    Add custom image here
-                  </span>
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-black border border-wbk-lightgrey/60 shadow-md relative">
+                  <video
+                    src="/M%20Sizeflex.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover select-none"
+                  />
                 </div>
               </div>
 
-              {/* Card 6: Lifetime Warranty */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-2xl bg-[#F8F7F5] border border-wbk-lightgrey/60 flex flex-col items-center justify-center p-6 text-center text-wbk-brown lg:order-1">
-                  <span className="text-3xl mb-2">🛡️</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider font-poppins text-wbk-black">
-                    Image Slot — Lifetime Warranty
-                  </span>
-                  <span className="text-[10px] font-poppins text-wbk-brown/70 mt-1">
-                    Add custom image here
-                  </span>
-                </div>
-                <div className="lg:col-span-5 space-y-4 lg:order-2">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins">
-                    {t("morphy.warrantyBadge", "Quality")}
-                  </span>
-                  <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                    {t(
-                      "morphy.warrantyTitle",
-                      "Lifetime Warranty & Sustainable Quality",
-                    )}
-                  </h3>
-                  <p className="font-poppins text-sm leading-relaxed text-wbk-black/80">
-                    {t(
-                      "morphy.warrantyDesc",
-                      "Morphy isn’t locked into one purpose. Transform it from a wall bed to an ottoman, bunk, or traditional frame as life changes. Lifetime warranty means long-lasting quality, and modular reuse means you’ll never need to discard your bed when styles or needs change. Choose sustainability, choose Morphy.",
-                    )}
-                  </p>
-                </div>
+              {/* Card 6: Lifetime Warranty (Centered, without image) */}
+              <div className="py-12 sm:py-16 text-center max-w-3xl mx-auto space-y-4 pb-16 border-b border-wbk-lightgrey/40">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-wbk-gold font-poppins block">
+                  {t("morphy.warrantyBadge", "Quality")}
+                </span>
+                <h3 className="font-new-york text-2xl sm:text-4xl text-wbk-black">
+                  {t(
+                    "morphy.warrantyTitle",
+                    "Lifetime Warranty & Sustainable Quality",
+                  )}
+                </h3>
+                <p className="font-poppins text-sm sm:text-base leading-relaxed text-wbk-black/80">
+                  {t(
+                    "morphy.warrantyDesc",
+                    "Morphy isn’t locked into one purpose. Transform it from a wall bed to an ottoman, bunk, or traditional frame as life changes. Lifetime warranty means long-lasting quality, and modular reuse means you’ll never need to discard your bed when styles or needs change. Choose sustainability, choose Morphy.",
+                  )}
+                </p>
               </div>
 
               {/* Card 7: Modules Coming Soon */}

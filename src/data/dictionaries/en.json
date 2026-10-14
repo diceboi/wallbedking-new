@@ -196,7 +196,9 @@
     "morphySofa": "Morphy™ Sofa",
     "clothTexture": "Cloth texture in multiple colors",
     "startConfigurator": "Start configurator",
-    "explore": "Explore"
+    "explore": "Explore",
+    "addToExistingBed": "Add to your existing bed",
+    "viewMorphyBeds": "Explore MORPHY™ Beds"
   },
   "categories": {
     "morphyBeds": "MORPHY™ Beds",

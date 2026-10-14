@@ -163,7 +163,9 @@
     "morphySofa": "Divano Morphy™",
     "clothTexture": "Texture del tessuto in molteplici colori",
     "startConfigurator": "Avvia il configuratore",
-    "explore": "Esplora"
+    "explore": "Esplora",
+    "addToExistingBed": "Aggiungilo al tuo letto esistente",
+    "viewMorphyBeds": "Scopri i letti MORPHY™"
   },
   "categories": {
     "morphyBeds": "Letti a Scomparsa MORPHY™",
