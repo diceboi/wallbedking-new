@@ -1,8 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useLocale } from "@/context/LocaleContext";
 import { useCategories } from "@/context/CategoriesContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { isProductAvailableInLocale } from "@/lib/products";
 import { getLocalizedCategoryTitle } from "@/lib/categories-utils";
 
 const getGridBorderClass = (idx, total) => {
@@ -25,13 +28,37 @@ const getGridBorderClass = (idx, total) => {
 
 export function CategoryGrid() {
   const { t, localizedHref, locale } = useLocale();
-  const { featuredCategories } = useCategories();
-  const total = featuredCategories.length;
+  const { categories, featuredCategories } = useCategories();
+  const { allProducts } = useProductCatalog();
+
+  const displayCategories = useMemo(() => {
+    const list = categories && categories.length > 0 ? categories : featuredCategories;
+    const available = list.filter((cat) => {
+      if (cat.is_visible === false) return false;
+      const catKey = cat.id || cat.slug;
+      if (allProducts && allProducts[catKey] && locale) {
+        const catProds = allProducts[catKey];
+        if (Array.isArray(catProds) && catProds.length > 0) {
+          const hasAvailable = catProds.some((p) => isProductAvailableInLocale(p, locale));
+          if (!hasAvailable) return false;
+        }
+      }
+      return true;
+    });
+
+    const sorted = [...available].sort(
+      (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
+    );
+    const featured = sorted.filter((c) => c.is_featured !== false);
+    return (featured.length >= 4 ? featured : sorted).slice(0, 4);
+  }, [categories, featuredCategories, allProducts, locale]);
+
+  const total = displayCategories.length;
 
   return (
     <section className="w-full bg-wbk-white">
       <div className="container m-auto grid grid-cols-6 gap-1 w-full">
-        {featuredCategories.map((cat, idx) => {
+        {displayCategories.map((cat, idx) => {
           const href =
             cat.href ||
             (cat.slug?.startsWith("/")

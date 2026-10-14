@@ -86,14 +86,16 @@ export async function getProduct(categorySlug, productSlug) {
 export function isProductAvailableInLocale(product, locale) {
   if (!product) return false;
   if (!locale) return true;
-  if (
-    !product.available_locales ||
-    !Array.isArray(product.available_locales) ||
-    product.available_locales.length === 0
-  ) {
-    return true; // Default: available everywhere
+  if (product.available_locales === undefined || product.available_locales === null) {
+    return true; // Default: available everywhere if not explicitly specified
   }
-  return product.available_locales.includes(locale);
+  if (!Array.isArray(product.available_locales)) {
+    return true;
+  }
+  const normLocale = String(locale).toLowerCase();
+  return product.available_locales.some(
+    (l) => String(l).toLowerCase() === normLocale
+  );
 }
 
 /**

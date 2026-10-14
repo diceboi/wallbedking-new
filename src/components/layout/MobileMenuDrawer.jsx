@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,8 @@ import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { isProductAvailableInLocale } from "@/lib/products";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
 import { SearchBar } from "./SearchBar";
@@ -36,10 +38,24 @@ const LANGUAGES = [
 
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
-  const items = navItems || MAIN_NAV_ITEMS;
+  const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
+  const { allProducts } = useProductCatalog();
+  const rawItems = navItems || MAIN_NAV_ITEMS;
+
+  const items = useMemo(() => {
+    if (!locale || !allProducts) return rawItems;
+    return rawItems.filter((item) => {
+      const catKey = item.slug || item.category_id || item.id;
+      const catList = allProducts[catKey];
+      if (Array.isArray(catList) && catList.length > 0) {
+        return catList.some((p) => isProductAvailableInLocale(p, locale));
+      }
+      return true;
+    });
+  }, [rawItems, allProducts, locale]);
+
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
-  const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
   const [level, setLevel] = useState(0);

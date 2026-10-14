@@ -5,6 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { isProductAvailableInLocale } from "@/lib/products";
 
 const FOOTER_LINKS = {
   Products: [
@@ -32,7 +34,8 @@ const FOOTER_LINKS = {
 
 export function Footer() {
   const pathname = usePathname();
-  const { localizedHref, t } = useLocale();
+  const { localizedHref, t, locale } = useLocale();
+  const { allProducts } = useProductCatalog();
   if (pathname === "/configurator" || pathname?.endsWith("/configurator") || pathname?.startsWith("/admin")) return null;
 
   return (
@@ -60,7 +63,16 @@ export function Footer() {
                 {title}
               </p>
               <ul className="space-y-2.5">
-                {links.map((link) => (
+                {links
+                  .filter((link) => {
+                    if (!link.id || !allProducts || !allProducts[link.id] || !locale) return true;
+                    const catProds = allProducts[link.id];
+                    if (Array.isArray(catProds) && catProds.length > 0) {
+                      return catProds.some((p) => isProductAvailableInLocale(p, locale));
+                    }
+                    return true;
+                  })
+                  .map((link) => (
                   <li key={link.href}>
                     <Link
                       href={localizedHref(link.href)}

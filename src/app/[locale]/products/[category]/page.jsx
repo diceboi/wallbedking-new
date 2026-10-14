@@ -488,6 +488,15 @@ export default function CategoryArchivePage() {
       // Exclude generic 'beds' container when displaying distinct categories
       if (cat.id === "beds" && cat.slug === "beds") return false;
 
+      // Filter out categories where all products are unavailable in current locale
+      const catKey = cat.id || cat.slug;
+      const productsMap = allProducts || ALL_PRODUCTS;
+      const catProds = productsMap[catKey];
+      if (locale && Array.isArray(catProds) && catProds.length > 0) {
+        const hasAvailable = catProds.some((p) => isProductAvailableInLocale(p, locale));
+        if (!hasAvailable) return false;
+      }
+
       if (currentCategory === "beds") {
         if (selectedCollection === "traditional") {
           return cat.id !== "traditional-beds" && !cat.slug?.includes("traditional");
@@ -496,7 +505,7 @@ export default function CategoryArchivePage() {
       }
       return cat.id !== currentCategory && cat.slug !== currentCategory;
     });
-  }, [allDbCategories, currentCategory, selectedCollection]);
+  }, [allDbCategories, currentCategory, selectedCollection, allProducts, locale]);
 
 
   if (!mounted) {
@@ -1063,18 +1072,31 @@ export default function CategoryArchivePage() {
             className="py-20 text-center space-y-4 bg-[#F4F2F0]/40 rounded-none border border-wbk-lightgrey/60"
           >
             <p className="font-new-york text-2xl text-wbk-black">
-              {t("categories.noProductsFound", "No products found")}
+              {rawCategoryProducts.length === 0
+                ? t("categories.notAvailableInRegion", "This category is currently not available in your region")
+                : t("categories.noProductsFound", "No products found")}
             </p>
             <p className="text-xs font-poppins text-wbk-brown">
-              {t("categories.adjustFilters", "Try adjusting your filters to see more results.")}
+              {rawCategoryProducts.length === 0
+                ? t("categories.exploreOtherCategories", "Please explore our other available categories.")
+                : t("categories.adjustFilters", "Try adjusting your filters to see more results.")}
             </p>
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full cursor-pointer hover:bg-wbk-green hover:text-wbk-black transition-colors"
-            >
-              {t("categories.clearAllFilters", "Clear all filters")}
-            </button>
+            {rawCategoryProducts.length > 0 ? (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full cursor-pointer hover:bg-wbk-green hover:text-wbk-black transition-colors"
+              >
+                {t("categories.clearAllFilters", "Clear all filters")}
+              </button>
+            ) : (
+              <Link
+                href={localizedHref("/products")}
+                className="inline-block px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full cursor-pointer hover:bg-wbk-green hover:text-wbk-black transition-colors"
+              >
+                {t("home.allProducts", "All products")}
+              </Link>
+            )}
           </div>
         ) : (
           <div

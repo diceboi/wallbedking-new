@@ -48,6 +48,7 @@ import { TagBadge } from "@/components/ui/TagBadge";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 import {
+  isProductAvailableInLocale,
   getLocalizedProductName,
   getLocalizedProductGtin,
   getLocalizedProductDescription,
@@ -457,8 +458,10 @@ export default function ProductDetailPage() {
   // Available variants for the family / category (all sizes for this flagship model)
   const familyVariants = useMemo(() => {
     const getVariants = catalogGetVariants || getProductVariants;
-    return getVariants(activeProduct);
-  }, [catalogGetVariants, activeProduct]);
+    const variants = getVariants(activeProduct);
+    if (!locale) return variants;
+    return variants.filter((v) => isProductAvailableInLocale(v, locale));
+  }, [catalogGetVariants, activeProduct, locale]);
 
   // Derived options for dropdowns based on actual products in the family
   const isBedProduct =
@@ -848,7 +851,9 @@ export default function ProductDetailPage() {
 
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
+  const isAvailableInRegion = isProductAvailableInLocale(displayProduct, locale);
   const isOutOfStock =
+    !isAvailableInRegion ||
     (displayProduct?.stock !== undefined &&
       displayProduct?.stock !== null &&
       Number(displayProduct.stock) <= 0) ||
@@ -1580,7 +1585,14 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                 )}
-              {isOutOfStock ? (
+              {!isAvailableInRegion ? (
+                <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
+                    {t("product.notAvailableInRegion", "Not Available in Your Region")}
+                  </span>
+                </div>
+              ) : isOutOfStock ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />

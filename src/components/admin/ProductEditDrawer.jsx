@@ -30,6 +30,10 @@ import {
   IconFileText,
   IconExternalLink,
   IconBrandYoutube,
+  IconRuler2,
+  IconPackage,
+  IconShieldCheck,
+  IconBed,
 } from "@tabler/icons-react";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { TagIcon } from "@/components/ui/TagBadge";
@@ -221,6 +225,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
         extended_description_es: product.extended_description_es ?? "",
         extended_description_por: product.extended_description_por ?? product.extended_description_pt ?? "",
         extended_description_it: product.extended_description_it ?? "",
+
+        // Technical specifications & dimensions
+        width: product.width ?? "",
+        length: product.length ?? "",
+        height: product.height ?? "",
+        frame_width: product.frame_width ?? "",
+        folded_up_height: product.folded_up_height ?? "",
+        folded_up_projection: product.folded_up_projection ?? "",
+        folded_down_projection: product.folded_down_projection ?? "",
+        mounting_frame_height: product.mounting_frame_height ?? "",
+        frame_distance_from_ground: product.frame_distance_from_ground ?? "",
+        maximum_mattress_depth: product.maximum_mattress_depth ?? "",
+        weight: product.weight ?? "",
+        warranty: product.warranty ?? "",
+        color: product.color ?? "",
+        pack_1: product.pack_1 ?? "",
+        pack_2: product.pack_2 ?? "",
+        pack_3: product.pack_3 ?? "",
+        pack_4: product.pack_4 ?? "",
+        package_dimensions: product.package_dimensions ?? "",
 
         tags: Array.isArray(product.tags) ? product.tags : [],
         available_locales:
@@ -797,6 +821,58 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
           </button>
         </div>
 
+        {/* Quick Jump Navigation Bar */}
+        <div className="px-4 py-2 bg-[#141517] text-white/80 border-b border-white/10 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+          <span className="text-[10px] uppercase font-semibold text-wbk-gold mr-1 flex items-center gap-1 shrink-0">
+            <span>Jump to:</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-basic")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 hover:text-white transition-colors shrink-0 cursor-pointer"
+          >
+            1. Basic Info
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-pricing")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 hover:text-white transition-colors shrink-0 cursor-pointer"
+          >
+            2. Pricing & Currency
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-tech-specs")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 font-semibold transition-colors shrink-0 cursor-pointer flex items-center gap-1 shadow-xs"
+          >
+            <IconRuler2 size={13} className="text-amber-400" />
+            <span>3. Technical Specifications</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-descriptions")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 hover:text-white transition-colors shrink-0 cursor-pointer"
+          >
+            4. Descriptions
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-media")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 hover:text-white transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+          >
+            <IconPhoto size={13} />
+            <span>5. Gallery & Media</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("section-manual")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 hover:text-white transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+          >
+            <IconFileText size={13} />
+            <span>6. Manual & Video</span>
+          </button>
+        </div>
+
         {/* Status banner */}
         {message && (
           <div
@@ -822,7 +898,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
           className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-[#FBF9F8]"
         >
           {/* Section 1: Basic Information */}
-          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4">
+          <div id="section-basic" className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4 scroll-mt-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
               1. Basic Information
             </h3>
@@ -1462,7 +1538,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
           </div>
 
           {/* Section 2: Multi-Currency Pricing & Discounts */}
-          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4">
+          <div id="section-pricing" className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4 scroll-mt-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
                 2. Multi-Currency Pricing & Discounts
@@ -1614,154 +1690,326 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
             </div>
           </div>
 
-          {/* Section 3: Technical Dimensions */}
-          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
-              3. Dimensions (in mm)
-            </h3>
+          {/* Section 3: Technical Specifications & Dimensions */}
+          <div
+            id="section-tech-specs"
+            className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-5 scroll-mt-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded bg-amber-500/10 text-wbk-gold flex items-center justify-center shrink-0">
+                  <IconRuler2 size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
+                    3. Technical Specifications & Dimensions
+                  </h3>
+                  <p className="text-[10px] text-wbk-brown mt-0.5">
+                    Directly feeds into the storefront product page &quot;Technical Specifications&quot; table across all categories.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-medium self-start sm:self-auto">
+                ✓ Live Sync with Supabase Database
+              </span>
+            </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Width (mm)
-                </label>
-                <input
-                  type="number"
-                  value={formData.width ?? ""}
-                  onChange={(e) => handleNumberChange("width", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
+            {/* Subsection A: Dimensions & Core Specifications (Beds, Mattresses, Cabinets, Sofas, Tables) */}
+            <div className="p-3.5 bg-[#FAF9F7] border border-wbk-lightgrey/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider flex items-center gap-1.5">
+                  <IconBed size={14} className="text-wbk-gold" />
+                  <span>A) Core Dimensions & Specs (All Products: Beds, Mattresses, Cabinets, Sofas)</span>
+                </span>
+                <span className="text-[10px] text-wbk-brown">
+                  Mattress & unit measurements, weight, finish & warranty
+                </span>
               </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Length (mm)
-                </label>
-                <input
-                  type="number"
-                  value={formData.length ?? ""}
-                  onChange={(e) => handleNumberChange("length", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
-              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Width (width, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1400"
+                    value={formData.width ?? ""}
+                    onChange={(e) => handleNumberChange("width", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Mattress width (beds/mattresses) or cabinet width</span>
+                </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Folded-up Height
-                </label>
-                <input
-                  type="number"
-                  value={formData.folded_up_height ?? ""}
-                  onChange={(e) => handleNumberChange("folded_up_height", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Length / Depth (length, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2000"
+                    value={formData.length ?? ""}
+                    onChange={(e) => handleNumberChange("length", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Mattress length (beds/mattresses) or cabinet depth</span>
+                </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Folded-up Projection
-                </label>
-                <input
-                  type="number"
-                  value={formData.folded_up_projection ?? ""}
-                  onChange={(e) => handleNumberChange("folded_up_projection", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Height / Profile (height, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2150"
+                    value={formData.height ?? ""}
+                    onChange={(e) => handleNumberChange("height", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Cabinet height, mattress profile (e.g. 200mm), or unit height</span>
+                </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Folded-down Projection
-                </label>
-                <input
-                  type="number"
-                  value={formData.folded_down_projection ?? ""}
-                  onChange={(e) => handleNumberChange("folded_down_projection", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Net Weight (weight, kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="e.g. 52.5"
+                    value={formData.weight ?? ""}
+                    onChange={(e) => handleNumberChange("weight", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Total net product weight in kg</span>
+                </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Max Mattress Depth
-                </label>
-                <input
-                  type="number"
-                  value={formData.maximum_mattress_depth ?? 300}
-                  onChange={(e) => handleNumberChange("maximum_mattress_depth", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Color / Finish (color)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. White, Oak, Beech, Anthracite"
+                    value={formData.color ?? ""}
+                    onChange={(e) => handleChange("color", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Frame, cabinet or fabric color finish</span>
+                </div>
 
-              <div>
-                <label className="block text-[11px] text-wbk-brown mb-1">
-                  Net Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 52.5"
-                  value={formData.weight ?? ""}
-                  onChange={(e) => handleNumberChange("weight", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none"
-                />
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1 flex items-center justify-between">
+                    <span>Warranty (warranty)</span>
+                    <IconShieldCheck size={13} className="text-emerald-600" />
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Lifetime mechanism warranty"
+                    value={formData.warranty ?? ""}
+                    onChange={(e) => handleChange("warranty", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <div className="flex items-center gap-1 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleChange("warranty", "Lifetime mechanism warranty")}
+                      className="text-[9px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
+                      title="Set Lifetime Mechanism Warranty (standard for Murphy Beds)"
+                    >
+                      Lifetime (Beds)
+                    </button>
+                    <span className="text-[9px] text-wbk-brown/40">|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleChange("warranty", "1 year for manufacturing defects")}
+                      className="text-[9px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
+                      title="Set 1 Year Warranty (standard for Cabinets & Mattresses)"
+                    >
+                      1 Year (Cabinets/Mattresses)
+                    </button>
+                    <span className="text-[9px] text-wbk-brown/40">|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleChange("warranty", "5 years warranty")}
+                      className="text-[9px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
+                    >
+                      5 Years
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Box Packaging Breakdown */}
-            <div className="pt-3 border-t border-wbk-lightgrey/50 space-y-2">
+            {/* Subsection B: Wall Bed Frame & Mechanism Specs (Murphy Beds Only) */}
+            <div className="p-3.5 bg-[#FAF9F7] border border-wbk-lightgrey/80 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider">
-                  Box Packaging Dimensions (cm, e.g. 215x30x12)
+                <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider flex items-center gap-1.5">
+                  <IconRuler2 size={14} className="text-wbk-gold" />
+                  <span>B) Wall Bed Frame & Mechanism Specs (Murphy Beds Only)</span>
                 </span>
                 <span className="text-[10px] text-wbk-brown">
-                  Used for freight logistics & package display
+                  Frame measurements in open & closed positions (mm)
                 </span>
               </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Frame Width (frame_width, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1520"
+                    value={formData.frame_width ?? ""}
+                    onChange={(e) => handleNumberChange("frame_width", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Outer bed frame width</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Folded-up Height (folded_up_height, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2150"
+                    value={formData.folded_up_height ?? ""}
+                    onChange={(e) => handleNumberChange("folded_up_height", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Height when bed is closed against wall</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Folded-up Projection (folded_up_projection, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 410"
+                    value={formData.folded_up_projection ?? ""}
+                    onChange={(e) => handleNumberChange("folded_up_projection", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Bed depth closed (projection from wall)</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Folded-down Projection (folded_down_projection, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2180"
+                    value={formData.folded_down_projection ?? ""}
+                    onChange={(e) => handleNumberChange("folded_down_projection", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Bed depth open (projection into room)</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Mounting Frame Height (mounting_frame_height, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2130"
+                    value={formData.mounting_frame_height ?? ""}
+                    onChange={(e) => handleNumberChange("mounting_frame_height", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Height of wall mounting bracket frame</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Frame Ground Distance (frame_distance_from_ground, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 240"
+                    value={formData.frame_distance_from_ground ?? ""}
+                    onChange={(e) => handleNumberChange("frame_distance_from_ground", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Clearance between bottom edge and floor</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                    Max Mattress Depth (maximum_mattress_depth, mm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 300"
+                    value={formData.maximum_mattress_depth ?? 300}
+                    onChange={(e) => handleNumberChange("maximum_mattress_depth", e.target.value)}
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                  />
+                  <span className="text-[9px] text-wbk-brown">Maximum allowed mattress thickness (standard 300mm / 12&quot;)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Subsection C: Packaging & Box Dimensions */}
+            <div className="p-3.5 bg-[#FAF9F7] border border-wbk-lightgrey/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-wbk-black uppercase tracking-wider flex items-center gap-1.5">
+                  <IconPackage size={14} className="text-wbk-gold" />
+                  <span>C) Packaging & Box Dimensions (All Products & Freight Logistics)</span>
+                </span>
+                <span className="text-[10px] text-wbk-brown">
+                  Freight shipping cartons in cm (e.g. 215x30x12)
+                </span>
+              </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 1</label>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 1 (pack_1, cm)</label>
                   <input
                     type="text"
                     placeholder="e.g. 215x30x12"
                     value={formData.pack_1 || ""}
                     onChange={(e) => handleChange("pack_1", e.target.value)}
-                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 2</label>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 2 (pack_2, cm)</label>
                   <input
                     type="text"
                     placeholder="e.g. 150x25x10"
                     value={formData.pack_2 || ""}
                     onChange={(e) => handleChange("pack_2", e.target.value)}
-                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 3</label>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 3 (pack_3, cm)</label>
                   <input
                     type="text"
-                    placeholder="Optional"
+                    placeholder="Optional, e.g. 90x40x15"
                     value={formData.pack_3 || ""}
                     onChange={(e) => handleChange("pack_3", e.target.value)}
-                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 4</label>
+                  <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">Box 4 (pack_4, cm)</label>
                   <input
                     type="text"
                     placeholder="Optional"
                     value={formData.pack_4 || ""}
                     onChange={(e) => handleChange("pack_4", e.target.value)}
-                    className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                    className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                   />
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="block text-[10px] font-medium text-wbk-brown mb-0.5">
                   Composite Package Summary (package_dimensions)
                 </label>
@@ -1770,14 +2018,14 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   placeholder="e.g. Box 1: 215x30x12 | Box 2: 150x25x10"
                   value={formData.package_dimensions || ""}
                   onChange={(e) => handleChange("package_dimensions", e.target.value)}
-                  className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none font-mono"
+                  className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-mono"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 4: Description & Media Management */}
-          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-6">
+          <div id="section-descriptions" className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-6 scroll-mt-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-3">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold">
@@ -2303,7 +2551,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
             </div>
 
             {/* Product Gallery Section */}
-            <div className="pt-2 border-t border-wbk-lightgrey/40">
+            <div id="section-media" className="pt-2 border-t border-wbk-lightgrey/40 scroll-mt-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                 <div>
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center gap-2">
@@ -2631,7 +2879,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
           </div>
 
           {/* Section 5: Assembly & Installation Manual */}
-          <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-5">
+          <div id="section-manual" className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs space-y-5 scroll-mt-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/40 pb-3">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-wbk-gold flex items-center gap-2">

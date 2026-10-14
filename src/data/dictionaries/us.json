@@ -192,6 +192,8 @@
     "clearAllFilters": "Clear all filters",
     "noProductsFound": "No products found",
     "adjustFilters": "Try adjusting your filters to see more results.",
+    "notAvailableInRegion": "This category is currently not available in your region",
+    "exploreOtherCategories": "Please explore our other available categories.",
     "allCabinets": "All Cabinets",
     "allSofas": "All Sofas",
     "allMattresses": "All Mattresses",
@@ -199,6 +201,7 @@
     "allBeds": "All Murphy Beds"
   },
   "product": {
+    "notAvailableInRegion": "Not Available in Your Region",
     "sale": "Sale",
     "orientation": "Orientation",
     "size": "Size",

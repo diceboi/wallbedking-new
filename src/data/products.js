@@ -969,6 +969,7 @@ export const FLAGSHIP_CABINETS = [
     size: "4 Sizes / 4 Finishes",
     sizeLabel: "Single to King in Oak, Beech, Pine & White",
     defaultSizeSlug: "double-vertical-cabinet-oak-160x52x215",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#BCA37F", "#D8AC78", "#E8CE9B", "#FFFFFF"],
@@ -1014,6 +1015,7 @@ export const FLAGSHIP_CABINETS = [
     size: "2 Sizes / 4 Finishes",
     sizeLabel: "Double & King in Oak, Beech, Pine & White",
     defaultSizeSlug: "double-horizontal-cabinet-oak-215x52x180",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#BCA37F", "#D8AC78", "#E8CE9B", "#FFFFFF"],
@@ -1058,6 +1060,7 @@ export const FLAGSHIP_CABINETS = [
     size: "2 Sizes / 4 Finishes",
     sizeLabel: "Double & King in Oak, Beech, Pine & White",
     defaultSizeSlug: "double-horizontal-cabinet-extension-oak-215x52x35",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#BCA37F", "#D8AC78", "#E8CE9B", "#FFFFFF"],
@@ -1104,6 +1107,7 @@ export const FLAGSHIP_CABINETS = [
     size: "2 Styles / 4 Finishes",
     sizeLabel: "Door + Hanger or Shelves in 4 Finishes",
     defaultSizeSlug: "50x52-door",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#BCA37F", "#D8AC78", "#E8CE9B", "#FFFFFF"],
@@ -1243,8 +1247,26 @@ export function getDynamicFlagships(templates, rawItems, category) {
       matching.find((m) => m.installation_video)?.installation_video ||
       null;
 
+    // Derive available locales for this flagship model from matching variants
+    const allKnownLocales = ["en", "us", "de", "fr", "es", "por", "it"];
+    const variantLocalesSet = new Set();
+    matching.forEach((m) => {
+      if (Array.isArray(m.available_locales) && m.available_locales.length > 0) {
+        m.available_locales.forEach((l) => variantLocalesSet.add(String(l).toLowerCase()));
+      } else {
+        // If variant doesn't have available_locales explicitly specified, it defaults to all markets
+        allKnownLocales.forEach((l) => variantLocalesSet.add(l));
+      }
+    });
+
+    const dynamicAvailableLocales =
+      variantLocalesSet.size > 0
+        ? Array.from(variantLocalesSet)
+        : template.available_locales || allKnownLocales;
+
     return {
       ...template,
+      available_locales: dynamicAvailableLocales,
       description_en: template.description_en || defaultVariant?.description_en || template.description,
       description_us: template.description_us || defaultVariant?.description_us || template.description,
       description_de: template.description_de || defaultVariant?.description_de,

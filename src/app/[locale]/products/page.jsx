@@ -455,16 +455,31 @@ function ProductsSearchContent() {
     locale,
   ]);
 
-  // Dynamic filter options
-  const categoryOptions = [
-    { key: "All", label: t("search.allCategories", "All Categories") },
-    { key: "beds", label: t("categories.beds", "Murphy Beds") },
-    { key: "sofas", label: t("categories.sofas", "Sofas") },
-    { key: "tables", label: t("categories.tables", "Smart Tables") },
-    { key: "mattresses", label: t("categories.mattresses", "Mattresses") },
-    { key: "cabinets", label: t("categories.cabinets", "Cabinets") },
-    { key: "extras", label: t("categories.extras", "Accessories") },
-  ];
+  // Dynamic filter options based on product availability for the current locale
+  const categoryOptions = useMemo(() => {
+    const allOptions = [
+      { key: "All", label: t("search.allCategories", "All Categories") },
+      { key: "beds", label: t("categories.beds", "Murphy Beds") },
+      { key: "sofas", label: t("categories.sofas", "Sofas") },
+      { key: "tables", label: t("categories.tables", "Smart Tables") },
+      { key: "mattresses", label: t("categories.mattresses", "Mattresses") },
+      { key: "cabinets", label: t("categories.cabinets", "Cabinets") },
+      { key: "extras", label: t("categories.extras", "Accessories") },
+    ];
+
+    if (!locale) return allOptions;
+
+    const availableCategories = new Set(
+      searchableProducts
+        .filter((item) => isProductAvailableInLocale(item, locale))
+        .map((item) => item.parent_category?.toLowerCase())
+        .filter(Boolean)
+    );
+
+    return allOptions.filter(
+      (opt) => opt.key === "All" || availableCategories.has(opt.key)
+    );
+  }, [t, searchableProducts, locale]);
 
   const orientationOptions = [
     { key: "All", label: t("categories.all", "All") },
