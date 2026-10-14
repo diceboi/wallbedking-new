@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   } = useCart();
 
   const finalTotal = total;
+  const isStripeAvailable = locale === "en" || locale === "us";
 
   // Form states
   const [formData, setFormData] = useState({
@@ -67,13 +68,20 @@ export default function CheckoutPage() {
     city: "",
     postcode: "",
     country: "United Kingdom",
-    paymentMethod: "card", // 'card' | 'klarna' | 'paypal'
+    paymentMethod: isStripeAvailable ? "card" : "paypal", // 'card' | 'klarna' | 'paypal'
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
     cardName: "",
     agreeTerms: true,
   });
+
+  // Ensure non-UK/US locales always fall back to PayPal when Stripe is restricted
+  useEffect(() => {
+    if (!isStripeAvailable && formData.paymentMethod === "card") {
+      setFormData((prev) => ({ ...prev, paymentMethod: "paypal" }));
+    }
+  }, [isStripeAvailable, formData.paymentMethod]);
 
   // Non-blocking Inline Auth States
   const [isAuthExpanded, setIsAuthExpanded] = useState(false);
@@ -1237,52 +1245,77 @@ export default function CheckoutPage() {
 
                 <div className="space-y-4">
                   {/* Payment method selector tabs */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleChange("paymentMethod", "card")}
-                      className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
-                        formData.paymentMethod === "card"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
-                          : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
-                      }`}
-                    >
-                      <IconCreditCard
-                        size={20}
-                        className="mx-auto mb-1 text-wbk-black"
-                      />
-                      <span className="block">
-                        {t("checkout.paymentCard", "Credit / Debit Card")}
-                      </span>
-                      <span className="text-[10px] text-wbk-brown font-normal">
-                        Stripe & Apple Pay
-                      </span>
-                    </button>
+                  {isStripeAvailable ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleChange("paymentMethod", "card")}
+                        className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
+                          formData.paymentMethod === "card"
+                            ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <IconCreditCard
+                          size={20}
+                          className="mx-auto mb-1 text-wbk-black"
+                        />
+                        <span className="block">
+                          {t("checkout.paymentCard", "Credit / Debit Card")}
+                        </span>
+                        <span className="text-[10px] text-wbk-brown font-normal">
+                          Stripe & Apple Pay
+                        </span>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleChange("paymentMethod", "paypal")}
-                      className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
-                        formData.paymentMethod === "paypal"
-                          ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
-                          : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
-                      }`}
-                    >
-                      <IconBrandPaypal
-                        size={20}
-                        className="mx-auto mb-1 text-[#003087]"
-                      />
-                      <span className="block font-semibold text-[#003087]">
-                        {t("checkout.paymentPaypal", "PayPal")}
-                      </span>
-                      <span className="text-[10px] text-wbk-brown font-normal">
-                        Express & Pay in 3
-                      </span>
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => handleChange("paymentMethod", "paypal")}
+                        className={`p-3 text-center border text-xs font-medium transition-all cursor-pointer ${
+                          formData.paymentMethod === "paypal"
+                            ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-xs"
+                            : "border-wbk-lightgrey bg-white text-wbk-brown hover:border-wbk-black"
+                        }`}
+                      >
+                        <IconBrandPaypal
+                          size={20}
+                          className="mx-auto mb-1 text-[#003087]"
+                        />
+                        <span className="block font-semibold text-[#003087]">
+                          {t("checkout.paymentPaypal", "PayPal")}
+                        </span>
+                        <span className="text-[10px] text-wbk-brown font-normal">
+                          Express & Pay in 3
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      <button
+                        type="button"
+                        onClick={() => handleChange("paymentMethod", "paypal")}
+                        className="w-full p-3.5 text-left border border-wbk-black bg-[#FBF9F8] text-wbk-black shadow-xs flex items-center justify-between gap-3 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <IconBrandPaypal size={24} className="text-[#003087] shrink-0" />
+                          <div>
+                            <span className="block font-semibold text-sm text-[#003087]">
+                              {t("checkout.paymentPaypal", "PayPal Checkout")}
+                            </span>
+                            <span className="text-[11px] text-wbk-brown font-normal">
+                              {t("checkout.paypalAvailable", "Pay safely with PayPal balance, Credit / Debit Card or Bank Account")}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-white border border-wbk-lightgrey text-wbk-black shrink-0 font-semibold">
+                          Selected
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Stripe Payment Box */}
-                  {formData.paymentMethod === "card" && (
+                  {isStripeAvailable && formData.paymentMethod === "card" && (
                     <div className="p-6 bg-[#FBF9F8] border border-wbk-lightgrey space-y-4">
                       <div className="flex items-center justify-between text-xs text-wbk-black border-b border-wbk-lightgrey pb-3">
                         <div className="flex items-center gap-2 font-semibold">

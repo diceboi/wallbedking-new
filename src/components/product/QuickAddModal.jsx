@@ -44,15 +44,31 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     if (!product) return [];
     const getVariants = catalogGetVariants || getProductVariants;
     const list = getVariants(product);
-    if (!list || list.length === 0) {
-      return [formatCatalogItem(product)];
+    const visibleList = (list || []).filter(
+      (v) =>
+        v.visibility !== "Hidden" &&
+        v.visibility !== "hidden" &&
+        v.visibility !== false &&
+        v.is_visible !== false
+    );
+    if (visibleList.length === 0) {
+      const isProductHidden =
+        product.visibility === "Hidden" ||
+        product.visibility === "hidden" ||
+        product.visibility === false ||
+        product.is_visible === false;
+      return isProductHidden ? [] : [formatCatalogItem(product)];
     }
-    return list;
+    return visibleList;
   }, [product, catalogGetVariants]);
 
   // Available orientations if bed
   const formats = useMemo(() => {
-    if (!product || product.parent_category !== "beds") return [];
+    const isBed =
+      product?.parent_category === "beds" ||
+      product?.parent_category === "morphy-beds" ||
+      product?.parent_category === "traditional-beds";
+    if (!product || !isBed) return [];
     return ["Vertical", "Horizontal"];
   }, [product]);
 
@@ -137,7 +153,18 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
   // Sizes available for the active format / type & color
   const availableSizes = variants.filter((v) => {
-    if (product.parent_category === "beds" && selectedFormat) {
+    const isHidden =
+      v.visibility === "Hidden" ||
+      v.visibility === "hidden" ||
+      v.visibility === false ||
+      v.is_visible === false;
+    if (isHidden) return false;
+
+    const isBed =
+      product.parent_category === "beds" ||
+      product.parent_category === "morphy-beds" ||
+      product.parent_category === "traditional-beds";
+    if (isBed && selectedFormat) {
       return (v.orientation || "Vertical").toLowerCase() === selectedFormat.toLowerCase();
     }
     if (availableColors.length > 1 && selectedColor) {

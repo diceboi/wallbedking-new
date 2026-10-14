@@ -269,12 +269,28 @@ function ProductsSearchContent() {
     return flagshipList.map((prod) => {
       // Find all associated size variants from rawCatalog
       const variants = catalogList.filter((item) => {
-        if (prod.parent_category === "beds") {
+        const isBed =
+          prod.parent_category === "beds" ||
+          prod.parent_category === "morphy-beds" ||
+          prod.parent_category === "traditional-beds";
+        if (isBed) {
+          const prodIsMorphy = Boolean(
+            prod.isMorphy ??
+            ((prod.name || "").includes("MORPHY") || (prod.title || "").includes("MORPHY"))
+          );
+          const itemIsBed =
+            item.parent_category === "beds" ||
+            item.parent_category === "morphy-beds" ||
+            item.parent_category === "traditional-beds";
+          const itemIsMorphy = Boolean(
+            (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY")
+          );
           return (
-            item.parent_category === "beds" &&
+            itemIsBed &&
             (item.type || "").toLowerCase() === (prod.type || "").toLowerCase() &&
             (item.orientation || "Vertical").toLowerCase() ===
-              (prod.orientation || "Vertical").toLowerCase()
+              (prod.orientation || "Vertical").toLowerCase() &&
+            itemIsMorphy === prodIsMorphy
           );
         }
         return (
@@ -296,6 +312,8 @@ function ProductsSearchContent() {
       const catSynonyms =
         {
           beds: "agy agyak murphy bed lenyithato falagy wall bed foldaway",
+          "morphy-beds": "agy agyak murphy bed lenyithato falagy wall bed foldaway",
+          "traditional-beds": "agy agyak murphy bed lenyithato falagy wall bed foldaway",
           sofas: "kanape kanapek sofa couches seating",
           tables: "asztal asztalok table tables desk extending",
           mattresses: "matrac matracok mattress mattresses hybrid pocket spring",

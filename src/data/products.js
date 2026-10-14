@@ -156,7 +156,11 @@ export const OTHER_CATEGORIES_LIST = [
 
 // Helpers to derive clean dimensions, size labels and slugs across all product categories
 export const getCleanBedDimensions = (item) => {
-  if (!item || item.parent_category !== "beds") {
+  const isBed =
+    item?.parent_category === "beds" ||
+    item?.parent_category === "morphy-beds" ||
+    item?.parent_category === "traditional-beds";
+  if (!item || !isBed) {
     return {
       widthCm: item?.width ? Math.round(item.width / 10) : 0,
       lengthCm: item?.length ? Math.round(item.length / 10) : 0,
@@ -170,8 +174,13 @@ export const getCleanBedDimensions = (item) => {
 export const getProductSizeInfo = (item) => {
   if (!item) return { size: "Standard", sizeLabel: "Standard", sizeSlug: "" };
 
+  const isBed =
+    item.parent_category === "beds" ||
+    item.parent_category === "morphy-beds" ||
+    item.parent_category === "traditional-beds";
+
   // 1. Murphy Beds
-  if (item.parent_category === "beds") {
+  if (isBed) {
     const { widthCm, lengthCm } = getCleanBedDimensions(item);
     let baseName = (item.name || "")
       .replace(/Horizontal.*Bed/i, "")
@@ -236,7 +245,11 @@ export const getProductSizeInfo = (item) => {
     const lCm = item.length ? Math.round(item.length / 10) : 0;
     const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
     const label = `${cabSize}${dim}`;
-    const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    let slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    if (/side\s*unit/i.test(name)) {
+      if (/door/i.test(name)) slug = `${slug}-door`;
+      else if (/shelves/i.test(name)) slug = `${slug}-shelves`;
+    }
     return { size: cabSize, sizeLabel: label, sizeSlug: slug };
   }
 
@@ -1090,7 +1103,7 @@ export const FLAGSHIP_CABINETS = [
     numericPrice: 319,
     size: "2 Styles / 4 Finishes",
     sizeLabel: "Door + Hanger or Shelves in 4 Finishes",
-    defaultSizeSlug: "vertical-cabinet-side-unit-with-door-hanger-oak-50x52x215",
+    defaultSizeSlug: "50x52-door",
     has_3d: false,
     has3D: false,
     colors: ["#BCA37F", "#D8AC78", "#E8CE9B", "#FFFFFF"],
@@ -1098,12 +1111,22 @@ export const FLAGSHIP_CABINETS = [
   },
 ];
 
+// Helper to determine if a product or variant is visible on storefront
+export const isProductVisible = (item) => {
+  if (!item) return false;
+  const vis = String(item.visibility || "").trim().toLowerCase();
+  if (vis === "hidden" || vis === "false" || item.visibility === false) return false;
+  if (item.is_visible === false) return false;
+  return true;
+};
+
 /**
  * Computes starting prices ("from") dynamically for flagship models
  * based on the cheapest matching product variant in Supabase / catalog.
  */
 export function getDynamicFlagships(templates, rawItems, category) {
   const catItems = rawItems.filter((p) => {
+    if (!isProductVisible(p)) return false;
     if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
       return (
         p.parent_category === "beds" ||
@@ -1114,26 +1137,34 @@ export function getDynamicFlagships(templates, rawItems, category) {
     return p.parent_category === category;
   });
 
-  return templates.map((template) => {
-    const matching = catItems.filter((item) => {
-      if (category === "beds") {
-        const itemIsMorphy = Boolean(
-          (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY")
-        );
-        const templateIsMorphy = Boolean(template.isMorphy);
-        return (
-          item.type?.toLowerCase() === template.type?.toLowerCase() &&
-          item.orientation?.toLowerCase() === template.orientation?.toLowerCase() &&
-          itemIsMorphy === templateIsMorphy
-        );
-      }
-      return (
-        item.sub_category?.toLowerCase() === template.sub_category?.toLowerCase() ||
-        item.type?.toLowerCase() === template.type?.toLowerCase()
-      );
-    });
+  return templates
+    .map((template) => {
+      if (!isProductVisible(template)) return null;
 
-    if (matching.length === 0) return template;
+      const matching = catItems.filter((item) => {
+        if (category === "beds") {
+          const itemIsMorphy = Boolean(
+            (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY")
+          );
+          const templateIsMorphy = Boolean(template.isMorphy);
+          return (
+            item.type?.toLowerCase() === template.type?.toLowerCase() &&
+            item.orientation?.toLowerCase() === template.orientation?.toLowerCase() &&
+            itemIsMorphy === templateIsMorphy
+          );
+        }
+        return (
+          item.sub_category?.toLowerCase() === template.sub_category?.toLowerCase() ||
+          item.type?.toLowerCase() === template.type?.toLowerCase()
+        );
+      });
+
+      if (matching.length === 0) {
+        if (rawItems && rawItems.length > 0) {
+          return null;
+        }
+        return template;
+      }
 
     const gbpList = matching.map((m) => m.price_gbp).filter((v) => v != null && !isNaN(v));
     const euroList = matching.map((m) => m.price_euro ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
@@ -1210,7 +1241,7 @@ export function getDynamicFlagships(templates, rawItems, category) {
       price: `from £${bestPrice}`,
       sale_percent: template.sale_percent,
     };
-  });
+  }).filter(Boolean);
 }
 
 export function getDynamicFlagshipBeds(rawItems = RAW_CATALOG) {
@@ -1440,12 +1471,14 @@ export const ALL_PRODUCTS = {
  * dynamically from any array of raw catalog items (e.g. from Supabase).
  */
 export function buildCatalog(rawItems = RAW_CATALOG) {
-  const dynamicFlagshipBeds = getDynamicFlagshipBeds(rawItems);
-  const dynamicFlagshipSofas = getDynamicFlagshipSofas(rawItems);
-  const dynamicFlagshipTables = getDynamicFlagshipTables(rawItems);
-  const dynamicFlagshipMattresses = getDynamicFlagshipMattresses(rawItems);
-  const dynamicFlagshipCabinets = getDynamicFlagshipCabinets(rawItems);
-  const dynamicFlagshipExtras = getDynamicFlagshipExtras(rawItems);
+  const visibleItems = (rawItems || []).filter(isProductVisible);
+
+  const dynamicFlagshipBeds = getDynamicFlagshipBeds(visibleItems);
+  const dynamicFlagshipSofas = getDynamicFlagshipSofas(visibleItems);
+  const dynamicFlagshipTables = getDynamicFlagshipTables(visibleItems);
+  const dynamicFlagshipMattresses = getDynamicFlagshipMattresses(visibleItems);
+  const dynamicFlagshipCabinets = getDynamicFlagshipCabinets(visibleItems);
+  const dynamicFlagshipExtras = getDynamicFlagshipExtras(visibleItems);
 
   const allFlagships = [
     ...dynamicFlagshipBeds,
@@ -1470,7 +1503,7 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
     extras: dynamicFlagshipExtras,
   };
 
-  const allBedVariants = (rawItems || [])
+  const allBedVariants = visibleItems
     .filter(
       (p) =>
         p.parent_category === "beds" ||
@@ -1480,7 +1513,7 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
     .map(formatCatalogItem);
 
   return {
-    rawCatalog: rawItems,
+    rawCatalog: visibleItems,
     allFlagships,
     allProducts,
     allBedVariants,
@@ -1633,8 +1666,8 @@ export const findProductBySlug = (
 ) => {
   if (!productSlug) return null;
   const cleanSlug = productSlug.toLowerCase();
-  const flagships = allFlagships || ALL_FLAGSHIP_PRODUCTS;
-  const catalog = rawCatalog || RAW_CATALOG;
+  const flagships = (allFlagships || ALL_FLAGSHIP_PRODUCTS).filter(isProductVisible);
+  const catalog = (rawCatalog || RAW_CATALOG).filter(isProductVisible);
 
   // 1. Exact match or alias match against ALL Flagship products (beds, sofas, mattresses, cabinets)
   const flagshipMatch = flagships.find(
@@ -1688,7 +1721,12 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
   const subCategory = currentProduct.sub_category || type;
   const orientation = currentProduct.orientation || "Vertical";
 
-  if (parentCat === "beds") {
+  const isBedCategory =
+    parentCat === "beds" ||
+    parentCat === "morphy-beds" ||
+    parentCat === "traditional-beds";
+
+  if (isBedCategory) {
     const isMorphy = Boolean(
       currentProduct.isMorphy ??
       ((currentProduct.name || "").includes("MORPHY") || (currentProduct.title || "").includes("MORPHY"))
@@ -1696,7 +1734,12 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
 
     // Return all size variants for this specific flagship (type + orientation + isMorphy)
     const matching = catalog.filter((p) => {
-      if (p.parent_category !== "beds") return false;
+      if (!isProductVisible(p)) return false;
+      const pIsBed =
+        p.parent_category === "beds" ||
+        p.parent_category === "morphy-beds" ||
+        p.parent_category === "traditional-beds";
+      if (!pIsBed) return false;
       if (p.type?.toLowerCase() !== type.toLowerCase()) return false;
       if (p.orientation?.toLowerCase() !== orientation.toLowerCase()) return false;
       const itemIsMorphy = Boolean(
@@ -1722,6 +1765,7 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
   if (parentCat === "sofas") {
     const matching = catalog.filter(
       (p) =>
+        isProductVisible(p) &&
         p.parent_category === "sofas" &&
         (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
          p.type?.toLowerCase() === type.toLowerCase())
@@ -1733,6 +1777,7 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
   if (parentCat === "mattresses") {
     const matching = catalog.filter(
       (p) =>
+        isProductVisible(p) &&
         p.parent_category === "mattresses" &&
         (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
          p.type?.toLowerCase() === type.toLowerCase())
@@ -1744,6 +1789,7 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
   if (parentCat === "cabinets") {
     const matching = catalog.filter(
       (p) =>
+        isProductVisible(p) &&
         p.parent_category === "cabinets" &&
         (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
          p.type?.toLowerCase() === type.toLowerCase())
@@ -1752,9 +1798,9 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
     return matching.map(formatCatalogItem);
   }
 
-  return catalog.filter((p) => p.parent_category === parentCat).map(
-    formatCatalogItem
-  );
+  return catalog
+    .filter((p) => isProductVisible(p) && p.parent_category === parentCat)
+    .map(formatCatalogItem);
 };
 
 // Fallback generator for unknown product slugs

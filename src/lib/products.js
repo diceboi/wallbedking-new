@@ -301,7 +301,7 @@ export function getStorefrontProductUrl(p, locale = "en") {
   if (!p) return `${prefix}/products`;
   const category = (p.parent_category || "beds").toLowerCase();
 
-  if (category === "beds") {
+  if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
     const isMorphy = Boolean(
       p.isMorphy ??
       ((p.name || "").includes("MORPHY") || (p.category || "").includes("MORPHY"))
@@ -356,7 +356,8 @@ export function getStorefrontProductUrl(p, locale = "en") {
     if (s.includes("side") || s.includes("wardrobe")) slug = "side-storage-wardrobe-cabinet";
     else if (s.includes("ext") || s.includes("overhead") || s.includes("bridge")) slug = "overhead-storage-extension-cabinet";
     else if (s.includes("horiz") || o === "horizontal") slug = "horizontal-wall-bed-cabinet";
-    return `${prefix}/products/cabinets/${slug}`;
+    const sizeSlug = p.sizeSlug || null;
+    return `${prefix}/products/cabinets/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
   }
 
   if (category === "tables") {

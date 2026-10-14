@@ -51,6 +51,7 @@ export default function CartPage() {
 
   const [inputCode, setInputCode] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
+  const isStripeAvailable = locale === "en" || locale === "us";
 
   if (!isMounted) {
     return (
@@ -468,7 +469,9 @@ export default function CartPage() {
 
                   {/* Express Instant Checkout Buttons */}
                   <div className="space-y-2.5">
-                    <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
+                    {isStripeAvailable && (
+                      <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
+                    )}
                     <PayPalCheckoutButton />
                   </div>
                 </div>

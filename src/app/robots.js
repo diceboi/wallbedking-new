@@ -1,4 +1,5 @@
 export default function robots() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.wallbedking.com";
   return {
     rules: [
       {
@@ -7,6 +8,6 @@ export default function robots() {
         disallow: ["/admin/", "/api/", "/thanks", "/*?*session_id=*"],
       },
     ],
-    sitemap: "https://www.wallbedking.co.uk/sitemap.xml",
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

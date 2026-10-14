@@ -3,7 +3,7 @@ import { RAW_CATALOG } from "@/data/products";
 import { getStorefrontProducts } from "@/lib/products-db";
 
 export default async function sitemap() {
-  const baseUrl = "https://www.wallbedking.co.uk";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.wallbedking.com";
   const routes = [
     "",
     "/products/beds",
@@ -35,8 +35,17 @@ export default async function sitemap() {
     // Generate localized product pages
     if (Array.isArray(catalog)) {
       for (const prod of catalog) {
-        if (prod.slug) {
-          const category = prod.parent_category || "beds";
+        const isHidden =
+          prod.visibility === "Hidden" ||
+          prod.visibility === "hidden" ||
+          prod.visibility === false ||
+          prod.is_visible === false;
+        if (prod.slug && !isHidden) {
+          const rawCat = prod.parent_category || "beds";
+          const category =
+            rawCat === "morphy-beds" || rawCat === "traditional-beds"
+              ? "beds"
+              : rawCat;
           sitemapEntries.push({
             url: `${baseUrl}/${locale}/products/${category}/${prod.slug}`,
             lastModified: new Date(),

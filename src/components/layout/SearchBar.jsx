@@ -60,6 +60,12 @@ export function SearchBar({ className = "", onSelect = null }) {
 
     const catalogList = rawCatalog || RAW_CATALOG;
     return catalogList.filter((item) => {
+      const isHidden =
+        item.visibility === "Hidden" ||
+        item.visibility === "hidden" ||
+        item.visibility === false ||
+        item.is_visible === false;
+      if (isHidden) return false;
       const widthCm = item.width ? Math.round(item.width / 10) : "";
       const lengthCm = item.length ? Math.round(item.length / 10) : "";
       const dimCm =

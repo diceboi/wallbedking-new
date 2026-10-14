@@ -39,7 +39,11 @@ export async function GET(request) {
     let queryUrl = `${SUPABASE_URL}/rest/v1/products?select=*&order=id.asc&limit=${limit}&offset=${offset}`;
 
     if (category && category !== "all") {
-      queryUrl += `&parent_category=eq.${encodeURIComponent(category)}`;
+      if (category === "beds") {
+        queryUrl += `&parent_category=in.(beds,morphy-beds,traditional-beds)`;
+      } else {
+        queryUrl += `&parent_category=eq.${encodeURIComponent(category)}`;
+      }
     }
     if (orientation && orientation !== "all") {
       queryUrl += `&orientation=eq.${encodeURIComponent(orientation)}`;

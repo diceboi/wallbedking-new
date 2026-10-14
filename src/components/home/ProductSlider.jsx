@@ -60,8 +60,8 @@ export function ProductSlider() {
           tags: match.tags || item.tags,
         };
       }
-      return item;
-    });
+      return null;
+    }).filter(Boolean);
   }, [allFlagships]);
 
   return (

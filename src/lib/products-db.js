@@ -43,8 +43,14 @@ export const getStorefrontProducts = unstable_cache(
       const rows = await res.json();
       if (!Array.isArray(rows)) return null;
 
+      // Filter out hidden products so they NEVER enter the storefront
+      const visibleRows = rows.filter((p) => {
+        const vis = String(p.visibility || "").trim().toLowerCase();
+        return vis !== "hidden" && p.visibility !== false && p.is_visible !== false;
+      });
+
       // Normalize fields for storefront compatibility
-      return rows.map((p) => ({
+      return visibleRows.map((p) => ({
         ...p,
         installation_manual: p.installation_manual || null,
         installation_video: p.installation_video || null,
@@ -60,7 +66,7 @@ export const getStorefrontProducts = unstable_cache(
       return null;
     }
   },
-  ["storefront-products-catalog-v2"],
+  ["storefront-products-catalog-v3"],
   { tags: ["products"], revalidate: 3600 }
 );
 

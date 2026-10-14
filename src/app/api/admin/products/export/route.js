@@ -70,7 +70,13 @@ export async function GET(request) {
 
     // Apply filters if provided and not "all"
     if (category && category !== "all") {
-      products = products.filter((p) => p.parent_category === category);
+      products = products.filter((p) =>
+        category === "beds"
+          ? p.parent_category === "beds" ||
+            p.parent_category === "morphy-beds" ||
+            p.parent_category === "traditional-beds"
+          : p.parent_category === category
+      );
     }
     if (orientation && orientation !== "all") {
       products = products.filter((p) => p.orientation === orientation);

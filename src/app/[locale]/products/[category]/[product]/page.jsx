@@ -363,7 +363,7 @@ export default function ProductDetailPage() {
     const s = (style || "").toLowerCase();
     const o = (orientation || "Vertical").toLowerCase();
 
-    if (cat === "beds") {
+    if (cat === "beds" || cat === "morphy-beds" || cat === "traditional-beds") {
       const isMorphy = Boolean(
         activeProduct?.isMorphy ??
         ((activeProduct?.name || "").includes("MORPHY") ||
@@ -410,13 +410,28 @@ export default function ProductDetailPage() {
     if (!variants || !variants.length || !query) return null;
     const clean = query.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    // 1. Exact sizeSlug match (e.g. "135x190")
+    // 1. Exact sizeSlug match (e.g. "135x190", "50x52-door")
     const matchSlug = variants.find(
-      (v) => (v.sizeSlug || "").replace(/[^a-z0-9]/g, "") === clean,
+      (v) => (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
     );
     if (matchSlug) return matchSlug;
 
-    // 2. Dimensions match (e.g. 135x190 or 1350x1900)
+    // 2. Exact slug match
+    const matchFullSlug = variants.find(
+      (v) => (v.slug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
+    );
+    if (matchFullSlug) return matchFullSlug;
+
+    // 3. Name or size category match (e.g. "door", "shelves", "double", "king", "single")
+    const matchName = variants.find((v) => {
+      const s = (v.size || v.sizeLabel || v.name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+      return s.includes(clean) || clean.includes(s);
+    });
+    if (matchName) return matchName;
+
+    // 4. Dimensions match (e.g. 135x190 or 1350x1900)
     const matchDim = variants.find((v) => {
       const w = Math.min(v.width || 0, v.length || 0);
       const l = Math.max(v.width || 0, v.length || 0);
@@ -425,15 +440,6 @@ export default function ProductDetailPage() {
       return clean.includes(dimCm) || clean.includes(dimMm);
     });
     if (matchDim) return matchDim;
-
-    // 3. Name or size category match (e.g. "double", "king", "single")
-    const matchName = variants.find((v) => {
-      const s = (v.size || v.sizeLabel || v.name || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-      return s.includes(clean) || clean.includes(s);
-    });
-    if (matchName) return matchName;
 
     return null;
   }, []);
@@ -455,16 +461,21 @@ export default function ProductDetailPage() {
   }, [catalogGetVariants, activeProduct]);
 
   // Derived options for dropdowns based on actual products in the family
+  const isBedProduct =
+    activeProduct.parent_category === "beds" ||
+    activeProduct.parent_category === "morphy-beds" ||
+    activeProduct.parent_category === "traditional-beds";
+
   const availableFormats = useMemo(() => {
-    if (activeProduct.parent_category === "beds") {
+    if (isBedProduct) {
       return ["Vertical", "Horizontal"];
     }
     // Only beds require a separate Vertical / Horizontal format selector
     return [];
-  }, [activeProduct.parent_category]);
+  }, [isBedProduct]);
 
   const availableStyles = useMemo(() => {
-    if (activeProduct.parent_category === "beds") {
+    if (isBedProduct) {
       const isMorphy = Boolean(
         activeProduct?.isMorphy ??
         ((activeProduct?.name || "").includes("MORPHY") ||
@@ -484,7 +495,7 @@ export default function ProductDetailPage() {
       return ["Vertical", "Horizontal", "Side Units", "Extensions"];
     }
     return [];
-  }, [activeProduct.parent_category]);
+  }, [isBedProduct, activeProduct.parent_category, activeProduct?.isMorphy, activeProduct?.name, activeProduct?.title]);
 
   const availableSizes = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
@@ -509,6 +520,14 @@ export default function ProductDetailPage() {
     const list = variantsList.length > 0 ? variantsList : familyVariants;
 
     for (const v of list) {
+      if (
+        v.visibility === "Hidden" ||
+        v.visibility === "hidden" ||
+        v.visibility === false ||
+        v.is_visible === false
+      ) {
+        continue;
+      }
       const label = v.sizeLabel || v.size || v.name || "Standard";
       if (!seen.has(label)) {
         seen.add(label);
@@ -525,8 +544,15 @@ export default function ProductDetailPage() {
     if (!familyVariants || familyVariants.length === 0) {
       return activeProduct?.color ? [activeProduct.color] : [];
     }
+    const visibleVariants = familyVariants.filter(
+      (v) =>
+        v.visibility !== "Hidden" &&
+        v.visibility !== "hidden" &&
+        v.visibility !== false &&
+        v.is_visible !== false
+    );
     const colors = Array.from(
-      new Set(familyVariants.map((v) => v.color).filter(Boolean)),
+      new Set(visibleVariants.map((v) => v.color).filter(Boolean)),
     );
     const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
     colors.sort((a, b) => {
@@ -559,11 +585,21 @@ export default function ProductDetailPage() {
       const colorQuery = searchParams?.get("color");
 
       if (colorQuery && sizeQuery) {
+        const cleanSize = sizeQuery.toLowerCase().replace(/[^a-z0-9]/g, "");
         targetVariant = familyVariants.find(
           (v) =>
             v.color?.toLowerCase() === colorQuery.toLowerCase() &&
-            (v.sizeSlug === sizeQuery || v.slug === sizeQuery || v.sizeLabel === sizeQuery)
+            (v.sizeSlug === sizeQuery ||
+              v.slug === sizeQuery ||
+              v.sizeLabel === sizeQuery ||
+              (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === cleanSize)
         );
+        if (!targetVariant) {
+          const colorVariants = familyVariants.filter(
+            (v) => v.color?.toLowerCase() === colorQuery.toLowerCase()
+          );
+          targetVariant = findMatchingVariant(colorVariants, sizeQuery);
+        }
       }
       if (!targetVariant && sizeQuery) {
         targetVariant = findMatchingVariant(familyVariants, sizeQuery);
@@ -1445,6 +1481,33 @@ export default function ProductDetailPage() {
     return (
       <div className="bg-wbk-white min-h-screen pt-16 flex items-center justify-center">
         <div className="h-10 w-10 border-4 border-wbk-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const isHiddenProduct = Boolean(
+    activeProduct &&
+      (activeProduct.visibility === "Hidden" ||
+        activeProduct.visibility === "hidden" ||
+        activeProduct.visibility === false ||
+        activeProduct.is_visible === false)
+  );
+
+  if (isHiddenProduct) {
+    return (
+      <div className="bg-wbk-white min-h-[60vh] flex flex-col items-center justify-center px-4 py-20 text-center space-y-4">
+        <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
+          {t("categories.noProductsFound", "Product Unavailable")}
+        </h1>
+        <p className="text-sm font-poppins text-wbk-brown max-w-md">
+          {t("product.unavailableDesc", "This product is currently not available for purchase.")}
+        </p>
+        <Link
+          href={localizedHref ? localizedHref("/products") : "/products"}
+          className="inline-block mt-4 px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full hover:bg-wbk-green hover:text-wbk-black transition-colors"
+        >
+          {t("categories.allProducts", "View all products")}
+        </Link>
       </div>
     );
   }
@@ -2835,7 +2898,9 @@ export default function ProductDetailPage() {
                       )}
 
                       {/* Bed-Specific: Mechanism */}
-                      {displayProduct.parent_category === "beds" && (
+                      {(displayProduct.parent_category === "beds" ||
+                        displayProduct.parent_category === "morphy-beds" ||
+                        displayProduct.parent_category === "traditional-beds") && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
                             {t("product.mechanism", "Mechanism")}
@@ -2945,7 +3010,9 @@ export default function ProductDetailPage() {
                       )}
 
                       {/* Bed Frame Specifications (only for beds) */}
-                      {displayProduct.parent_category === "beds" && (
+                      {(displayProduct.parent_category === "beds" ||
+                        displayProduct.parent_category === "morphy-beds" ||
+                        displayProduct.parent_category === "traditional-beds") && (
                         <>
                           {displayProduct.frame_width && (
                             <tr className="border-b border-wbk-lightgrey/40">
@@ -3018,7 +3085,9 @@ export default function ProductDetailPage() {
                         </td>
                         <td className="py-2.5 text-right text-wbk-brown">
                           {displayProduct.warranty ||
-                            (displayProduct.parent_category === "beds"
+                            (displayProduct.parent_category === "beds" ||
+                            displayProduct.parent_category === "morphy-beds" ||
+                            displayProduct.parent_category === "traditional-beds"
                               ? t("product.lifetimeMechanism", "Lifetime mechanism warranty")
                               : "1 year for manufacturing defects")}
                         </td>
@@ -3499,7 +3568,11 @@ export default function ProductDetailPage() {
 
       {/* ── MORPHY / BED FEATURE BLOCKS & VIDEO SECTION ── */}
       {(categorySlug === "beds" ||
+        categorySlug === "morphy-beds" ||
+        categorySlug === "traditional-beds" ||
         activeProduct?.parent_category === "beds" ||
+        activeProduct?.parent_category === "morphy-beds" ||
+        activeProduct?.parent_category === "traditional-beds" ||
         has3D) && (
         <section className="relative z-20 bg-white py-20 border-t border-wbk-lightgrey/40">
           <Container size="xl" className="space-y-20">

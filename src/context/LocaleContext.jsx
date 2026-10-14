@@ -75,6 +75,15 @@ export function LocaleProvider({ children, initialLocale = DEFAULT_LOCALE }) {
   const switchLocale = useCallback(
     (targetLocale) => {
       const normTarget = normalizeLocale(targetLocale);
+
+      // Temporary redirect for UK locale to the live UK storefront (wallbedking.co.uk)
+      if (normTarget === "en") {
+        if (typeof window !== "undefined") {
+          window.location.href = "https://wallbedking.co.uk";
+        }
+        return;
+      }
+
       if (normTarget === currentLocale) return;
 
       // Set cookie for persistence (1 year)

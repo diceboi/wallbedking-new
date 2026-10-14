@@ -30,11 +30,18 @@ export function CategoryGrid() {
 
   return (
     <section className="w-full bg-wbk-white">
-      <div className="grid grid-cols-6 gap-1 w-full">
+      <div className="container m-auto grid grid-cols-6 gap-1 w-full">
         {featuredCategories.map((cat, idx) => {
-          const href = cat.href || (cat.slug?.startsWith("/") ? cat.slug : `/products/${cat.slug || cat.id}`);
-          const imageSrc = cat.grid_image || cat.image || `/category-images/${cat.id}.webp`;
-          const title = getLocalizedCategoryTitle(cat, locale) || t(`categories.${cat.key}`, cat.title || cat.name);
+          const href =
+            cat.href ||
+            (cat.slug?.startsWith("/")
+              ? cat.slug
+              : `/products/${cat.slug || cat.id}`);
+          const imageSrc =
+            cat.grid_image || cat.image || `/category-images/${cat.id}.webp`;
+          const title =
+            getLocalizedCategoryTitle(cat, locale) ||
+            t(`categories.${cat.key}`, cat.title || cat.name);
           const borderClass = getGridBorderClass(idx, total);
 
           return (
