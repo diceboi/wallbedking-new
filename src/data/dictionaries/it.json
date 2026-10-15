@@ -616,5 +616,27 @@
     "placeOrderViaBank": "Conferma l'ordine con bonifico",
     "processingOrder": "Elaborazione dell'ordine in corso...",
     "bankTransferInstructions": "Clicca sul pulsante sottostante per confermare la prenotazione del tuo ordine. Riceverai immediatamente via e-mail le nostre coordinate bancarie ufficiali e il codice di riferimento."
+  },
+  "auth": {
+    "recoveryBadge": "Reimpostazione password",
+    "recoveryTitle": "Imposta nuova password",
+    "recoverySubtitle": "Sei arrivato tramite un link verificato. Inserisci la tua nuova password qui sotto per proteggere il tuo account WallBedKing.",
+    "newPassword": "Nuova password",
+    "confirmNewPassword": "Conferma nuova password",
+    "passwordMinLength": "Almeno 6 caratteri",
+    "passwordsMatch": "Le password coincidono",
+    "passwordsMismatch": "Le password non coincidono",
+    "updatePasswordBtn": "Aggiorna password e continua",
+    "updatingPassword": "Aggiornamento in corso...",
+    "passwordUpdatedTitle": "Password aggiornata!",
+    "passwordUpdatedMsg": "La tua nuova password è ora attiva e il tuo account è protetto. Hai effettuato l'accesso.",
+    "statusUpdated": "Aggiornamento di sicurezza completato",
+    "continueToStore": "Continua su WallBedKing",
+    "expiredBadge": "Link scaduto o non valido",
+    "linkExpiredTitle": "Link scaduto",
+    "linkExpiredMsg": "Questo link di reimpostazione della password non è valido o è scaduto. Inserisci la tua email qui sotto per riceverne uno nuovo.",
+    "requestNewLink": "Invia nuovo link",
+    "newLinkSent": "Nuovo link inviato",
+    "emailLabel": "Indirizzo e-mail"
   }
 }

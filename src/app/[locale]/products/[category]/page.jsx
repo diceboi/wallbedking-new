@@ -492,7 +492,8 @@ export default function CategoryArchivePage() {
       const catKey = cat.id || cat.slug;
       const productsMap = allProducts || ALL_PRODUCTS;
       const catProds = productsMap[catKey];
-      if (locale && Array.isArray(catProds) && catProds.length > 0) {
+      if (locale && Array.isArray(catProds)) {
+        if (catProds.length === 0) return false;
         const hasAvailable = catProds.some((p) => isProductAvailableInLocale(p, locale));
         if (!hasAvailable) return false;
       }

@@ -24,6 +24,7 @@ import {
   IconTrash,
   IconClock,
   IconExternalLink,
+  IconKey,
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -38,6 +39,8 @@ export function UserDrawer() {
     closeUserDrawer,
     drawerTab,
     setDrawerTab,
+    isPasswordRecovery,
+    setIsPasswordRecovery,
     signInWithPassword,
     signUpWithPassword,
     signOut,
@@ -459,6 +462,28 @@ export function UserDrawer() {
                 ) : (
                 /* ── Main View: Authenticated User ── */
                 <div className="space-y-6">
+                  {/* Password Recovery Banner if recovery session active */}
+                  {isPasswordRecovery && (
+                    <div className="p-3.5 bg-wbk-gold/15 border border-wbk-gold/40 text-wbk-black flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <IconKey size={18} className="text-wbk-gold shrink-0" />
+                        <div className="text-[11px] leading-tight font-medium">
+                          Password recovery session active.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeUserDrawer();
+                          setIsPasswordRecovery(true);
+                        }}
+                        className="px-3 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full transition-colors shrink-0 cursor-pointer"
+                      >
+                        Set Password
+                      </button>
+                    </div>
+                  )}
+
                   {/* User Profile Card */}
                   <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/80 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-wbk-black text-wbk-white font-new-york text-lg flex items-center justify-center shrink-0 shadow-xs">

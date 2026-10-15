@@ -15,6 +15,7 @@ import {
   IconRefresh,
   IconStar,
   IconHeartHandshake,
+  IconKey,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -93,6 +94,17 @@ const EMAIL_TEMPLATES = [
     trigger: "Triggered when a customer submits a new product review with star rating & optional photos.",
     recipient: "support@wallbedking.com (Links to /admin/reviews for 1-click approval)",
     subject: "⭐ NEW REVIEW SUBMITTED: Marcus Vance (5 Stars)",
+    supportsLocale: false,
+  },
+  {
+    id: "password_reset",
+    title: "Password Reset (Supabase)",
+    audience: "Customer",
+    audienceColor: "bg-blue-50 text-blue-800 border-blue-200",
+    icon: IconKey,
+    trigger: "Triggered from User Drawer / Account page or Supabase Auth when requesting a password reset.",
+    recipient: "Customer's registered email address",
+    subject: "Reset Your Password - Wall Bed King",
     supportsLocale: false,
   },
 ];

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
+import { PasswordResetModal } from "@/components/auth/PasswordResetModal";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { getStorefrontProducts } from "@/lib/products-db";
 import { getStorefrontCategories } from "@/lib/categories-db";
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }) {
                     <Footer />
                     <CartDrawer />
                     <UserDrawer />
+                    <PasswordResetModal />
                     <CookieConsent />
                   </MenuContextProvider>
                 </CartProvider>

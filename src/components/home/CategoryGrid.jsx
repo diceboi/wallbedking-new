@@ -38,7 +38,8 @@ export function CategoryGrid() {
       const catKey = cat.id || cat.slug;
       if (allProducts && allProducts[catKey] && locale) {
         const catProds = allProducts[catKey];
-        if (Array.isArray(catProds) && catProds.length > 0) {
+        if (Array.isArray(catProds)) {
+          if (catProds.length === 0) return false;
           const hasAvailable = catProds.some((p) => isProductAvailableInLocale(p, locale));
           if (!hasAvailable) return false;
         }

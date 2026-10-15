@@ -226,9 +226,21 @@ export async function PATCH(request) {
     if (trackingCarrier !== undefined) updates.tracking_carrier = trackingCarrier;
     if (adminNotes !== undefined) updates.admin_notes = adminNotes;
 
+    // Determine payment confirmation intention
+    const isNowPaidFirstTime =
+      (status === "paid" || paymentStatus === "paid") &&
+      currentOrder.payment_status !== "paid";
+
+    if (isNowPaidFirstTime) {
+      updates.payment_status = "paid";
+      if (status === "paid" || (status === undefined && currentOrder.status === "pending")) {
+        updates.status = "processing"; // Advance order to In Production when payment arrives
+      }
+    }
+
     // Determine notification intentions
     // 1. In Production (processing)
-    const isNowProcessingFirstTime = status === "processing" && currentOrder.status !== "processing" && !wasProcessingSent;
+    const isNowProcessingFirstTime = status === "processing" && currentOrder.status !== "processing" && !wasProcessingSent && !isNowPaidFirstTime;
     const isProcessingUpdate = (status === "processing" || (status === undefined && currentOrder.status === "processing")) && wasProcessingSent && Boolean(sendUpdateEmail);
     const willSendProcessing = isNowProcessingFirstTime || isProcessingUpdate;
 
@@ -251,6 +263,10 @@ export async function PATCH(request) {
     }
 
     // Record notification timestamps
+    if (isNowPaidFirstTime) {
+      notificationsSent.paid = nowIso;
+      notificationsSent.confirmation = nowIso;
+    }
     if (willSendProcessing) notificationsSent.processing = nowIso;
     if (willSendShipped) notificationsSent.shipped = nowIso;
     if (willSendCompleted) notificationsSent.completed = nowIso;
@@ -277,7 +293,19 @@ export async function PATCH(request) {
     let notificationType = null;
     let wasUpdatedFlag = false;
 
-    if (willSendProcessing) {
+    if (isNowPaidFirstTime) {
+      try {
+        emailResult = await sendOrderConfirmationEmail(
+          { ...updatedOrder, payment_status: "paid" },
+          null,
+          false
+        );
+        notificationType = "paid";
+        console.log(`[Payment Confirmed Email] Sent to ${updatedOrder.customer_email}:`, emailResult);
+      } catch (mailErr) {
+        console.error("[Payment Confirmed Email Error]", mailErr);
+      }
+    } else if (willSendProcessing) {
       const isUpdate = !isNowProcessingFirstTime;
       wasUpdatedFlag = isUpdate;
       try {
@@ -313,7 +341,9 @@ export async function PATCH(request) {
     }
 
     let feedbackMessage = "Order updated successfully";
-    if (notificationType === "production") {
+    if (notificationType === "paid") {
+      feedbackMessage = "Payment marked as paid and confirmation email sent to customer!";
+    } else if (notificationType === "production") {
       feedbackMessage = wasUpdatedFlag
         ? "Order updated and [UPDATED] Production email sent to customer!"
         : "Order marked as In Production and customer notified by email!";

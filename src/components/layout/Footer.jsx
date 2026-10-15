@@ -67,7 +67,8 @@ export function Footer() {
                   .filter((link) => {
                     if (!link.id || !allProducts || !allProducts[link.id] || !locale) return true;
                     const catProds = allProducts[link.id];
-                    if (Array.isArray(catProds) && catProds.length > 0) {
+                    if (Array.isArray(catProds)) {
+                      if (catProds.length === 0) return false;
                       return catProds.some((p) => isProductAvailableInLocale(p, locale));
                     }
                     return true;

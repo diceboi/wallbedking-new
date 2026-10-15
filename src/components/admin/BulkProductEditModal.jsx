@@ -161,6 +161,14 @@ export function BulkProductEditModal({
     setEnabledFields((prev) => ({ ...prev, tags: true }));
   };
 
+  const handleLocaleActionMode = (mode) => {
+    setLocaleAction(mode);
+    setEnabledFields((prev) => ({ ...prev, locales: true }));
+    if (mode === "remove" && selectedLocales.length === 7) {
+      setSelectedLocales([]);
+    }
+  };
+
   const toggleLocaleSelection = (code) => {
     setSelectedLocales((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
@@ -692,7 +700,7 @@ export function BulkProductEditModal({
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                       <button
                         type="button"
-                        onClick={() => setLocaleAction("replace")}
+                        onClick={() => handleLocaleActionMode("replace")}
                         className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
                           localeAction === "replace"
                             ? "border-wbk-black bg-[#090A0A] text-white font-medium"
@@ -707,7 +715,7 @@ export function BulkProductEditModal({
 
                       <button
                         type="button"
-                        onClick={() => setLocaleAction("add")}
+                        onClick={() => handleLocaleActionMode("add")}
                         className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
                           localeAction === "add"
                             ? "border-wbk-black bg-[#090A0A] text-white font-medium"
@@ -722,7 +730,7 @@ export function BulkProductEditModal({
 
                       <button
                         type="button"
-                        onClick={() => setLocaleAction("remove")}
+                        onClick={() => handleLocaleActionMode("remove")}
                         className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
                           localeAction === "remove"
                             ? "border-wbk-black bg-[#090A0A] text-white font-medium"
@@ -738,7 +746,7 @@ export function BulkProductEditModal({
                       <button
                         type="button"
                         onClick={() => {
-                          setLocaleAction("all");
+                          handleLocaleActionMode("all");
                           selectAllLocales();
                         }}
                         className={`p-2.5 text-xs text-left border transition-all cursor-pointer ${
@@ -760,7 +768,9 @@ export function BulkProductEditModal({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-semibold uppercase text-wbk-black">
-                          Select Target Countries ({selectedLocales.length} of 7 selected):
+                          {localeAction === "remove"
+                            ? `Select Markets to Remove (${selectedLocales.length} selected):`
+                            : `Select Target Countries (${selectedLocales.length} of 7 selected):`}
                         </label>
                         <div className="flex items-center gap-2">
                           <button
@@ -789,7 +799,9 @@ export function BulkProductEditModal({
                               key={loc.code}
                               className={`flex items-center justify-between p-3 border cursor-pointer select-none transition-all ${
                                 isSelected
-                                  ? "bg-amber-50/40 border-wbk-black shadow-2xs font-medium"
+                                  ? localeAction === "remove"
+                                    ? "bg-red-50 border-red-400 font-medium text-red-900"
+                                    : "bg-amber-50/40 border-wbk-black shadow-2xs font-medium"
                                   : "bg-white border-wbk-lightgrey/80 opacity-60 hover:opacity-100 hover:border-wbk-black"
                               }`}
                             >
@@ -812,11 +824,46 @@ export function BulkProductEditModal({
                                 </div>
                               </div>
                               {isSelected && (
-                                <IconCheck size={14} className="text-wbk-gold" />
+                                <IconCheck size={14} className={localeAction === "remove" ? "text-red-600" : "text-wbk-gold"} />
                               )}
                             </label>
                           );
                         })}
+                      </div>
+
+                      {/* Live Operation Summary Banner */}
+                      <div className="mt-3 p-2.5 bg-neutral-100 border border-neutral-300 text-[11px] text-neutral-800 flex items-center justify-between">
+                        <div>
+                          <strong>Outcome Preview:</strong>{" "}
+                          {localeAction === "replace" && (
+                            selectedLocales.length > 0 ? (
+                              <span>
+                                Visible in: {TARGET_LOCALES.filter((l) => selectedLocales.includes(l.code)).map((l) => `${l.flag} ${l.label}`).join(", ")}
+                                {TARGET_LOCALES.some((l) => !selectedLocales.includes(l.code)) && (
+                                  <span className="text-neutral-500 ml-1">
+                                    (Hidden in: {TARGET_LOCALES.filter((l) => !selectedLocales.includes(l.code)).map((l) => `${l.flag} ${l.label}`).join(", ")})
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="text-red-600 font-semibold">Hidden from ALL markets</span>
+                            )
+                          )}
+                          {localeAction === "remove" && (
+                            selectedLocales.length > 0 ? (
+                              <span className="text-red-700 font-semibold">
+                                Will hide from: {TARGET_LOCALES.filter((l) => selectedLocales.includes(l.code)).map((l) => `${l.flag} ${l.label}`).join(", ")}
+                              </span>
+                            ) : (
+                              <span>No markets selected to remove.</span>
+                            )
+                          )}
+                          {localeAction === "add" && (
+                            <span>
+                              Will add: {TARGET_LOCALES.filter((l) => selectedLocales.includes(l.code)).map((l) => `${l.flag} ${l.label}`).join(", ")}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}

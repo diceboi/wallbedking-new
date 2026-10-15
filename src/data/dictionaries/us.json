@@ -617,7 +617,28 @@
     "bankWireTransfer": "Bank Wire Transfer",
     "manualWirePayment": "Manual Wire Payment",
     "placeOrderViaBank": "Place Order via Bank Transfer",
-    "processingOrder": "Processing Order...",
     "bankTransferInstructions": "Click the button below to complete your order reservation. You will immediately receive our official bank transfer details and your unique order reference code by email."
+  },
+  "auth": {
+    "recoveryBadge": "Password Recovery",
+    "recoveryTitle": "Set New Password",
+    "recoverySubtitle": "You arrived via a verified password reset link. Please enter your new password below to secure your WallBedKing account.",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordMinLength": "Min. 6 characters",
+    "passwordsMatch": "Passwords match",
+    "passwordsMismatch": "Passwords do not match",
+    "updatePasswordBtn": "Update Password & Continue",
+    "updatingPassword": "Updating Password...",
+    "passwordUpdatedTitle": "Password Updated!",
+    "passwordUpdatedMsg": "Your new password is now active and your account is secure. You are currently signed in.",
+    "statusUpdated": "Security Update Completed",
+    "continueToStore": "Continue to WallBedKing",
+    "expiredBadge": "Link Expired or Invalid",
+    "linkExpiredTitle": "Reset Link Expired",
+    "linkExpiredMsg": "This password reset link is invalid or has expired. Please enter your email below to receive a new link.",
+    "requestNewLink": "Send New Reset Link",
+    "newLinkSent": "New Reset Link Dispatched",
+    "emailLabel": "Email Address"
   }
 }

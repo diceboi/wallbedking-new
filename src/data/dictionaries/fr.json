@@ -616,5 +616,27 @@
     "placeOrderViaBank": "Confirmer la commande par virement",
     "processingOrder": "Traitement de votre commande...",
     "bankTransferInstructions": "Cliquez sur le bouton ci-dessous pour valider votre commande. Vous recevrez immédiatement nos coordonnées bancaires officielles et votre référence unique de commande par e-mail."
+  },
+  "auth": {
+    "recoveryBadge": "Récupération du mot de passe",
+    "recoveryTitle": "Définir un nouveau mot de passe",
+    "recoverySubtitle": "Vous êtes arrivé via un lien de réinitialisation vérifié. Veuillez saisir votre nouveau mot de passe ci-dessous pour sécuriser votre compte WallBedKing.",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le mot de passe",
+    "passwordMinLength": "Au moins 6 caractères",
+    "passwordsMatch": "Les mots de passe correspondent",
+    "passwordsMismatch": "Les mots de passe ne correspondent pas",
+    "updatePasswordBtn": "Mettre à jour le mot de passe",
+    "updatingPassword": "Mise à jour en cours...",
+    "passwordUpdatedTitle": "Mot de passe mis à jour !",
+    "passwordUpdatedMsg": "Votre mot de passe a été mis à jour avec succès. Votre compte est sécurisé et vous êtes connecté.",
+    "statusUpdated": "Mise à jour de sécurité effectuée",
+    "continueToStore": "Continuer sur WallBedKing",
+    "expiredBadge": "Lien expiré ou invalide",
+    "linkExpiredTitle": "Lien expiré",
+    "linkExpiredMsg": "Ce lien de réinitialisation de mot de passe est invalide ou a expiré. Veuillez saisir votre adresse e-mail ci-dessous pour recevoir un nouveau lien.",
+    "requestNewLink": "Demander un nouveau lien",
+    "newLinkSent": "Nouveau lien envoyé",
+    "emailLabel": "Adresse e-mail"
   }
 }

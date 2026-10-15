@@ -6,6 +6,7 @@ import {
   getContactFormHtml,
   getReviewRequestHtml,
   getAdminNewReviewAlertHtml,
+  getPasswordResetHtml,
   SAMPLE_ORDER,
   SAMPLE_SHIPPING,
   SAMPLE_CONTACT,
@@ -50,6 +51,9 @@ export async function GET(request) {
         break;
       case "review_alert":
         html = getAdminNewReviewAlertHtml(SAMPLE_REVIEW);
+        break;
+      case "password_reset":
+        html = getPasswordResetHtml();
         break;
       case "order_confirmation":
       default:
@@ -130,6 +134,10 @@ export async function POST(request) {
       case "review_alert":
         subject = `[TEST] ⭐ NEW REVIEW SUBMITTED: ${SAMPLE_REVIEW.author_name} (${SAMPLE_REVIEW.rating} Stars)`;
         html = getAdminNewReviewAlertHtml(SAMPLE_REVIEW);
+        break;
+      case "password_reset":
+        subject = `[TEST] 🔒 Reset Your Password - Wall Bed King`;
+        html = getPasswordResetHtml({ email: recipientEmail });
         break;
       case "order_confirmation":
       default: {

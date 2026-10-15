@@ -6,7 +6,10 @@
  * Set RESEND_API_KEY in .env.local to activate automated outbound emails.
  */
 
+import { BANK_DETAILS, getBankI18n } from "./bank-details";
+
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "delivery@wallbedking.co.uk";
 export const STORE_PHONE = "01928 583 469";
 export const STORE_HOURS = "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00";
 
@@ -342,6 +345,11 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
   const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
   const storePhone = getStorePhone(loc);
 
+  const isBankTransfer = (order.payment_method || "").toLowerCase().includes("bank");
+  const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+  const bankI18n = getBankI18n(loc);
+  const isUk = loc === "en" || (order.shipping_address?.country || "").toLowerCase().includes("kingdom");
+
   const itemsList = (order.items || [])
     .map(
       (item) => `
@@ -361,7 +369,21 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     )
     .join("");
 
-  const introText = t.intro.replace("{id}", order.id);
+  let introText = t.intro.replace("{id}", order.id);
+  if (isBankTransfer && !isPaid) {
+    introText = bankI18n.instructionIntro;
+  } else if (isBankTransfer && isPaid) {
+    const paidIntros = {
+      en: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order #${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
+      us: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order #${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
+      de: `Wir haben Ihre Überweisung in Höhe von ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} für die Bestellung #${order.id} erhalten und verbucht. Vielen Dank! Ihre Bestellung ist bestätigt und wird nun für die Fertigung vorbereitet.`,
+      fr: `Nous avons bien reçu et validé votre virement bancaire de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} pour la commande #${order.id}. Merci ! Votre commande est confirmée et entre en production.`,
+      it: `Abbiamo ricevuto e verificato il pagamento tramite bonifico di ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} per l'ordine #${order.id}. Grazie! Il suo ordine è confermato ed entra in produzione.`,
+      es: `Hemos recibido y confirmado tu transferencia bancaria de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para el pedido #${order.id}. ¡Gracias! Tu pedido está confirmado y entra en producción.`,
+      por: `Recebemos e confirmámos a sua transferência bancária de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para a encomenda #${order.id}. Obrigado! A sua encomenda está confirmada e entra em produção.`,
+    };
+    introText = paidIntros[loc] || paidIntros.en;
+  }
 
   const updateBannerHtml = isUpdate ? `
     <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
@@ -374,12 +396,70 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     </div>
   ` : "";
 
+  const badgeHtml = isBankTransfer && !isPaid
+    ? `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">⏳ ${bankI18n.statusBadge}</span>`
+    : `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">✓ ${t.badge}</span>`;
+
+  const bankDetailsBoxHtml = isBankTransfer && !isPaid ? `
+    <div style="background: #faf8f5; border: 1px solid #d4b26f; border-left: 5px solid #b4832c; padding: 20px 22px; border-radius: 6px; margin: 24px 0;">
+      <h3 style="margin: 0 0 14px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111;">
+        🏦 ${bankI18n.methodLabel} — Banking Coordinates
+      </h3>
+      <table style="width: 100%; font-size: 13px; line-height: 1.6; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0; color: #666; width: 45%;"><strong>${bankI18n.accountHolderLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${BANK_DETAILS.accountName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.bankNameLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${BANK_DETAILS.bankName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.ibanLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.ibanFormatted}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.bicLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 13px; font-weight: 700; color: #111;">${BANK_DETAILS.bic}</td>
+        </tr>
+        ${isUk ? `
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.sortCodeLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.sortCode}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.accountNumberLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.accountNumber}</td>
+        </tr>
+        ` : ""}
+        <tr style="border-top: 1px dashed #d4b26f;">
+          <td style="padding: 10px 0 4px; color: #666;"><strong>${bankI18n.amountToTransferLabel}:</strong></td>
+          <td style="padding: 10px 0 4px; text-align: right; font-size: 18px; font-weight: 800; color: #047857;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td>
+        </tr>
+      </table>
+
+      <div style="margin-top: 16px; padding: 14px; background: #ffffff; border: 1px solid #ecd8ab; border-radius: 4px;">
+        <div style="font-size: 11px; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
+          ⚠️ ${bankI18n.referenceFieldName} (CRITICAL)
+        </div>
+        <div style="font-size: 15px; font-family: monospace; font-weight: 700; color: #111; margin-bottom: 6px;">
+          #${order.id}
+        </div>
+        <p style="margin: 0; font-size: 12px; color: #78350f; line-height: 1.5;">
+          ${bankI18n.referenceNotice.replace("{orderId}", order.id).replace("{email}", order.customer_email || "")}
+        </p>
+      </div>
+    </div>
+  ` : "";
+
+  const totalLabel = isBankTransfer && !isPaid ? bankI18n.amountToTransferLabel : t.totalPaid;
+
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${t.title} - #${order.id}</title>
+        <title>${isBankTransfer && !isPaid ? bankI18n.thankYouTitle : t.title} - #${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -387,7 +467,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
           .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; }
           .header p { margin: 8px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
           .content { padding: 32px 28px; }
-          .badge { display: inline-block; background: #f3ede2; color: #8c6a28; padding: 4px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; margin-bottom: 16px; }
+          .badge { display: inline-block; padding: 5px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; margin-bottom: 16px; }
           .order-box { background: #faf9f7; border: 1px solid #eeeae3; padding: 18px 20px; border-radius: 6px; margin: 22px 0; }
           .table { width: 100%; border-collapse: collapse; margin-top: 18px; }
           .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 24px 28px; text-align: center; font-size: 12px; color: #777777; line-height: 1.6; }
@@ -397,16 +477,18 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
         <div class="container">
           <div class="header">
             <h1>Wall Bed King</h1>
-            <p>${t.title}</p>
+            <p>${isBankTransfer && !isPaid ? bankI18n.thankYouTitle : t.title}</p>
           </div>
           <div class="content">
             ${updateBannerHtml}
-            <span class="badge">${t.badge}</span>
-            <h2 style="font-size: 20px; color: #111; margin-top: 0; font-weight: 600;">${t.thankYou}, ${order.customer_name || "Customer"}!</h2>
+            ${badgeHtml}
+            <h2 style="font-size: 20px; color: #111; margin-top: 0; font-weight: 600;">${isBankTransfer && !isPaid ? bankI18n.thankYouSubtitle : t.thankYou}, ${order.customer_name || "Customer"}!</h2>
             <p style="font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px;">
               ${introText}
             </p>
             
+            ${bankDetailsBoxHtml}
+
             <div class="order-box">
               <table style="width:100%; font-size: 13px; border-collapse: collapse;">
                 <tr>
@@ -423,7 +505,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.paymentMethod}</strong></td>
-                  <td style="padding: 4px 0; text-align: right; color: #111;">${order.payment_method || "Online Card"}</td>
+                  <td style="padding: 4px 0; text-align: right; color: #111;">${isBankTransfer ? bankI18n.methodLabel : (order.payment_method || "Online Card")}</td>
                 </tr>
               </table>
             </div>
@@ -443,13 +525,13 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
             </table>
 
             <div style="text-align: right; margin-top: 20px; font-size: 14px; border-top: 2px solid #111; padding-top: 16px;">
-              <span style="color: #666; margin-right: 12px;">${t.totalPaid}</span>
+              <span style="color: #666; margin-right: 12px;">${totalLabel}</span>
               <strong style="font-size: 20px; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
             </div>
 
             <div style="margin-top: 32px; padding: 16px; background: #fafafa; border-radius: 6px; border-left: 3px solid #d4b26f;">
               <p style="margin: 0; font-size: 12px; color: #444; line-height: 1.5;">
-                <strong>${t.whatNextTitle}</strong> ${t.whatNextDesc}
+                <strong>${isBankTransfer && !isPaid ? bankI18n.whatHappensNext : t.whatNextTitle}</strong> ${isBankTransfer && !isPaid ? bankI18n.whatHappensNextText : t.whatNextDesc}
               </p>
             </div>
           </div>
@@ -466,6 +548,10 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
 export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const currencyCode = (order.currency || "GBP").toUpperCase();
   const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+  const isBank = (order.payment_method || "").toLowerCase().includes("bank");
+  const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
+  const adminOrderUrl = `${siteUrl}/admin/orders?search=${encodeURIComponent(order.id)}`;
 
   return `
     <!DOCTYPE html>
@@ -476,21 +562,46 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 24px;">
         <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 6px; border: 1px solid #e0e0e0; overflow: hidden;">
-          <div style="background: #e63946; color: #ffffff; padding: 18px 24px;">
-            <h2 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">🚨 New Order Received: #${order.id}</h2>
+          <div style="background: ${isBank && !isPaid ? "#b4832c" : "#111111"}; color: #ffffff; padding: 18px 24px;">
+            <h2 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">
+              ${isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: #${order.id}
+            </h2>
           </div>
           <div style="padding: 24px; color: #222; font-size: 14px; line-height: 1.6;">
-            <p style="margin-top: 0;">A new paid order was just placed on the Wall Bed King storefront:</p>
+            ${isBank && !isPaid ? `
+              <div style="padding: 14px 16px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 18px; border-radius: 4px;">
+                <strong style="color: #92400e; font-size: 13px; text-transform: uppercase; display: block; margin-bottom: 4px;">
+                  Awaiting Bank Transfer Payment
+                </strong>
+                <p style="margin: 0; font-size: 13px; color: #78350f;">
+                  The customer chose <strong>Bank Transfer</strong>. The banking coordinates were emailed to them. Once the funds arrive in the HSBC account with reference <strong>#${order.id}</strong> or <strong>${order.customer_email}</strong>, click the button below to mark the order as Paid and notify the customer.
+                </p>
+                <div style="margin-top: 12px;">
+                  <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 10px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">
+                    Open Order in Admin & Mark as Paid →
+                  </a>
+                </div>
+              </div>
+            ` : `
+              <p style="margin-top: 0;">A new paid order was just placed on the Wall Bed King storefront:</p>
+            `}
+
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #fbfbfb; border: 1px solid #eee; border-radius: 4px;">
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Order ID:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: bold;">#${order.id}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Total Paid:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 16px; font-weight: bold; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td></tr>
+              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Total Amount:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 16px; font-weight: bold; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td></tr>
+              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Status:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: bold; color: ${isPaid ? "#047857" : "#b45309"};">${isPaid ? "PAID" : "UNPAID / AWAITING TRANSFER"}</td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Name:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_name || "N/A"}</td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;"><a href="mailto:${order.customer_email}">${order.customer_email}</a></td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Phone:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_phone || "Not provided"}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Gateway:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.payment_method || "Online"}</td></tr>
+              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Method:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.payment_method || "Online"}</td></tr>
               <tr><td style="padding: 10px 14px; color: #666;"><strong>Delivery Area:</strong></td><td style="padding: 10px 14px;">${order.shipping_address?.city || ""}, ${order.shipping_address?.country || "UK"}</td></tr>
             </table>
-            <p style="font-size: 13px; color: #666;">Please log into the Admin Dashboard under <strong>Orders</strong> to manage fulfilment, generate dispatch labels, or assign tracking numbers.</p>
+
+            <div style="margin-top: 16px; text-align: center;">
+              <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 12px 24px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">
+                View Order in Admin Dashboard →
+              </a>
+            </div>
           </div>
         </div>
       </body>
@@ -942,14 +1053,23 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
     const htmlContent = getOrderConfirmationHtml(order, effectiveLocale, isUpdate);
     const i18n = CONFIRMATION_I18N[effectiveLocale.toLowerCase()] || CONFIRMATION_I18N.en;
     const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
-    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+    const isBank = (order.payment_method || "").toLowerCase().includes("bank");
+    const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+    const bankI18n = getBankI18n(effectiveLocale);
+
+    let emailSubject = `${subjectPrefix}${i18n.subjectPrefix} - #${order.id}`;
+    if (isBank && !isPaid && !isUpdate) {
+      emailSubject = `[Wall Bed King] ${bankI18n.thankYouTitle} - #${order.id}`;
+    } else if (isBank && isPaid) {
+      emailSubject = `✓ [Wall Bed King] ${i18n.badge} - #${order.id}`;
+    }
 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: ADMIN_EMAIL,
       reply_to: ADMIN_EMAIL,
-      subject: `${subjectPrefix}${i18n.subjectPrefix} - #${order.id}`,
+      subject: emailSubject,
       html: htmlContent,
     });
 
@@ -978,13 +1098,19 @@ export async function sendAdminOrderAlert(order) {
 
     const adminCurr = (order.currency || "GBP").toUpperCase();
     const adminSymbol = adminCurr === "EUR" ? "€" : adminCurr === "USD" ? "$" : "£";
+    const isBank = (order.payment_method || "").toLowerCase().includes("bank");
+    const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+
+    const subject = isBank && !isPaid
+      ? `🏦 BANK TRANSFER REQUEST: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`
+      : `🚨 NEW ORDER RECEIVED: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)})`;
 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [ADMIN_EMAIL],
       replyTo: order.customer_email,
       reply_to: order.customer_email,
-      subject: `🚨 NEW ORDER RECEIVED: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)})`,
+      subject,
       html: getAdminOrderAlertHtml(order),
     });
 
@@ -1824,5 +1950,86 @@ export async function sendDeliveryNotificationEmail(order, locale = null, isUpda
     console.error("[Delivery Email Error]", error);
     return { success: false, error: error.message };
   }
+}
+
+// ==========================================
+// PASSWORD RESET / SUPABASE AUTH TEMPLATES
+// ==========================================
+
+export const SUPABASE_PASSWORD_RESET_RAW_TEMPLATE = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password - Wall Bed King</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; -webkit-font-smoothing: antialiased; }
+      .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+      .header { background: #111111; color: #ffffff; padding: 32px 28px; text-align: center; }
+      .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #ffffff; }
+      .header p { margin: 8px 0 0; font-size: 11px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+      .content { padding: 36px 32px; }
+      .badge { display: inline-block; padding: 5px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; margin-bottom: 20px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+      .btn { display: inline-block; background: #111111; color: #ffffff !important; text-decoration: none; padding: 15px 34px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 50px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); margin: 24px 0; }
+      .alert-box { background: #faf9f7; border: 1px solid #eeeae3; border-left: 4px solid #b89c66; padding: 16px 18px; border-radius: 6px; margin: 24px 0; font-size: 13px; color: #555; line-height: 1.6; }
+      .fallback-box { background: #faf8f5; border: 1px dashed #d6d3cd; padding: 14px 16px; border-radius: 6px; font-size: 12px; color: #666; margin-top: 24px; word-break: break-all; line-height: 1.5; }
+      .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 24px 28px; text-align: center; font-size: 12px; color: #777777; line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Wall Bed King</h1>
+        <p>Security &amp; Account Access</p>
+      </div>
+      <div class="content">
+        <span class="badge">🔒 Password Reset Request</span>
+        <h2 style="font-size: 22px; color: #111111; margin-top: 0; font-weight: 600; letter-spacing: -0.5px;">
+          Reset Your Password
+        </h2>
+        <p style="font-size: 14px; color: #555555; line-height: 1.6; margin-bottom: 8px;">
+          Hello,
+        </p>
+        <p style="font-size: 14px; color: #555555; line-height: 1.6; margin-bottom: 20px;">
+          We received a request to reset the password for your Wall Bed King account: <strong style="color: #111111;">{{ .Email }}</strong>. Click the button below to choose a new password:
+        </p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{{ .ConfirmationURL }}" class="btn" style="color: #ffffff; background: #111111;">
+            Reset My Password &rarr;
+          </a>
+        </div>
+
+        <div class="alert-box">
+          <strong style="color: #111111; display: block; margin-bottom: 4px;">⚠️ Didn't request this change?</strong>
+          If you did not request a password reset, you can safely ignore this email. Your current password remains active and your account is secure.
+        </div>
+
+        <p style="font-size: 12px; color: #888888; line-height: 1.5; margin-top: 20px;">
+          <em>Note: This password reset link is time-sensitive and will expire in 60 minutes.</em>
+        </p>
+
+        <div class="fallback-box">
+          <strong style="color: #444444; display: block; margin-bottom: 6px;">Button not working?</strong>
+          Copy and paste the following link directly into your browser:
+          <br>
+          <a href="{{ .ConfirmationURL }}" style="color: #9f7d3d; text-decoration: underline; font-family: monospace; font-size: 11px;">{{ .ConfirmationURL }}</a>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p style="margin: 0 0 6px; font-weight: 600; color: #333333;">Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee</p>
+        <p style="margin: 0; color: #777777;">
+          Need assistance? Contact our team at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${STORE_PHONE}</strong> (${STORE_HOURS}).
+        </p>
+      </div>
+    </div>
+  </body>
+</html>`;
+
+export function getPasswordResetHtml({ email = "customer@example.com", confirmationUrl = "https://wallbedking.com/en/account?mode=recovery" } = {}) {
+  return SUPABASE_PASSWORD_RESET_RAW_TEMPLATE
+    .replace(/\{\{\s*\.Email\s*\}\}/g, email)
+    .replace(/\{\{\s*\.ConfirmationURL\s*\}\}/g, confirmationUrl);
 }
 

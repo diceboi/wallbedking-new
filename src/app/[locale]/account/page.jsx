@@ -380,8 +380,8 @@ export default function AccountPage() {
 
   const userInitial = (userDisplayName[0] || "U").toUpperCase();
 
-  // If in Password Recovery Mode (from email reset link)
-  if (isRecoveryMode && (!user || isPasswordRecovery || recoveryFromUrl)) {
+  // If in Password Recovery Mode without an active user session (guest/unauthenticated recovery link fallback)
+  if (isRecoveryMode && !user) {
     return (
       <div className="bg-wbk-white min-h-screen pt-32 pb-24 font-poppins">
         <Container size="sm">

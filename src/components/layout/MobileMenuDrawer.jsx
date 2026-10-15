@@ -73,7 +73,8 @@ export function MobileMenuDrawer() {
     return rawItems.filter((item) => {
       const catKey = item.slug || item.category_id || item.id;
       const catList = allProducts[catKey];
-      if (Array.isArray(catList) && catList.length > 0) {
+      if (Array.isArray(catList)) {
+        if (catList.length === 0) return false;
         return catList.some((p) => isProductAvailableInLocale(p, locale));
       }
       return true;

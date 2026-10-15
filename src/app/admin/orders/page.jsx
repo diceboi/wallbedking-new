@@ -18,6 +18,7 @@ import {
   IconLoader2,
   IconRefresh,
   IconMail,
+  IconBuildingBank,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -103,6 +104,7 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({
           orderId: selectedOrder.id,
           status: editStatus,
+          paymentStatus: editStatus === "paid" ? "paid" : undefined,
           trackingNumber: editTrackingNumber,
           trackingCarrier: editTrackingCarrier,
           adminNotes: editAdminNotes,
@@ -122,6 +124,47 @@ export default function AdminOrdersPage() {
     } catch (err) {
       console.error("Failed to update order:", err);
       alert("Error saving order changes");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (orderId) => {
+    const targetOrder = orderId ? orders.find((o) => o.id === orderId) : selectedOrder;
+    if (!targetOrder) return;
+
+    const curr = targetOrder.currency === "EUR" ? "€" : targetOrder.currency === "USD" ? "$" : "£";
+    if (
+      !window.confirm(
+        `Confirm bank transfer payment received for Order #${targetOrder.id}?\n\nCustomer: ${targetOrder.customer_name || "Valued Customer"} (${targetOrder.customer_email})\nAmount: ${curr}${Number(targetOrder.total_amount || 0).toFixed(2)}\n\nThis will mark the payment status as PAID, advance the order to In Production, and immediately send the official payment confirmation email to the customer.`
+      )
+    ) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: targetOrder.id,
+          status: "processing",
+          paymentStatus: "paid",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.order) {
+        setSelectedOrder(data.order);
+        setOrders((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
+        showToast("✓ Bank payment confirmed! Official confirmation email sent to customer.");
+      } else {
+        alert(data.error || "Failed to confirm payment");
+      }
+    } catch (err) {
+      console.error("Failed to mark order as paid:", err);
+      alert("Error confirming payment");
     } finally {
       setIsUpdating(false);
     }
@@ -378,11 +421,16 @@ export default function AdminOrdersPage() {
                         >
                           {badge.label}
                         </span>
+                        {(ord.payment_method || "").toLowerCase().includes("bank") && (ord.payment_status || "").toLowerCase() !== "paid" && (
+                          <span className="block text-[10px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 border border-amber-200 mt-1 rounded-2xs">
+                            🏦 Bank Unpaid
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 text-right font-bold text-wbk-black font-poppins whitespace-nowrap">
                         £{Number(ord.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-4 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleOpenDrawer(ord)}
@@ -390,6 +438,19 @@ export default function AdminOrdersPage() {
                         >
                           Manage
                         </button>
+                        {(ord.payment_method || "").toLowerCase().includes("bank") && (ord.payment_status || "").toLowerCase() !== "paid" && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsPaid(ord.id);
+                            }}
+                            className="block mt-1 w-full px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider transition-colors shadow-2xs"
+                            title="Confirm payment received and notify customer"
+                          >
+                            Mark Paid
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -998,6 +1059,41 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
+              {/* Bank Transfer Unpaid Callout */}
+              {(selectedOrder.payment_method || "").toLowerCase().includes("bank") && (selectedOrder.payment_status || "").toLowerCase() !== "paid" && (
+                <div className="p-4 bg-amber-50/90 border border-amber-300 text-amber-950 space-y-3 rounded-2xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-amber-900">
+                      <IconBuildingBank size={18} className="text-amber-700 shrink-0" />
+                      <span>Awaiting Bank Wire / Transfer</span>
+                    </div>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-amber-200/90 text-amber-900 rounded border border-amber-300">
+                      Unpaid
+                    </span>
+                  </div>
+                  <div className="text-xs text-amber-900 space-y-1">
+                    <div>
+                      • Expected Reference (Megjegyzés): <strong className="font-mono bg-white px-1.5 py-0.5 border border-amber-200">#{selectedOrder.id}</strong> or <strong>{selectedOrder.customer_email}</strong>
+                    </div>
+                    <div>
+                      • Amount Due: <strong>{selectedOrder.currency === "EUR" ? "€" : selectedOrder.currency === "USD" ? "$" : "£"}{Number(selectedOrder.total_amount || 0).toFixed(2)}</strong>
+                    </div>
+                    <div>
+                      • Banking Destination: <strong>HSBC BANK PLC</strong> (IZN LTD)
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isUpdating}
+                    onClick={() => handleMarkAsPaid(selectedOrder.id)}
+                    className="w-full py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {isUpdating ? <IconLoader2 size={15} className="animate-spin" /> : <IconCheck size={16} />}
+                    <span>Confirm Bank Payment Received & Notify Customer</span>
+                  </button>
+                </div>
+              )}
+
               {/* Payment Details */}
               <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2">
                 <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
@@ -1011,9 +1107,15 @@ export default function AdminOrdersPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-wbk-brown block">Transaction ID:</span>
+                    <span className="text-wbk-brown block">Payment Status:</span>
+                    <span className={`font-semibold capitalize ${(selectedOrder.payment_status || "").toLowerCase() === "paid" ? "text-emerald-700" : "text-amber-800"}`}>
+                      {selectedOrder.payment_status || "Unpaid"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-wbk-brown block">Transaction / Gateway Reference:</span>
                     <span className="font-mono text-wbk-black truncate block">
-                      {selectedOrder.payment_id || "Pending"}
+                      {selectedOrder.payment_id || "Pending Confirmation"}
                     </span>
                   </div>
                 </div>

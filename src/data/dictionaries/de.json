@@ -616,5 +616,27 @@
     "placeOrderViaBank": "Bestellung aufgeben per Banküberweisung",
     "processingOrder": "Bestellung wird verarbeitet...",
     "bankTransferInstructions": "Klicken Sie auf die Schaltfläche unten, um Ihre Bestellreservierung abzuschließen. Sie erhalten umgehend unsere offiziellen Bankverbindungsdaten und Ihren individuellen Bestellreferenzcode per E-Mail."
+  },
+  "auth": {
+    "recoveryBadge": "Passwort-Wiederherstellung",
+    "recoveryTitle": "Neues Passwort festlegen",
+    "recoverySubtitle": "Sie haben einen verifizierten Link zur Passwortrücksetzung geöffnet. Bitte geben Sie unten Ihr neues Passwort ein.",
+    "newPassword": "Neues Passwort",
+    "confirmNewPassword": "Neues Passwort bestätigen",
+    "passwordMinLength": "Mind. 6 Zeichen",
+    "passwordsMatch": "Passwörter stimmen überein",
+    "passwordsMismatch": "Passwörter stimmen nicht überein",
+    "updatePasswordBtn": "Passwort aktualisieren & fortfahren",
+    "updatingPassword": "Passwort wird aktualisiert...",
+    "passwordUpdatedTitle": "Passwort aktualisiert!",
+    "passwordUpdatedMsg": "Ihr neues Passwort ist nun aktiv und Ihr Konto ist geschützt. Sie sind angemeldet.",
+    "statusUpdated": "Sicherheits-Update abgeschlossen",
+    "continueToStore": "Weiter zu WallBedKing",
+    "expiredBadge": "Link abgelaufen oder ungültig",
+    "linkExpiredTitle": "Link abgelaufen",
+    "linkExpiredMsg": "Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte geben Sie Ihre E-Mail-Adresse ein, um einen neuen Link zu erhalten.",
+    "requestNewLink": "Neuen Link anfordern",
+    "newLinkSent": "Neuer Link versendet",
+    "emailLabel": "E-Mail-Adresse"
   }
 }

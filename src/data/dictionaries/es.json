@@ -616,5 +616,27 @@
     "placeOrderViaBank": "Realizar pedido por transferencia bancaria",
     "processingOrder": "Procesando pedido...",
     "bankTransferInstructions": "Haga clic en el botón de abajo para completar la reserva de su pedido. Recibirá inmediatamente nuestros datos bancarios oficiales y su código de referencia por correo electrónico."
+  },
+  "auth": {
+    "recoveryBadge": "Recuperación de contraseña",
+    "recoveryTitle": "Establecer nueva contraseña",
+    "recoverySubtitle": "Ha accedido mediante un enlace verificado. Introduzca su nueva contraseña a continuación para asegurar su cuenta WallBedKing.",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordMinLength": "Mín. 6 caracteres",
+    "passwordsMatch": "Las contraseñas coinciden",
+    "passwordsMismatch": "Las contraseñas no coinciden",
+    "updatePasswordBtn": "Actualizar contraseña y continuar",
+    "updatingPassword": "Actualizando contraseña...",
+    "passwordUpdatedTitle": "¡Contraseña actualizada!",
+    "passwordUpdatedMsg": "Su nueva contraseña ya está activa y su cuenta está protegida. Ha iniciado sesión.",
+    "statusUpdated": "Actualización de seguridad completada",
+    "continueToStore": "Continuar a WallBedKing",
+    "expiredBadge": "Enlace caducado o no válido",
+    "linkExpiredTitle": "Enlace caducado",
+    "linkExpiredMsg": "Este enlace de restablecimiento de contraseña no es válido o ha caducado. Introduzca su correo electrónico a continuación para recibir uno nuevo.",
+    "requestNewLink": "Enviar nuevo enlace",
+    "newLinkSent": "Nuevo enlace enviado",
+    "emailLabel": "Correo electrónico"
   }
 }

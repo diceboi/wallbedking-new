@@ -616,5 +616,27 @@
     "placeOrderViaBank": "Efetuar encomenda por transferência bancária",
     "processingOrder": "A processar encomenda...",
     "bankTransferInstructions": "Clique no botão abaixo para concluir a reserva da sua encomenda. Receberá imediatamente os nossos dados bancários oficiais e o código de referência por e-mail."
+  },
+  "auth": {
+    "recoveryBadge": "Recuperação de palavra-passe",
+    "recoveryTitle": "Definir nova palavra-passe",
+    "recoverySubtitle": "Acedeu através de uma ligação verificada. Introduza a sua nova palavra-passe abaixo para proteger a sua conta WallBedKing.",
+    "newPassword": "Nova palavra-passe",
+    "confirmNewPassword": "Confirmar nova palavra-passe",
+    "passwordMinLength": "Mín. 6 caracteres",
+    "passwordsMatch": "As palavras-passe coincidem",
+    "passwordsMismatch": "As palavras-passe não coincidem",
+    "updatePasswordBtn": "Atualizar palavra-passe e continuar",
+    "updatingPassword": "A atualizar palavra-passe...",
+    "passwordUpdatedTitle": "Palavra-passe atualizada!",
+    "passwordUpdatedMsg": "A sua nova palavra-passe já está ativa e a sua conta está protegida. Tem a sessão iniciada.",
+    "statusUpdated": "Atualização de segurança concluída",
+    "continueToStore": "Continuar no WallBedKing",
+    "expiredBadge": "Ligação expirada ou inválida",
+    "linkExpiredTitle": "Ligação expirada",
+    "linkExpiredMsg": "Esta ligação de reposição de palavra-passe é inválida ou expirou. Introduza o seu e-mail abaixo para receber uma nova ligação.",
+    "requestNewLink": "Enviar nova ligação",
+    "newLinkSent": "Nova ligação enviada",
+    "emailLabel": "Endereço de e-mail"
   }
 }

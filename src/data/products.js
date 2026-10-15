@@ -832,6 +832,7 @@ export const FLAGSHIP_MATTRESSES = [
     size: "4 Sizes",
     sizeLabel: "4 Available Sizes (Single to King)",
     defaultSizeSlug: "double-comfort-mattress-135x190x20",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#FFFFFF"],
@@ -876,6 +877,7 @@ export const FLAGSHIP_MATTRESSES = [
     size: "4 Sizes",
     sizeLabel: "4 Available Sizes (Single to King)",
     defaultSizeSlug: "double-luxury-mattress-135x190x25",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#FFFFFF"],
@@ -920,6 +922,7 @@ export const FLAGSHIP_MATTRESSES = [
     size: "4 Sizes",
     sizeLabel: "4 Available Sizes (Single to King)",
     defaultSizeSlug: "double-supreme-mattress-135x190x25",
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
     colors: ["#FFFFFF"],
@@ -1169,18 +1172,22 @@ export function getDynamicFlagships(templates, rawItems, category) {
           );
         }
 
+        const templateOrientation = (template.orientation || "").toLowerCase();
+        const itemOrientation = (item.orientation || "").toLowerCase();
+        const ignoreOrientation = !templateOrientation || templateOrientation === "universal" || !itemOrientation || itemOrientation === "universal";
+
         if (template.sub_category && item.sub_category) {
           const subMatch = item.sub_category.toLowerCase() === template.sub_category.toLowerCase();
-          if (template.orientation && item.orientation) {
-            return subMatch && item.orientation.toLowerCase() === template.orientation.toLowerCase();
+          if (!ignoreOrientation) {
+            return subMatch && itemOrientation === templateOrientation;
           }
           return subMatch;
         }
 
         if (template.type && item.type) {
           const typeMatch = item.type.toLowerCase() === template.type.toLowerCase();
-          if (template.orientation && item.orientation) {
-            return typeMatch && item.orientation.toLowerCase() === template.orientation.toLowerCase();
+          if (!ignoreOrientation) {
+            return typeMatch && itemOrientation === templateOrientation;
           }
           return typeMatch;
         }

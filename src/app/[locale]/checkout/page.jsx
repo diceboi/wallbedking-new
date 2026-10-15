@@ -26,6 +26,7 @@ import {
   IconBookmark,
   IconHome,
   IconBuildingBank,
+  IconCopy,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -33,6 +34,7 @@ import { useAuth } from "@/context/AuthContext";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 import { formatSizeLabel } from "@/lib/i18n";
+import { BANK_DETAILS, getBankI18n } from "@/lib/bank-details";
 
 export default function CheckoutPage() {
   const { t, formatPrice, localizedHref, locale } = useLocale();
@@ -79,6 +81,15 @@ export default function CheckoutPage() {
     : "card";
 
   // Form states
+  const [copiedBankKey, setCopiedBankKey] = useState("");
+  const handleCopyBank = (text, key) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedBankKey(key);
+      setTimeout(() => setCopiedBankKey(""), 2200);
+    }
+  };
+
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
@@ -445,26 +456,190 @@ export default function CheckoutPage() {
 
   // If order is completed, show Thank You / Confirmation Screen
   if (orderComplete) {
+    const isBank = (formData.paymentMethod || "").toLowerCase().includes("bank");
+    const bankI18n = getBankI18n(locale);
+    const isUk = locale === "en" || (formData.country || "").toLowerCase().includes("kingdom");
+
     return (
       <div className="bg-wbk-white min-h-screen font-poppins py-16">
         <Container size="md" className="max-w-2xl text-center space-y-8">
-          <div className="w-20 h-20 mx-auto rounded-full bg-wbk-green/20 text-wbk-black flex items-center justify-center">
-            <IconCheck size={40} className="text-wbk-green" strokeWidth={2.5} />
-          </div>
+          {isBank ? (
+            <>
+              <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/15 text-amber-700 flex items-center justify-center">
+                <IconBuildingBank size={42} strokeWidth={2} />
+              </div>
 
-          <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold block">
-              {t("checkout.orderConfirmed", "Order Confirmed")}
-            </span>
-            <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-              {t("checkout.thankYouOrder", "Thank you for your order")},{" "}
-              {formData.firstName}!
-            </h1>
-            <p className="text-sm text-wbk-brown max-w-md mx-auto leading-relaxed">
-              We have received your order and our dispatch team is preparing
-              your precision-engineered wall bed.
-            </p>
-          </div>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800 bg-amber-100/90 px-3 py-1 rounded-full inline-block border border-amber-300">
+                  {bankI18n.statusBadge}
+                </span>
+                <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
+                  {bankI18n.thankYouTitle},{" "}
+                  {formData.firstName}!
+                </h1>
+                <p className="text-sm text-wbk-brown max-w-lg mx-auto leading-relaxed">
+                  {bankI18n.instructionIntro}
+                </p>
+              </div>
+
+              {/* Official Bank Coordinates Card */}
+              <div className="bg-[#FAF8F5] border-2 border-amber-300 p-6 sm:p-8 text-left space-y-6 shadow-sm">
+                <div className="flex items-center justify-between pb-4 border-b border-amber-200">
+                  <div className="flex items-center gap-2.5 font-bold text-sm text-wbk-black uppercase tracking-wider">
+                    <IconBuildingBank size={20} className="text-amber-700" />
+                    <span>{bankI18n.methodLabel} — Bank Details</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 border border-emerald-200">
+                    HSBC BANK PLC
+                  </span>
+                </div>
+
+                {/* Critical Payment Reference Callout */}
+                <div className="p-4 bg-white border-2 border-amber-400 text-xs rounded space-y-2.5 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-[11px] uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                      <span>⚠️ {bankI18n.referenceFieldName} (CRITICAL)</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyBank(orderNumber, "ref")}
+                      className="px-2.5 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedBankKey === "ref" ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                      <span>{copiedBankKey === "ref" ? bankI18n.copiedToast : bankI18n.copyButton}</span>
+                    </button>
+                  </div>
+                  <div className="font-mono text-base font-bold text-wbk-black bg-amber-50 px-3 py-1.5 border border-amber-200 inline-block">
+                    #{orderNumber}
+                  </div>
+                  <p className="text-[11px] text-amber-950 leading-relaxed">
+                    {bankI18n.referenceNotice.replace("{orderId}", orderNumber).replace("{email}", formData.email)}
+                  </p>
+                </div>
+
+                {/* Banking Coordinates Table */}
+                <div className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                    <span className="text-wbk-brown font-medium">{bankI18n.accountHolderLabel}:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-wbk-black">{BANK_DETAILS.accountName}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyBank(BANK_DETAILS.accountName, "name")}
+                        className="text-wbk-brown hover:text-wbk-black p-1"
+                        title="Copy"
+                      >
+                        {copiedBankKey === "name" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                    <span className="text-wbk-brown font-medium">{bankI18n.bankNameLabel}:</span>
+                    <span className="font-bold text-wbk-black">{BANK_DETAILS.bankName}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                    <span className="text-wbk-brown font-medium">{bankI18n.ibanLabel}:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-wbk-black text-sm tracking-wider">{BANK_DETAILS.ibanFormatted}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyBank(BANK_DETAILS.iban, "iban")}
+                        className="text-wbk-brown hover:text-wbk-black p-1"
+                        title="Copy IBAN"
+                      >
+                        {copiedBankKey === "iban" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                    <span className="text-wbk-brown font-medium">{bankI18n.bicLabel}:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.bic}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyBank(BANK_DETAILS.bic, "bic")}
+                        className="text-wbk-brown hover:text-wbk-black p-1"
+                        title="Copy BIC"
+                      >
+                        {copiedBankKey === "bic" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isUk && (
+                    <>
+                      <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                        <span className="text-wbk-brown font-medium">{bankI18n.sortCodeLabel}:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.sortCode}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyBank(BANK_DETAILS.sortCode, "sort")}
+                            className="text-wbk-brown hover:text-wbk-black p-1"
+                            title="Copy Sort Code"
+                          >
+                            {copiedBankKey === "sort" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
+                        <span className="text-wbk-brown font-medium">{bankI18n.accountNumberLabel}:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.accountNumber}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyBank(BANK_DETAILS.accountNumber, "acc")}
+                            className="text-wbk-brown hover:text-wbk-black p-1"
+                            title="Copy Account Number"
+                          >
+                            {copiedBankKey === "acc" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-amber-200">
+                    <span className="text-xs font-bold uppercase tracking-wider text-wbk-black">
+                      {bankI18n.amountToTransferLabel}:
+                    </span>
+                    <span className="font-bold text-2xl text-emerald-800 font-poppins">
+                      {formatPrice(finalTotal)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white border border-wbk-lightgrey text-[11px] text-wbk-brown leading-relaxed">
+                  <strong className="text-wbk-black block mb-0.5">{bankI18n.whatHappensNext}</strong>
+                  {bankI18n.whatHappensNextText}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-20 h-20 mx-auto rounded-full bg-wbk-green/20 text-wbk-black flex items-center justify-center">
+                <IconCheck size={40} className="text-wbk-green" strokeWidth={2.5} />
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold block">
+                  {t("checkout.orderConfirmed", "Order Confirmed")}
+                </span>
+                <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
+                  {t("checkout.thankYouOrder", "Thank you for your order")},{" "}
+                  {formData.firstName}!
+                </h1>
+                <p className="text-sm text-wbk-brown max-w-md mx-auto leading-relaxed">
+                  We have received your order and our dispatch team is preparing
+                  your precision-engineered wall bed.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Order Details Card */}
           <div className="bg-[#FBF9F8] border border-wbk-lightgrey p-6 sm:p-8 text-left space-y-6">
@@ -521,7 +696,7 @@ export default function CheckoutPage() {
 
             <div className="pt-4 border-t border-wbk-lightgrey flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                {t("checkout.totalPaid", "Total Paid")}
+                {isBank ? bankI18n.amountToTransferLabel : t("checkout.totalPaid", "Total Paid")}
               </span>
               <span className="font-bold text-xl text-wbk-black font-poppins">
                 {formatPrice(finalTotal)}

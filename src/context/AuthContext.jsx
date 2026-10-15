@@ -14,6 +14,8 @@ export const AuthContext = createContext({
   drawerTab: "login", // 'login' | 'register' | 'forgot'
   isPasswordRecovery: false,
   setIsPasswordRecovery: () => {},
+  passwordRecoveryError: null,
+  setPasswordRecoveryError: () => {},
   openUserDrawer: () => {},
   closeUserDrawer: () => {},
   setDrawerTab: () => {},
@@ -38,6 +40,7 @@ export function AuthProvider({ children }) {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState("login"); // 'login' | 'register' | 'forgot'
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [passwordRecoveryError, setPasswordRecoveryError] = useState(null);
 
   // Fetch authoritative role from Supabase DB or API
   const fetchUserRole = useCallback(async (currentUser, currentSession) => {
@@ -101,6 +104,32 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+    // Check URL hash and search query immediately on client mount
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+
+      if (
+        hash.includes("otp_expired") ||
+        hash.includes("error_code=otp_expired") ||
+        search.includes("otp_expired") ||
+        (hash.includes("error=") && hash.includes("expired")) ||
+        (search.includes("error=") && search.includes("expired"))
+      ) {
+        const rawParams = hash.startsWith("#") ? hash.substring(1) : search.startsWith("?") ? search.substring(1) : search;
+        const params = new URLSearchParams(rawParams);
+        const errorDesc = params.get("error_description") || "Email link is invalid or has expired.";
+        setPasswordRecoveryError(errorDesc);
+      } else if (
+        hash.includes("type=recovery") ||
+        (hash.includes("access_token=") && hash.includes("recovery")) ||
+        search.includes("mode=recovery") ||
+        search.includes("type=recovery")
+      ) {
+        setIsPasswordRecovery(true);
+      }
+    }
+
     async function initSession() {
       try {
         if (!supabase) {
@@ -152,7 +181,12 @@ export function AuthProvider({ children }) {
           setRoleLoading(false);
         }
 
-        if (event === "PASSWORD_RECOVERY") {
+        if (
+          event === "PASSWORD_RECOVERY" ||
+          (event === "SIGNED_IN" &&
+            typeof window !== "undefined" &&
+            (window.location.hash.includes("type=recovery") || window.location.search.includes("mode=recovery")))
+        ) {
           setIsPasswordRecovery(true);
         }
       }
@@ -222,16 +256,25 @@ export function AuthProvider({ children }) {
     }
     setUser(null);
     setSession(null);
+    setIsPasswordRecovery(false);
+    setPasswordRecoveryError(null);
   }, []);
 
   // Send password reset email
   const resetPassword = useCallback(async (email) => {
     if (!supabase) throw new Error("Supabase client is not available.");
 
+    let redirectUrl = undefined;
+    if (typeof window !== "undefined") {
+      const match = window.location.pathname.match(/^\/(en|us|de|fr|es|it|por)\b/i);
+      const prefix = match ? `/${match[1].toLowerCase()}` : "/en";
+      redirectUrl = `${window.location.origin}${prefix}/account?mode=recovery`;
+    }
+
     const { data, error } = await supabase.auth.resetPasswordForEmail(
       email.trim().toLowerCase(),
       {
-        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/account?mode=recovery` : undefined,
+        redirectTo: redirectUrl,
       }
     );
 
@@ -400,6 +443,8 @@ export function AuthProvider({ children }) {
         drawerTab,
         isPasswordRecovery,
         setIsPasswordRecovery,
+        passwordRecoveryError,
+        setPasswordRecoveryError,
         openUserDrawer,
         closeUserDrawer,
         setDrawerTab,

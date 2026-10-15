@@ -18,6 +18,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/account",
+        destination: "/en/account",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
