@@ -22,6 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { isProductAvailableInLocale } from "@/lib/products";
+import { getProductPrice } from "@/lib/i18n";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
 import { SearchBar } from "./SearchBar";
@@ -39,8 +40,33 @@ const LANGUAGES = [
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
   const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
-  const { allProducts } = useProductCatalog();
+  const { allProducts, allFlagships } = useProductCatalog();
   const rawItems = navItems || MAIN_NAV_ITEMS;
+
+  const getSubmenuItemPrice = (item) => {
+    if (!item) return null;
+    const cleanHref = item.href ? item.href.split("?")[0].replace(/\/+$/, "") : "";
+    const slug = cleanHref.split("/").pop();
+    const flagship = allFlagships?.find(
+      (f) =>
+        f.slug === slug ||
+        (Array.isArray(f.aliases) && f.aliases.includes(slug)) ||
+        f.link === item.href ||
+        f.link?.split("?")[0].replace(/\/+$/, "") === cleanHref
+    );
+
+    if (flagship) {
+      const pricing = getProductPrice(flagship, locale);
+      if (pricing?.display) {
+        return `${t("common.from", "from")} ${pricing.display}`;
+      }
+    }
+
+    if (item.price && item.price.includes("£")) {
+      return `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`;
+    }
+    return item.price;
+  };
 
   const items = useMemo(() => {
     if (!locale || !allProducts) return rawItems;
@@ -443,9 +469,7 @@ export function MobileMenuDrawer() {
                             <div className="divide-y divide-wbk-lightgrey/50">
                               {section.items?.map((item, idx) => {
                                 const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
-                                const formattedPrice = item.price && item.price.includes("£")
-                                  ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
-                                  : item.price;
+                                const formattedPrice = getSubmenuItemPrice(item);
 
                                 return (
                                   <Link
@@ -487,9 +511,7 @@ export function MobileMenuDrawer() {
                     ) : (
                       activeCategoryData?.items?.map((item, idx) => {
                         const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
-                        const formattedPrice = item.price && item.price.includes("£")
-                          ? `${t("common.from", "from")} ${formatPrice(Number(item.price.replace(/[^0-9]/g, "")))}`
-                          : item.price;
+                        const formattedPrice = getSubmenuItemPrice(item);
 
                         return (
                           <Link

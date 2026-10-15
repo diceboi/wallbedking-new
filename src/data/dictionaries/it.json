@@ -608,5 +608,12 @@
     "backToProfile": "Torna al menu profilo",
     "items": "articoli",
     "item": "articolo"
+  },
+  "checkout": {
+    "bankWireTransfer": "Bonifico Bancario",
+    "manualWirePayment": "Pagamento con bonifico SEPA",
+    "placeOrderViaBank": "Conferma l'ordine con bonifico",
+    "processingOrder": "Elaborazione dell'ordine in corso...",
+    "bankTransferInstructions": "Clicca sul pulsante sottostante per confermare la prenotazione del tuo ordine. Riceverai immediatamente via e-mail le nostre coordinate bancarie ufficiali e il codice di riferimento."
   }
 }

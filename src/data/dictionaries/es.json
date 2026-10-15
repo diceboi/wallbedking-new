@@ -608,5 +608,12 @@
     "backToProfile": "Volver al menú de perfil",
     "items": "artículos",
     "item": "artículo"
+  },
+  "checkout": {
+    "bankWireTransfer": "Transferencia Bancaria",
+    "manualWirePayment": "Pago por transferencia SEPA",
+    "placeOrderViaBank": "Realizar pedido por transferencia bancaria",
+    "processingOrder": "Procesando pedido...",
+    "bankTransferInstructions": "Haga clic en el botón de abajo para completar la reserva de su pedido. Recibirá inmediatamente nuestros datos bancarios oficiales y su código de referencia por correo electrónico."
   }
 }

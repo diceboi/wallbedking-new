@@ -608,5 +608,12 @@
     "backToProfile": "Zurück zum Profilmenü",
     "items": "Artikel",
     "item": "Artikel"
+  },
+  "checkout": {
+    "bankWireTransfer": "Banküberweisung",
+    "manualWirePayment": "Manuelle Überweisung (SEPA)",
+    "placeOrderViaBank": "Bestellung aufgeben per Banküberweisung",
+    "processingOrder": "Bestellung wird verarbeitet...",
+    "bankTransferInstructions": "Klicken Sie auf die Schaltfläche unten, um Ihre Bestellreservierung abzuschließen. Sie erhalten umgehend unsere offiziellen Bankverbindungsdaten und Ihren individuellen Bestellreferenzcode per E-Mail."
   }
 }

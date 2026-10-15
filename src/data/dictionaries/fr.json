@@ -608,5 +608,12 @@
     "backToProfile": "Retour au menu profil",
     "items": "articles",
     "item": "article"
+  },
+  "checkout": {
+    "bankWireTransfer": "Virement Bancaire",
+    "manualWirePayment": "Paiement par virement SEPA",
+    "placeOrderViaBank": "Confirmer la commande par virement",
+    "processingOrder": "Traitement de votre commande...",
+    "bankTransferInstructions": "Cliquez sur le bouton ci-dessous pour valider votre commande. Vous recevrez immédiatement nos coordonnées bancaires officielles et votre référence unique de commande par e-mail."
   }
 }

@@ -611,5 +611,12 @@
     "backToProfile": "Back to Profile Menu",
     "items": "items",
     "item": "item"
+  },
+  "checkout": {
+    "bankWireTransfer": "Bank Wire Transfer",
+    "manualWirePayment": "Manual Wire Payment",
+    "placeOrderViaBank": "Place Order via Bank Transfer",
+    "processingOrder": "Processing Order...",
+    "bankTransferInstructions": "Click the button below to complete your order reservation. You will immediately receive our official bank transfer details and your unique order reference code by email."
   }
 }

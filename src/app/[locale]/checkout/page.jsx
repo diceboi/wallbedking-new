@@ -347,7 +347,7 @@ export default function CheckoutPage() {
   };
 
   const handleSubmitOrder = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setErrorMessage("");
 
     // Basic validation
@@ -359,12 +359,27 @@ export default function CheckoutPage() {
       !formData.city ||
       !formData.postcode
     ) {
-      setErrorMessage(
-        t(
-          "checkout.requiredFieldsError",
-          "Please complete all required shipping address fields.",
-        ),
+      const msg = t(
+        "checkout.requiredFieldsError",
+        "Please complete all required shipping address fields.",
       );
+      setErrorMessage(msg);
+
+      // Scroll smoothly to the first empty required field or shipping section
+      const requiredFieldIds = ["email", "phone", "firstName", "lastName", "address1", "city", "postcode"];
+      const missingId = requiredFieldIds.find((id) => !formData[id]);
+      if (missingId) {
+        const elem = document.getElementById(missingId);
+        if (elem) {
+          elem.scrollIntoView({ behavior: "smooth", block: "center" });
+          elem.focus();
+        }
+      } else {
+        const shippingSection = document.getElementById("shipping-address-section");
+        if (shippingSection) {
+          shippingSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
       return;
     }
 
@@ -387,8 +402,10 @@ export default function CheckoutPage() {
           shippingAddress: formData,
           deliveryOption,
           promoCode,
-          paymentMethod: formData.paymentMethod,
+          paymentMethod: formData.paymentMethod || "bank",
           userId: user?.id || null,
+          locale: locale || "en",
+          currency: checkoutSettings?.currency || null,
         }),
       });
 
@@ -937,7 +954,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Step 2: Shipping Address */}
-              <div className="space-y-4">
+              <div id="shipping-address-section" className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-wbk-lightgrey/80">
                   <h2 className="font-new-york text-xl text-wbk-black flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-full bg-wbk-black text-white text-xs flex items-center justify-center font-poppins">
@@ -1517,20 +1534,29 @@ export default function CheckoutPage() {
                         <div className="flex items-center gap-2 font-semibold">
                           <IconBuildingBank size={18} className="text-emerald-700" />
                           <span>
-                            {checkoutSettings?.payments?.bankTransfer?.label || "Bank Wire Transfer"}
+                            {checkoutSettings?.payments?.bankTransfer?.label || t("checkout.bankWireTransfer", "Bank Wire Transfer")}
                           </span>
                         </div>
                         <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200 font-semibold">
-                          Manual Wire Payment
+                          {t("checkout.manualWirePayment", "Manual Wire Payment")}
                         </span>
                       </div>
 
                       <p className="text-xs text-wbk-brown leading-relaxed">
                         {checkoutSettings?.payments?.bankTransfer?.instructions ||
-                          "Click the button below to complete your order reservation. You will immediately receive our official bank transfer details (HSBC) and your unique order reference code by email."}
+                          t(
+                            "checkout.bankTransferInstructions",
+                            "Click the button below to complete your order reservation. You will immediately receive our official bank transfer details and your unique order reference code by email.",
+                          )}
                       </p>
 
-                      <div className="pt-2">
+                      <div className="pt-2 space-y-3">
+                        {errorMessage && (
+                          <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5 rounded-2xs animate-shake">
+                            <IconAlertCircle size={18} className="shrink-0 text-red-600" />
+                            <span className="font-medium leading-relaxed">{errorMessage}</span>
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={handleSubmitOrder}
@@ -1544,8 +1570,8 @@ export default function CheckoutPage() {
                           )}
                           <span>
                             {isSubmitting
-                              ? "Processing Order..."
-                              : `Place Order via Bank Transfer (${formatPrice(finalTotal)})`}
+                              ? t("checkout.processingOrder", "Processing Order...")
+                              : `${t("checkout.placeOrderViaBank", "Place Order via Bank Transfer")} (${formatPrice(finalTotal)})`}
                           </span>
                         </button>
                       </div>

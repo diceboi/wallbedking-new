@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { getProductPrice } from "@/lib/i18n";
 
 export function SubmenuItem({
   title,
@@ -18,11 +21,43 @@ export function SubmenuItem({
   compact = false,
   onClick,
 }) {
-  const { localizedHref, t, formatPrice } = useLocale();
+  const { locale, localizedHref, t, formatPrice } = useLocale();
+  const { allFlagships } = useProductCatalog();
   const targetLink = localizedHref(href);
 
   const displayTitle = titleKey ? t(titleKey, title) : title;
   const displayTagline = taglineKey ? t(taglineKey, tagline) : tagline;
+
+  // Resolve dynamic flagship to get true lowest starting price per active market/currency
+  const dynamicFlagship = useMemo(() => {
+    if (!href || isParent || !allFlagships || allFlagships.length === 0) return null;
+    const cleanHref = href.split("?")[0].replace(/\/+$/, "");
+    const slug = cleanHref.split("/").pop();
+    return (
+      allFlagships.find(
+        (f) =>
+          f.slug === slug ||
+          (Array.isArray(f.aliases) && f.aliases.includes(slug)) ||
+          f.link === href ||
+          f.link?.split("?")[0].replace(/\/+$/, "") === cleanHref
+      ) || null
+    );
+  }, [href, isParent, allFlagships]);
+
+  const pricing = useMemo(() => {
+    if (!dynamicFlagship) return null;
+    return getProductPrice(dynamicFlagship, locale);
+  }, [dynamicFlagship, locale]);
+
+  const formattedPrice = useMemo(() => {
+    if (pricing && pricing.display) {
+      return `${t("common.from", "from")} ${pricing.display}`;
+    }
+    if (price && price.includes("£")) {
+      return `${t("common.from", "from")} ${formatPrice(Number(price.replace(/[^0-9]/g, "")))}`;
+    }
+    return price;
+  }, [pricing, price, t, formatPrice]);
 
   const isMorphyImage = typeof image === "string" && image.includes("MORPHY");
   const isIntegratedImage =
@@ -141,11 +176,6 @@ export function SubmenuItem({
     );
   }
 
-  const formattedPrice =
-    price && price.includes("£")
-      ? `${t("common.from", "from")} ${formatPrice(Number(price.replace(/[^0-9]/g, "")))}`
-      : price;
-
   return (
     <Link
       href={targetLink}
@@ -198,7 +228,7 @@ export function SubmenuItem({
         </div>
 
         {/* Starting Price */}
-        {price && (
+        {(formattedPrice || price) && (
           <div
             className={`${
               compact ? "text-[11px]" : "text-xs"
