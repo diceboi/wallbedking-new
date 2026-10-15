@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useLocale } from "@/context/LocaleContext";
 import defaultSettingsData from "@/data/shipping_payment_settings.json";
+import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics";
 
 const CartContext = createContext(null);
 
@@ -68,35 +69,50 @@ export function CartProvider({ children }) {
   const [remoteSettings, setRemoteSettings] = useState(null);
 
   // Safely extract locale from LocaleContext
-  let activeLocale = "en";
-  try {
-    const loc = useLocale();
-    if (loc?.locale) activeLocale = loc.locale.toLowerCase();
-  } catch (e) {
-    // fallback to "en"
-  }
+  const localeCtx = useLocale();
+  const activeLocale = (localeCtx?.locale || "en").toLowerCase();
 
-  // Fetch updated settings from API when mounted or locale changes
+  // Function to load fresh settings from API
+  const loadFreshSettings = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/checkout/settings?locale=${activeLocale}&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json();
+      if (data?.success && data?.config) {
+        setRemoteSettings(data.config);
+      }
+    } catch {
+      // Fallback to local data
+    }
+  }, [activeLocale]);
+
+  // Fetch updated settings from API when mounted, locale changes, window regains focus, or custom event fires
   useEffect(() => {
-    let isMountedLocal = true;
-    fetch(`/api/checkout/settings?locale=${activeLocale}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMountedLocal && data.success && data.config) {
-          setRemoteSettings(data.config);
-        }
-      })
-      .catch(() => {});
+    loadFreshSettings();
+
+    const handleRefresh = () => {
+      loadFreshSettings();
+    };
+
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener("wbk_settings_updated", handleRefresh);
+    window.addEventListener("storage", handleRefresh);
 
     return () => {
-      isMountedLocal = false;
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener("wbk_settings_updated", handleRefresh);
+      window.removeEventListener("storage", handleRefresh);
     };
-  }, [activeLocale]);
+  }, [loadFreshSettings]);
 
   // Combine default JSON with remote settings for active market
   const checkoutSettings = useMemo(() => {
+    if (remoteSettings && remoteSettings.locale === activeLocale) {
+      return remoteSettings;
+    }
     return (
-      remoteSettings ||
       defaultSettingsData[activeLocale] ||
       defaultSettingsData.en ||
       {}
@@ -257,10 +273,25 @@ export function CartProvider({ children }) {
       ];
     });
 
+    // Ecommerce dataLayer & Meta tracking
+    try {
+      trackAddToCart({
+        id: item.productId || item.id || cartItemId,
+        name: item.title || item.name || "Wall Bed King Product",
+        category: item.options?.type || item.category || "Wall Bed",
+        variant: item.options?.size || "",
+        price: Number(item.price) || 0,
+        quantity,
+        currency: localeCtx?.market?.currency || (activeLocale === "en" ? "GBP" : "EUR"),
+      });
+    } catch (e) {
+      console.warn("Analytics trackAddToCart warning:", e);
+    }
+
     if (openDrawer) {
       setIsCartOpen(true);
     }
-  }, []);
+  }, [localeCtx, activeLocale]);
 
   /**
    * Update quantity of an item
@@ -281,8 +312,24 @@ export function CartProvider({ children }) {
    * Remove item from cart
    */
   const removeItem = useCallback((cartItemId) => {
-    setItems((prev) => prev.filter((i) => i.id !== cartItemId));
-  }, []);
+    setItems((prev) => {
+      const target = prev.find((i) => i.id === cartItemId);
+      if (target) {
+        try {
+          trackRemoveFromCart({
+            id: target.productId || target.id || cartItemId,
+            name: target.title || target.name || "Wall Bed King Product",
+            price: Number(target.price) || 0,
+            quantity: target.quantity || 1,
+            currency: localeCtx?.market?.currency || (activeLocale === "en" ? "GBP" : "EUR"),
+          });
+        } catch (e) {
+          console.warn("Analytics trackRemoveFromCart warning:", e);
+        }
+      }
+      return prev.filter((i) => i.id !== cartItemId);
+    });
+  }, [localeCtx, activeLocale]);
 
   /**
    * Clear all items from cart
@@ -426,6 +473,7 @@ export function CartProvider({ children }) {
     applyPromoCode,
     removePromoCode,
     isMounted,
+    refreshCheckoutSettings: loadFreshSettings,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

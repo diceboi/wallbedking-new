@@ -35,6 +35,7 @@
     "cart": "Cart",
     "account": "My Account",
     "phone": "+44 1928 583 469",
+    "phoneRaw": "+441928583469",
     "callNow": "Toll Free",
     "openingHours": "Mon-Fri 9AM - 8PM, Sat 9AM - 12PM GMT",
     "specialistAdvice": "Specialist Advice",

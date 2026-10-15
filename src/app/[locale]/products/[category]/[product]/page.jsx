@@ -56,6 +56,7 @@ import {
   parseYouTubeVideo,
 } from "@/lib/products";
 import { getMorphyFaqs } from "@/data/morphyFaq";
+import { trackViewItem } from "@/lib/analytics";
 
 // Dynamically import the 3D Canvas component to prevent SSR WebGL issues
 const ConfiguratorCanvas = dynamic(
@@ -454,6 +455,27 @@ export default function ProductDetailPage() {
       getFallbackProduct(categorySlug, productSlug)
     );
   }, [catalogFindBySlug, categorySlug, productSlug]);
+
+  // Track Product View (GA4 view_item + Meta ViewContent)
+  useEffect(() => {
+    if (activeProduct && activeProduct.id) {
+      const price = getProductPrice(activeProduct, locale) || 0;
+      const currency = locale === "us" ? "USD" : (locale === "en" ? "GBP" : "EUR");
+      trackViewItem({
+        id: String(activeProduct.id),
+        name:
+          getLocalizedProductName(activeProduct, locale) ||
+          activeProduct.name ||
+          activeProduct.title ||
+          "Wall Bed King Product",
+        category:
+          activeProduct.category || activeProduct.parent_category || "Wall Bed",
+        variant: activeProduct.size || activeProduct.variant || "",
+        price,
+        currency,
+      });
+    }
+  }, [activeProduct?.id, locale]);
 
   // Available variants for the family / category (all sizes for this flagship model)
   const familyVariants = useMemo(() => {

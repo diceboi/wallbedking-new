@@ -190,7 +190,7 @@
         "label": "Paiement rapide dans le panier"
       },
       "bankTransfer": {
-        "enabled": true,
+        "enabled": false,
         "label": "Virement Bancaire",
         "sublabel": "Virement SEPA",
         "instructions": "Veuillez effectuer le paiement par virement bancaire. Expédition dès réception."

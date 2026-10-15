@@ -100,7 +100,7 @@ const STATS = [
 ];
 
 export default function AboutPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, market } = useLocale();
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -276,10 +276,10 @@ export default function AboutPage() {
                 {t("nav.contact", "Contact")}
               </Link>
               <a
-                href="tel:01928583469"
+                href={`tel:${market?.phoneRaw || "+441928583469"}`}
                 className="px-6 py-3.5 border border-white/30 hover:border-white text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors text-center"
               >
-                {t("header.callNow", "Call Us")} {t("header.phone", "01928 583 469")}
+                {t("header.callNow", "Call Us")} {market?.phone || t("header.phone", "01928 583 469")}
               </a>
             </div>
           </div>

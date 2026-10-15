@@ -39,7 +39,7 @@ const LANGUAGES = [
 
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
-  const { locale, switchLocale, localizedHref, t, formatPrice } = useLocale();
+  const { locale, market, switchLocale, localizedHref, t, formatPrice } = useLocale();
   const { allProducts, allFlagships } = useProductCatalog();
   const rawItems = navItems || MAIN_NAV_ITEMS;
 
@@ -311,7 +311,7 @@ export function MobileMenuDrawer() {
                     {/* Quick Call */}
                     <div className="p-4 bg-wbk-white">
                       <a
-                        href="tel:01928583469"
+                        href={`tel:${market?.phoneRaw || "+441928583469"}`}
                         className="flex items-center gap-3 p-3 border border-wbk-lightgrey bg-[#FBF9F8] hover:border-wbk-gold transition-colors"
                       >
                         <div className="w-8 h-8 flex items-center justify-center bg-wbk-black text-white shrink-0">
@@ -322,7 +322,8 @@ export function MobileMenuDrawer() {
                             {t("support.needHelp", "Need Assistance?")}
                           </div>
                           <div className="text-xs font-medium text-wbk-black">
-                            {t("header.phone", "01928 583 469")} {t("header.openingHoursParen", "(Mon-Fri 9-20, Sat 9-12)")}
+                            {market?.phone || t("header.phone", "01928 583 469")}{" "}
+                            {t("header.openingHoursParen", "(Mon-Fri 9-20, Sat 9-12)")}
                           </div>
                         </div>
                       </a>

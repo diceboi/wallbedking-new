@@ -7,9 +7,16 @@
  */
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
-export const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "support@wallbedking.com";
 export const STORE_PHONE = "01928 583 469";
 export const STORE_HOURS = "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00";
+
+export function getStorePhone(locale = "en") {
+  const norm = (locale || "en").toLowerCase();
+  if (norm === "de") return "032 2210 99855";
+  if (norm === "it") return "06 4521 4986";
+  if (norm === "en") return "01928 583 469";
+  return "+44 1928 583 469";
+}
 
 // ==========================================
 // SAMPLE DATA FOR PREVIEW & TESTING
@@ -333,6 +340,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
   const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
   const currencyCode = (order.currency || (loc === "us" ? "USD" : loc === "en" ? "GBP" : "EUR")).toUpperCase();
   const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+  const storePhone = getStorePhone(loc);
 
   const itemsList = (order.items || [])
     .map(
@@ -447,7 +455,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
           </div>
           <div class="footer">
             <p style="margin: 0 0 6px; font-weight: 500; color: #333;">${t.footerGuarantee}</p>
-            <p style="margin: 0;">${t.footerHelp} <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${STORE_PHONE}</strong> (${STORE_HOURS}).</p>
+            <p style="margin: 0;">${t.footerHelp} <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${storePhone}</strong> (${STORE_HOURS}).</p>
           </div>
         </div>
       </body>

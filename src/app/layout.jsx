@@ -13,6 +13,7 @@ import { getStorefrontProducts } from "@/lib/products-db";
 import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import { CategoriesProvider } from "@/context/CategoriesContext";
+import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -36,6 +37,9 @@ export const metadata = {
     locale: "en_GB",
     siteName: "WallBedKing",
   },
+  verification: {
+    google: ["googleef87f60405111b90", "googlefbbb56ed99e358dd"],
+  },
 };
 
 export default async function RootLayout({ children }) {
@@ -50,6 +54,7 @@ export default async function RootLayout({ children }) {
         <ScrollToTop />
         <AuthProvider>
           <LocaleProvider>
+            <AnalyticsScripts />
             <ProductCatalogProvider initialProducts={initialProducts}>
               <CategoriesProvider initialCategories={initialCategories}>
                 <CartProvider>

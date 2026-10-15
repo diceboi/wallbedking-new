@@ -15,20 +15,32 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const locale = searchParams.get("locale");
 
+    const headers = {
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    };
+
     if (locale) {
       const config = await getCheckoutSettingsForLocale(locale);
-      return NextResponse.json({
-        success: true,
-        locale,
-        config,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          locale,
+          config,
+        },
+        { headers }
+      );
     }
 
     const all = await getAllCheckoutSettings();
-    return NextResponse.json({
-      success: true,
-      settings: all,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        settings: all,
+      },
+      { headers }
+    );
   } catch (error) {
     console.error("[api/checkout/settings] Error:", error);
     return NextResponse.json(

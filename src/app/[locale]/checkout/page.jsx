@@ -57,12 +57,18 @@ export default function CheckoutPage() {
     isPayPalEnabled,
     isBankTransferEnabled,
     checkoutSettings,
+    refreshCheckoutSettings,
   } = useCart();
 
   const finalTotal = total;
   const isStripeAvailable = isStripeEnabled;
   const isPayPalAvailable = isPayPalEnabled;
   const isBankTransferAvailable = isBankTransferEnabled;
+
+  // Re-fetch latest store settings on checkout mount to ensure real-time accuracy
+  useEffect(() => {
+    refreshCheckoutSettings?.();
+  }, [refreshCheckoutSettings]);
 
   const initialMethod = isStripeAvailable
     ? "card"

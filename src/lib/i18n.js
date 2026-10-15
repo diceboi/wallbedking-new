@@ -12,6 +12,8 @@ export const MARKETS = {
     currencySymbol: "£",
     countryCode: "GB",
     flag: "🇬🇧",
+    phone: "01928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Free UK Mainland Delivery",
   },
   us: {
@@ -22,6 +24,8 @@ export const MARKETS = {
     currencySymbol: "$",
     countryCode: "US",
     flag: "🇺🇸",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "US Nationwide Delivery",
   },
   de: {
@@ -32,6 +36,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "DE",
     flag: "🇩🇪",
+    phone: "032 2210 99855",
+    phoneRaw: "+4932221099855",
     defaultShippingNote: "Kostenlose EU-Lieferung",
   },
   fr: {
@@ -42,6 +48,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "FR",
     flag: "🇫🇷",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Livraison gratuite en France",
   },
   es: {
@@ -52,6 +60,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "ES",
     flag: "🇪🇸",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Envío gratuito a España",
   },
   por: {
@@ -62,6 +72,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "PT",
     flag: "🇵🇹",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Envio gratuito para Portugal",
   },
   it: {
@@ -72,6 +84,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "IT",
     flag: "🇮🇹",
+    phone: "06 4521 4986",
+    phoneRaw: "+390645214986",
     defaultShippingNote: "Spedizione gratuita in Italia",
   },
 };

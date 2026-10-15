@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendOrderConfirmationEmail, sendAdminOrderAlert } from "@/lib/email";
 import { getPaymentConfig } from "@/lib/payments";
+import { sendMetaCapiPurchase } from "@/lib/meta-capi";
 import catalogProducts from "@/data/products-catalog.json";
 
 export const dynamic = "force-dynamic";
@@ -218,6 +219,30 @@ export async function POST(request) {
       } catch (insertErr) {
         console.warn("[Confirm Session] Supabase write notice:", insertErr.message);
       }
+    }
+
+    // Server-side Meta Conversions API (CAPI) purchase tracking
+    try {
+      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
+      const userAgent = request.headers.get("user-agent") || "";
+      const nameParts = (orderRecord.customer_name || "").trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      await sendMetaCapiPurchase({
+        orderId: orderRecord.id,
+        amount: orderRecord.total_amount,
+        currency: orderRecord.currency || "EUR",
+        email: orderRecord.customer_email || "",
+        phone: orderRecord.customer_phone || "",
+        firstName,
+        lastName,
+        clientIp,
+        userAgent,
+        sourceUrl: `https://www.wallbedking.com/${locale}/thanks`,
+      });
+    } catch (capiErr) {
+      console.warn("[Confirm Session] Meta CAPI notice:", capiErr);
     }
 
     // 4. Send Confirmation Emails if not yet sent

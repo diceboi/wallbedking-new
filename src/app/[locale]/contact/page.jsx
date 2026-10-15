@@ -16,7 +16,7 @@ import {
 import { useLocale } from "@/context/LocaleContext";
 
 export default function ContactPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, market } = useLocale();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -103,10 +103,13 @@ export default function ContactPage() {
                     </p>
                     <div className="mt-1 flex flex-col gap-1">
                       <a
-                        href="tel:01928583469"
+                        href={`tel:${market?.phoneRaw || "+441928583469"}`}
                         className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
                       >
-                        01928 583 469 <span className="text-xs font-normal text-wbk-brown">(Mon–Fri 9–20, Sat 9–12)</span>
+                        {market?.phone || t("header.phone", "01928 583 469")}{" "}
+                        <span className="text-xs font-normal text-wbk-brown">
+                          {t("header.openingHoursParen", "(Mon–Fri 9–20, Sat 9–12)")}
+                        </span>
                       </a>
                     </div>
                   </div>

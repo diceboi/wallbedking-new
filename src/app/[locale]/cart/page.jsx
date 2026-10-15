@@ -25,7 +25,7 @@ import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 
 export default function CartPage() {
-  const { t, formatPrice, localizedHref, locale } = useLocale();
+  const { t, formatPrice, localizedHref, locale, market } = useLocale();
   const {
     items,
     updateQuantity,
@@ -520,7 +520,9 @@ export default function CartPage() {
                     </h4>
                     <p className="text-[11px] text-wbk-brown leading-relaxed mt-0.5">
                       {t("header.callSpecialists", "Call our product specialists")}:{" "}
-                      <strong className="text-wbk-black">{t("header.phone", "01928 583 469")}</strong>
+                      <a href={`tel:${market?.phoneRaw || "+441928583469"}`} className="hover:text-wbk-green transition-colors">
+                        <strong className="text-wbk-black">{market?.phone || t("header.phone", "01928 583 469")}</strong>
+                      </a>
                     </p>
                   </div>
                 </div>

@@ -1,15 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { IconPhone } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 
 export function ContactInfo() {
-  const { t } = useLocale();
+  const { t, market } = useLocale();
+
+  const phone = market?.phone || t("header.phone", "01928 583 469");
+  const phoneRaw = market?.phoneRaw || t("header.phoneRaw", "+441928583469");
 
   return (
-    <Link
-      href="tel:01928583469"
+    <a
+      href={`tel:${phoneRaw}`}
       className="hidden xl:flex items-center gap-3 py-1 px-2 text-wbk-black hover:text-wbk-green transition-colors group cursor-pointer"
       title={t("header.callSpecialists", "Call our product specialists")}
     >
@@ -21,12 +23,12 @@ export function ContactInfo() {
           {t("header.specialistAdvice", "Specialist Advice")}
         </span>
         <span className="text-xs font-medium text-wbk-black tracking-wide">
-          {t("header.phone", "01928 583 469")}{" "}
+          {phone}{" "}
           <span className="text-[10px] text-wbk-brown font-normal">
             {t("header.openingHoursParen", "(Mon-Fri 9-20, Sat 9-12)")}
           </span>
         </span>
       </div>
-    </Link>
+    </a>
   );
 }

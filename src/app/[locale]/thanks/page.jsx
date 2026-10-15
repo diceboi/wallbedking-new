@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { trackPurchase } from "@/lib/analytics";
 
 function ThanksContent() {
   const searchParams = useSearchParams();
@@ -138,6 +139,30 @@ function ThanksContent() {
     }
     return null;
   }, [confirmedOrder, street, city, zip, country]);
+
+  // Fire Ecommerce & Marketing Purchase Conversion (Once per order)
+  const hasTrackedPurchaseRef = useRef(false);
+  useEffect(() => {
+    if (hasTrackedPurchaseRef.current) return;
+    if (effectiveOrderId && effectiveAmount !== null && effectiveAmount > 0) {
+      hasTrackedPurchaseRef.current = true;
+      trackPurchase({
+        orderId: effectiveOrderId,
+        total: effectiveAmount,
+        currency: effectiveCurrency,
+        items: confirmedOrder?.items || [],
+        email: effectiveEmail,
+        locale,
+      });
+    }
+  }, [
+    effectiveOrderId,
+    effectiveAmount,
+    effectiveCurrency,
+    effectiveEmail,
+    confirmedOrder?.items,
+    locale,
+  ]);
 
   return (
     <div className="bg-wbk-white min-h-screen font-poppins py-16 sm:py-20">
