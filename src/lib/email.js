@@ -255,6 +255,32 @@ export function resolveOrderLocale(order, fallback = "en") {
   return "en";
 }
 
+export function formatOrderShippingAddress(order) {
+  if (!order) return "";
+  let s = order.shipping_address;
+  if (typeof s === "string") {
+    try {
+      s = JSON.parse(s);
+    } catch {
+      return s;
+    }
+  }
+  if (!s || typeof s !== "object") return "";
+  const street = [s.address || s.address1, s.address2].filter(Boolean).join(", ");
+  const city = s.city || "";
+  const post = s.postcode || s.postal_code || "";
+  const country = s.country || "";
+
+  const parts = [];
+  if (street) parts.push(street);
+  if (post && city) parts.push(`${post} ${city}`);
+  else if (city) parts.push(city);
+  else if (post) parts.push(post);
+  if (country) parts.push(country);
+
+  return parts.join(", ");
+}
+
 export const UPDATE_NOTICE_I18N = {
   en: {
     subjectPrefix: "[UPDATED] ",
@@ -501,7 +527,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.deliveryTo}</strong></td>
-                  <td style="padding: 4px 0; text-align: right; color: #111;">${order.shipping_address?.address ? `${order.shipping_address.address}, ` : ""}${order.shipping_address?.city || ""}, ${order.shipping_address?.country || "UK"}</td>
+                  <td style="padding: 4px 0; text-align: right; color: #111;">${formatOrderShippingAddress(order) || (order.shipping_address?.city ? `${order.shipping_address.city}, ${order.shipping_address.country || "UK"}` : "Standard Delivery")}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.paymentMethod}</strong></td>
@@ -594,7 +620,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;"><a href="mailto:${order.customer_email}">${order.customer_email}</a></td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Phone:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_phone || "Not provided"}</td></tr>
               <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Method:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.payment_method || "Online"}</td></tr>
-              <tr><td style="padding: 10px 14px; color: #666;"><strong>Delivery Area:</strong></td><td style="padding: 10px 14px;">${order.shipping_address?.city || ""}, ${order.shipping_address?.country || "UK"}</td></tr>
+              <tr><td style="padding: 10px 14px; color: #666;"><strong>Delivery Area:</strong></td><td style="padding: 10px 14px;">${formatOrderShippingAddress(order) || `${order.shipping_address?.city || ""}, ${order.shipping_address?.country || "UK"}`}</td></tr>
             </table>
 
             <div style="margin-top: 16px; text-align: center;">
