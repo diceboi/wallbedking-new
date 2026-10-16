@@ -6,7 +6,7 @@
  * Set RESEND_API_KEY in .env.local to activate automated outbound emails.
  */
 
-import { BANK_DETAILS, getBankI18n } from "./bank-details";
+import { BANK_DETAILS, getBankI18n } from "./bank-details.js";
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "delivery@wallbedking.co.uk";
@@ -1056,7 +1056,7 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
     const isBank = (order.payment_method || "").toLowerCase().includes("bank");
     const isPaid = (order.payment_status || "").toLowerCase() === "paid";
     const bankI18n = getBankI18n(effectiveLocale);
-
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
     let emailSubject = `${subjectPrefix}${i18n.subjectPrefix} - #${order.id}`;
     if (isBank && !isPaid && !isUpdate) {
       emailSubject = `[Wall Bed King] ${bankI18n.thankYouTitle} - #${order.id}`;
