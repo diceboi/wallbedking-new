@@ -301,7 +301,16 @@ export function getLocalizedProductExtendedDescription(product, locale = "en") {
 export function getStorefrontProductUrl(p, locale = "en") {
   const prefix = locale ? `/${locale}` : "/en";
   if (!p) return `${prefix}/products`;
+  if (p.link) {
+    if (p.link.startsWith("http")) return p.link;
+    return `${prefix}${p.link.startsWith("/") ? "" : "/"}${p.link}`;
+  }
   const category = (p.parent_category || "beds").toLowerCase();
+
+  // Route standalone test products directly to their product page
+  if (String(p.name || "").toUpperCase().includes("TEST") || p.id === 235 || p.id === 236) {
+    return `${prefix}/products/beds/${p.slug || `test-product-${p.id}`}`;
+  }
 
   if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
     const isMorphy = Boolean(

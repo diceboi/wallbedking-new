@@ -296,6 +296,16 @@ export const formatCatalogItem = (item) => {
   const isIntegrated = item.type === "Integrated" || item.has_3d;
   const isMorphy = (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY");
 
+  const fallbackImg = isMorphy
+    ? `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`
+    : `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`;
+  const fallbackHover = isMorphy
+    ? `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`
+    : `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`;
+
+  const itemImg = item.image || fallbackImg;
+  const itemHov = item.hover_image || item.hoverImage || fallbackHover;
+
   const gallery =
     item.product_images && item.product_images.length > 0
       ? item.product_images.map((src, i) => ({
@@ -305,22 +315,29 @@ export const formatCatalogItem = (item) => {
       : isIntegrated
       ? GLOBAL_GALLERY_TEMPLATES
       : [
-          { src: item.image, alt: item.name },
-          { src: item.hover_image || item.hoverImage, alt: `${item.name} Open` },
+          { src: itemImg, alt: item.name },
+          { src: itemHov, alt: `${item.name} Open` },
         ];
 
   const sizeInfo = getProductSizeInfo(item);
+  const parentCat = (item.parent_category || "beds").toLowerCase();
+  const itemLink =
+    item.link ||
+    (parentCat === "beds" || parentCat === "morphy-beds" || parentCat === "traditional-beds"
+      ? `/products/beds/${item.slug || `test-product-${item.id}`}`
+      : `/products/${parentCat}/${item.slug || item.id}`);
 
   return {
     ...item,
     id: `wbk-${item.id}`,
     rawId: item.id,
     title: item.name,
-    image: item.image,
-    hoverImage: item.hover_image || item.hoverImage,
-    hover_image: item.hover_image || item.hoverImage,
+    image: itemImg,
+    hoverImage: itemHov,
+    hover_image: itemHov,
+    link: itemLink,
     isMorphy,
-    badge: isMorphy ? "MORPHY™" : item.badge,
+    badge: isMorphy ? "MORPHY™" : (item.badge || "Traditional"),
     price: `£${item.price_gbp}`,
     numericPrice: item.price_gbp,
     salePrice: item.sale_price_gbp ? `£${item.sale_price_gbp}` : null,
@@ -1121,17 +1138,6 @@ export const FLAGSHIP_CABINETS = [
 // Helper to determine if a product or variant is visible on storefront
 export const isProductVisible = (item) => {
   if (!item) return false;
-  const name = String(item.name || "").trim().toUpperCase();
-  const sku = String(item.sku || "").trim().toUpperCase();
-  if (
-    name.includes("TEST PRODUCT") ||
-    sku.startsWith("TEST-") ||
-    item.id === 235 ||
-    item.id === 236 ||
-    Number(item.price_gbp) <= 1
-  ) {
-    return false;
-  }
   const vis = String(item.visibility || "").trim().toLowerCase();
   if (vis === "hidden" || vis === "false" || item.visibility === false) return false;
   if (item.is_visible === false) return false;
@@ -1202,43 +1208,53 @@ export function getDynamicFlagships(templates, rawItems, category) {
         return template;
       }
 
-    const gbpList = matching.map((m) => m.price_gbp).filter((v) => v != null && !isNaN(v));
-    const euroList = matching.map((m) => m.price_euro ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
-    const usdList = matching.map((m) => m.price_usd ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
+      // Isolate legitimate products for flagship starting price calculations (exclude test beds or abnormally low test prices)
+      const validForPricing = matching.filter(
+        (m) =>
+          Number(m.price_gbp) > 5 &&
+          !String(m.name || "").toUpperCase().includes("TEST") &&
+          m.id !== 235 &&
+          m.id !== 236
+      );
+      const pricingPool = validForPricing.length > 0 ? validForPricing : matching;
 
-    const minGbp = gbpList.length > 0 ? Math.min(...gbpList) : template.price_gbp;
-    const minEuro = euroList.length > 0 ? Math.min(...euroList) : template.price_euro;
-    const minUsd = usdList.length > 0 ? Math.min(...usdList) : template.price_usd;
+      const gbpList = pricingPool.map((m) => m.price_gbp).filter((v) => v != null && !isNaN(v));
+      const euroList = pricingPool.map((m) => m.price_euro ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
+      const usdList = pricingPool.map((m) => m.price_usd ?? m.price_gbp).filter((v) => v != null && !isNaN(v));
 
-    // Dynamic Sale Calculations from matching variants in database
-    const salePercents = matching
-      .map((m) => Number(m.sale_percent))
-      .filter((v) => !isNaN(v) && v > 0);
-    const dynamicSalePercent = salePercents.length > 0 ? Math.max(...salePercents) : null;
+      const minGbp = gbpList.length > 0 ? Math.min(...gbpList) : template.price_gbp;
+      const minEuro = euroList.length > 0 ? Math.min(...euroList) : template.price_euro;
+      const minUsd = usdList.length > 0 ? Math.min(...usdList) : template.price_usd;
 
-    const saleGbpList = matching
-      .map((m) => Number(m.sale_price_gbp))
-      .filter((v) => !isNaN(v) && v > 0);
-    const saleEuroList = matching
-      .map((m) => Number(m.sale_price_euro ?? m.sale_price_gbp))
-      .filter((v) => !isNaN(v) && v > 0);
-    const saleUsdList = matching
-      .map((m) => Number(m.sale_price_usd ?? m.sale_price_gbp))
-      .filter((v) => !isNaN(v) && v > 0);
+      // Dynamic Sale Calculations from matching variants in database
+      const salePercents = pricingPool
+        .map((m) => Number(m.sale_percent))
+        .filter((v) => !isNaN(v) && v > 0);
+      const dynamicSalePercent = salePercents.length > 0 ? Math.max(...salePercents) : null;
 
-    const minSaleGbp = saleGbpList.length > 0 ? Math.min(...saleGbpList) : null;
-    const minSaleEuro = saleEuroList.length > 0 ? Math.min(...saleEuroList) : null;
-    const minSaleUsd = saleUsdList.length > 0 ? Math.min(...saleUsdList) : null;
+      const saleGbpList = pricingPool
+        .map((m) => Number(m.sale_price_gbp))
+        .filter((v) => !isNaN(v) && v > 0);
+      const saleEuroList = pricingPool
+        .map((m) => Number(m.sale_price_euro ?? m.sale_price_gbp))
+        .filter((v) => !isNaN(v) && v > 0);
+      const saleUsdList = pricingPool
+        .map((m) => Number(m.sale_price_usd ?? m.sale_price_gbp))
+        .filter((v) => !isNaN(v) && v > 0);
 
-    const saleFixGbpList = matching
-      .map((m) => Number(m.sale_fix_gbp))
-      .filter((v) => !isNaN(v) && v > 0);
-    const saleFixEuroList = matching
-      .map((m) => Number(m.sale_fix_euro))
-      .filter((v) => !isNaN(v) && v > 0);
-    const saleFixUsdList = matching
-      .map((m) => Number(m.sale_fix_usd))
-      .filter((v) => !isNaN(v) && v > 0);
+      const minSaleGbp = saleGbpList.length > 0 ? Math.min(...saleGbpList) : null;
+      const minSaleEuro = saleEuroList.length > 0 ? Math.min(...saleEuroList) : null;
+      const minSaleUsd = saleUsdList.length > 0 ? Math.min(...saleUsdList) : null;
+
+      const saleFixGbpList = pricingPool
+        .map((m) => Number(m.sale_fix_gbp))
+        .filter((v) => !isNaN(v) && v > 0);
+      const saleFixEuroList = pricingPool
+        .map((m) => Number(m.sale_fix_euro))
+        .filter((v) => !isNaN(v) && v > 0);
+      const saleFixUsdList = pricingPool
+        .map((m) => Number(m.sale_fix_usd))
+        .filter((v) => !isNaN(v) && v > 0);
 
     const maxSaleFixGbp = saleFixGbpList.length > 0 ? Math.max(...saleFixGbpList) : null;
     const maxSaleFixEuro = saleFixEuroList.length > 0 ? Math.max(...saleFixEuroList) : null;
@@ -1579,10 +1595,21 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
   ];
 
   const dynamicFlagshipMorphyBeds = dynamicFlagshipBeds.filter((b) => b.isMorphy);
-  const dynamicFlagshipTraditionalBeds = dynamicFlagshipBeds.filter((b) => !b.isMorphy);
+  const standaloneTraditionalBeds = visibleItems
+    .filter(
+      (p) =>
+        p.parent_category === "traditional-beds" &&
+        (String(p.name || "").toUpperCase().includes("TEST") || p.id === 235 || p.id === 236)
+    )
+    .map(formatCatalogItem);
+
+  const dynamicFlagshipTraditionalBeds = [
+    ...dynamicFlagshipBeds.filter((b) => !b.isMorphy),
+    ...standaloneTraditionalBeds,
+  ];
 
   const allProducts = {
-    beds: dynamicFlagshipBeds,
+    beds: [...dynamicFlagshipBeds, ...standaloneTraditionalBeds],
     "morphy-beds": dynamicFlagshipMorphyBeds,
     "traditional-beds": dynamicFlagshipTraditionalBeds,
     sofas: dynamicFlagshipSofas,
