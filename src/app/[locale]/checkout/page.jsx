@@ -395,6 +395,8 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [completedOrderTotal, setCompletedOrderTotal] = useState(null);
+  const [completedDeliveryLabel, setCompletedDeliveryLabel] = useState("");
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -465,6 +467,9 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (data.success && data.orderId) {
+        const orderPayableTotal = Number(data.total ?? data.order?.total_amount ?? finalTotal);
+        setCompletedOrderTotal(orderPayableTotal);
+        setCompletedDeliveryLabel(selectedDeliveryDetails?.label || "");
         setOrderNumber(data.orderId);
         setIsSubmitting(false);
         setOrderComplete(true);
@@ -496,6 +501,7 @@ export default function CheckoutPage() {
     const isBank = (formData.paymentMethod || "").toLowerCase().includes("bank");
     const bankI18n = getBankI18n(locale);
     const isUk = locale === "en" || (formData.country || "").toLowerCase().includes("kingdom");
+    const payableTotal = completedOrderTotal !== null ? completedOrderTotal : finalTotal;
 
     return (
       <div className="bg-wbk-white min-h-screen font-poppins py-16">
@@ -645,7 +651,7 @@ export default function CheckoutPage() {
                       {bankI18n.amountToTransferLabel}:
                     </span>
                     <span className="font-bold text-2xl text-emerald-800 font-poppins">
-                      {formatPrice(finalTotal)}
+                      {formatPrice(payableTotal)}
                     </span>
                   </div>
                 </div>
@@ -721,7 +727,8 @@ export default function CheckoutPage() {
                   {t("checkout.shippingMethod", "Shipping & Service")}
                 </h4>
                 <p className="text-wbk-black font-medium">
-                  {selectedDeliveryDetails?.label ||
+                  {completedDeliveryLabel ||
+                    selectedDeliveryDetails?.label ||
                     "Standard UK Mainland Delivery"}
                 </p>
                 <p className="pt-2 text-[11px] leading-relaxed">
@@ -736,7 +743,7 @@ export default function CheckoutPage() {
                 {isBank ? bankI18n.amountToTransferLabel : t("checkout.totalPaid", "Total Paid")}
               </span>
               <span className="font-bold text-xl text-wbk-black font-poppins">
-                {formatPrice(finalTotal)}
+                {formatPrice(payableTotal)}
               </span>
             </div>
           </div>
