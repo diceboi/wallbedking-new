@@ -30,6 +30,15 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "installation_manual", "installation_video"
 ]);
 
+const NUMERIC_COLUMNS = new Set([
+  "width", "length", "height", "frame_width", "folded_up_height",
+  "folded_up_projection", "folded_down_projection", "frame_distance_from_ground",
+  "mounting_frame_height", "maximum_mattress_depth", "weight", "stock",
+  "price_gbp", "price_euro", "price_usd", "sale_percent",
+  "sale_fix_gbp", "sale_fix_euro", "sale_fix_usd",
+  "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+]);
+
 export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
@@ -62,7 +71,11 @@ export async function PATCH(request, { params }) {
     const supabasePayload = {};
     for (const [key, val] of Object.entries(body)) {
       if (ALLOWED_SUPABASE_COLUMNS.has(key) && val !== undefined) {
-        supabasePayload[key] = val;
+        if (NUMERIC_COLUMNS.has(key)) {
+          supabasePayload[key] = (val === "" || val === null) ? null : Number(val);
+        } else {
+          supabasePayload[key] = val;
+        }
       }
     }
     if (body.hoverImage && !supabasePayload.hover_image) {
@@ -109,11 +122,23 @@ export async function PATCH(request, { params }) {
           },
           body: JSON.stringify(supabasePayload),
         });
-      }
 
-      if (!res.ok) {
-        const retryErr = await res.text();
-        return NextResponse.json({ success: false, error: retryErr }, { status: res.status });
+        if (!res.ok) {
+          const retryErr = await res.text();
+          let parsedRetryErr = retryErr;
+          try {
+            const errObj = JSON.parse(retryErr);
+            parsedRetryErr = errObj.message || errObj.details || retryErr;
+          } catch (_) {}
+          return NextResponse.json({ success: false, error: parsedRetryErr }, { status: res.status });
+        }
+      } else {
+        let parsedErr = err;
+        try {
+          const errObj = JSON.parse(err);
+          parsedErr = errObj.message || errObj.details || err;
+        } catch (_) {}
+        return NextResponse.json({ success: false, error: parsedErr }, { status: res.status });
       }
     }
 

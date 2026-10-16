@@ -27,6 +27,15 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "installation_manual", "installation_video"
 ]);
 
+const NUMERIC_COLUMNS = new Set([
+  "width", "length", "height", "frame_width", "folded_up_height",
+  "folded_up_projection", "folded_down_projection", "frame_distance_from_ground",
+  "mounting_frame_height", "maximum_mattress_depth", "weight", "stock",
+  "price_gbp", "price_euro", "price_usd", "sale_percent",
+  "sale_fix_gbp", "sale_fix_euro", "sale_fix_usd",
+  "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+]);
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -120,7 +129,11 @@ export async function POST(request) {
     const payload = {};
     for (const [key, val] of Object.entries(body)) {
       if (ALLOWED_SUPABASE_COLUMNS.has(key) && val !== undefined) {
-        payload[key] = val;
+        if (NUMERIC_COLUMNS.has(key)) {
+          payload[key] = (val === "" || val === null) ? null : Number(val);
+        } else {
+          payload[key] = val;
+        }
       }
     }
     if (body.hoverImage && !payload.hover_image) {
