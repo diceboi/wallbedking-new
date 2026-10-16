@@ -244,10 +244,20 @@ export function mapUrlToLocale(currentPath, targetLocale) {
     }
 
     if (subParts.length === 2) {
+      // If switching to US and category is mattresses, redirect to /us/products
+      if (normTarget === "us" && canonicalCat === "mattresses") {
+        return `/${normTarget}/products${querySuffix}${hashSuffix}`;
+      }
       return `/${normTarget}/products/${targetCatSlug}${effectiveQuery}${hashSuffix}`;
     }
     // Product detail: products/[category]/[product]
     const productSlug = subParts.slice(2).join("/");
+
+    // If switching to US and category is mattresses, redirect to /us/products
+    if (normTarget === "us" && canonicalCat === "mattresses") {
+      return `/${normTarget}/products${querySuffix}${hashSuffix}`;
+    }
+
     return `/${normTarget}/products/${targetCatSlug}/${productSlug}${querySuffix}${hashSuffix}`;
   }
 

@@ -84,8 +84,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "IT",
     flag: "🇮🇹",
-    phone: "06 4521 4986",
-    phoneRaw: "+390645214986",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Spedizione gratuita in Italia",
   },
 };

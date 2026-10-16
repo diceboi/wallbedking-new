@@ -16,7 +16,7 @@ export const STORE_HOURS = "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00";
 export function getStorePhone(locale = "en") {
   const norm = (locale || "en").toLowerCase();
   if (norm === "de") return "032 2210 99855";
-  if (norm === "it") return "06 4521 4986";
+  if (norm === "it") return "+44 1928 583 469";
   if (norm === "en") return "01928 583 469";
   return "+44 1928 583 469";
 }

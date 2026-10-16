@@ -16,9 +16,10 @@ import "swiper/css/navigation";
 import { POPULAR_PRODUCTS_OVERVIEW } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { isProductAvailableInLocale } from "@/lib/products";
 
 export function ProductSlider() {
-  const { t, localizedHref } = useLocale();
+  const { locale, t, localizedHref } = useLocale();
   const { allFlagships } = useProductCatalog();
   const [offset, setOffset] = useState(32);
   const prevRef = useRef(null);
@@ -45,24 +46,29 @@ export function ProductSlider() {
   }, []);
 
   const products = useMemo(() => {
-    if (!allFlagships || allFlagships.length === 0) return POPULAR_PRODUCTS_OVERVIEW;
-    return POPULAR_PRODUCTS_OVERVIEW.map((item) => {
-      const slug = item.link?.split("/").pop();
-      const match = allFlagships.find((f) => f.slug === slug);
-      if (match) {
-        return {
-          ...item,
-          title: match.title || match.name || item.title,
-          price: match.price || item.price,
-          numericPrice: match.numericPrice || item.numericPrice,
-          image: match.image || item.image,
-          hoverImage: match.hoverImage || match.hover_image || item.hoverImage,
-          tags: match.tags || item.tags,
-        };
-      }
-      return null;
-    }).filter(Boolean);
-  }, [allFlagships]);
+    const list = (!allFlagships || allFlagships.length === 0)
+      ? POPULAR_PRODUCTS_OVERVIEW
+      : POPULAR_PRODUCTS_OVERVIEW.map((item) => {
+          const slug = item.link?.split("/").pop();
+          const match = allFlagships.find((f) => f.slug === slug);
+          if (match) {
+            return {
+              ...item,
+              ...match,
+              title: match.title || match.name || item.title,
+              price: match.price || item.price,
+              numericPrice: match.numericPrice || item.numericPrice,
+              image: match.image || item.image,
+              hoverImage: match.hoverImage || match.hover_image || item.hoverImage,
+              tags: match.tags || item.tags,
+              available_locales: match.available_locales || item.available_locales,
+            };
+          }
+          return item;
+        });
+
+    return list.filter((p) => isProductAvailableInLocale(p, locale));
+  }, [allFlagships, locale]);
 
   return (
     <section className="py-16 md:py-24 bg-white overflow-hidden">

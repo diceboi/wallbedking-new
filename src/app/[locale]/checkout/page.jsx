@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
@@ -35,6 +35,12 @@ import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 import { formatSizeLabel } from "@/lib/i18n";
 import { BANK_DETAILS, getBankI18n } from "@/lib/bank-details";
+import {
+  getDefaultCountry,
+  getDeliveryCountries,
+  getPostcodePlaceholder,
+  getCityPlaceholder,
+} from "@/lib/countries";
 
 export default function CheckoutPage() {
   const { t, formatPrice, localizedHref, locale } = useLocale();
@@ -99,7 +105,7 @@ export default function CheckoutPage() {
     address2: "",
     city: "",
     postcode: "",
-    country: "United Kingdom",
+    country: getDefaultCountry(locale),
     paymentMethod: initialMethod, // 'card' | 'paypal' | 'bank'
     cardNumber: "",
     cardExpiry: "",
@@ -107,6 +113,24 @@ export default function CheckoutPage() {
     cardName: "",
     agreeTerms: true,
   });
+
+  const deliveryCountries = useMemo(() => getDeliveryCountries(locale), [locale]);
+
+  // Synchronize country when storefront locale changes (if customer has not set a custom country)
+  const previousLocaleRef = useRef(locale);
+  useEffect(() => {
+    const prevLoc = previousLocaleRef.current;
+    if (prevLoc !== locale) {
+      previousLocaleRef.current = locale;
+      const prevDefault = getDefaultCountry(prevLoc);
+      if (!formData.country || formData.country === prevDefault) {
+        setFormData((prev) => ({
+          ...prev,
+          country: getDefaultCountry(locale),
+        }));
+      }
+    }
+  }, [locale, formData.country]);
 
   // Ensure active payment method stays valid if gateway availability changes
   useEffect(() => {
@@ -242,7 +266,7 @@ export default function CheckoutPage() {
         apartment: formData.address2?.trim() || "",
         city: formData.city.trim(),
         postcode: formData.postcode.trim().toUpperCase(),
-        country: formData.country || "United Kingdom",
+        country: formData.country || getDefaultCountry(locale),
         phone: formData.phone?.trim() || "",
         isDefault: savedAddresses.length === 0,
       });
@@ -1322,6 +1346,7 @@ export default function CheckoutPage() {
                       id="city"
                       type="text"
                       required
+                      placeholder={getCityPlaceholder(locale, formData.country)}
                       value={formData.city}
                       onChange={(e) => handleChange("city", e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
@@ -1339,7 +1364,7 @@ export default function CheckoutPage() {
                       id="postcode"
                       type="text"
                       required
-                      placeholder="e.g. SW1A 1AA"
+                      placeholder={getPostcodePlaceholder(locale, formData.country)}
                       value={formData.postcode}
                       onChange={(e) => handleChange("postcode", e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white uppercase transition-colors"
@@ -1357,14 +1382,13 @@ export default function CheckoutPage() {
                       id="country"
                       value={formData.country}
                       onChange={(e) => handleChange("country", e.target.value)}
-                      className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
+                      className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors cursor-pointer"
                     >
-                      <option value="United Kingdom">
-                        United Kingdom (Free UK Delivery)
-                      </option>
-                      <option value="Isle of Man">Isle of Man</option>
-                      <option value="Channel Islands">Channel Islands</option>
-                      <option value="Ireland">Republic of Ireland</option>
+                      {deliveryCountries.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

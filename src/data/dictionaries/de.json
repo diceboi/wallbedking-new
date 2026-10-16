@@ -638,5 +638,14 @@
     "requestNewLink": "Neuen Link anfordern",
     "newLinkSent": "Neuer Link versendet",
     "emailLabel": "E-Mail-Adresse"
+  },
+  "product": {
+    "regionUnavailableBadge": "Regionale Verfügbarkeit",
+    "notAvailableTitle": "Produkt in diesem Markt nicht verfügbar",
+    "notAvailableDesc": "Dieses Produkt wird in dem von Ihnen ausgewählten Land / Storefront derzeit leider nicht angeboten oder geliefert.",
+    "notSoldInStore": "In diesem Store nicht verfügbar",
+    "exploreAvailable": "Verfügbare Produkte ansehen",
+    "redirectCancelled": "Automatische Weiterleitung pausiert.",
+    "redirectingIn": "Weiterleitung zum Katalog in"
   }
 }

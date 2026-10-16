@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IconMenu2,
-  IconExternalLink,
-  IconSparkles,
-} from "@tabler/icons-react";
+import { IconMenu2, IconExternalLink, IconSparkles } from "@tabler/icons-react";
 import { ADMIN_NAV_ITEMS } from "./AdminSidebar";
 
 export function AdminHeader({ title, onOpenMobile }) {
@@ -16,7 +12,7 @@ export function AdminHeader({ title, onOpenMobile }) {
   const matchedNav = ADMIN_NAV_ITEMS.find((item) =>
     item.href === "/admin"
       ? pathname === "/admin"
-      : pathname.startsWith(item.href)
+      : pathname.startsWith(item.href),
   );
 
   const displayTitle = title || matchedNav?.label || "Admin Console";
@@ -58,7 +54,7 @@ export function AdminHeader({ title, onOpenMobile }) {
         </Link>
 
         <Link
-          href="/en"
+          href="/"
           target="_blank"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#9A9A8C] hover:bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors shadow-xs cursor-pointer"
         >

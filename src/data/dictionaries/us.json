@@ -640,5 +640,14 @@
     "requestNewLink": "Send New Reset Link",
     "newLinkSent": "New Reset Link Dispatched",
     "emailLabel": "Email Address"
+  },
+  "product": {
+    "regionUnavailableBadge": "Regional Availability",
+    "notAvailableTitle": "Product Not Available in This Market",
+    "notAvailableDesc": "We're sorry, but this product is not currently offered or available for delivery in your selected country / storefront.",
+    "notSoldInStore": "Not available in this storefront",
+    "exploreAvailable": "Explore Available Products",
+    "redirectCancelled": "Automatic redirect paused.",
+    "redirectingIn": "Redirecting to catalog in"
   }
 }

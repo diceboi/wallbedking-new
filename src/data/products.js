@@ -1708,6 +1708,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     link: "/products/mattresses/comfort-mattress",
     categoryKey: "mattresses",
     has3D: false,
+    available_locales: ["en", "de", "fr", "es", "por", "it"],
   },
   {
     id: "popular-cabinets",

@@ -34,8 +34,8 @@
     "configuratorCta": "Configuratore 3D",
     "cart": "Carrello",
     "account": "Il Mio Account",
-    "phone": "06 4521 4986",
-    "phoneRaw": "+390645214986",
+    "phone": "+44 1928 583 469",
+    "phoneRaw": "+441928583469",
     "callNow": "Consulenza Specializzata",
     "openingHours": "Lun-Ven 9:00 - 20:00, Sab 9:00 - 12:00",
     "specialistAdvice": "Consulenza Specializzata",
@@ -638,5 +638,14 @@
     "requestNewLink": "Invia nuovo link",
     "newLinkSent": "Nuovo link inviato",
     "emailLabel": "Indirizzo e-mail"
+  },
+  "product": {
+    "regionUnavailableBadge": "Disponibilità regionale",
+    "notAvailableTitle": "Prodotto non disponibile in questo mercato",
+    "notAvailableDesc": "Siamo spiacenti, ma questo prodotto non è attualmente disponibile per l'acquisto o la spedizione nel paese selezionato.",
+    "notSoldInStore": "Non disponibile in questo negozio",
+    "exploreAvailable": "Scopri i prodotti disponibili",
+    "redirectCancelled": "Reindirizzamento automatico sospeso.",
+    "redirectingIn": "Reindirizzamento al catalogo tra"
   }
 }

@@ -31,6 +31,9 @@ import {
   IconExternalLink,
   IconClock,
   IconBrandYoutube,
+  IconMapPinOff,
+  IconAlertCircle,
+  IconArrowRight,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
@@ -86,6 +89,8 @@ export default function ProductDetailPage() {
 
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+  const [redirectCancelled, setRedirectCancelled] = useState(false);
 
   // Imperial vs Metric measurement helpers
   const isUS = locale === "us";
@@ -874,6 +879,28 @@ export default function ProductDetailPage() {
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
   const isAvailableInRegion = isProductAvailableInLocale(displayProduct, locale);
+  const isRegionallyUnavailable = Boolean(
+    locale &&
+      !isAvailableInRegion &&
+      (!familyVariants || familyVariants.length === 0 || !familyVariants.some((v) => isProductAvailableInLocale(v, locale)))
+  );
+
+  // Auto-redirect countdown if product is not available in current storefront region
+  useEffect(() => {
+    if (!isRegionallyUnavailable || redirectCancelled || !mounted) return;
+
+    if (redirectCountdown <= 0) {
+      router.replace(localizedHref ? localizedHref("/products") : `/${locale}/products`);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isRegionallyUnavailable, redirectCountdown, redirectCancelled, mounted, router, localizedHref, locale]);
+
   const isOutOfStock =
     !isAvailableInRegion ||
     (displayProduct?.stock !== undefined &&
@@ -1520,21 +1547,80 @@ export default function ProductDetailPage() {
         activeProduct.is_visible === false)
   );
 
-  if (isHiddenProduct) {
+  if (isHiddenProduct || isRegionallyUnavailable) {
     return (
-      <div className="bg-wbk-white min-h-[60vh] flex flex-col items-center justify-center px-4 py-20 text-center space-y-4">
-        <h1 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
-          {t("categories.noProductsFound", "Product Unavailable")}
-        </h1>
-        <p className="text-sm font-poppins text-wbk-brown max-w-md">
-          {t("product.unavailableDesc", "This product is currently not available for purchase.")}
-        </p>
-        <Link
-          href={localizedHref ? localizedHref("/products") : "/products"}
-          className="inline-block mt-4 px-6 py-2.5 bg-wbk-black text-white text-xs font-poppins font-medium rounded-full hover:bg-wbk-green hover:text-wbk-black transition-colors"
-        >
-          {t("categories.allProducts", "View all products")}
-        </Link>
+      <div className="bg-wbk-white min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 sm:py-24 text-center font-poppins">
+        <Container size="sm">
+          <div className="max-w-md mx-auto p-6 sm:p-10 border border-wbk-lightgrey bg-[#FBF9F8] shadow-md space-y-6 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-wbk-gold/15 border border-wbk-gold/40 flex items-center justify-center text-wbk-gold shadow-xs">
+              <IconMapPinOff size={30} strokeWidth={1.8} />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-wbk-gold block">
+                {t("product.regionUnavailableBadge", "Regional Availability")}
+              </span>
+              <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                {t("product.notAvailableTitle", "Product Not Available in This Market")}
+              </h1>
+              <p className="text-xs text-wbk-brown leading-relaxed max-w-sm mx-auto">
+                {t(
+                  "product.notAvailableDesc",
+                  "We're sorry, but this product is not currently offered or available for delivery in your selected country / storefront."
+                )}
+              </p>
+            </div>
+
+            {/* Product snapshot */}
+            <div className="p-3.5 bg-white border border-wbk-lightgrey/80 flex items-center gap-3 text-left">
+              <div className="w-12 h-12 bg-[#F4F2F0] shrink-0 flex items-center justify-center overflow-hidden">
+                <img
+                  src={displayProduct?.image || activeProduct?.image || "/hero2.webp"}
+                  alt={displayProduct?.title || "Product"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-wbk-black truncate">
+                  {localizedProductName || displayProduct?.title || displayProduct?.name}
+                </div>
+                <div className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-0.5">
+                  <IconAlertCircle size={13} className="shrink-0" />
+                  <span>{t("product.notSoldInStore", "Not available in this storefront")}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col gap-2.5">
+              <Link
+                href={localizedHref ? localizedHref("/products") : `/${locale}/products`}
+                className="w-full py-3.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
+              >
+                <span>{t("product.exploreAvailable", "Explore Available Products")}</span>
+                <IconArrowRight size={15} />
+              </Link>
+            </div>
+
+            <p className="text-[11px] text-wbk-brown">
+              {redirectCancelled ? (
+                <span>{t("product.redirectCancelled", "Automatic redirect paused.")}</span>
+              ) : (
+                <span>
+                  {t("product.redirectingIn", "Redirecting to catalog in")}{" "}
+                  <strong className="font-semibold text-wbk-black">{redirectCountdown}s</strong>...{" "}
+                  <button
+                    type="button"
+                    onClick={() => setRedirectCancelled(true)}
+                    className="underline hover:text-wbk-black cursor-pointer font-medium ml-1"
+                  >
+                    {t("common.cancel", "Cancel")}
+                  </button>
+                </span>
+              )}
+            </p>
+          </div>
+        </Container>
       </div>
     );
   }
