@@ -1,5 +1,7 @@
 /**
  * Centralized Storefront Delivery Countries and Regional Address Configurations
+ * Strictly limited to Wall Bed King operational markets:
+ * France, Germany, Portugal, Italy, Spain, USA (and UK for English storefront).
  */
 
 export const DEFAULT_COUNTRY_BY_LOCALE = {
@@ -17,62 +19,133 @@ export function getDefaultCountry(locale) {
   return DEFAULT_COUNTRY_BY_LOCALE[norm] || "United Kingdom";
 }
 
-// Master list of European delivery countries
-const EUROPEAN_COUNTRIES = [
-  { value: "Italy", label: "Italy / Italia", code: "IT" },
-  { value: "France", label: "France", code: "FR" },
-  { value: "Germany", label: "Germany / Deutschland", code: "DE" },
-  { value: "Spain", label: "Spain / España", code: "ES" },
-  { value: "Portugal", label: "Portugal", code: "PT" },
-  { value: "Austria", label: "Austria / Österreich", code: "AT" },
-  { value: "Belgium", label: "Belgium / Belgique / België", code: "BE" },
-  { value: "Netherlands", label: "Netherlands / Nederland", code: "NL" },
-  { value: "Ireland", label: "Ireland (Republic of Ireland)", code: "IE" },
-  { value: "Switzerland", label: "Switzerland / Schweiz / Suisse", code: "CH" },
-  { value: "Luxembourg", label: "Luxembourg", code: "LU" },
-  { value: "Poland", label: "Poland / Polska", code: "PL" },
-  { value: "Denmark", label: "Denmark / Danmark", code: "DK" },
-  { value: "Sweden", label: "Sweden / Sverige", code: "SE" },
-  { value: "Finland", label: "Finland / Suomi", code: "FI" },
-  { value: "Czech Republic", label: "Czech Republic / Česko", code: "CZ" },
-  { value: "Hungary", label: "Hungary / Magyarország", code: "HU" },
-  { value: "Greece", label: "Greece / Ελλάδα", code: "GR" },
-  { value: "Croatia", label: "Croatia / Hrvatska", code: "HR" },
-  { value: "Romania", label: "Romania / România", code: "RO" },
-  { value: "Slovakia", label: "Slovakia / Slovensko", code: "SK" },
-  { value: "Slovenia", label: "Slovenia / Slovenija", code: "SI" },
-  { value: "San Marino", label: "San Marino", code: "SM" },
-  { value: "Monaco", label: "Monaco", code: "MC" },
-  { value: "Andorra", label: "Andorra", code: "AD" },
+// Master list of permitted European delivery countries: strictly France, Germany, Portugal, Italy, Spain
+const PERMITTED_EU_COUNTRIES = [
+  {
+    value: "France",
+    code: "FR",
+    names: {
+      en: "France",
+      fr: "France",
+      de: "Frankreich (France)",
+      es: "Francia (France)",
+      por: "França (France)",
+      it: "Francia (France)",
+    },
+  },
+  {
+    value: "Germany",
+    code: "DE",
+    names: {
+      en: "Germany",
+      fr: "Allemagne (Germany)",
+      de: "Deutschland (Germany)",
+      es: "Alemania (Germany)",
+      por: "Alemanha (Germany)",
+      it: "Germania (Germany)",
+    },
+  },
+  {
+    value: "Portugal",
+    code: "PT",
+    names: {
+      en: "Portugal",
+      fr: "Portugal",
+      de: "Portugal",
+      es: "Portugal",
+      por: "Portugal",
+      it: "Portogallo (Portugal)",
+    },
+  },
+  {
+    value: "Italy",
+    code: "IT",
+    names: {
+      en: "Italy",
+      fr: "Italie (Italy)",
+      de: "Italien (Italy)",
+      es: "Italia (Italy)",
+      por: "Itália (Italy)",
+      it: "Italia (Italy)",
+    },
+  },
+  {
+    value: "Spain",
+    code: "ES",
+    names: {
+      en: "Spain",
+      fr: "Espagne (Spain)",
+      de: "Spanien (Spain)",
+      es: "España (Spain)",
+      por: "Espanha (Spain)",
+      it: "Spagna (Spain)",
+    },
+  },
 ];
 
+const USA_COUNTRY = {
+  value: "United States",
+  code: "US",
+  names: {
+    en: "United States (USA)",
+    fr: "États-Unis (USA)",
+    de: "Vereinigte Staaten (USA)",
+    es: "Estados Unidos (USA)",
+    por: "Estados Unidos (USA)",
+    it: "Stati Uniti (USA)",
+  },
+};
+
+const UK_COUNTRY = {
+  value: "United Kingdom",
+  code: "GB",
+  names: {
+    en: "United Kingdom (Free Mainland Delivery)",
+    fr: "Royaume-Uni (UK)",
+    de: "Vereinigtes Königreich (UK)",
+    es: "Reino Unido (UK)",
+    por: "Reino Unido (UK)",
+    it: "Regno Unito (UK)",
+  },
+};
+
 /**
- * Returns available delivery countries prioritized for the specific storefront locale
+ * Returns available delivery countries prioritized for the specific storefront locale.
+ * Allowed countries are strictly: France, Germany, Portugal, Italy, Spain, USA (and UK on en).
  */
 export function getDeliveryCountries(locale) {
   const norm = (locale || "en").toLowerCase();
 
+  const getLabel = (c) => c.names[norm] || c.names.en || c.value;
+
   if (norm === "en") {
     return [
-      { value: "United Kingdom", label: "United Kingdom (Free Mainland Delivery)", code: "GB" },
-      { value: "Isle of Man", label: "Isle of Man", code: "IM" },
-      { value: "Channel Islands", label: "Channel Islands (Jersey & Guernsey)", code: "JE" },
-      { value: "Ireland", label: "Republic of Ireland", code: "IE" },
+      { value: UK_COUNTRY.value, label: getLabel(UK_COUNTRY), code: UK_COUNTRY.code },
+      { value: USA_COUNTRY.value, label: getLabel(USA_COUNTRY), code: USA_COUNTRY.code },
+      ...PERMITTED_EU_COUNTRIES.map((c) => ({
+        value: c.value,
+        label: getLabel(c),
+        code: c.code,
+      })),
     ];
   }
 
   if (norm === "us") {
     return [
-      { value: "United States", label: "United States (Nationwide Delivery)", code: "US" },
-      { value: "Canada", label: "Canada", code: "CA" },
+      { value: USA_COUNTRY.value, label: "United States (Nationwide Delivery)", code: USA_COUNTRY.code },
+      ...PERMITTED_EU_COUNTRIES.map((c) => ({
+        value: c.value,
+        label: getLabel(c),
+        code: c.code,
+      })),
     ];
   }
 
-  // Determine primary country for this European storefront
-  const primaryCountry = DEFAULT_COUNTRY_BY_LOCALE[norm] || "Germany";
+  // European storefronts: de, fr, es, por, it
+  const primaryCountryValue = DEFAULT_COUNTRY_BY_LOCALE[norm] || "Germany";
 
-  const primaryObj = EUROPEAN_COUNTRIES.find((c) => c.value === primaryCountry);
-  const otherCountries = EUROPEAN_COUNTRIES.filter((c) => c.value !== primaryCountry);
+  const primaryObj = PERMITTED_EU_COUNTRIES.find((c) => c.value === primaryCountryValue);
+  const otherEu = PERMITTED_EU_COUNTRIES.filter((c) => c.value !== primaryCountryValue);
 
   const localizedPrimaryLabel = {
     it: "Italia (Italy) — Spedizione Gratuita",
@@ -82,11 +155,22 @@ export function getDeliveryCountries(locale) {
     por: "Portugal — Envio Gratuito",
   }[norm];
 
-  const formattedPrimary = primaryObj
-    ? [{ ...primaryObj, label: localizedPrimaryLabel || primaryObj.label }]
+  const primaryList = primaryObj
+    ? [{ value: primaryObj.value, label: localizedPrimaryLabel || getLabel(primaryObj), code: primaryObj.code }]
     : [];
 
-  return [...formattedPrimary, ...otherCountries];
+  const otherList = otherEu.map((c) => ({
+    value: c.value,
+    label: getLabel(c),
+    code: c.code,
+  }));
+
+  // EU storefronts include the 5 EU countries + USA
+  return [
+    ...primaryList,
+    ...otherList,
+    { value: USA_COUNTRY.value, label: getLabel(USA_COUNTRY), code: USA_COUNTRY.code },
+  ];
 }
 
 /**
@@ -96,16 +180,16 @@ export function getPostcodePlaceholder(locale, country) {
   const c = (country || "").toLowerCase();
   const loc = (locale || "").toLowerCase();
 
-  if (c.includes("kingdom") || c.includes("isle of man") || c.includes("channel") || loc === "en") {
+  if (c.includes("kingdom") || loc === "en") {
     return "e.g. SW1A 1AA";
   }
-  if (c.includes("united states") || loc === "us") {
+  if (c.includes("united states") || c.includes("usa") || loc === "us") {
     return "e.g. 90210";
   }
   if (c.includes("ital") || loc === "it") {
     return "es. 00185 (CAP)";
   }
-  if (c.includes("germany") || c.includes("deutschland") || c.includes("austria") || loc === "de") {
+  if (c.includes("germany") || c.includes("deutschland") || loc === "de") {
     return "z.B. 10115 (PLZ)";
   }
   if (c.includes("france") || loc === "fr") {
@@ -128,7 +212,7 @@ export function getCityPlaceholder(locale, country) {
   const loc = (locale || "").toLowerCase();
 
   if (c.includes("kingdom") || loc === "en") return "e.g. London";
-  if (c.includes("united states") || loc === "us") return "e.g. New York";
+  if (c.includes("united states") || c.includes("usa") || loc === "us") return "e.g. New York";
   if (c.includes("ital") || loc === "it") return "es. Roma";
   if (c.includes("germany") || c.includes("deutschland") || loc === "de") return "z.B. Berlin";
   if (c.includes("france") || loc === "fr") return "ex. Paris";

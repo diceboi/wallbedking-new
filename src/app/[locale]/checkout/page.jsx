@@ -132,6 +132,19 @@ export default function CheckoutPage() {
     }
   }, [locale, formData.country]);
 
+  // Ensure selected country is valid for the current delivery countries list
+  useEffect(() => {
+    if (deliveryCountries.length > 0 && formData.country) {
+      const isValid = deliveryCountries.some((c) => c.value === formData.country);
+      if (!isValid) {
+        setFormData((prev) => ({
+          ...prev,
+          country: deliveryCountries[0].value,
+        }));
+      }
+    }
+  }, [deliveryCountries, formData.country]);
+
   // Ensure active payment method stays valid if gateway availability changes
   useEffect(() => {
     if (!isStripeAvailable && formData.paymentMethod === "card") {

@@ -88,19 +88,30 @@ export async function getCheckoutSettingsForLocale(locale = "en") {
  */
 export async function saveCheckoutSettings(updatedSettings) {
   // 1. Save locally first to guarantee persistence
-  saveLocalCheckoutSettings(updatedSettings);
+  const savedLocally = saveLocalCheckoutSettings(updatedSettings);
+  if (!savedLocally) {
+    throw new Error("Failed to write checkout settings file to disk.");
+  }
 
-  // 2. Best-effort sync to Supabase if table exists
+  // 2. Best-effort sync to Supabase only if table exists
   try {
-    const entries = Object.entries(updatedSettings);
-    for (const [locale, config] of entries) {
-      await supabaseAdmin.from("checkout_settings").upsert(
-        {
-          locale,
-          config,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "locale" }
+    const { error: testErr } = await supabaseAdmin
+      .from("checkout_settings")
+      .select("locale")
+      .limit(1);
+
+    if (!testErr) {
+      await Promise.allSettled(
+        Object.entries(updatedSettings).map(([locale, config]) =>
+          supabaseAdmin.from("checkout_settings").upsert(
+            {
+              locale,
+              config,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "locale" }
+          )
+        )
       );
     }
   } catch (err) {

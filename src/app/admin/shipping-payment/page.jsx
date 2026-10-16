@@ -55,10 +55,14 @@ export default function AdminShippingPaymentPage() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/checkout-settings");
+      const res = await fetch(`/api/admin/checkout-settings?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       const data = await res.json();
       if (data.success && data.settings) {
         setSettings(data.settings);
+        setHasChanges(false);
       } else {
         showToast("error", "Failed to load checkout settings.");
       }
@@ -197,22 +201,28 @@ export default function AdminShippingPaymentPage() {
     try {
       const res = await fetch("/api/admin/checkout-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
         body: JSON.stringify({ settings }),
       });
       const data = await res.json();
       if (data.success) {
+        if (data.settings) {
+          setSettings(data.settings);
+        }
         setHasChanges(false);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("wbk_settings_updated"));
           localStorage.setItem("wbk_settings_updated", Date.now().toString());
         }
-        showToast("success", "Shipping and payment settings saved successfully!");
+        showToast("success", "Beállítások sikeresen elmentve!");
       } else {
-        showToast("error", data.error || "Failed to save settings.");
+        showToast("error", data.error || "A mentés nem sikerült.");
       }
     } catch (err) {
-      showToast("error", "Network error while saving.");
+      showToast("error", "Hálózati hiba történt a mentés során.");
     } finally {
       setSaving(false);
     }
@@ -434,15 +444,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Stripe (Credit / Debit Card)</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handlePaymentToggle("stripe")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.payments?.stripe?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.payments?.stripe?.enabled ? "Active on Storefront" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Enables direct Visa, Mastercard, AMEX, Apple Pay, and Google Pay card checkout.
@@ -508,15 +520,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">PayPal Smart Buttons</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handlePaymentToggle("paypal")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.payments?.paypal?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.payments?.paypal?.enabled ? "Active on Storefront" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Native PayPal checkout with embedded Card fields and Pay in 3 / Pay Later funding.
@@ -582,15 +596,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Express Quick Pay in Cart</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handlePaymentToggle("quickPayInCart")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.payments?.quickPayInCart?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.payments?.quickPayInCart?.enabled ? "Enabled" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Shows instant 1-click payment buttons directly on the <code className="bg-white px-1">/cart</code> page and slide-over cart drawer.
@@ -626,15 +642,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Direct Bank Transfer / Wire</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handlePaymentToggle("bankTransfer")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.payments?.bankTransfer?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.payments?.bankTransfer?.enabled ? "Active on Storefront" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Allows customers to place orders and receive bank wire (HSBC / BACS / SEPA) transfer instructions.
@@ -734,15 +752,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Economy / Free Delivery</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handleShippingToggle("delivery_option_economy")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.shipping?.delivery_option_economy?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.shipping?.delivery_option_economy?.enabled ? "Active" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Standard inclusive delivery option. Usually free or included in price.
@@ -824,15 +844,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Standard Delivery</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handleShippingToggle("delivery_option_standard")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.shipping?.delivery_option_standard?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.shipping?.delivery_option_standard?.enabled ? "Active" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Faster dispatch option with tracking (normally 1 - 2 weeks).
@@ -914,15 +936,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Express Delivery</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handleShippingToggle("delivery_option_express")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.shipping?.delivery_option_express?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.shipping?.delivery_option_express?.enabled ? "Active" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Priority express courier dispatch (normally 2 - 5 working days).
@@ -1004,15 +1028,17 @@ export default function AdminShippingPaymentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-wbk-black">Warehouse Collection (Free)</span>
-                        <span
-                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        <button
+                          type="button"
+                          onClick={() => handleShippingToggle("delivery_option_pickup")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
                             currentConfig?.shipping?.delivery_option_pickup?.enabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {currentConfig?.shipping?.delivery_option_pickup?.enabled ? "Active" : "Disabled"}
-                        </span>
+                        </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
                         Free pickup directly from warehouse (usually active in UK only).
