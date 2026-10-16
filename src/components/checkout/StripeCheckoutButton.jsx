@@ -12,7 +12,7 @@ export function StripeCheckoutButton({
   customerDetails = null,
   onBeforeCheckout = null,
 }) {
-  const { locale, market } = useLocale();
+  const { locale, market, formatPrice, t } = useLocale();
   const {
     items,
     subtotal,
@@ -181,14 +181,14 @@ export function StripeCheckoutButton({
         {isLoading ? (
           <>
             <IconLoader2 size={18} className="animate-spin" />
-            <span>Connecting to Secure Stripe Checkout...</span>
+            <span>{t ? t("checkout.connectingStripe", "Connecting to Secure Stripe Checkout...") : "Connecting to Secure Stripe Checkout..."}</span>
           </>
         ) : (
           <>
             <IconLock size={16} />
             <span>{label}</span>
             <span className="font-mono text-[11px] bg-white/20 px-2 py-0.5 rounded-full tracking-normal">
-              £{total.toLocaleString()}
+              {formatPrice ? formatPrice(total) : `£${total.toLocaleString()}`}
             </span>
           </>
         )}

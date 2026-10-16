@@ -9,7 +9,7 @@ import { getPaymentConfig } from "@/lib/payments";
 
 export function PayPalCheckoutButton({ disabled = false, customerDetails = null, onBeforeCheckout = null }) {
   const { user } = useAuth();
-  const { locale, market } = useLocale();
+  const { locale, market, t } = useLocale();
   const paymentConfig = getPaymentConfig(locale, market?.currency);
   const paypalClientId = paymentConfig.paypalClientId;
   const paypalCurrency = paymentConfig.paypalCurrency;
@@ -345,7 +345,7 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
       {isProcessing && (
         <div className="flex items-center justify-center gap-2 p-3 bg-wbk-gold/10 text-wbk-black text-xs font-semibold">
           <IconLoader2 size={16} className="animate-spin text-wbk-gold" />
-          <span>Finalizing your PayPal payment...</span>
+          <span>{t ? t("checkout.finalizingPayPal", "Finalizing your PayPal payment...") : "Finalizing your PayPal payment..."}</span>
         </div>
       )}
 
@@ -358,7 +358,7 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
 
       {!sdkReady && !sdkError && (
         <div className="h-12 bg-gray-100 animate-pulse flex items-center justify-center text-xs text-gray-500">
-          Loading PayPal payment options...
+          {t ? t("checkout.loadingPayPal", "Loading PayPal payment options...") : "Loading PayPal payment options..."}
         </div>
       )}
 

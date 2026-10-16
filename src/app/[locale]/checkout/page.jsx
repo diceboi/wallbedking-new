@@ -491,7 +491,7 @@ export default function CheckoutPage() {
   if (!isMounted) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center font-poppins text-sm text-wbk-brown">
-        Loading checkout...
+        {t("checkout.loadingCheckout", "Loading checkout...")}
       </div>
     );
   }
@@ -677,8 +677,10 @@ export default function CheckoutPage() {
                   {formData.firstName}!
                 </h1>
                 <p className="text-sm text-wbk-brown max-w-md mx-auto leading-relaxed">
-                  We have received your order and our dispatch team is preparing
-                  your precision-engineered wall bed.
+                  {t(
+                    "checkout.dispatchNotice",
+                    "We have received your order and our dispatch team is preparing your precision-engineered wall bed.",
+                  )}
                 </p>
               </div>
             </>
@@ -719,7 +721,9 @@ export default function CheckoutPage() {
                   {formData.city}, {formData.postcode}
                 </p>
                 <p>{formData.country}</p>
-                <p className="pt-1">Tel: {formData.phone || "Not provided"}</p>
+                <p className="pt-1">
+                  Tel: {formData.phone || t("checkout.notProvided", "Not provided")}
+                </p>
               </div>
 
               <div>
@@ -732,8 +736,10 @@ export default function CheckoutPage() {
                     "Standard UK Mainland Delivery"}
                 </p>
                 <p className="pt-2 text-[11px] leading-relaxed">
-                  Our courier will contact you 24 hours prior to dispatch with
-                  an exact 2-hour delivery window.
+                  {t(
+                    "checkout.courierNotice",
+                    "Our courier will contact you 24 hours prior to dispatch with an exact 2-hour delivery window.",
+                  )}
                 </p>
               </div>
             </div>
@@ -1150,8 +1156,10 @@ export default function CheckoutPage() {
                       className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
                     />
                     <span className="text-[10.5px] text-wbk-brown mt-1 block">
-                      We'll send your invoice, dimensions guide, and tracking
-                      link here.
+                      {t(
+                        "checkout.emailNotice",
+                        "We'll send your invoice, dimensions guide, and tracking link here.",
+                      )}
                     </span>
                   </div>
 
@@ -1172,7 +1180,10 @@ export default function CheckoutPage() {
                       className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
                     />
                     <span className="text-[10.5px] text-wbk-brown mt-1 block">
-                      For courier delivery scheduling SMS notifications.
+                      {t(
+                        "checkout.phoneNotice",
+                        "For courier delivery scheduling SMS notifications.",
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1233,11 +1244,11 @@ export default function CheckoutPage() {
                           <span>
                             {activeSavedAddr.recipient ||
                               activeSavedAddr.name ||
-                              "Saved Recipient"}
+                              t("checkout.savedRecipient", "Saved Recipient")}
                           </span>
                           {activeSavedAddr.isDefault && (
                             <span className="text-[10px] uppercase font-bold text-wbk-gold tracking-wider bg-wbk-gold/10 px-1.5 py-0.5 border border-wbk-gold/30">
-                              Default
+                              {t("checkout.default", "Default")}
                             </span>
                           )}
                         </div>
@@ -1331,7 +1342,7 @@ export default function CheckoutPage() {
                       id="address1"
                       type="text"
                       required
-                      placeholder="House name / number and street"
+                      placeholder={t("checkout.addressPlaceholder", "House name / number and street")}
                       value={formData.address1}
                       onChange={(e) => handleChange("address1", e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
@@ -1348,7 +1359,7 @@ export default function CheckoutPage() {
                     <input
                       id="address2"
                       type="text"
-                      placeholder="Apartment, suite, unit, building floor"
+                      placeholder={t("checkout.address2Placeholder", "Apartment, suite, unit, building floor (Optional)")}
                       value={formData.address2}
                       onChange={(e) => handleChange("address2", e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white transition-colors"
@@ -1639,7 +1650,7 @@ export default function CheckoutPage() {
                                     {checkoutSettings?.payments?.stripe?.label || "Credit / Debit Card"}
                                   </span>
                                   <span className="text-[11px] text-wbk-brown font-normal">
-                                    Secure Stripe card payment (Visa, Mastercard, AMEX, Apple Pay)
+                                    {t("checkout.stripeSublabel", "Secure Stripe card payment (Visa, Mastercard, AMEX, Apple Pay)")}
                                   </span>
                                 </div>
                               </div>
@@ -1658,7 +1669,7 @@ export default function CheckoutPage() {
                                     {checkoutSettings?.payments?.bankTransfer?.label || "Bank Wire Transfer"}
                                   </span>
                                   <span className="text-[11px] text-wbk-brown font-normal">
-                                    Pay directly into our bank account
+                                    {t("checkout.payDirectlyBank", "Pay directly into our bank account")}
                                   </span>
                                 </div>
                               </div>
@@ -1673,7 +1684,7 @@ export default function CheckoutPage() {
 
                     return (
                       <div className="p-4 bg-amber-50 text-amber-800 text-xs border border-amber-200">
-                        No payment gateways are currently enabled for this country. Please contact support.
+                        {t("checkout.noGateways", "No payment gateways are currently enabled for this country. Please contact support.")}
                       </div>
                     );
                   })()}
@@ -1705,9 +1716,10 @@ export default function CheckoutPage() {
                       </div>
 
                       <p className="text-xs text-wbk-brown leading-relaxed">
-                        You will be redirected to Stripe’s secure 256-bit
-                        encrypted checkout to complete your transaction with
-                        card or Apple Pay.
+                        {t(
+                          "checkout.stripeDesc",
+                          "You will be redirected to Stripe’s secure 256-bit encrypted checkout to complete your transaction with card or Apple Pay.",
+                        )}
                       </p>
 
                       <div className="pt-2">
@@ -1731,13 +1743,15 @@ export default function CheckoutPage() {
                           PayPal Checkout
                         </span>
                         <span className="text-[10px] text-wbk-brown">
-                          Pay with balance, card, or Pay in 3
+                          {t("checkout.paypalPayIn3", "Pay with balance, card, or Pay in 3")}
                         </span>
                       </div>
 
                       <p className="text-xs text-wbk-brown leading-relaxed">
-                        Click the PayPal button below to log into your PayPal
-                        account and confirm your payment safely.
+                        {t(
+                          "checkout.paypalDesc",
+                          "Click the PayPal button below to log into your PayPal account and confirm your payment safely.",
+                        )}
                       </p>
 
                       <div className="pt-2">
@@ -1814,14 +1828,14 @@ export default function CheckoutPage() {
                     href={localizedHref("/terms")}
                     className="text-wbk-black underline hover:text-wbk-green"
                   >
-                    Terms & Conditions
+                    {t("checkout.termsLink", "Terms & Conditions")}
                   </Link>{" "}
-                  and{" "}
+                  {t("checkout.andText", "and")}{" "}
                   <Link
                     href={localizedHref("/privacy")}
                     className="text-wbk-black underline hover:text-wbk-green"
                   >
-                    Privacy Policy
+                    {t("checkout.privacyLink", "Privacy Policy")}
                   </Link>
                   .
                 </div>
@@ -1836,7 +1850,10 @@ export default function CheckoutPage() {
                     {t("checkout.yourOrder", "Your Order")}
                   </h2>
                   <span className="text-xs text-wbk-brown font-poppins">
-                    {items.length} {items.length === 1 ? "item" : "items"}
+                    {items.length}{" "}
+                    {items.length === 1
+                      ? t("common.item", "item")
+                      : t("common.items", "items")}
                   </span>
                 </div>
 
@@ -1907,7 +1924,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-wbk-brown/80 pt-1">
-                    <span>Includes 20% UK VAT</span>
+                    <span>{t("checkout.vatIncluded", "Includes 20% VAT")}</span>
                     <span>{formatPrice(vatIncluded)}</span>
                   </div>
                 </div>
