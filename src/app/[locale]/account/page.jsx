@@ -78,7 +78,7 @@ const SAMPLE_ORDERS = [
 ];
 
 export default function AccountPage() {
-  const { locale, t } = useLocale();
+  const { locale, t, localizedHref } = useLocale();
   const {
     user,
     loading,

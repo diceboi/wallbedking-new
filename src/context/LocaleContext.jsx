@@ -8,6 +8,7 @@ import {
   MARKETS,
   normalizeLocale,
   formatPrice as formatPriceUtil,
+  localizedHref as localizedHrefUtil,
 } from "@/lib/i18n";
 import { mapUrlToLocale } from "@/data/slugs";
 
@@ -138,7 +139,7 @@ export function useLocale() {
       t: (_, fallback = "") => fallback,
       switchLocale: () => {},
       formatPrice: (amount) => formatPriceUtil(amount, norm),
-      localizedHref: (path) => localizedHref(path, norm),
+      localizedHref: (path) => localizedHrefUtil(path, norm),
     };
   }
   return ctx;
