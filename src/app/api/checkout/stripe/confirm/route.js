@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { sendOrderConfirmationEmail, sendAdminOrderAlert } from "@/lib/email";
 import { getPaymentConfig } from "@/lib/payments";
 import { sendMetaCapiPurchase } from "@/lib/meta-capi";
+import { generateOrderNumber } from "@/lib/orders";
 import catalogProducts from "@/data/products-catalog.json";
 
 export const dynamic = "force-dynamic";
@@ -150,7 +151,7 @@ export async function POST(request) {
     } = sessionData;
 
     const effectiveCartId = cart_id || sessionCartId || "";
-    const effectiveOrderId = order_id || (sessionCartId && sessionCartId.startsWith("WBK-") ? sessionCartId : `WBK-${Date.now().toString().slice(-6)}`);
+    const effectiveOrderId = order_id || (sessionCartId && sessionCartId.startsWith("WBK-") ? sessionCartId : (await generateOrderNumber()));
     const customerEmailClean = (customer_email || "").trim().toLowerCase();
 
     // 2. Check if order already exists in Supabase

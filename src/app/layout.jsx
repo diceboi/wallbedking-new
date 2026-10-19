@@ -15,6 +15,7 @@ import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import { CategoriesProvider } from "@/context/CategoriesContext";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { ZendeskChat } from "@/components/chat/ZendeskChat";
 import "./globals.css";
 
 /* ── Google Font: Poppins ─────────────────────────────────── */
@@ -67,6 +68,7 @@ export default async function RootLayout({ children }) {
                     <UserDrawer />
                     <PasswordResetModal />
                     <CookieConsent />
+                    <ZendeskChat />
                   </MenuContextProvider>
                 </CartProvider>
               </CategoriesProvider>

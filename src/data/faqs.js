@@ -23,9 +23,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "Can I pay over the telephone or upon collection?",
+      question: "Can I contact your customer support team or order over the telephone?",
       answer:
-        "Yes! If you prefer not to order online, our customer service specialists can take your order and payment directly over the telephone during business hours. Alternatively, if you choose Click & Collect from our Harlow warehouse, you can pay in advance or inspect upon arrival.",
+        "Yes! Our dedicated customer support specialists can answer technical questions, advise on room dimensions, or take your order by phone during opening hours:\n\n• Telephone Support: 01928 583 469 (International: +44 1928 583 469)\n\nOpening Hours: Monday to Friday: 9:00 – 20:00 (GMT), Saturday: 9:00 – 12:00 (GMT). You can also email us anytime at support@wallbedking.com.",
     },
     {
       id: "pay-4",
@@ -156,9 +156,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "Posso encomendar e pagar por telefone ou no ato de levantamento?",
+      question: "Posso contactar o apoio ao cliente ou encomendar por telefone?",
       answer:
-        "Sim! Se preferir não encomendar online, a nossa equipa de apoio ao cliente pode registar a sua encomenda e pagamento diretamente por telefone durante o horário de funcionamento. Caso prefira o levantamento direto no armazém, pode efetuar o pagamento antecipadamente ou verificar os artigos na receção.",
+        "Sim! A nossa equipa de apoio ao cliente está disponível para esclarecer dúvidas, dar aconselhamento técnico e registar a sua encomenda por telefone no horário de funcionamento:\n\n• Linha direta de apoio: +44 1928 583 469 (Reino Unido: 01928 583 469)\n\nHorário de atendimento: Segunda a sexta-feira das 9:00 às 20:00, sábado das 9:00 às 12:00 (GMT). Em alternativa, pode contactar-nos a qualquer momento por email para support@wallbedking.com.",
     },
     {
       id: "pay-4",
@@ -289,9 +289,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "Kann ich telefonisch oder bei Abholung bezahlen?",
+      question: "Kann ich den Kundenservice telefonisch erreichen oder telefonisch bestellen?",
       answer:
-        "Ja! Wenn Sie nicht online bestellen möchten, unterstützt Sie unser Kundenservice-Team gerne während der Geschäftszeiten per Telefon. Bei direkter Werksabholung können Sie im Voraus bezahlen oder die Ware vor Ort in Empfang nehmen.",
+        "Ja! Wenn Sie nicht online bestellen möchten oder technische Fragen haben, berät Sie unser Kundenservice-Team gerne während der Geschäftszeiten per Telefon:\n\n• Telefon-Kundenservice: +44 1928 583 469 (aus dem UK: 01928 583 469)\n\nGeschäftszeiten: Montag bis Freitag von 9:00 bis 20:00 Uhr, Samstag von 9:00 bis 12:00 Uhr (GMT). Alternativ erreichen Sie uns jederzeit per E-Mail unter support@wallbedking.com oder über unser Kontaktformular.",
     },
     {
       id: "pay-4",
@@ -422,9 +422,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "Puis-je commander et payer par téléphone ou lors du retrait ?",
+      question: "Puis-je joindre le service client ou commander par téléphone ?",
       answer:
-        "Oui ! Si vous préférez ne pas commander en ligne, nos spécialistes du service client peuvent enregistrer votre commande directement par téléphone pendant les heures d'ouverture. En cas de retrait à l'entrepôt, vous pouvez régler à l'avance ou lors de l'enlèvement.",
+        "Oui ! Si vous préférez ne pas commander en ligne ou si vous avez des questions techniques, nos conseillers spécialisés sont à votre écoute par téléphone aux horaires d'ouverture :\n\n• Ligne directe : +44 1928 583 469 (Royaume-Uni: 01928 583 469)\n\nHoraires : Du lundi au vendredi de 9h à 20h, le samedi de 9h à 12h (GMT). Vous pouvez également nous écrire à tout moment par email à support@wallbedking.com.",
     },
     {
       id: "pay-4",
@@ -555,9 +555,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "¿Puedo realizar el pago por teléfono o en el punto de recogida?",
+      question: "¿Puedo contactar con atención al cliente o realizar un pedido por teléfono?",
       answer:
-        "¡Sí! Si prefiere no tramitar su pedido por la web, nuestro equipo de atención al cliente puede gestionar su pedido y cobro directamente por teléfono durante el horario comercial. También puede coordinar la recogida directa en nuestras instalaciones.",
+        "¡Sí! Si prefiere no tramitar su pedido por la web o necesita asesoramiento sobre medidas y montaje, nuestro equipo especializado le atenderá con mucho gusto por teléfono:\n\n• Línea telefónica directa: +44 1928 583 469 (Reino Unido: 01928 583 469)\n\nHorario de atención: De lunes a viernes de 9:00 a 20:00, sábados de 9:00 a 12:00 (GMT). También puede escribirnos en cualquier momento a support@wallbedking.com.",
     },
     {
       id: "pay-4",
@@ -688,9 +688,9 @@ const FAQS_BY_LOCALE = {
     {
       id: "pay-3",
       category: "payments",
-      question: "Posso ordinare e pagare telefonicamente o al ritiro?",
+      question: "Posso contattare l'assistenza clienti o ordinare telefonicamente?",
       answer:
-        "Sì! Se preferisci non ordinare online, il nostro team di assistenza clienti può gestire il tuo ordine e il pagamento al telefono durante gli orari di apertura, oppure puoi concordare il ritiro diretto presso i nostri stabilimenti.",
+        "Sì! Se preferisci ordinare al telefono o desideri una consulenza tecnica su misure e montaggio, i nostri specialisti sono a tua completa disposizione:\n\n• Linea telefonica diretta: +44 1928 583 469 (Regno Unito: 01928 583 469)\n\nOrari di apertura: Dal lunedì al venerdì dalle 9:00 alle 20:00, sabato dalle 9:00 alle 12:00 (GMT). In alternativa puoi scriverci in qualunque momento a support@wallbedking.com.",
     },
     {
       id: "pay-4",

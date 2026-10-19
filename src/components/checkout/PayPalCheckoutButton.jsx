@@ -108,55 +108,103 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
                 console.warn("PayPal onBeforeCheckout error:", err);
               }
             }
-            const finalTotal = Number(current.total).toFixed(2);
-            const discountMult = current.subtotal > 0 ? Math.max(0, (current.subtotal - current.discount) / current.subtotal) : 1;
             const curr = current.paypalCurrency || "GBP";
+            const rawItems = current.items || [];
 
-            const paypalItems = current.items.map((it) => {
-              const unitPrice = (Math.round(Number(it.price) * discountMult * 100) / 100).toFixed(2);
-              const opt = [it.options?.size, it.options?.orientation].filter(Boolean).join(" ");
+            // Calculate precise monetary values in cents to avoid IEEE 754 rounding mismatches
+            const parsedItems = rawItems.map((it) => {
+              const priceCents = Math.round((Math.max(0, Number(it.price)) || 0) * 100);
+              const qty = Math.max(1, parseInt(it.quantity, 10) || 1);
+              const opt = [it.options?.size, it.options?.orientation, it.options?.color].filter(Boolean).join(" - ");
               return {
-                name: String(it.title || "Product").slice(0, 120),
-                description: String(opt || "Standard").slice(0, 120),
-                sku: String(it.rawId || it.productId || it.id).slice(0, 60),
-                unit_amount: {
-                  currency_code: curr,
-                  value: unitPrice,
-                },
-                tax: { currency_code: curr, value: "0.00" },
-                quantity: String(it.quantity || 1),
-                category: "PHYSICAL_GOODS",
+                it,
+                priceCents,
+                qty,
+                totalCents: priceCents * qty,
+                opt,
               };
             });
 
-            if (current.shipping > 0) {
-              paypalItems.push({
-                name: String(current.selectedDeliveryDetails?.label || "Delivery").slice(0, 120),
-                description: "Delivery option",
-                sku: `DELIVERY_${current.deliveryOption.toUpperCase()}`,
-                unit_amount: {
+            const itemsTotalCents = parsedItems.reduce((acc, currItem) => acc + currItem.totalCents, 0);
+            const shippingCents = Math.round((Math.max(0, Number(current.shipping)) || 0) * 100);
+            const finalTotalCents = Math.round((Math.max(0, Number(current.total)) || 0) * 100);
+
+            // Calculate exact discount needed so that itemsTotal + shipping - discount === finalTotal
+            const effectiveDiscountCents = Math.max(0, itemsTotalCents + shippingCents - finalTotalCents);
+
+            const finalTotal = (finalTotalCents / 100).toFixed(2);
+            const itemsTotalStr = (itemsTotalCents / 100).toFixed(2);
+            const shippingStr = (shippingCents / 100).toFixed(2);
+            const discountStr = (effectiveDiscountCents / 100).toFixed(2);
+
+            // Construct human-readable order summary description (max 127 chars for PayPal)
+            // e.g.: "Classic Vertical Wall Bed (Double 135x190) x1"
+            const itemsSummary = parsedItems
+              .map(({ it, opt, qty }) => {
+                const optText = opt ? ` (${opt})` : "";
+                return `${it.title || it.name || "Product"}${optText} x${qty}`;
+              })
+              .join(", ");
+
+            const orderDescription = (itemsSummary || "Wall Bed King Order").slice(0, 127);
+
+            // Build itemized list for PayPal invoice and receipt emails
+            const paypalItems = parsedItems.map(({ it, priceCents, qty, opt }) => ({
+              name: String(it.title || it.name || "Wall Bed King Product").slice(0, 127),
+              description: String(opt || "Standard").slice(0, 127),
+              sku: String(it.rawId || it.productId || it.id || "WBK").slice(0, 60),
+              unit_amount: {
+                currency_code: curr,
+                value: (priceCents / 100).toFixed(2),
+              },
+              quantity: String(qty),
+              category: "PHYSICAL_GOODS",
+            }));
+
+            // Construct purchase_unit payload
+            const purchaseUnit = {
+              description: orderDescription,
+              custom_id: String(current.customCartId || "").slice(0, 127),
+              soft_descriptor: paypalDescriptor,
+              amount: {
+                currency_code: curr,
+                value: finalTotal,
+              },
+            };
+
+            // If we have items and the breakdown matches the final total, provide detailed itemization
+            if (
+              paypalItems.length > 0 &&
+              itemsTotalCents + shippingCents - effectiveDiscountCents === finalTotalCents
+            ) {
+              const breakdown = {
+                item_total: {
                   currency_code: curr,
-                  value: Number(current.shipping).toFixed(2),
+                  value: itemsTotalStr,
                 },
-                tax: { currency_code: curr, value: "0.00" },
-                quantity: "1",
-                category: "PHYSICAL_GOODS",
-              });
+              };
+
+              if (shippingCents > 0) {
+                breakdown.shipping = {
+                  currency_code: curr,
+                  value: shippingStr,
+                };
+              }
+
+              if (effectiveDiscountCents > 0) {
+                breakdown.discount = {
+                  currency_code: curr,
+                  value: discountStr,
+                };
+              }
+
+              purchaseUnit.items = paypalItems;
+              purchaseUnit.amount.breakdown = breakdown;
             }
 
             return actions.order.create({
               intent: "CAPTURE",
-              purchase_units: [
-                {
-                  description: `WBK_${current.paymentConfig.entity}_order_${finalTotal}_${Date.now()}`,
-                  custom_id: current.customCartId,
-                  soft_descriptor: paypalDescriptor,
-                  amount: {
-                    currency_code: curr,
-                    value: finalTotal,
-                  },
-                },
-              ],
+              purchase_units: [purchaseUnit],
             });
           },
 

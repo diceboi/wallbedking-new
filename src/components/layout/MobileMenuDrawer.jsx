@@ -15,6 +15,7 @@ import {
   IconShieldCheck,
   IconTools,
   IconWorld,
+  IconHelpCircle,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
@@ -309,25 +310,25 @@ export function MobileMenuDrawer() {
                       </button>
                     </div>
 
-                    {/* Quick Call */}
+                    {/* Need Assistance? Link to FAQ & Support */}
                     <div className="p-4 bg-wbk-white">
-                      <a
-                        href={`tel:${market?.phoneRaw || "+441928583469"}`}
+                      <Link
+                        href={localizedHref("/support/faq")}
+                        onClick={closeMobileMenu}
                         className="flex items-center gap-3 p-3 border border-wbk-lightgrey bg-[#FBF9F8] hover:border-wbk-gold transition-colors"
                       >
                         <div className="w-8 h-8 flex items-center justify-center bg-wbk-black text-white shrink-0">
-                          <IconPhone size={15} />
+                          <IconHelpCircle size={15} />
                         </div>
                         <div>
                           <div className="text-[10px] uppercase font-semibold tracking-wider text-wbk-brown">
                             {t("support.needHelp", "Need Assistance?")}
                           </div>
                           <div className="text-xs font-medium text-wbk-black">
-                            {market?.phone || t("header.phone", "01928 583 469")}{" "}
-                            {t("header.openingHoursParen", "(Mon-Fri 9-20, Sat 9-12)")}
+                            {t("topbar.faq", "FAQ & Customer Support")}
                           </div>
                         </div>
-                      </a>
+                      </Link>
                     </div>
 
                     {/* Secondary Information & Support Links */}

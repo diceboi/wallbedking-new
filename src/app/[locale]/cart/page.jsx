@@ -519,10 +519,14 @@ export default function CartPage() {
                       {t("header.specialistAdvice", "UK Support & Advice")}
                     </h4>
                     <p className="text-[11px] text-wbk-brown leading-relaxed mt-0.5">
-                      {t("header.callSpecialists", "Call our product specialists")}:{" "}
-                      <a href={`tel:${market?.phoneRaw || "+441928583469"}`} className="hover:text-wbk-green transition-colors">
-                        <strong className="text-wbk-black">{market?.phone || t("header.phone", "01928 583 469")}</strong>
-                      </a>
+                      Need advice before purchasing?{" "}
+                      <Link href={localizedHref("/contact")} className="underline hover:text-wbk-black font-medium">
+                        {t("nav.contact", "Contact our specialists")}
+                      </Link>{" "}
+                      or check our{" "}
+                      <Link href={localizedHref("/support/faq")} className="underline hover:text-wbk-black font-medium">
+                        {t("topbar.faq", "FAQ")}
+                      </Link>.
                     </p>
                   </div>
                 </div>

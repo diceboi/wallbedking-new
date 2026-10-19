@@ -275,12 +275,12 @@ export default function AboutPage() {
               >
                 {t("nav.contact", "Contact")}
               </Link>
-              <a
-                href={`tel:${market?.phoneRaw || "+441928583469"}`}
+              <Link
+                href={localizedHref("/support/faq")}
                 className="px-6 py-3.5 border border-white/30 hover:border-white text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors text-center"
               >
-                {t("header.callNow", "Call Us")} {market?.phone || t("header.phone", "01928 583 469")}
-              </a>
+                {t("topbar.faq", "FAQ & Support")}
+              </Link>
             </div>
           </div>
         </Container>

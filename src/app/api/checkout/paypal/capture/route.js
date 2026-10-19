@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { generateOrderNumber } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,9 @@ export async function POST(request) {
           .eq("id", order.id);
 
         finalOrder = { ...order, ...updatePayload };
+        if ((!finalOrder.items || finalOrder.items.length === 0) && Array.isArray(items) && items.length > 0) {
+          finalOrder.items = items;
+        }
       } else {
         // 2b. If order record was not pre-created in DB, create it now so it is never lost
         const customerName =
@@ -96,7 +100,7 @@ export async function POST(request) {
           company_entity: companyEntity || "INTERNATIONAL",
         };
 
-        const newOrderId = orderId || `WBK-${Math.floor(100000 + Math.random() * 900000)}`;
+        const newOrderId = orderId || (await generateOrderNumber());
         const orderAmount = Number(total || captureData?.amount?.value || 0);
 
         const newOrderRecord = {
@@ -159,13 +163,22 @@ export async function POST(request) {
         }
       }
 
-      // 4. Send email confirmation to customer & alert to admin
-      if (finalOrder && finalOrder.customer_email) {
-        console.log(`[PayPal Capture] Dispatching order confirmation email to ${finalOrder.customer_email} (${effectiveLocale})...`);
-        try {
-          await sendOrderConfirmationEmail(finalOrder, effectiveLocale);
-        } catch (emailErr) {
-          console.error("[PayPal Capture] Confirmation email error:", emailErr);
+      // 4. Send email confirmation to customer & alert to admin (support@wallbedking.com)
+      if (finalOrder) {
+        if (finalOrder.customer_email) {
+          console.log(`[PayPal Capture] Dispatching order confirmation email to ${finalOrder.customer_email} (${effectiveLocale})...`);
+          try {
+            await sendOrderConfirmationEmail(finalOrder, effectiveLocale);
+          } catch (emailErr) {
+            console.error("[PayPal Capture] Confirmation email error:", emailErr);
+          }
+        } else {
+          try {
+            const { sendAdminOrderAlert } = await import("@/lib/email");
+            await sendAdminOrderAlert(finalOrder);
+          } catch (adminErr) {
+            console.error("[PayPal Capture] Admin alert error:", adminErr);
+          }
         }
       }
     }

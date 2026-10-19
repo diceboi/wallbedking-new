@@ -87,7 +87,7 @@ export async function sendMetaCapiPurchase({
 
     const result = await res.json();
     if (result.events_received) {
-      console.log(`✅ Meta CAPI: Purchase event sent successfully for order #${orderId}`);
+      console.log(`✅ Meta CAPI: Purchase event sent successfully for order ${orderId}`);
       return true;
     } else {
       console.warn("⚠️ Meta CAPI warning response:", result);

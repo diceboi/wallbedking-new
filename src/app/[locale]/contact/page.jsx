@@ -12,8 +12,10 @@ import {
   IconSend,
   IconBuildingWarehouse,
   IconCalendarEvent,
+  IconMessageDots,
 } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { openZendeskChat } from "@/components/chat/ZendeskChat";
 
 export default function ContactPage() {
   const { t, localizedHref, market } = useLocale();
@@ -92,7 +94,7 @@ export default function ContactPage() {
                 Direct Contact Channels
               </h2>
               <div className="space-y-4">
-                {/* Telephone */}
+                {/* Telephone Support */}
                 <div className="p-5 rounded-none border border-wbk-lightgrey bg-white flex items-start gap-4 shadow-2xs">
                   <div className="w-10 h-10 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center shrink-0">
                     <IconPhoneCall size={20} className="text-wbk-gold" />
@@ -101,17 +103,40 @@ export default function ContactPage() {
                     <p className="text-xs uppercase font-semibold tracking-wider text-wbk-brown">
                       Telephone Support
                     </p>
-                    <div className="mt-1 flex flex-col gap-1">
-                      <a
-                        href={`tel:${market?.phoneRaw || "+441928583469"}`}
-                        className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
-                      >
-                        {market?.phone || t("header.phone", "01928 583 469")}{" "}
-                        <span className="text-xs font-normal text-wbk-brown">
-                          {t("header.openingHoursParen", "(Mon–Fri 9–20, Sat 9–12)")}
-                        </span>
-                      </a>
+                    <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
+                      Available Mon–Fri 9–20, Sat 9–12. Direct phone lines can be found under the telephone question in our{" "}
+                      <Link href={localizedHref("/support/faq")} className="text-wbk-black font-semibold underline hover:text-wbk-green">
+                        FAQ
+                      </Link>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Online Live Chat (Zendesk) */}
+                <div className="p-5 rounded-none border border-wbk-lightgrey bg-white flex items-start gap-4 shadow-2xs">
+                  <div className="w-10 h-10 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center shrink-0">
+                    <IconMessageDots size={20} className="text-wbk-gold" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs uppercase font-semibold tracking-wider text-wbk-black font-semibold">
+                        Online Live Chat
+                      </p>
+                      <span className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Zendesk Live
+                      </span>
                     </div>
+                    <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
+                      Chat directly with our product engineers and customer support specialists in real time.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openZendeskChat}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-xs font-medium uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      <span>Start Live Chat</span>
+                    </button>
                   </div>
                 </div>
 

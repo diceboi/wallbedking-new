@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getPaymentConfig } from "@/lib/payments";
+import { generateOrderNumber } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function POST(request) {
       );
     }
 
-    const referenceId = orderId || cartId || `WBK-${Date.now()}`;
+    const referenceId = orderId || (cartId && cartId.startsWith("WBK-") ? cartId : (await generateOrderNumber()));
     const paymentConfig = getPaymentConfig(locale, currency);
     const targetCurrencyLower = paymentConfig.stripeCurrency;
     const clientEmail = (customerEmail || customer?.email || "").trim().toLowerCase();

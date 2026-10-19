@@ -36,8 +36,8 @@ export const MARKETS = {
     currencySymbol: "€",
     countryCode: "DE",
     flag: "🇩🇪",
-    phone: "032 2210 99855",
-    phoneRaw: "+4932221099855",
+    phone: "+44 1928 583 469",
+    phoneRaw: "+441928583469",
     defaultShippingNote: "Kostenlose EU-Lieferung",
   },
   fr: {

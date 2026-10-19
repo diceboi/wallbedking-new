@@ -690,13 +690,13 @@ export default function AccountPage() {
               <p className="text-[11px] text-wbk-brown leading-relaxed">
                 Our UK-based wall bed specialists are available Monday to Friday, 9:00 - 20:00, Saturday 9:00 - 12:00.
               </p>
-              <a
-                href="tel:01928583469"
+              <Link
+                href={localizedHref("/support/faq")}
                 className="inline-flex items-center gap-2 text-xs font-semibold text-wbk-black hover:text-wbk-green transition-colors"
               >
-                <IconPhone size={14} />
-                <span>01928 583 469</span>
-              </a>
+                <IconMail size={14} />
+                <span>Customer Support & FAQ</span>
+              </Link>
             </div>
           </div>
 

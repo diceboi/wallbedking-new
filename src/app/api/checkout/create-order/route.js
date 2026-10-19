@@ -51,7 +51,7 @@ export async function POST(request) {
       .filter(Boolean)
       .join(" ") || customer.name || "Valued Customer";
 
-    const orderId = generateOrderNumber();
+    const orderId = await generateOrderNumber();
 
     const orderRecord = {
       id: orderId,

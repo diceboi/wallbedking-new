@@ -38,7 +38,7 @@ const EMAIL_TEMPLATES = [
     icon: IconMail,
     trigger: "Triggered automatically when a Stripe checkout or PayPal payment succeeds.",
     recipient: "Customer's checkout email address",
-    subject: "Wall Bed King Order Confirmation - #WBK-84920",
+    subject: "Wall Bed King Order Confirmation - WBK-1000",
     supportsLocale: true,
   },
   {
@@ -49,7 +49,7 @@ const EMAIL_TEMPLATES = [
     icon: IconTruck,
     trigger: "Triggered from Admin Orders dashboard when status is changed to 'shipped' with tracking number.",
     recipient: "Customer's checkout email address",
-    subject: "Your Wall Bed King Order #WBK-84920 Has Been Dispatched!",
+    subject: "Your Wall Bed King Order WBK-1000 Has Been Dispatched!",
     supportsLocale: false,
   },
   {
@@ -60,7 +60,7 @@ const EMAIL_TEMPLATES = [
     icon: IconHeartHandshake,
     trigger: "Sent ~7 days after parcel dispatch/delivery, asking customer for feedback and setup photos.",
     recipient: "Customer's email address",
-    subject: "How is your Wall Bed King Murphy bed? (Order #WBK-84920)",
+    subject: "How is your Wall Bed King Murphy bed? (Order WBK-1000)",
     supportsLocale: false,
   },
   {
@@ -71,7 +71,7 @@ const EMAIL_TEMPLATES = [
     icon: IconBellRinging,
     trigger: "Triggered in parallel with customer confirmation whenever an order is successfully paid.",
     recipient: "support@wallbedking.com",
-    subject: "🚨 NEW ORDER RECEIVED: #WBK-84920 (£1,449.00)",
+    subject: "🚨 NEW ORDER RECEIVED: WBK-1000 (£1,449.00)",
     supportsLocale: false,
   },
   {

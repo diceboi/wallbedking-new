@@ -106,7 +106,7 @@ export async function POST(request) {
 
     switch (type) {
       case "shipping":
-        subject = `[TEST] 🚚 Your Wall Bed King Order #${SAMPLE_SHIPPING.order.id} Has Shipped!`;
+        subject = `[TEST] 🚚 Your Wall Bed King Order ${SAMPLE_SHIPPING.order.id} Has Shipped!`;
         html = getShippingNotificationHtml(
           SAMPLE_SHIPPING.order,
           SAMPLE_SHIPPING.trackingNumber,
@@ -114,7 +114,7 @@ export async function POST(request) {
         );
         break;
       case "admin_alert":
-        subject = `[TEST] 🚨 NEW ORDER RECEIVED: #${SAMPLE_ORDER.id} (£${SAMPLE_ORDER.total_amount.toFixed(2)})`;
+        subject = `[TEST] 🚨 NEW ORDER RECEIVED: ${SAMPLE_ORDER.id} (£${SAMPLE_ORDER.total_amount.toFixed(2)})`;
         html = getAdminOrderAlertHtml({ ...SAMPLE_ORDER, customer_email: recipientEmail });
         break;
       case "contact":
@@ -123,7 +123,7 @@ export async function POST(request) {
         break;
       case "review_request": {
         const i18n = REVIEW_REQUEST_I18N[locale.toLowerCase()] || REVIEW_REQUEST_I18N.en;
-        subject = `[TEST] ${i18n.headline} (Order #${SAMPLE_ORDER.id})`;
+        subject = `[TEST] ${i18n.headline} (Order ${SAMPLE_ORDER.id})`;
         html = getReviewRequestHtml(
           { ...SAMPLE_ORDER, customer_email: recipientEmail, locale },
           null,

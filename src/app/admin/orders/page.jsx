@@ -136,7 +136,7 @@ export default function AdminOrdersPage() {
     const curr = targetOrder.currency === "EUR" ? "€" : targetOrder.currency === "USD" ? "$" : "£";
     if (
       !window.confirm(
-        `Confirm bank transfer payment received for Order #${targetOrder.id}?\n\nCustomer: ${targetOrder.customer_name || "Valued Customer"} (${targetOrder.customer_email})\nAmount: ${curr}${Number(targetOrder.total_amount || 0).toFixed(2)}\n\nThis will mark the payment status as PAID, advance the order to In Production, and immediately send the official payment confirmation email to the customer.`
+        `Confirm bank transfer payment received for Order ${targetOrder.id}?\n\nCustomer: ${targetOrder.customer_name || "Valued Customer"} (${targetOrder.customer_email})\nAmount: ${curr}${Number(targetOrder.total_amount || 0).toFixed(2)}\n\nThis will mark the payment status as PAID, advance the order to In Production, and immediately send the official payment confirmation email to the customer.`
       )
     ) {
       return;

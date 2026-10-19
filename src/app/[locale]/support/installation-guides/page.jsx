@@ -112,13 +112,13 @@ export default function InstallationGuidesPage() {
                 <IconVideo size={16} />
                 <span>{t("support.watchVideosBtn", "Watch Video Walkthroughs")}</span>
               </Link>
-              <a
-                href="tel:01928583469"
+              <Link
+                href={localizedHref("/support/faq")}
                 className="inline-flex items-center gap-2 px-6 py-3 border border-wbk-lightgrey bg-white hover:border-wbk-black text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
               >
                 <IconPhoneCall size={16} />
-                <span>{t("support.techHotlineBtn", "Technical Assistance Hotline")}</span>
-              </a>
+                <span>{t("topbar.faq", "Technical Assistance FAQ")}</span>
+              </Link>
             </div>
           </div>
         </Container>

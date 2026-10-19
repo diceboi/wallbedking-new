@@ -3,8 +3,15 @@
 import { IconPhone } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 
+// Temporarily hide phone numbers from navigation as requested
+const SHOW_NAV_PHONE = false;
+
 export function ContactInfo() {
   const { t, market } = useLocale();
+
+  if (!SHOW_NAV_PHONE) {
+    return null;
+  }
 
   const phone = market?.phone || t("header.phone", "01928 583 469");
   const phoneRaw = market?.phoneRaw || t("header.phoneRaw", "+441928583469");

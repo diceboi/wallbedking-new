@@ -9,15 +9,17 @@
 import { BANK_DETAILS, getBankI18n } from "./bank-details.js";
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
-export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@wallbedking.com";
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || SUPPORT_EMAIL;
+export const SUPPORT_EMAIL = "support@wallbedking.com";
+// Admin notifications MUST go to support@wallbedking.com (never delivery@)
+const configuredAdmin = (process.env.ADMIN_EMAIL || "").trim();
+export const ADMIN_EMAIL = (configuredAdmin && !configuredAdmin.toLowerCase().includes("delivery"))
+  ? configuredAdmin
+  : "support@wallbedking.com";
 export const STORE_PHONE = "01928 583 469";
 export const STORE_HOURS = "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00";
 
 export function getStorePhone(locale = "en") {
   const norm = (locale || "en").toLowerCase();
-  if (norm === "de") return "032 2210 99855";
-  if (norm === "it") return "+44 1928 583 469";
   if (norm === "en") return "01928 583 469";
   return "+44 1928 583 469";
 }
@@ -26,7 +28,7 @@ export function getStorePhone(locale = "en") {
 // SAMPLE DATA FOR PREVIEW & TESTING
 // ==========================================
 export const SAMPLE_ORDER = {
-  id: "WBK-84920",
+  id: "WBK-1000",
   customer_name: "John Doe",
   customer_email: "john.doe@example.com",
   customer_phone: "+44 7700 900077",
@@ -103,7 +105,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Wall Bed King Order Confirmation",
     badge: "Payment Confirmed",
     thankYou: "Thank you for your order",
-    intro: "We have received your order #{id}. Our engineering and dispatch team is now carefully preparing your precision space-saving furniture.",
+    intro: "We have received your order {id}. Our engineering and dispatch team is now carefully preparing your precision space-saving furniture.",
     orderNumber: "Order Number:",
     date: "Date:",
     deliveryTo: "Delivery To:",
@@ -123,7 +125,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Wall Bed King Order Confirmation",
     badge: "Payment Confirmed",
     thankYou: "Thank you for your order",
-    intro: "We have received your order #{id}. Our team is now preparing your space-saving Murphy bed for delivery.",
+    intro: "We have received your order {id}. Our team is now preparing your space-saving Murphy bed for delivery.",
     orderNumber: "Order Number:",
     date: "Date:",
     deliveryTo: "Shipping Address:",
@@ -143,7 +145,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Wall Bed King Bestellbestätigung",
     badge: "Zahlung bestätigt",
     thankYou: "Vielen Dank für Ihre Bestellung",
-    intro: "Wir haben Ihre Bestellung #{id} erhalten. Unser Fertigungs- und Versandteam bereitet Ihr Schrankbett sorgfältig vor.",
+    intro: "Wir haben Ihre Bestellung {id} erhalten. Unser Fertigungs- und Versandteam bereitet Ihr Schrankbett sorgfältig vor.",
     orderNumber: "Bestellnummer:",
     date: "Datum:",
     deliveryTo: "Lieferadresse:",
@@ -163,7 +165,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Confirmation de commande Wall Bed King",
     badge: "Paiement Confirmé",
     thankYou: "Merci pour votre commande",
-    intro: "Nous avons bien reçu votre commande #{id}. Notre équipe prépare votre lit escamotable haut de gamme avec le plus grand soin.",
+    intro: "Nous avons bien reçu votre commande {id}. Notre équipe prépare votre lit escamotable haut de gamme avec le plus grand soin.",
     orderNumber: "Numéro de commande :",
     date: "Date :",
     deliveryTo: "Adresse de livraison :",
@@ -183,7 +185,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Confirmación de pedido Wall Bed King",
     badge: "Pago Confirmado",
     thankYou: "¡Gracias por su pedido",
-    intro: "Hemos recibido su pedido #{id}. Nuestro equipo de ingeniería y logística está preparando su cama abatible.",
+    intro: "Hemos recibido su pedido {id}. Nuestro equipo de ingeniería y logística está preparando su cama abatible.",
     orderNumber: "Número de pedido:",
     date: "Fecha:",
     deliveryTo: "Dirección de entrega:",
@@ -203,7 +205,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Conferma d'ordine Wall Bed King",
     badge: "Pagamento Confermato",
     thankYou: "Grazie per il tuo ordine",
-    intro: "Abbiamo ricevuto il tuo ordine #{id}. Il nostro team sta preparando con cura il tuo letto a scomparsa salva-spazio.",
+    intro: "Abbiamo ricevuto il tuo ordine {id}. Il nostro team sta preparando con cura il tuo letto a scomparsa salva-spazio.",
     orderNumber: "Numero d'ordine:",
     date: "Data:",
     deliveryTo: "Indirizzo di consegna:",
@@ -223,7 +225,7 @@ export const CONFIRMATION_I18N = {
     subjectPrefix: "Confirmação de encomenda Wall Bed King",
     badge: "Pagamento Confirmado",
     thankYou: "Obrigado pela sua encomenda",
-    intro: "Recebemos a sua encomenda #{id}. A nossa equipa de fabrico e logística está a preparar a sua cama rebatível.",
+    intro: "Recebemos a sua encomenda {id}. A nossa equipa de fabrico e logística está a preparar a sua cama rebatível.",
     orderNumber: "Número da encomenda:",
     date: "Data:",
     deliveryTo: "Morada de entrega:",
@@ -282,6 +284,28 @@ export function formatOrderShippingAddress(order) {
   return parts.join(", ");
 }
 
+export function formatPaymentMethod(order) {
+  if (!order) return "Online Payment";
+  const method = String(order.payment_method || "").toLowerCase().trim();
+  const txId = String(order.payment_id || order.paymentId || "").trim();
+  let label = "Online Payment";
+
+  if (method === "paypal" || (txId && (txId.startsWith("PAYID-") || txId.length === 17))) {
+    label = "PayPal";
+  } else if (method === "stripe" || method === "card" || (txId && (txId.startsWith("pi_") || txId.startsWith("cs_")))) {
+    label = "Credit / Debit Card (Stripe)";
+  } else if (method.includes("bank")) {
+    label = "Direct Bank Transfer";
+  } else if (method) {
+    label = method.charAt(0).toUpperCase() + method.slice(1);
+  }
+
+  if (txId) {
+    return `${label} (TX: ${txId})`;
+  }
+  return label;
+}
+
 export const UPDATE_NOTICE_I18N = {
   en: {
     subjectPrefix: "[UPDATED] ",
@@ -335,28 +359,28 @@ export const UPDATE_NOTICE_I18N = {
 
 export const SHIPPING_I18N = {
   en: {
-    subject: (id) => `Your Wall Bed King Order #${id} Has Been Dispatched! 🚚`,
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Dispatched! 🚚`,
   },
   us: {
-    subject: (id) => `Your Wall Bed King Order #${id} Has Been Dispatched! 🚚`,
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Dispatched! 🚚`,
   },
   de: {
-    subject: (id) => `Ihre Wall Bed King Bestellung #${id} wurde versandt! 🚚`,
+    subject: (id) => `Ihre Wall Bed King Bestellung ${id} wurde versandt! 🚚`,
   },
   fr: {
-    subject: (id) => `Votre commande Wall Bed King #${id} a été expédiée ! 🚚`,
+    subject: (id) => `Votre commande Wall Bed King ${id} a été expédiée ! 🚚`,
   },
   es: {
-    subject: (id) => `¡Su pedido Wall Bed King #${id} ha sido enviado! 🚚`,
+    subject: (id) => `¡Su pedido Wall Bed King ${id} ha sido enviado! 🚚`,
   },
   it: {
-    subject: (id) => `Il tuo ordine Wall Bed King #${id} è stato spedito! 🚚`,
+    subject: (id) => `Il tuo ordine Wall Bed King ${id} è stato spedito! 🚚`,
   },
   hu: {
-    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése feladásra került! 🚚`,
+    subject: (id) => `A(z) ${id} számú Wall Bed King rendelése feladásra került! 🚚`,
   },
   por: {
-    subject: (id) => `A sua encomenda Wall Bed King #${id} foi expedida! 🚚`,
+    subject: (id) => `A sua encomenda Wall Bed King ${id} foi expedida! 🚚`,
   },
 };
 
@@ -401,13 +425,13 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     introText = bankI18n.instructionIntro;
   } else if (isBankTransfer && isPaid) {
     const paidIntros = {
-      en: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order #${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
-      us: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order #${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
-      de: `Wir haben Ihre Überweisung in Höhe von ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} für die Bestellung #${order.id} erhalten und verbucht. Vielen Dank! Ihre Bestellung ist bestätigt und wird nun für die Fertigung vorbereitet.`,
-      fr: `Nous avons bien reçu et validé votre virement bancaire de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} pour la commande #${order.id}. Merci ! Votre commande est confirmée et entre en production.`,
-      it: `Abbiamo ricevuto e verificato il pagamento tramite bonifico di ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} per l'ordine #${order.id}. Grazie! Il suo ordine è confermato ed entra in produzione.`,
-      es: `Hemos recibido y confirmado tu transferencia bancaria de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para el pedido #${order.id}. ¡Gracias! Tu pedido está confirmado y entra en producción.`,
-      por: `Recebemos e confirmámos a sua transferência bancária de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para a encomenda #${order.id}. Obrigado! A sua encomenda está confirmada e entra em produção.`,
+      en: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order ${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
+      us: `We have received your bank transfer payment of ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} for order ${order.id}. Thank you! Your order is now confirmed and our team is preparing your precision wall bed.`,
+      de: `Wir haben Ihre Überweisung in Höhe von ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} für die Bestellung ${order.id} erhalten und verbucht. Vielen Dank! Ihre Bestellung ist bestätigt und wird nun für die Fertigung vorbereitet.`,
+      fr: `Nous avons bien reçu et validé votre virement bancaire de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} pour la commande ${order.id}. Merci ! Votre commande est confirmée et entre en production.`,
+      it: `Abbiamo ricevuto e verificato il pagamento tramite bonifico di ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} per l'ordine ${order.id}. Grazie! Il suo ordine è confermato ed entra in produzione.`,
+      es: `Hemos recibido y confirmado tu transferencia bancaria de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para el pedido ${order.id}. ¡Gracias! Tu pedido está confirmado y entra en producción.`,
+      por: `Recebemos e confirmámos a sua transferência bancária de ${currencySymbol}${Number(order.total_amount || 0).toFixed(2)} para a encomenda ${order.id}. Obrigado! A sua encomenda está confirmada e entra em produção.`,
     };
     introText = paidIntros[loc] || paidIntros.en;
   }
@@ -470,7 +494,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
           ⚠️ ${bankI18n.referenceFieldName} (CRITICAL)
         </div>
         <div style="font-size: 15px; font-family: monospace; font-weight: 700; color: #111; margin-bottom: 6px;">
-          #${order.id}
+          ${order.id}
         </div>
         <p style="margin: 0; font-size: 12px; color: #78350f; line-height: 1.5;">
           ${bankI18n.referenceNotice.replace("{orderId}", order.id).replace("{email}", order.customer_email || "")}
@@ -486,7 +510,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${isBankTransfer && !isPaid ? bankI18n.thankYouTitle : t.title} - #${order.id}</title>
+        <title>${isBankTransfer && !isPaid ? bankI18n.thankYouTitle : t.title} - ${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -520,7 +544,7 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
               <table style="width:100%; font-size: 13px; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.orderNumber}</strong></td>
-                  <td style="padding: 4px 0; text-align: right; color: #111; font-weight: 600;">#${order.id}</td>
+                  <td style="padding: 4px 0; text-align: right; color: #111; font-weight: 600;">${order.id}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.date}</strong></td>
@@ -579,29 +603,88 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const isPaid = (order.payment_status || "").toLowerCase() === "paid";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
   const adminOrderUrl = `${siteUrl}/admin/orders?search=${encodeURIComponent(order.id)}`;
+  const paymentMethodLabel = formatPaymentMethod(order);
+
+  let itemsList = [];
+  if (Array.isArray(order.items)) {
+    itemsList = order.items;
+  } else if (typeof order.items === "string") {
+    try {
+      itemsList = JSON.parse(order.items);
+    } catch {
+      itemsList = [];
+    }
+  }
+
+  const itemsRowsHtml = itemsList.length > 0 ? itemsList.map((item) => {
+    const title = item.title || item.name || item.product_name || "Wall Bed King Product";
+    const variantText = item.variant || (item.options && typeof item.options === "object" ? [item.options.size, item.options.orientation, item.options.type, item.options.color].filter(Boolean).join(" • ") : "");
+    const sku = item.sku || item.rawId || item.productId || item.id || "";
+    const qty = parseInt(item.quantity, 10) || 1;
+    const unitPrice = Number(item.price || item.unitPrice || 0);
+    const lineTotal = Number(item.itemTotal || (unitPrice * qty));
+
+    return `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 12px 14px; vertical-align: top;">
+          <strong style="color: #111; font-size: 14px; display: block;">${title}</strong>
+          ${variantText ? `<div style="color: #666; font-size: 12px; margin-top: 3px;"><strong>Option:</strong> ${variantText}</div>` : ""}
+          ${sku ? `<div style="color: #888; font-size: 11px; font-family: monospace; margin-top: 2px;">SKU: ${sku}</div>` : ""}
+        </td>
+        <td style="padding: 12px 14px; text-align: center; vertical-align: top; font-weight: 600; color: #111;">
+          ${qty}
+        </td>
+        <td style="padding: 12px 14px; text-align: right; vertical-align: top; color: #555;">
+          ${currencySymbol}${unitPrice.toFixed(2)}
+        </td>
+        <td style="padding: 12px 14px; text-align: right; vertical-align: top; font-weight: 700; color: #111;">
+          ${currencySymbol}${lineTotal.toFixed(2)}
+        </td>
+      </tr>
+    `;
+  }).join("") : `
+    <tr>
+      <td colspan="4" style="padding: 16px 14px; text-align: center; color: #777; font-style: italic;">
+        No items itemized in payload.
+      </td>
+    </tr>
+  `;
+
+  const subtotalAmount = Number(order.subtotal || order.total_amount || 0);
+  const shippingAmount = Number(order.shipping_amount || 0);
+  const discountAmount = Number(order.discount_amount || 0);
+  const deliveryLabel = order.delivery_label || order.delivery_option || "Delivery";
+  const formattedAddress = formatOrderShippingAddress(order);
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>New Order Alert #${order.id}</title>
+        <title>New Order Alert: ${order.id}</title>
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 24px;">
-        <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 6px; border: 1px solid #e0e0e0; overflow: hidden;">
-          <div style="background: ${isBank && !isPaid ? "#b4832c" : "#111111"}; color: #ffffff; padding: 18px 24px;">
-            <h2 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">
-              ${isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: #${order.id}
+        <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.05);">
+          
+          <!-- Header Banner -->
+          <div style="background: ${isBank && !isPaid ? "#b4832c" : "#111111"}; color: #ffffff; padding: 20px 24px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #d4b26f; margin-bottom: 4px;">
+              Wall Bed King • Internal Support Alert
+            </div>
+            <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">
+              ${isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: ${order.id}
             </h2>
           </div>
+
           <div style="padding: 24px; color: #222; font-size: 14px; line-height: 1.6;">
+            
             ${isBank && !isPaid ? `
-              <div style="padding: 14px 16px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 18px; border-radius: 4px;">
+              <div style="padding: 14px 16px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 20px; border-radius: 4px;">
                 <strong style="color: #92400e; font-size: 13px; text-transform: uppercase; display: block; margin-bottom: 4px;">
                   Awaiting Bank Transfer Payment
                 </strong>
                 <p style="margin: 0; font-size: 13px; color: #78350f;">
-                  The customer chose <strong>Bank Transfer</strong>. The banking coordinates were emailed to them. Once the funds arrive in the HSBC account with reference <strong>#${order.id}</strong> or <strong>${order.customer_email}</strong>, click the button below to mark the order as Paid and notify the customer.
+                  The customer chose <strong>Bank Transfer</strong>. The banking coordinates were emailed to them. Once the funds arrive with reference <strong>${order.id}</strong> or <strong>${order.customer_email}</strong>, mark the order as Paid in the dashboard.
                 </p>
                 <div style="margin-top: 12px;">
                   <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 10px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">
@@ -609,27 +692,134 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   </a>
                 </div>
               </div>
-            ` : `
-              <p style="margin-top: 0;">A new paid order was just placed on the Wall Bed King storefront:</p>
-            `}
+            ` : ""}
 
-            <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #fbfbfb; border: 1px solid #eee; border-radius: 4px;">
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Order ID:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: bold;">#${order.id}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Total Amount:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 16px; font-weight: bold; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Status:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: bold; color: ${isPaid ? "#047857" : "#b45309"};">${isPaid ? "PAID" : "UNPAID / AWAITING TRANSFER"}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Name:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_name || "N/A"}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;"><a href="mailto:${order.customer_email}">${order.customer_email}</a></td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Phone:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.customer_phone || "Not provided"}</td></tr>
-              <tr><td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Payment Method:</strong></td><td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${order.payment_method || "Online"}</td></tr>
-              <tr><td style="padding: 10px 14px; color: #666;"><strong>Delivery Area:</strong></td><td style="padding: 10px 14px;">${formatOrderShippingAddress(order) || `${order.shipping_address?.city || ""}, ${order.shipping_address?.country || "UK"}`}</td></tr>
+            <!-- Quick Summary Bar -->
+            <table style="width: 100%; border-collapse: collapse; background: #faf9f7; border: 1px solid #eee; border-radius: 6px; margin-bottom: 22px;">
+              <tr>
+                <td style="padding: 12px 16px; vertical-align: top;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">Total Paid</span>
+                  <strong style="font-size: 18px; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
+                </td>
+                <td style="padding: 12px 16px; vertical-align: top;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 4px;">Payment Status</span>
+                  <span style="display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: ${isPaid ? "#ecfdf5" : "#fef3c7"}; color: ${isPaid ? "#065f46" : "#92400e"}; border: 1px solid ${isPaid ? "#a7f3d0" : "#fde68a"};">
+                    ${isPaid ? "✓ PAID" : "⏳ UNPAID"}
+                  </span>
+                </td>
+                <td style="padding: 12px 16px; vertical-align: top;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">Payment Method</span>
+                  <strong style="font-size: 13px; color: #111;">${paymentMethodLabel}</strong>
+                </td>
+              </tr>
             </table>
 
-            <div style="margin-top: 16px; text-align: center;">
-              <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 12px 24px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">
-                View Order in Admin Dashboard →
-              </a>
+            <!-- 1. Ordered Products Table -->
+            <div style="margin-bottom: 24px;">
+              <h3 style="margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 2px solid #111; padding-bottom: 6px;">
+                📦 Ordered Products (${itemsList.length} ${itemsList.length === 1 ? "item" : "items"})
+              </h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid #eee;">
+                <thead>
+                  <tr style="background: #f7f7f7; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #ddd;">
+                    <th style="padding: 10px 14px; text-align: left;">Product Details</th>
+                    <th style="padding: 10px 14px; text-align: center;">Qty</th>
+                    <th style="padding: 10px 14px; text-align: right;">Unit Price</th>
+                    <th style="padding: 10px 14px; text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsRowsHtml}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="padding: 8px 14px; text-align: right; color: #666; border-top: 1px solid #eee;">Subtotal:</td>
+                    <td style="padding: 8px 14px; text-align: right; font-weight: 600; border-top: 1px solid #eee;">${currencySymbol}${subtotalAmount.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" style="padding: 4px 14px; text-align: right; color: #666;">Delivery (${deliveryLabel}):</td>
+                    <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: ${shippingAmount > 0 ? "#111" : "#047857"};">
+                      ${shippingAmount > 0 ? `${currencySymbol}${shippingAmount.toFixed(2)}` : "FREE"}
+                    </td>
+                  </tr>
+                  ${discountAmount > 0 ? `
+                  <tr>
+                    <td colspan="3" style="padding: 4px 14px; text-align: right; color: #b45309;">Discount (${order.promo_code || "Promo"}):</td>
+                    <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: #b45309;">-${currencySymbol}${discountAmount.toFixed(2)}</td>
+                  </tr>
+                  ` : ""}
+                  <tr style="background: #faf9f7; border-top: 2px solid #111; font-size: 15px;">
+                    <td colspan="3" style="padding: 12px 14px; text-align: right; font-weight: 700; color: #111;">Total:</td>
+                    <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
+
+            <!-- 2. Customer & Shipping Details -->
+            <div style="margin-bottom: 24px;">
+              <h3 style="margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 2px solid #111; padding-bottom: 6px;">
+                👤 Customer & Shipping Information
+              </h3>
+              <table style="width: 100%; border-collapse: collapse; background: #fbfbfb; border: 1px solid #eee; border-radius: 4px; font-size: 13px;">
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666; width: 35%;"><strong>Customer Name:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: 600;">${order.customer_name || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee;">
+                    <a href="mailto:${order.customer_email}" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">${order.customer_email}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Telephone:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee;">
+                    ${order.customer_phone ? `<a href="tel:${order.customer_phone}" style="color: #111; text-decoration: none; font-weight: 600;">${order.customer_phone}</a>` : '<span style="color: #888;">Not provided</span>'}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Delivery Address:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: 500;">
+                    ${formattedAddress || (order.shipping_address?.city ? `${order.shipping_address.city}, ${order.shipping_address.country || "UK"}` : "Address provided via checkout")}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Delivery Speed:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${deliveryLabel}</td>
+                </tr>
+                ${order.customer_notes ? `
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Notes:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #b45309; font-style: italic;">${order.customer_notes}</td>
+                </tr>
+                ` : ""}
+                <tr>
+                  <td style="padding: 10px 14px; color: #666;"><strong>Storefront / Market:</strong></td>
+                  <td style="padding: 10px 14px; color: #777; font-size: 12px;">${order.admin_notes || `Locale: ${order.locale || "en"}`}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="margin-top: 24px; text-align: center;">
+              <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 12px 26px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px; margin-right: 8px;">
+                Open Order in Admin Dashboard →
+              </a>
+              ${order.customer_email ? `
+              <a href="mailto:${order.customer_email}?subject=Regarding%20your%20Wall%20Bed%20King%20Order%20${order.id}" style="display: inline-block; background: #f3f3f3; color: #333; border: 1px solid #ddd; padding: 11px 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">
+                Reply to Customer
+              </a>
+              ` : ""}
+            </div>
+
           </div>
+
+          <!-- Footer -->
+          <div style="background: #faf8f5; border-top: 1px solid #eeebe6; padding: 16px 24px; text-align: center; font-size: 11px; color: #888;">
+            Wall Bed King Central Support Alert • Sent to <strong>support@wallbedking.com</strong>
+          </div>
+
         </div>
       </body>
     </html>
@@ -693,7 +883,7 @@ export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}Order Dispatched - #${order.id}</title>
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}Order Dispatched - ${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -715,7 +905,7 @@ export function getShippingNotificationHtml(order = SAMPLE_ORDER, trackingNumber
             ${updateBannerHtml}
             <h2 style="color: #111; font-size: 20px; margin-top: 0; font-weight: 600;">Your Order is On Its Way! 🚚</h2>
             <p style="color: #555; font-size: 14px; line-height: 1.6;">
-              Great news, <strong>${order.customer_name || "Customer"}</strong>! Your wall bed order <strong style="color: #111;">#${order.id}</strong> has been carefully packed and handed over for delivery.
+              Great news, <strong>${order.customer_name || "Customer"}</strong>! Your wall bed order <strong style="color: #111;">${order.id}</strong> has been carefully packed and handed over for delivery.
             </p>
 
             ${ownFleet ? `
@@ -1084,11 +1274,11 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
     const isPaid = (order.payment_status || "").toLowerCase() === "paid";
     const bankI18n = getBankI18n(effectiveLocale);
     const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
-    let emailSubject = `${subjectPrefix}${i18n.subjectPrefix} - #${order.id}`;
+    let emailSubject = `${subjectPrefix}${i18n.subjectPrefix} - ${order.id}`;
     if (isBank && !isPaid && !isUpdate) {
-      emailSubject = `[Wall Bed King] ${bankI18n.thankYouTitle} - #${order.id}`;
+      emailSubject = `[Wall Bed King] ${bankI18n.thankYouTitle} - ${order.id}`;
     } else if (isBank && isPaid) {
-      emailSubject = `✓ [Wall Bed King] ${i18n.badge} - #${order.id}`;
+      emailSubject = `✓ [Wall Bed King] ${i18n.badge} - ${order.id}`;
     }
 
     const data = await resend.emails.send({
@@ -1128,15 +1318,17 @@ export async function sendAdminOrderAlert(order) {
     const isBank = (order.payment_method || "").toLowerCase().includes("bank");
     const isPaid = (order.payment_status || "").toLowerCase() === "paid";
 
+    const recipient = "support@wallbedking.com";
+
     const subject = isBank && !isPaid
-      ? `🏦 BANK TRANSFER REQUEST: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`
-      : `🚨 NEW ORDER RECEIVED: #${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)})`;
+      ? `🏦 BANK TRANSFER REQUEST: ${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`
+      : `🚨 NEW ORDER RECEIVED: ${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`;
 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
-      to: [ADMIN_EMAIL],
-      replyTo: order.customer_email,
-      reply_to: order.customer_email,
+      to: [recipient],
+      replyTo: order.customer_email || SUPPORT_EMAIL,
+      reply_to: order.customer_email || SUPPORT_EMAIL,
       subject,
       html: getAdminOrderAlertHtml(order),
     });
@@ -1241,7 +1433,7 @@ export async function sendReviewRequestEmail(order, product = null) {
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
       reply_to: SUPPORT_EMAIL,
-      subject: `How is your Wall Bed King Murphy bed? (Order #${order.id})`,
+      subject: `How is your Wall Bed King Murphy bed? (Order ${order.id})`,
       html: getReviewRequestHtml(order, product),
     });
 
@@ -1479,11 +1671,11 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
 
 export const PRODUCTION_I18N = {
   en: {
-    subject: (id) => `Your Wall Bed King Order #${id} is Now in Production! ⚙️`,
+    subject: (id) => `Your Wall Bed King Order ${id} is Now in Production! ⚙️`,
     badge: "In Production",
     headline: "Your Wall Bed System is Being Crafted",
     greeting: (name) => `Hello ${name || "Valued Customer"},`,
-    intro: (id) => `Great news! Your custom order #${id} has entered our production and precision engineering stage. Our team is now preparing the laser-cut steel framing and German gas-piston lifting mechanisms for your wall bed.`,
+    intro: (id) => `Great news! Your custom order ${id} has entered our production and precision engineering stage. Our team is now preparing the laser-cut steel framing and German gas-piston lifting mechanisms for your wall bed.`,
     step1: "Precision Steel Fabrication & Frame Assembly",
     step2: "Piston Counterbalance Calibration & Load Testing",
     step3: "Final Multi-Point Quality Inspection & Protective Crating",
@@ -1494,11 +1686,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "Need assistance? Contact us at",
   },
   us: {
-    subject: (id) => `Your Wall Bed King Order #${id} is Now in Production! ⚙️`,
+    subject: (id) => `Your Wall Bed King Order ${id} is Now in Production! ⚙️`,
     badge: "In Production",
     headline: "Your Murphy Bed is Being Built",
     greeting: (name) => `Hello ${name || "Valued Customer"},`,
-    intro: (id) => `Great news! Your custom order #${id} has entered our production stage. Our team is now preparing the heavy-duty steel frame and gas-piston lifting mechanisms for your Murphy bed.`,
+    intro: (id) => `Great news! Your custom order ${id} has entered our production stage. Our team is now preparing the heavy-duty steel frame and gas-piston lifting mechanisms for your Murphy bed.`,
     step1: "Precision Steel Fabrication & Frame Assembly",
     step2: "Piston Counterbalance Calibration & Testing",
     step3: "Final Multi-Point Quality Inspection & Protective Crating",
@@ -1509,11 +1701,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "Need assistance? Contact us at",
   },
   de: {
-    subject: (id) => `Ihre Wall Bed King Bestellung #${id} ist jetzt in Produktion! ⚙️`,
+    subject: (id) => `Ihre Wall Bed King Bestellung ${id} ist jetzt in Produktion! ⚙️`,
     badge: "In Produktion",
     headline: "Ihr Schrankbett wird jetzt gefertigt",
     greeting: (name) => `Guten Tag ${name || "Kunde"},`,
-    intro: (id) => `Gute Neuigkeiten! Ihre Bestellung #${id} befindet sich jetzt in der Fertigung. Unser Ingenieurteam bereitet den Präzisionsstahlrahmen und die deutschen Gasdruckkolben für Ihr Schrankbett vor.`,
+    intro: (id) => `Gute Neuigkeiten! Ihre Bestellung ${id} befindet sich jetzt in der Fertigung. Unser Ingenieurteam bereitet den Präzisionsstahlrahmen und die deutschen Gasdruckkolben für Ihr Schrankbett vor.`,
     step1: "Präzisionsstahlfertigung & Rahmenmontage",
     step2: "Kalibrierung & Belastungstest der Gasdruckfedern",
     step3: "Umfassende Qualitätsprüfung & sichere Schutzverpackung",
@@ -1524,11 +1716,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "Brauchen Sie Hilfe? Kontaktieren Sie uns unter",
   },
   fr: {
-    subject: (id) => `Votre commande Wall Bed King #${id} est en cours de fabrication ! ⚙️`,
+    subject: (id) => `Votre commande Wall Bed King ${id} est en cours de fabrication ! ⚙️`,
     badge: "En Fabrication",
     headline: "Votre lit escamotable est en cours de fabrication",
     greeting: (name) => `Bonjour ${name || "Cher Client"},`,
-    intro: (id) => `Excellente nouvelle ! Votre commande #${id} est entrée dans notre atelier de fabrication. Notre équipe prépare le cadre en acier de précision et les vérins à gaz allemands de votre lit escamotable.`,
+    intro: (id) => `Excellente nouvelle ! Votre commande ${id} est entrée dans notre atelier de fabrication. Notre équipe prépare le cadre en acier de précision et les vérins à gaz allemands de votre lit escamotable.`,
     step1: "Fabrication de précision & assemblage du châssis",
     step2: "Calibrage & test de résistance des pistons à gaz",
     step3: "Contrôle qualité rigoureux & emballage de protection renforcé",
@@ -1539,11 +1731,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "Besoin d'aide ? Contactez-nous à",
   },
   es: {
-    subject: (id) => `¡Su pedido Wall Bed King #${id} está en producción! ⚙️`,
+    subject: (id) => `¡Su pedido Wall Bed King ${id} está en producción! ⚙️`,
     badge: "En Producción",
     headline: "Su cama abatible está en proceso de fabricación",
     greeting: (name) => `Hola ${name || "Cliente"},`,
-    intro: (id) => `¡Buenas noticias! Su pedido #${id} ha entrado en la fase de fabricación e ingeniería. Nuestro equipo está preparando la estructura de acero de precisión y los pistones de gas alemanes de su cama abatible.`,
+    intro: (id) => `¡Buenas noticias! Su pedido ${id} ha entrado en la fase de fabricación e ingeniería. Nuestro equipo está preparando la estructura de acero de precisión y los pistones de gas alemanes de su cama abatible.`,
     step1: "Fabricación de precisión y ensamblaje de la estructura",
     step2: "Calibración y pruebas de resistencia de los pistones",
     step3: "Inspección de calidad exhaustiva y embalaje de protección",
@@ -1554,11 +1746,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "¿Necesita ayuda? Contáctenos en",
   },
   it: {
-    subject: (id) => `Il tuo ordine Wall Bed King #${id} è ora in produzione! ⚙️`,
+    subject: (id) => `Il tuo ordine Wall Bed King ${id} è ora in produzione! ⚙️`,
     badge: "In Produzione",
     headline: "Il tuo letto a scomparsa è in produzione",
     greeting: (name) => `Gentile ${name || "Cliente"},`,
-    intro: (id) => `Ottime notizie! Il tuo ordine #${id} è entrato nella fase di produzione e assemblaggio. Il nostro team sta preparando il telaio in acciaio ad alta precisione e i pistoni a gas tedeschi per il tuo letto.`,
+    intro: (id) => `Ottime notizie! Il tuo ordine ${id} è entrato nella fase di produzione e assemblaggio. Il nostro team sta preparando il telaio in acciaio ad alta precisione e i pistoni a gas tedeschi per il tuo letto.`,
     step1: "Lavorazione laser dell'acciaio e montaggio del telaio",
     step2: "Calibrazione e collaudo dei pistoni a gas",
     step3: "Controllo qualità multipunto e imballaggio protettivo rinforzato",
@@ -1569,11 +1761,11 @@ export const PRODUCTION_I18N = {
     footerHelp: "Hai bisogno di assistenza? Contattaci a",
   },
   hu: {
-    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése gyártás alatt áll! ⚙️`,
+    subject: (id) => `A(z) ${id} számú Wall Bed King rendelése gyártás alatt áll! ⚙️`,
     badge: "Gyártás Alatt",
     headline: "Lenyitható ágya gyártásba került",
     greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
-    intro: (id) => `Nagyszerű hír! A(z) #${id} számú rendelése megérkezett műszaki és gyártási részlegünkhöz. Munkatársaink megkezdték a precíziós acélkeret és a német gázteleszkópos mechanizmus összeszerelését és tesztelését.`,
+    intro: (id) => `Nagyszerű hír! A(z) ${id} számú rendelése megérkezett műszaki és gyártási részlegünkhöz. Munkatársaink megkezdték a precíziós acélkeret és a német gázteleszkópos mechanizmus összeszerelését és tesztelését.`,
     step1: "Lézervágott acélszerkezet precíziós összeszerelése",
     step2: "Német gázteleszkópok kalibrálása és teherbírási tesztje",
     step3: "Többpontos minőségellenőrzés és biztonságos védőcsomagolás",
@@ -1587,11 +1779,11 @@ export const PRODUCTION_I18N = {
 
 export const DELIVERY_I18N = {
   en: {
-    subject: (id) => `Your Wall Bed King Order #${id} Has Been Delivered! 🏡✨`,
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Delivered! 🏡✨`,
     badge: "Delivered",
     headline: "Your Murphy Bed Has Arrived!",
     greeting: (name) => `Hello ${name || "Valued Customer"},`,
-    intro: (id) => `We are delighted to confirm that your order #${id} has been delivered! We hope your new space-saving wall bed system transforms your home with unmatched style and function.`,
+    intro: (id) => `We are delighted to confirm that your order ${id} has been delivered! We hope your new space-saving wall bed system transforms your home with unmatched style and function.`,
     supportTitle: "Assembly & Installation Assistance",
     supportDesc: "All assembly manuals, clear step-by-step PDF diagrams, and video assembly tutorials are available 24/7 on our website. Take your time during installation, and remember our support team is on hand if you have any questions.",
     manualsBtn: "View Installation Manuals & Video Guides",
@@ -1601,11 +1793,11 @@ export const DELIVERY_I18N = {
     footerHelp: "Need assistance? Contact us at",
   },
   us: {
-    subject: (id) => `Your Wall Bed King Order #${id} Has Been Delivered! 🏡✨`,
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Delivered! 🏡✨`,
     badge: "Delivered",
     headline: "Your Murphy Bed Has Arrived!",
     greeting: (name) => `Hello ${name || "Valued Customer"},`,
-    intro: (id) => `We are pleased to confirm that your order #${id} has been successfully delivered! We hope your new Murphy bed helps you make the absolute most of your living space.`,
+    intro: (id) => `We are pleased to confirm that your order ${id} has been successfully delivered! We hope your new Murphy bed helps you make the absolute most of your living space.`,
     supportTitle: "Assembly & Installation Support",
     supportDesc: "Step-by-step PDF installation guides and video tutorials are available on our website anytime. Please reach out if you need guidance with mounting or assembly.",
     manualsBtn: "View Installation Guides & Videos",
@@ -1615,11 +1807,11 @@ export const DELIVERY_I18N = {
     footerHelp: "Need assistance? Contact us at",
   },
   de: {
-    subject: (id) => `Ihre Wall Bed King Bestellung #${id} wurde zugestellt! 🏡✨`,
+    subject: (id) => `Ihre Wall Bed King Bestellung ${id} wurde zugestellt! 🏡✨`,
     badge: "Zugestellt",
     headline: "Ihr Schrankbett ist angekommen!",
     greeting: (name) => `Guten Tag ${name || "Kunde"},`,
-    intro: (id) => `Wir freuen uns, Ihnen mitteilen zu können, dass Ihre Bestellung #${id} erfolgreich zugestellt wurde! Wir hoffen, dass Ihr neues platzsparendes Schrankbett Ihr Zuhause bereichert.`,
+    intro: (id) => `Wir freuen uns, Ihnen mitteilen zu können, dass Ihre Bestellung ${id} erfolgreich zugestellt wurde! Wir hoffen, dass Ihr neues platzsparendes Schrankbett Ihr Zuhause bereichert.`,
     supportTitle: "Aufbauanleitung & Montageunterstützung",
     supportDesc: "Alle Aufbauanleitungen, Schritt-für-Schritt-Pläne und Videoanleitungen stehen Ihnen jederzeit rund um die Uhr auf unserer Website zur Verfügung.",
     manualsBtn: "Montageanleitungen & Videos ansehen",
@@ -1629,11 +1821,11 @@ export const DELIVERY_I18N = {
     footerHelp: "Brauchen Sie Hilfe? Kontaktieren Sie uns unter",
   },
   fr: {
-    subject: (id) => `Votre commande Wall Bed King #${id} a été livrée ! 🏡✨`,
+    subject: (id) => `Votre commande Wall Bed King ${id} a été livrée ! 🏡✨`,
     badge: "Livré",
     headline: "Votre lit escamotable est bien arrivé !",
     greeting: (name) => `Bonjour ${name || "Cher Client"},`,
-    intro: (id) => `Nous avons le plaisir de vous confirmer que votre commande #${id} a bien été livrée ! Nous espérons que votre nouveau lit escamotable saura transformer et optimiser votre espace de vie.`,
+    intro: (id) => `Nous avons le plaisir de vous confirmer que votre commande ${id} a bien été livrée ! Nous espérons que votre nouveau lit escamotable saura transformer et optimiser votre espace de vie.`,
     supportTitle: "Aide au montage & guides d'installation",
     supportDesc: "Toutes nos notices de montage en PDF, schémas détaillés et vidéos tutorielles d'assemblage sont accessibles 24h/24 et 7j/7 sur notre site internet.",
     manualsBtn: "Voir les notices & vidéos de montage",
@@ -1643,11 +1835,11 @@ export const DELIVERY_I18N = {
     footerHelp: "Besoin d'aide ? Contactez-nous à",
   },
   es: {
-    subject: (id) => `¡Su pedido Wall Bed King #${id} ha sido entregado! 🏡✨`,
+    subject: (id) => `¡Su pedido Wall Bed King ${id} ha sido entregado! 🏡✨`,
     badge: "Entregado",
     headline: "¡Su cama abatible ha llegado!",
     greeting: (name) => `Hola ${name || "Cliente"},`,
-    intro: (id) => `¡Nos complace confirmarle que su pedido #${id} ha sido entregado con éxito! Esperamos que su nueva cama abatible transforme su hogar brindándole el máximo espacio y confort.`,
+    intro: (id) => `¡Nos complace confirmarle que su pedido ${id} ha sido entregado con éxito! Esperamos que su nueva cama abatible transforme su hogar brindándole el máximo espacio y confort.`,
     supportTitle: "Guías y asistencia de montaje",
     supportDesc: "Todos los manuales de montaje, esquemas explicativos en PDF y tutoriales en vídeo están a su disposición las 24 horas en nuestra web.",
     manualsBtn: "Ver guías de montaje y vídeos",
@@ -1657,11 +1849,11 @@ export const DELIVERY_I18N = {
     footerHelp: "¿Necesita ayuda? Contáctenos en",
   },
   it: {
-    subject: (id) => `Il tuo ordine Wall Bed King #${id} è stato consegnato! 🏡✨`,
+    subject: (id) => `Il tuo ordine Wall Bed King ${id} è stato consegnato! 🏡✨`,
     badge: "Consegnato",
     headline: "Il tuo letto a scomparsa è arrivato!",
     greeting: (name) => `Gentile ${name || "Cliente"},`,
-    intro: (id) => `Siamo lieti di confermarti che il tuo ordine #${id} è stato consegnato con successo! Ci auguriamo che il tuo nuovo letto a scomparsa ottimizzi al meglio i tuoi spazi quotidiani.`,
+    intro: (id) => `Siamo lieti di confermarti che il tuo ordine ${id} è stato consegnato con successo! Ci auguriamo che il tuo nuovo letto a scomparsa ottimizzi al meglio i tuoi spazi quotidiani.`,
     supportTitle: "Manuali e supporto al montaggio",
     supportDesc: "Tutti i manuali in PDF, gli schemi di montaggio e i video tutorial passo-passo sono disponibili in ogni momento sul nostro sito web.",
     manualsBtn: "Guarda le guide e i video di montaggio",
@@ -1671,11 +1863,11 @@ export const DELIVERY_I18N = {
     footerHelp: "Hai bisogno di assistenza? Contattaci a",
   },
   hu: {
-    subject: (id) => `A(z) #${id} számú Wall Bed King rendelése kézbesítésre került! 🏡✨`,
+    subject: (id) => `A(z) ${id} számú Wall Bed King rendelése kézbesítésre került! 🏡✨`,
     badge: "Kézbesítve",
     headline: "Lenyitható ágya megérkezett!",
     greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
-    intro: (id) => `Örömmel értesítjük, hogy a(z) #${id} számú rendelése sikeresen kézbesítésre került! Reméljük, hogy új helytakarékos ágymechanizmusa maximális kényelmet és prémium helykihasználást nyújt otthonában.`,
+    intro: (id) => `Örömmel értesítjük, hogy a(z) ${id} számú rendelése sikeresen kézbesítésre került! Reméljük, hogy új helytakarékos ágymechanizmusa maximális kényelmet és prémium helykihasználást nyújt otthonában.`,
     supportTitle: "Összeszerelési segédlet és útmutatók",
     supportDesc: "Az összeszereléshez szükséges részletes magyar és angol nyelvű PDF útmutatók, rajzok és lépésről-lépésre videós segédletek bármikor elérhetőek a weboldalunkon.",
     manualsBtn: "Szerelési útmutatók és videók megtekintése",
@@ -1724,7 +1916,7 @@ export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - #${order.id}</title>
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - ${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -1773,7 +1965,7 @@ export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en
               </table>
             </div>
 
-            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-top: 28px; margin-bottom: 8px;">Order Details (#${order.id})</h3>
+            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-top: 28px; margin-bottom: 8px;">Order Details (${order.id})</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="border-bottom: 2px solid #111; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666;">
@@ -1831,7 +2023,7 @@ export function getDeliveryNotificationHtml(order = SAMPLE_ORDER, locale = "en",
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - #${order.id}</title>
+        <title>${isUpdate ? `${upd.subjectPrefix}` : ""}${t.badge} - ${order.id}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -1903,7 +2095,7 @@ export async function sendProductionNotificationEmail(order, locale = null, isUp
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[Email Service: Mock] In Production Notification for #${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
+    console.log(`[Email Service: Mock] In Production Notification for ${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
     return {
       success: true,
       mode: "mock",
@@ -1946,7 +2138,7 @@ export async function sendDeliveryNotificationEmail(order, locale = null, isUpda
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[Email Service: Mock] Delivery Notification for #${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
+    console.log(`[Email Service: Mock] Delivery Notification for ${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`);
     return {
       success: true,
       mode: "mock",

@@ -35,12 +35,50 @@ export const PROMO_CODES = {
   FREEDELIVERY: { type: "fixed", value: 0, label: "Free UK Delivery" },
 };
 
+const LEGACY_RANDOM_IDS = new Set([
+  "WBK-170692", "WBK-837390", "WBK-289712", "WBK-848749",
+  "WBK-435497", "WBK-435336", "WBK-811614", "WBK-844907",
+  "WBK-665523", "WBK-842190", "WBK-629511"
+]);
+
 /**
- * Generate unique order reference (e.g. WBK-741920)
+ * Generate sequential order reference starting from WBK-1000 (e.g. WBK-1000, WBK-1001...)
  */
-export function generateOrderNumber() {
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  return `WBK-${randomNum}`;
+export async function generateOrderNumber() {
+  const START_NUMBER = 1000;
+  try {
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("orders")
+        .select("id")
+        .like("id", "WBK-%");
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        let maxSequential = 0;
+        for (const row of data) {
+          if (!row?.id) continue;
+          const match = row.id.match(/^WBK-(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            // Sequential orders start at 1000. Ignore legacy 6-digit random orders.
+            if (num >= START_NUMBER && (num < 100000 || !LEGACY_RANDOM_IDS.has(row.id))) {
+              if (num > maxSequential) {
+                maxSequential = num;
+              }
+            }
+          }
+        }
+
+        if (maxSequential >= START_NUMBER) {
+          return `WBK-${maxSequential + 1}`;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[generateOrderNumber] Error querying sequential orders:", err);
+  }
+
+  return `WBK-${START_NUMBER}`;
 }
 
 /**

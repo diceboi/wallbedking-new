@@ -171,13 +171,13 @@ export default function FAQPage() {
                   )}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
-                  <a
-                    href="tel:01928583469"
+                  <Link
+                    href={localizedHref("/contact")}
                     className="inline-flex items-center gap-2 text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors"
                   >
-                    <IconPhoneCall size={14} className="text-wbk-gold" />
-                    <span>01928 583 469</span>
-                  </a>
+                    <IconMail size={14} className="text-wbk-gold" />
+                    <span>{t("nav.contact", "Contact Specialists")}</span>
+                  </Link>
                   <a
                     href="mailto:support@wallbedking.com"
                     className="inline-flex items-center gap-2 text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors"
