@@ -27,17 +27,13 @@ const COM_LEGACY_REDIRECTS = {
   "/de/gewerbe": "/de/ueber-uns",
   "/de/kommerzkunden": "/de/ueber-uns",
   "/de/fallbeispiele": "/de/ueber-uns",
-  "/de/kontakt": "/de/kontakt",
-  "/de/bewertungen": "/de/bewertungen",
   "/de/reviews": "/de/bewertungen",
   "/de/faq": "/de/support/faq",
   "/de/haufig-gestellte-fragen": "/de/support/faq",
   "/de/lieferung": "/de/support/lieferung",
   "/de/datenschutz": "/de/privacy",
-  "/de/cart": "/de/cart",
   "/de/warenkorb": "/de/cart",
   "/de/seitenuebersicht": "/de",
-  "/de/thanks": "/de/thanks",
 
   // --- FRENCH (fr) ---
   "/fr/lits": "/fr/products/lits-escamotables",
@@ -60,17 +56,13 @@ const COM_LEGACY_REDIRECTS = {
   "/fr/about": "/fr/a-propos",
   "/fr/professionnels": "/fr/a-propos",
   "/fr/etudes-cas": "/fr/a-propos",
-  "/fr/contact": "/fr/contact",
-  "/fr/avis": "/fr/avis",
   "/fr/reviews": "/fr/avis",
   "/fr/questions-frequentes": "/fr/support/faq",
   "/fr/faq": "/fr/support/faq",
   "/fr/livraison": "/fr/support/livraison",
   "/fr/protection-donnees": "/fr/privacy",
-  "/fr/cart": "/fr/cart",
   "/fr/panier": "/fr/cart",
   "/fr/plan-du-site": "/fr",
-  "/fr/thanks": "/fr/thanks",
 
   // --- SPANISH (es) ---
   "/es/camas": "/es/products/camas-abatibles",
@@ -89,14 +81,10 @@ const COM_LEGACY_REDIRECTS = {
   "/es/profesionales": "/es/sobre-nosotros",
   "/es/clientes-comerciales": "/es/sobre-nosotros",
   "/es/casos-particulares": "/es/sobre-nosotros",
-  "/es/contacto": "/es/contacto",
-  "/es/opiniones": "/es/opiniones",
   "/es/preguntas-frecuentes": "/es/support/preguntas-frecuentes",
   "/es/entrega": "/es/support/envio",
   "/es/privacidad": "/es/privacy",
-  "/es/cart": "/es/cart",
   "/es/cesta": "/es/cart",
-  "/es/thanks": "/es/thanks",
 
   // --- ITALIAN (it) ---
   "/it/letti": "/it/products/letti-a-scomparsa",
@@ -119,17 +107,12 @@ const COM_LEGACY_REDIRECTS = {
   "/it/rivenditori": "/it/chi-siamo",
   "/it/commercio": "/it/chi-siamo",
   "/it/casi-specifici": "/it/chi-siamo",
-  "/it/contatti": "/it/contatti",
   "/it/contact": "/it/contatti",
-  "/it/recensioni": "/it/recensioni",
   "/it/domande-frequenti": "/it/support/domande-frequenti",
   "/it/consegna": "/it/support/spedizione",
   "/it/riservatezza": "/it/privacy",
-  "/it/privacy": "/it/privacy",
-  "/it/cart": "/it/cart",
   "/it/carrello": "/it/cart",
   "/it/indexo": "/it",
-  "/it/thanks": "/it/thanks",
 
   // --- PORTUGUESE (pt & por) ---
   "/pt": "/por",
@@ -203,8 +186,8 @@ const COM_LEGACY_REDIRECTS = {
   "/delivery": "/de/support/delivery",
   "/faq": "/de/support/faq",
   "/contact": "/de/contact",
-  "/feedback": "/de/reviews",
-  "/reviews": "/de/reviews",
+  "/feedback": "/de/bewertungen",
+  "/reviews": "/de/bewertungen",
   "/terms-conditions": "/de/terms",
   "/terms": "/de/terms",
   "/privacy": "/de/privacy",
@@ -280,20 +263,22 @@ function normalizePathname(rawPath) {
 function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = null) {
   if (!rawPath) return null;
   const normalized = normalizePathname(rawPath);
+  let target = null;
 
   // 1. Check UK domain specific redirects
   if (isUkDomain) {
     if (UK_LEGACY_REDIRECTS[normalized]) {
-      return UK_LEGACY_REDIRECTS[normalized];
-    }
-    const rawNoPhp = rawPath.replace(/\.(php|html)$/i, "");
-    if (UK_LEGACY_REDIRECTS[rawNoPhp]) {
-      return UK_LEGACY_REDIRECTS[rawNoPhp];
+      target = UK_LEGACY_REDIRECTS[normalized];
+    } else {
+      const rawNoPhp = rawPath.replace(/\.(php|html)$/i, "");
+      if (UK_LEGACY_REDIRECTS[rawNoPhp]) {
+        target = UK_LEGACY_REDIRECTS[rawNoPhp];
+      }
     }
   }
 
   // 2. If a preferred locale is specified and path is a root legacy path, resolve to that locale
-  if (preferredLocale && preferredLocale !== "de") {
+  if (!target && preferredLocale && preferredLocale !== "de") {
     const loc = preferredLocale === "pt" ? "por" : preferredLocale;
     const catMap = {
       beds: { de: "schrankbetten", fr: "lits-escamotables", es: "camas-abatibles", por: "camas-rebativeis", it: "letti-a-scomparsa", us: "beds", en: "beds" },
@@ -304,70 +289,73 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
 
     if (normalized === "/classic" || normalized === "/studio" || normalized === "/classic-plus") {
       const cat = catMap.beds[loc] || "beds";
-      return `/${loc}/products/${cat}?collection=traditional`;
-    }
-    if (normalized === "/morphy-bed") {
+      target = `/${loc}/products/${cat}?collection=traditional`;
+    } else if (normalized === "/morphy-bed") {
       const cat = catMap.beds[loc] || "beds";
-      return `/${loc}/products/${cat}?collection=morphy`;
-    }
-    if (normalized === "/wallbeds" || normalized === "/clearance") {
+      target = `/${loc}/products/${cat}?collection=morphy`;
+    } else if (normalized === "/wallbeds" || normalized === "/clearance") {
       const cat = catMap.beds[loc] || "beds";
-      return `/${loc}/products/${cat}`;
-    }
-    if (normalized === "/morphy-sofa") {
+      target = `/${loc}/products/${cat}`;
+    } else if (normalized === "/morphy-sofa") {
       const cat = catMap.sofas[loc] || "sofas";
-      return `/${loc}/products/${cat}`;
-    }
-    if (normalized === "/cabinets") {
+      target = `/${loc}/products/${cat}`;
+    } else if (normalized === "/cabinets") {
       const cat = catMap.cabinets[loc] || "cabinets";
-      return `/${loc}/products/${cat}`;
-    }
-    if (normalized === "/mattresses") {
+      target = `/${loc}/products/${cat}`;
+    } else if (normalized === "/mattresses") {
       const cat = catMap.mattresses[loc] || "mattresses";
-      return `/${loc}/products/${cat}`;
-    }
-    if (normalized === "/cart") {
-      return `/${loc}/cart`;
-    }
-    if (normalized === "/terms" || normalized === "/terms-conditions") {
-      return `/${loc}/terms`;
-    }
-    if (normalized === "/privacy") {
-      return `/${loc}/privacy`;
-    }
-    if (normalized === "/contact") {
-      return `/${loc}/contact`;
-    }
-    if (normalized === "/reviews" || normalized === "/feedback") {
-      return `/${loc}/reviews`;
-    }
-    if (normalized === "/faq") {
-      return `/${loc}/support/faq`;
-    }
-    if (normalized === "/delivery") {
+      target = `/${loc}/products/${cat}`;
+    } else if (normalized === "/cart") {
+      target = `/${loc}/cart`;
+    } else if (normalized === "/terms" || normalized === "/terms-conditions") {
+      target = `/${loc}/terms`;
+    } else if (normalized === "/privacy") {
+      target = `/${loc}/privacy`;
+    } else if (normalized === "/contact") {
+      target = `/${loc}/contact`;
+    } else if (normalized === "/reviews" || normalized === "/feedback") {
+      target = `/${loc}/reviews`;
+    } else if (normalized === "/faq") {
+      target = `/${loc}/support/faq`;
+    } else if (normalized === "/delivery") {
       const delivMap = { de: "lieferung", fr: "livraison", es: "envio", por: "envio", it: "spedizione", us: "delivery", en: "delivery" };
-      return `/${loc}/support/${delivMap[loc] || "delivery"}`;
+      target = `/${loc}/support/${delivMap[loc] || "delivery"}`;
     }
   }
 
   // 3. Check COM legacy redirects (exact normalized lookup)
-  if (COM_LEGACY_REDIRECTS[normalized]) {
-    return COM_LEGACY_REDIRECTS[normalized];
+  if (!target && COM_LEGACY_REDIRECTS[normalized]) {
+    target = COM_LEGACY_REDIRECTS[normalized];
   }
 
   // 4. Fallback check for raw path without .php
-  const rawClean = rawPath.replace(/\.(php|html)$/i, "").toLowerCase();
-  if (COM_LEGACY_REDIRECTS[rawClean]) {
-    return COM_LEGACY_REDIRECTS[rawClean];
+  if (!target) {
+    const rawClean = rawPath.replace(/\.(php|html)$/i, "").toLowerCase();
+    if (COM_LEGACY_REDIRECTS[rawClean]) {
+      target = COM_LEGACY_REDIRECTS[rawClean];
+    }
   }
 
   // 5. Catch-all: If path ended in .php and was not in map, redirect to clean path
-  if (/\.php$/i.test(rawPath)) {
+  if (!target && /\.php$/i.test(rawPath)) {
     const stripped = rawPath.replace(/\.php$/i, "");
-    return stripped.endsWith("/index") ? stripped.replace(/\/index$/, "") || "/" : stripped;
+    target = stripped.endsWith("/index") ? stripped.replace(/\/index$/, "") || "/" : stripped;
   }
 
-  return null;
+  // Safety guard: NEVER redirect to the exact same URL (prevents ERR_TOO_MANY_REDIRECTS)
+  if (
+    !target ||
+    target === rawPath ||
+    target === normalized ||
+    target === `${normalized}/` ||
+    `${target}/` === normalized ||
+    target === `${rawPath}/` ||
+    `${target}/` === rawPath
+  ) {
+    return null;
+  }
+
+  return target;
 }
 
 /**
@@ -395,6 +383,18 @@ function getNextConfigRedirects() {
       addRule(`${source}.php`, destination);
       addRule(`${source}/`, destination);
     }
+  }
+
+  // Add clean redirects for legacy .php pages whose clean target is an existing App Router page
+  const cleanPhpRedirects = [
+    "/de/kontakt", "/de/bewertungen", "/de/cart", "/de/thanks",
+    "/fr/contact", "/fr/avis", "/fr/cart", "/fr/thanks",
+    "/es/contacto", "/es/opiniones", "/es/cart", "/es/thanks",
+    "/it/contatti", "/it/recensioni", "/it/privacy", "/it/cart", "/it/thanks",
+  ];
+  for (const p of cleanPhpRedirects) {
+    addRule(`${p}.php`, p);
+    addRule(`${p}/`, p);
   }
 
   return redirects;

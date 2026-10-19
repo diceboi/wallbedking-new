@@ -47,7 +47,12 @@ export function proxy(request) {
   const preferredLocale = savedCookieLocale || (detectedLang !== "uk_redirect" ? detectedLang : null) || null;
 
   const legacyTarget = resolveLegacyRedirect(pathname, isUkDomain, preferredLocale);
-  if (legacyTarget) {
+  if (
+    legacyTarget &&
+    legacyTarget !== pathname &&
+    legacyTarget !== `${pathname}/` &&
+    `${legacyTarget}/` !== pathname
+  ) {
     const targetUrl = new URL(legacyTarget, request.url);
     if (request.nextUrl.search && !legacyTarget.includes("?")) {
       targetUrl.search = request.nextUrl.search;

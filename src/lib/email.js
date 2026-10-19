@@ -9,7 +9,8 @@
 import { BANK_DETAILS, getBankI18n } from "./bank-details.js";
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "delivery@wallbedking.co.uk";
+export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@wallbedking.com";
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || SUPPORT_EMAIL;
 export const STORE_PHONE = "01928 583 469";
 export const STORE_HOURS = "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00";
 
@@ -1093,8 +1094,8 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: emailSubject,
       html: htmlContent,
     });
@@ -1175,8 +1176,8 @@ export async function sendShippingNotificationEmail(order, trackingNumber, carri
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: getShippingNotificationHtml(order, trackingNumber, carrier, isUpdate),
     });
@@ -1201,7 +1202,7 @@ export async function sendContactFormEmail({ name, email, phone, subject, messag
 
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
-      to: [ADMIN_EMAIL],
+      to: [SUPPORT_EMAIL],
       replyTo: email,
       reply_to: email,
       subject: `📩 Contact Form Submission: ${subject} from ${name}`,
@@ -1238,8 +1239,8 @@ export async function sendReviewRequestEmail(order, product = null) {
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: `How is your Wall Bed King Murphy bed? (Order #${order.id})`,
       html: getReviewRequestHtml(order, product),
     });
@@ -1265,8 +1266,8 @@ export async function sendAdminNewReviewAlert(review) {
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [ADMIN_EMAIL],
-      replyTo: review.author_email || ADMIN_EMAIL,
-      reply_to: review.author_email || ADMIN_EMAIL,
+      replyTo: review.author_email || SUPPORT_EMAIL,
+      reply_to: review.author_email || SUPPORT_EMAIL,
       subject: `⭐ NEW REVIEW SUBMITTED: ${review.author_name} for ${review.product_name || review.product_slug} (${review.rating} Stars)`,
       html: getAdminNewReviewAlertHtml(review),
     });
@@ -1459,8 +1460,8 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [waitlistItem.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: t.subject(pName),
       html: getRestockNotificationHtml(waitlistItem, product, loc),
     });
@@ -1922,8 +1923,8 @@ export async function sendProductionNotificationEmail(order, locale = null, isUp
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: htmlContent,
     });
@@ -1965,8 +1966,8 @@ export async function sendDeliveryNotificationEmail(order, locale = null, isUpda
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
-      replyTo: ADMIN_EMAIL,
-      reply_to: ADMIN_EMAIL,
+      replyTo: SUPPORT_EMAIL,
+      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: htmlContent,
     });
