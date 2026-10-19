@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { LOCALES } from "./lib/i18n";
 import { resolveStaticPage } from "./data/slugs";
+import { resolveLegacyRedirect } from "./data/legacy-redirects";
 
 // On .com, active locales are US and EU (UK is hosted separately on wallbedking.co.uk)
 const COM_LOCALES = ["us", "de", "fr", "es", "por", "it"];
@@ -30,17 +31,46 @@ export function proxy(request) {
   const host = request.headers.get("host") || "";
   const isUkDomain = host.includes("wallbedking.co.uk");
 
-  // 1. Ignore Next.js internals, APIs, static files, and media
+  // 1. Ignore Next.js internals, APIs, and Admin
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname.startsWith("/admin") ||
+    pathname.startsWith("/admin")
+  ) {
+    return NextResponse.next();
+  }
+
+  // 2. Check legacy redirects from old website (.com and .co.uk)
+  const savedCookieLocale = request.cookies.get("NEXT_LOCALE")?.value?.toLowerCase();
+  const acceptLangHeader = request.headers.get("accept-language");
+  const detectedLang = detectLocaleFromAcceptLanguage(acceptLangHeader);
+  const preferredLocale = savedCookieLocale || (detectedLang !== "uk_redirect" ? detectedLang : null) || null;
+
+  const legacyTarget = resolveLegacyRedirect(pathname, isUkDomain, preferredLocale);
+  if (legacyTarget) {
+    const targetUrl = new URL(legacyTarget, request.url);
+    if (request.nextUrl.search && !legacyTarget.includes("?")) {
+      targetUrl.search = request.nextUrl.search;
+    } else if (request.nextUrl.search && legacyTarget.includes("?")) {
+      const existingParams = new URLSearchParams(targetUrl.search);
+      for (const [key, val] of request.nextUrl.searchParams.entries()) {
+        if (!existingParams.has(key)) {
+          existingParams.append(key, val);
+        }
+      }
+      targetUrl.search = existingParams.toString();
+    }
+    return NextResponse.redirect(targetUrl, 301);
+  }
+
+  // 3. Ignore explicit static assets and media files
+  if (
     pathname.startsWith("/sofa-configurator") ||
     pathname.startsWith("/product-images") ||
     pathname.startsWith("/showroom") ||
     pathname.startsWith("/logos") ||
     pathname.startsWith("/favicon.ico") ||
-    /\.(.*)$/.test(pathname)
+    /\.(png|jpe?g|webp|gif|svg|ico|css|js|woff2?|ttf|eot|mp4|webm|pdf|json|txt|xml)$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -131,6 +161,6 @@ export function proxy(request) {
 export const config = {
   matcher: [
     // Match all paths except explicit static assets and Next.js internals
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

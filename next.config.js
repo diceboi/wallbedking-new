@@ -1,3 +1,5 @@
+const { getNextConfigRedirects } = require("./src/data/legacy-redirects");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Disable React Strict Mode to prevent double-mounting of WebGL/ThreeJS canvas in development.
@@ -25,6 +27,7 @@ const nextConfig = {
         destination: "/en/account",
         permanent: false,
       },
+      ...getNextConfigRedirects(),
     ];
   },
 };

@@ -130,6 +130,22 @@ export const STATIC_PAGE_SLUGS = {
     por: "support/videos-instalacao",
     it: "support/video-installazione",
   },
+  terms: {
+    en: "terms",
+    de: "agb",
+    fr: "conditions",
+    es: "terminos-condiciones",
+    por: "termos-condicoes",
+    it: "termini-condizioni",
+  },
+  privacy: {
+    en: "privacy",
+    de: "datenschutz",
+    fr: "protection-donnees",
+    es: "privacidad",
+    por: "privacidade",
+    it: "riservatezza",
+  },
 };
 
 // Build reverse lookup maps for fast lookups
@@ -147,6 +163,25 @@ for (const [canonical, mapping] of Object.entries(STATIC_PAGE_SLUGS)) {
     REVERSE_STATIC_MAP[`${loc}:${slug.toLowerCase()}`] = canonical;
     REVERSE_STATIC_MAP[slug.toLowerCase()] = canonical;
   }
+}
+
+// Secondary legacy aliases for static pages
+const STATIC_PAGE_ALIASES = {
+  "de:impressum": "about",
+  "de:ueberuns": "about",
+  "fr:apropos": "about",
+  "fr:termes-conditions": "terms",
+  "es:terminos": "terms",
+  "es:términos-condiciones": "terms",
+  "it:termini": "terms",
+  "it:privacy": "privacy",
+  "pt:privacidade": "privacy",
+  "pt:termos-condicoes": "terms",
+  "impressum": "about",
+  "apropos": "about",
+};
+for (const [k, v] of Object.entries(STATIC_PAGE_ALIASES)) {
+  REVERSE_STATIC_MAP[k] = v;
 }
 
 /**
