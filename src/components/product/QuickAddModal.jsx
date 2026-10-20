@@ -250,6 +250,8 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     const itemToAdd = {
       id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${sizeStr}-${activeProduct.orientation || "Vertical"}-${activeProduct.type || "Classic"}-${activeProduct.color || selectedColor || ""}`,
       productId: activeProduct.slug || activeProduct.rawId || activeProduct.id,
+      rawId: activeProduct.id || activeProduct.rawId || null,
+      slug: activeProduct.slug || product.slug || "",
       title: getLocalizedProductName(activeProduct, locale) || getLocalizedProductName(product, locale),
       image:
         activeProduct.image ||

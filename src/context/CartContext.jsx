@@ -231,6 +231,59 @@ export function CartProvider({ children }) {
     }
   }, [deliveryOption, isMounted]);
 
+  // Revalidate cart item prices against database when activeLocale or currency changes
+  useEffect(() => {
+    if (!isMounted || items.length === 0) return;
+
+    let isSubscribed = true;
+    const targetCurrency = (localeCtx?.market?.currency || (activeLocale === "us" ? "USD" : (activeLocale === "en" ? "GBP" : "EUR"))).toUpperCase();
+
+    async function syncPrices() {
+      try {
+        const res = await fetch("/api/checkout/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items,
+            deliveryOption,
+            promoCode: promoCode || "",
+            currency: targetCurrency,
+            locale: activeLocale,
+          }),
+        });
+        const data = await res.json();
+        if (isSubscribed && data?.success && Array.isArray(data?.items)) {
+          let hasPriceDiff = false;
+          const updatedItems = items.map((origItem, idx) => {
+            const validated = data.items[idx];
+            if (validated && validated.price !== origItem.price) {
+              hasPriceDiff = true;
+              return {
+                ...origItem,
+                price: validated.price,
+                rawId: validated.rawId || origItem.rawId,
+                slug: validated.slug || origItem.slug,
+              };
+            }
+            return origItem;
+          });
+
+          if (hasPriceDiff) {
+            setItems(updatedItems);
+          }
+        }
+      } catch (err) {
+        console.warn("[CartContext] Price revalidation notice:", err);
+      }
+    }
+
+    syncPrices();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [activeLocale, localeCtx?.market?.currency, isMounted, deliveryOption, promoCode]);
+
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 

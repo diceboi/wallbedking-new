@@ -82,55 +82,151 @@ export async function generateOrderNumber() {
 }
 
 /**
- * Recalculate and validate prices against database or catalog
+ * Helper to resolve product identifier (id and slug) from cart item
  */
-export async function validateOrderTotals(items = [], deliveryOptionId = "delivery_option_economy", promoCode = "") {
+export function resolveProductIdentifiers(item) {
+  let numericId = null;
+  let slug = item.slug || null;
+
+  for (const field of [item.rawId, item.productId, item.id]) {
+    if (typeof field === "number" && field > 0) {
+      numericId = field;
+      break;
+    }
+    if (typeof field === "string") {
+      const clean = field.replace(/^wbk-/i, "");
+      if (/^\d+$/.test(clean)) {
+        numericId = parseInt(clean, 10);
+        break;
+      }
+    }
+  }
+
+  if (!slug && typeof item.productId === "string" && !/^\d+$/.test(item.productId)) {
+    slug = item.productId.replace(/^wbk-/i, "");
+  }
+
+  if (!numericId || !slug) {
+    const found = RAW_CATALOG?.find((p) => {
+      if (numericId && p.id === numericId) return true;
+      if (slug && p.slug === slug) return true;
+      if (typeof item.id === "string" && p.slug && (item.id === p.slug || item.id.startsWith(p.slug + "-"))) return true;
+      if (typeof item.rawId === "string" && p.slug && item.rawId === p.slug) return true;
+      return false;
+    });
+    if (found) {
+      if (!numericId) numericId = found.id;
+      if (!slug) slug = found.slug;
+    }
+  }
+
+  return { numericId, slug };
+}
+
+/**
+ * Recalculate and validate prices against database or catalog strictly matching the requested currency
+ */
+export async function validateOrderTotals(
+  items = [],
+  deliveryOptionId = "delivery_option_economy",
+  promoCode = "",
+  targetCurrency = "GBP",
+  targetLocale = "en"
+) {
   let subtotal = 0;
   const validatedItems = [];
+  const curr = String(targetCurrency || (targetLocale === "us" ? "USD" : (targetLocale === "en" ? "GBP" : "EUR"))).toUpperCase();
 
   for (const item of items) {
     const qty = Math.max(1, parseInt(item.quantity || 1, 10));
-    let unitPrice = null;
+    const { numericId, slug } = resolveProductIdentifiers(item);
+    let dbProd = null;
 
-    // Try finding product in Supabase
+    // 1. Try finding product in Supabase directly
     try {
-      if (supabaseAdmin) {
-        const queryId = item.rawId || item.id;
-        const { data: dbProd } = await supabaseAdmin
+      if (supabaseAdmin && (numericId || slug)) {
+        const orClauses = [];
+        if (numericId) orClauses.push(`id.eq.${numericId}`);
+        if (slug) orClauses.push(`slug.eq.${slug}`);
+
+        const { data } = await supabaseAdmin
           .from("products")
-          .select("id, price_gbp, sale_price_gbp, name")
-          .or(`id.eq.${parseInt(queryId, 10) || 0},slug.eq.${item.slug || ""}`)
+          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd")
+          .or(orClauses.join(","))
           .maybeSingle();
 
-        if (dbProd) {
-          unitPrice = dbProd.sale_price_gbp != null ? Number(dbProd.sale_price_gbp) : Number(dbProd.price_gbp);
+        if (data) {
+          dbProd = data;
         }
       }
-    } catch {
-      // Ignore and fallback
+    } catch (err) {
+      console.warn("[validateOrderTotals] Supabase query notice:", err?.message);
     }
 
-    // Fallback to local catalog if not found in DB
-    if (unitPrice == null) {
-      const foundInCatalog = RAW_CATALOG?.find(
-        (p) => String(p.id) === String(item.rawId || item.id) || p.slug === item.slug
-      );
-      if (foundInCatalog) {
-        unitPrice = foundInCatalog.numericPrice || Number(foundInCatalog.price_gbp) || Number(item.price) || 0;
+    // 2. Fallback to local catalog if not found in DB
+    const prodSource = dbProd || RAW_CATALOG?.find(
+      (p) => (numericId && p.id === numericId) || (slug && p.slug === slug)
+    );
+
+    let unitPrice = 0;
+
+    if (prodSource) {
+      let regularPrice = null;
+      let explicitSalePrice = null;
+      let fixedDiscount = null;
+
+      if (curr === "USD") {
+        regularPrice = prodSource.price_usd != null ? Number(prodSource.price_usd) : null;
+        explicitSalePrice = prodSource.sale_price_usd != null ? Number(prodSource.sale_price_usd) : null;
+        fixedDiscount = prodSource.sale_fix_usd != null ? Number(prodSource.sale_fix_usd) : null;
+      } else if (curr === "EUR") {
+        regularPrice = prodSource.price_euro != null ? Number(prodSource.price_euro) : null;
+        explicitSalePrice = prodSource.sale_price_euro != null ? Number(prodSource.sale_price_euro) : null;
+        fixedDiscount = prodSource.sale_fix_euro != null ? Number(prodSource.sale_fix_euro) : null;
       } else {
-        unitPrice = Number(item.price) || 0;
+        regularPrice = prodSource.price_gbp != null ? Number(prodSource.price_gbp) : null;
+        explicitSalePrice = prodSource.sale_price_gbp != null ? Number(prodSource.sale_price_gbp) : null;
+        fixedDiscount = prodSource.sale_fix_gbp != null ? Number(prodSource.sale_fix_gbp) : null;
       }
+
+      // Fallback if price is not populated yet in that currency in DB
+      if (regularPrice == null || isNaN(regularPrice) || regularPrice <= 0) {
+        regularPrice = Number(prodSource.price_gbp) || Number(prodSource.numericPrice) || Number(item.price) || 0;
+      }
+
+      let finalPrice = regularPrice;
+      const percentDiscount = prodSource.sale_percent != null ? Number(prodSource.sale_percent) : null;
+
+      if (percentDiscount != null && !isNaN(percentDiscount) && percentDiscount > 0 && percentDiscount < 100) {
+        finalPrice = Math.round(regularPrice * (1 - percentDiscount / 100));
+      } else if (fixedDiscount != null && !isNaN(fixedDiscount) && fixedDiscount > 0) {
+        finalPrice = Math.max(0, regularPrice - fixedDiscount);
+      } else if (explicitSalePrice != null && !isNaN(explicitSalePrice) && explicitSalePrice > 0 && explicitSalePrice < regularPrice) {
+        finalPrice = explicitSalePrice;
+      }
+
+      // Morphy sofa surcharge if included
+      const isSofaIncluded = Boolean(item.options?.sofaIncluded);
+      let sofaSurcharge = 0;
+      if (isSofaIncluded) {
+        sofaSurcharge = curr === "USD" ? 350 : (curr === "EUR" ? 320 : 280);
+      }
+
+      unitPrice = finalPrice + sofaSurcharge;
+    } else {
+      // Custom or modular items not in products catalog (e.g. modular sofa components)
+      unitPrice = Math.max(0, Number(item.price) || 0);
     }
 
     const itemTotal = unitPrice * qty;
     subtotal += itemTotal;
 
     validatedItems.push({
-      id: item.id || item.rawId,
-      rawId: item.rawId || item.id,
-      slug: item.slug || "",
-      title: item.title || "Wall Bed King Item",
-      image: item.image || "",
+      id: item.id || (numericId ? `wbk-${numericId}` : slug),
+      rawId: numericId || item.rawId || item.id,
+      slug: slug || item.slug || "",
+      title: item.title || prodSource?.name || "Wall Bed King Item",
+      image: item.image || prodSource?.image || "",
       price: unitPrice,
       quantity: qty,
       options: item.options || {},
@@ -166,5 +262,6 @@ export async function validateOrderTotals(items = [], deliveryOptionId = "delive
     shippingAmount,
     vatAmount,
     totalAmount,
+    currency: curr,
   };
 }

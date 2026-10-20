@@ -23,6 +23,7 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
     total,
     customCartId,
     deliveryOption,
+    promoCode,
     selectedDeliveryDetails,
   } = useCart();
 
@@ -32,10 +33,10 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Keep references to latest cart and payment values inside PayPal callbacks
-  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user });
+  const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, promoCode, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user });
   useEffect(() => {
-    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user };
-  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user]);
+    cartRef.current = { items, subtotal, discount, shipping, total, customCartId, deliveryOption, promoCode, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user };
+  }, [items, subtotal, discount, shipping, total, customCartId, deliveryOption, promoCode, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user]);
 
   // Load PayPal SDK Script dynamically based on selected market / entity
   useEffect(() => {
@@ -109,10 +110,36 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
               }
             }
             const curr = current.paypalCurrency || "GBP";
-            const rawItems = current.items || [];
+
+            // 1. Authoritative real-time server-side price validation against Supabase database
+            let effectiveItems = current.items || [];
+            let effectiveShippingVal = Number(current.shipping) || 0;
+            let effectiveTotalVal = Number(current.total) || 0;
+
+            try {
+              const valRes = await fetch("/api/checkout/validate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  items: current.items,
+                  deliveryOption: current.deliveryOption,
+                  promoCode: current.promoCode || "",
+                  currency: curr,
+                  locale: current.locale || "en",
+                }),
+              });
+              const valData = await valRes.json();
+              if (valData?.success && Array.isArray(valData?.items) && valData.items.length > 0) {
+                effectiveItems = valData.items;
+                effectiveShippingVal = Number(valData.shippingAmount) || 0;
+                effectiveTotalVal = Number(valData.totalAmount) || 0;
+              }
+            } catch (vErr) {
+              console.warn("[PayPal Checkout] Real-time database validation notice:", vErr);
+            }
 
             // Calculate precise monetary values in cents to avoid IEEE 754 rounding mismatches
-            const parsedItems = rawItems.map((it) => {
+            const parsedItems = effectiveItems.map((it) => {
               const priceCents = Math.round((Math.max(0, Number(it.price)) || 0) * 100);
               const qty = Math.max(1, parseInt(it.quantity, 10) || 1);
               const opt = [it.options?.size, it.options?.orientation, it.options?.color].filter(Boolean).join(" - ");
@@ -126,8 +153,8 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
             });
 
             const itemsTotalCents = parsedItems.reduce((acc, currItem) => acc + currItem.totalCents, 0);
-            const shippingCents = Math.round((Math.max(0, Number(current.shipping)) || 0) * 100);
-            const finalTotalCents = Math.round((Math.max(0, Number(current.total)) || 0) * 100);
+            const shippingCents = Math.round(effectiveShippingVal * 100);
+            const finalTotalCents = Math.round(effectiveTotalVal * 100);
 
             // Calculate exact discount needed so that itemsTotal + shipping - discount === finalTotal
             const effectiveDiscountCents = Math.max(0, itemsTotalCents + shippingCents - finalTotalCents);

@@ -139,6 +139,9 @@ export function StripeCheckoutButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           line_items: lineItems,
+          items,
+          deliveryOption,
+          promoCode,
           success_url: successUrl,
           cancel_url: cancelUrl,
           cartId: customCartId,

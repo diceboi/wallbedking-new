@@ -1460,6 +1460,8 @@ export default function ProductDetailPage() {
     const itemToAdd = {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
+      rawId: displayProduct?.id || displayProduct?.rawId || null,
+      slug: displayProduct?.slug || productSlug || "",
       title: localizedProductName,
       image:
         currentMainImage?.src ||

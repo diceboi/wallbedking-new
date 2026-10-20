@@ -41,8 +41,8 @@ export async function POST(request) {
     const targetCurrency = (currency || paymentConfig.currency).toUpperCase();
     const targetEntity = companyEntity || paymentConfig.entity;
 
-    // 1. Server-side validation of prices and totals
-    const calculation = await validateOrderTotals(items, deliveryOption, promoCode);
+    // 1. Server-side validation of prices and totals strictly matching market currency
+    const calculation = await validateOrderTotals(items, deliveryOption, promoCode, targetCurrency, locale);
 
     const customerName = [
       shippingAddress.firstName || customer.firstName || "",

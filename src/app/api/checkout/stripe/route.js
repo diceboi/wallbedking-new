@@ -25,6 +25,65 @@ export async function POST(request) {
 
     console.log(`[Stripe Checkout] Initiating session for entity: ${paymentConfig.entity} (${paymentConfig.companyName}), Currency: ${targetCurrencyLower.toUpperCase()}, Locale: ${locale}, Direct Stripe: ${Boolean(paymentConfig.stripeSecretKey)}`);
 
+    // Server-side authoritative price validation against Supabase database
+    let authoritativeLineItems = line_items;
+    if (Array.isArray(body.items) && body.items.length > 0) {
+      try {
+        const { validateOrderTotals } = await import("@/lib/orders");
+        const valCalc = await validateOrderTotals(
+          body.items,
+          body.deliveryOption || "delivery_option_economy",
+          body.promoCode || "",
+          targetCurrencyLower.toUpperCase(),
+          locale
+        );
+
+        if (valCalc?.items && valCalc.items.length > 0) {
+          const discountMultiplier = valCalc.subtotal > 0 ? Math.max(0, (valCalc.subtotal - valCalc.discountAmount) / valCalc.subtotal) : 1;
+          const recomputed = valCalc.items.map((it) => {
+            const discountedPrice = Math.round(it.price * discountMultiplier * 100) / 100;
+            const unitAmountPence = Math.round(discountedPrice * 100);
+            const optionsDesc = [
+              it.options?.size,
+              it.options?.orientation,
+              it.options?.type,
+              it.options?.sofaIncluded ? "Morphy Sofa Included" : null,
+            ].filter(Boolean).join(" | ");
+
+            return {
+              price_data: {
+                currency: targetCurrencyLower,
+                product_data: {
+                  name: it.title,
+                  description: optionsDesc || "Wall Bed King Product",
+                },
+                unit_amount: unitAmountPence,
+              },
+              quantity: it.quantity || 1,
+            };
+          });
+
+          if (valCalc.shippingAmount > 0) {
+            recomputed.push({
+              price_data: {
+                currency: targetCurrencyLower,
+                product_data: {
+                  name: valCalc.delivery?.label || "Delivery",
+                  description: valCalc.delivery?.message || "Standard Delivery",
+                },
+                unit_amount: Math.round(valCalc.shippingAmount * 100),
+              },
+              quantity: 1,
+            });
+          }
+
+          authoritativeLineItems = recomputed;
+        }
+      } catch (err) {
+        console.warn("[Stripe Route] Authoritative database price validation notice:", err);
+      }
+    }
+
     // 1. Direct Stripe Checkout Session creation if secret key is present for this entity
     if (paymentConfig.stripeSecretKey) {
       const stripe = new Stripe(paymentConfig.stripeSecretKey);
@@ -32,7 +91,7 @@ export async function POST(request) {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer_email: clientEmail || undefined,
-        line_items: line_items.map((item) => ({
+        line_items: authoritativeLineItems.map((item) => ({
           price_data: {
             currency: item.price_data?.currency || targetCurrencyLower,
             product_data: {
@@ -94,7 +153,7 @@ export async function POST(request) {
     // 2. Route to the dedicated Wall Bed King OnRender Stripe microservice for this company
     // UK: https://stripe-uk.onrender.com/create-checkout-session
     // International: https://stripe-05m9.onrender.com/create-checkout-session
-    const formattedLineItems = line_items.map((item) => ({
+    const formattedLineItems = authoritativeLineItems.map((item) => ({
       ...item,
       price_data: {
         ...item.price_data,
