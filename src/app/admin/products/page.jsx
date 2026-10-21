@@ -1092,7 +1092,9 @@ export default function AdminProductsPage() {
               </th>
 
               {/* Actions */}
-              <th className="py-3 px-3 text-center">Actions</th>
+              <th className="py-3 px-3 text-center sticky right-0 z-20 bg-[#F4F2F0] border-l border-wbk-lightgrey/80 shadow-[-4px_0_8px_rgba(0,0,0,0.05)] min-w-[110px]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-wbk-lightgrey/40">
@@ -1145,7 +1147,11 @@ export default function AdminProductsPage() {
 
                     {/* Image Preview */}
                     <td className="py-3 px-3">
-                      <div className="w-10 h-10 relative bg-[#F4F2F0] border border-wbk-lightgrey/60 overflow-hidden shrink-0">
+                      <div
+                        onClick={() => setSelectedProduct(p)}
+                        className="w-10 h-10 relative bg-[#F4F2F0] border border-wbk-lightgrey/60 overflow-hidden shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                        title="Click to edit product"
+                      >
                         <Image
                           src={imgUrl}
                           alt={p.name}
@@ -1158,7 +1164,11 @@ export default function AdminProductsPage() {
 
                     {/* Name & Type & Tags */}
                     <td className="py-3 px-4 min-w-[280px]">
-                      <div className="font-semibold text-wbk-black whitespace-normal break-words leading-snug">
+                      <div
+                        onClick={() => setSelectedProduct(p)}
+                        className="font-semibold text-wbk-black whitespace-normal break-words leading-snug cursor-pointer hover:text-wbk-gold transition-colors"
+                        title="Click to edit product"
+                      >
                         {p.name}
                       </div>
                       {p.name_us && p.name_us !== p.name && (
@@ -1354,13 +1364,21 @@ export default function AdminProductsPage() {
                       </button>
                     </td>
 
-                    {/* Actions */}
-                    <td className="py-3 px-3 text-center">
+                    {/* Actions (Sticky Right) */}
+                    <td
+                      className={`py-3 px-3 text-center sticky right-0 z-10 border-l border-wbk-lightgrey/80 shadow-[-4px_0_8px_rgba(0,0,0,0.05)] min-w-[110px] ${
+                        isSelected
+                          ? "bg-[#FAF5EF]"
+                          : isHidden
+                          ? "bg-[#F7F7F7]"
+                          : "bg-white group-hover:bg-[#FBF9F8]"
+                      }`}
+                    >
                       <div className="flex items-center justify-center gap-1">
                         <button
                           type="button"
                           onClick={() => setSelectedProduct(p)}
-                          className="p-1.5 text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors cursor-pointer"
+                          className="p-1.5 text-wbk-black hover:bg-wbk-gold hover:text-white rounded-md transition-colors cursor-pointer"
                           title="Edit product"
                         >
                           <IconEdit size={16} />
@@ -1375,7 +1393,7 @@ export default function AdminProductsPage() {
                             <Link
                               href={storefrontUrl}
                               target="_blank"
-                              className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors cursor-pointer"
+                              className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-md transition-colors cursor-pointer"
                               title={`View on storefront: ${storefrontUrl}`}
                             >
                               <IconExternalLink size={16} />
@@ -1385,7 +1403,7 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(p.id, p.name)}
-                          className="p-1.5 text-wbk-brown hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
+                          className="p-1.5 text-wbk-brown hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
                           title="Delete product"
                         >
                           <IconTrash size={16} />
