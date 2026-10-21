@@ -24,13 +24,15 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
-  "installation_manual", "installation_video"
+  "installation_manual", "installation_video",
+  "width_us", "length_us", "size_us"
 ]);
 
 const NUMERIC_COLUMNS = new Set([
   "width", "length", "height", "frame_width", "folded_up_height",
   "folded_up_projection", "folded_down_projection", "frame_distance_from_ground",
   "mounting_frame_height", "maximum_mattress_depth", "weight", "stock",
+  "width_us", "length_us",
   "price_gbp", "price_euro", "price_usd", "sale_percent",
   "sale_fix_gbp", "sale_fix_euro", "sale_fix_usd",
   "sale_price_gbp", "sale_price_euro", "sale_price_usd",

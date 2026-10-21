@@ -38,6 +38,7 @@ import {
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { TagIcon } from "@/components/ui/TagBadge";
 import { parseYouTubeVideo, OFFICIAL_INSTALLATION_VIDEOS } from "@/lib/products";
+import { resolveFactorySize } from "@/lib/sizes";
 
 const TARGET_LOCALES = [
   { code: "en", label: "UK", name: "United Kingdom", flag: "🇬🇧", currency: "GBP (£)" },
@@ -744,10 +745,23 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
     setMessage(null);
 
     try {
+      const factory = resolveFactorySize(formData);
+      const widthUs = formData.width_us !== undefined && formData.width_us !== "" && formData.width_us !== null
+        ? Number(formData.width_us)
+        : (factory?.width_us || (formData.width ? Math.round(Number(formData.width) / 25.4) : undefined));
+      const lengthUs = formData.length_us !== undefined && formData.length_us !== "" && formData.length_us !== null
+        ? Number(formData.length_us)
+        : (factory?.length_us || (formData.length ? Math.round(Number(formData.length) / 25.4) : undefined));
+      const sizeUs = formData.size_us || factory?.usLabel || (widthUs && lengthUs ? `${widthUs}" x ${lengthUs}"` : undefined);
+
       const payload = {
         ...formData,
+        width_us: widthUs,
+        length_us: lengthUs,
+        size_us: sizeUs,
         notifyRestock: Boolean(notifyRestock),
       };
+      delete payload.size_eu;
 
       const res = await fetch(`/api/admin/products/${formData.id}`, {
         method: "PATCH",
@@ -1727,6 +1741,41 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {(() => {
+                  const factory = resolveFactorySize({ width: formData.width, length: formData.length });
+                  if (!factory) return null;
+                  return (
+                    <div className="col-span-full p-2.5 bg-amber-50/70 border border-amber-200/80 text-xs flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-wbk-black">Factory Standard Size:</span>
+                        <span className="px-2 py-0.5 bg-white border border-wbk-lightgrey font-mono text-[11px] font-semibold text-wbk-black">
+                          🇪🇺 EU: {factory.cmKey} cm
+                        </span>
+                        <span className="px-2 py-0.5 bg-amber-100/80 border border-amber-300 font-mono text-[11px] font-semibold text-amber-900">
+                          🇺🇸 US: {factory.usLabel}
+                        </span>
+                      </div>
+                      {(!formData.name_us || !formData.name_us.includes('"')) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const style = formData.type || formData.sub_category || "Classic";
+                            const orient = formData.orientation || "Vertical";
+                            const isMorphy = (formData.name || "").includes("MORPHY");
+                            const newUsName = isMorphy
+                              ? `MORPHY™ ${style} ${factory.usNamePart} Wall Bed - ${orient}`
+                              : `Essential ${style} ${factory.usNamePart} Wall Bed – ${orient}`;
+                            handleChange("name_us", newUsName);
+                          }}
+                          className="text-[10px] font-semibold text-amber-800 underline hover:text-amber-950 cursor-pointer"
+                        >
+                          Auto-fill US Name ({factory.usLabel})
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div>
                   <label className="block text-[11px] font-medium text-wbk-black mb-1">
                     Width (width, mm)
@@ -1767,6 +1816,75 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                     className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-medium"
                   />
                   <span className="text-[9px] text-wbk-brown">Cabinet height, mattress profile (e.g. 200mm), or unit height</span>
+                </div>
+
+                {/* US Dimensions (Imperial) */}
+                <div className="bg-amber-50/60 p-2.5 border border-amber-200/60 col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-amber-950 mb-1">
+                      US Width (width_us, in)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="e.g. 55"
+                      value={formData.width_us ?? ""}
+                      onChange={(e) => handleNumberChange("width_us", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-amber-300 rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                    <span className="text-[9px] text-amber-800/80">Inches (e.g. 38 for Twin)</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-amber-950 mb-1">
+                      US Length (length_us, in)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="e.g. 80"
+                      value={formData.length_us ?? ""}
+                      onChange={(e) => handleNumberChange("length_us", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-amber-300 rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                    <span className="text-[9px] text-amber-800/80">Inches (e.g. 75 or 80)</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-amber-950 mb-1">
+                      US Size Name (size_us)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder='e.g. Twin (38" x 75")'
+                      value={formData.size_us ?? ""}
+                      onChange={(e) => handleChange("size_us", e.target.value)}
+                      className="w-full p-2 text-xs bg-white border border-amber-300 rounded-none focus:outline-none focus:border-wbk-black font-medium"
+                    />
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[9px] text-amber-800/80">US display size</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const factory = resolveFactorySize(formData);
+                          if (factory) {
+                            if (factory.width_us) handleNumberChange("width_us", factory.width_us);
+                            if (factory.length_us) handleNumberChange("length_us", factory.length_us);
+                            if (factory.usLabel) handleChange("size_us", factory.usLabel);
+                          } else if (formData.width && formData.length) {
+                            const wIn = Math.round(Number(formData.width) / 25.4);
+                            const lIn = Math.round(Number(formData.length) / 25.4);
+                            handleNumberChange("width_us", wIn);
+                            handleNumberChange("length_us", lIn);
+                            handleChange("size_us", `${wIn}" x ${lIn}"`);
+                          }
+                        }}
+                        className="text-[9px] font-semibold text-amber-900 underline hover:text-amber-700 cursor-pointer"
+                      >
+                        Auto-fill from mm
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>

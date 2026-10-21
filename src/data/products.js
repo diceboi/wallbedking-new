@@ -154,6 +154,8 @@ export const OTHER_CATEGORIES_LIST = [
 ];
 
 
+import { resolveFactorySize } from '../lib/sizes';
+
 // Helpers to derive clean dimensions, size labels and slugs across all product categories
 export const getCleanBedDimensions = (item) => {
   const isBed =
@@ -171,8 +173,11 @@ export const getCleanBedDimensions = (item) => {
   return { widthCm: Math.round(w), lengthCm: Math.round(l) };
 };
 
-export const getProductSizeInfo = (item) => {
-  if (!item) return { size: "Standard", sizeLabel: "Standard", sizeSlug: "" };
+export const getProductSizeInfo = (item, locale = "en") => {
+  if (!item) return { size: "Standard", sizeLabel: "Standard", sizeSlug: "", size_eu: "Standard", size_us: "Standard" };
+
+  const isUS = (locale || "en").toLowerCase() === "us";
+  const factory = resolveFactorySize(item);
 
   const isBed =
     item.parent_category === "beds" ||
@@ -197,9 +202,21 @@ export const getProductSizeInfo = (item) => {
     }
 
     const isMorphy = (item.name || "").includes("MORPHY");
-    const label = `${baseName}${isMorphy ? " MORPHY™" : ""} (${widthCm}x${lengthCm} cm)`;
+    const euLabel = `${baseName}${isMorphy ? " MORPHY™" : ""} (${widthCm}x${lengthCm} cm)`;
+    const usLabel = factory?.usLabel || (factory?.usInches ? `${factory.usInches}` : `${widthCm}x${lengthCm} cm`);
     const slug = `${widthCm}x${lengthCm}`;
-    return { size: baseName, sizeLabel: label, sizeSlug: slug };
+    const slugUs = factory?.cmKey ? factory.cmKey : slug;
+
+    return {
+      size: isUS ? (factory?.nameUs || usLabel) : baseName,
+      sizeLabel: isUS ? usLabel : euLabel,
+      sizeSlug: slug,
+      sizeSlug_us: slugUs,
+      size_eu: `${widthCm}x${lengthCm} cm`,
+      size_us: usLabel,
+      sizeLabel_eu: euLabel,
+      sizeLabel_us: usLabel,
+    };
   }
 
   // 2. Mattresses
@@ -215,9 +232,19 @@ export const getProductSizeInfo = (item) => {
     const wCm = item.width ? Math.round(item.width / 10) : 0;
     const lCm = item.length ? Math.round(item.length / 10) : 0;
     const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
-    const label = `${mattressSize}${dim}`;
+    const euLabel = `${mattressSize}${dim}`;
+    const usLabel = factory?.usLabel || (factory?.usInches ? `${factory.usInches}` : euLabel);
     const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
-    return { size: mattressSize, sizeLabel: label, sizeSlug: slug };
+
+    return {
+      size: isUS ? (factory?.nameUs || usLabel) : mattressSize,
+      sizeLabel: isUS ? usLabel : euLabel,
+      sizeSlug: slug,
+      size_eu: wCm && lCm ? `${wCm}x${lCm} cm` : mattressSize,
+      size_us: usLabel,
+      sizeLabel_eu: euLabel,
+      sizeLabel_us: usLabel,
+    };
   }
 
   // 3. Cabinets
@@ -244,13 +271,22 @@ export const getProductSizeInfo = (item) => {
     const wCm = item.width ? Math.round(item.width / 10) : 0;
     const lCm = item.length ? Math.round(item.length / 10) : 0;
     const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
-    const label = `${cabSize}${dim}`;
+    const euLabel = `${cabSize}${dim}`;
+    const usLabel = factory?.usLabel || (factory?.usInches ? `${cabSize} (${factory.usInches})` : euLabel);
     let slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
     if (/side\s*unit/i.test(name)) {
       if (/door/i.test(name)) slug = `${slug}-door`;
       else if (/shelves/i.test(name)) slug = `${slug}-shelves`;
     }
-    return { size: cabSize, sizeLabel: label, sizeSlug: slug };
+    return {
+      size: isUS ? (factory?.nameUs || usLabel) : cabSize,
+      sizeLabel: isUS ? usLabel : euLabel,
+      sizeSlug: slug,
+      size_eu: wCm && lCm ? `${wCm}x${lCm} cm` : cabSize,
+      size_us: usLabel,
+      sizeLabel_eu: euLabel,
+      sizeLabel_us: usLabel,
+    };
   }
 
   // 4. Sofas
@@ -268,9 +304,20 @@ export const getProductSizeInfo = (item) => {
     const wCm = item.width ? Number((item.width / 10).toFixed(1)) : 0;
     const lCm = item.length ? Number((item.length / 10).toFixed(1)) : 0;
     const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
-    const label = `${sofaSize}${dim}`;
+    const euLabel = `${sofaSize}${dim}`;
+    const wIn = wCm ? Math.round(wCm / 2.54) : 0;
+    const lIn = lCm ? Math.round(lCm / 2.54) : 0;
+    const usLabel = wIn && lIn ? `${sofaSize} (${wIn}" x ${lIn}")` : euLabel;
     const slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
-    return { size: sofaSize, sizeLabel: label, sizeSlug: slug };
+    return {
+      size: isUS ? usLabel : sofaSize,
+      sizeLabel: isUS ? usLabel : euLabel,
+      sizeSlug: slug,
+      size_eu: wCm && lCm ? `${wCm}x${lCm} cm` : sofaSize,
+      size_us: usLabel,
+      sizeLabel_eu: euLabel,
+      sizeLabel_us: usLabel,
+    };
   }
 
   // 5. Fallback for extras and other categories
@@ -280,6 +327,10 @@ export const getProductSizeInfo = (item) => {
     size: fallbackSize,
     sizeLabel: fallbackLabel,
     sizeSlug: item.slug || String(item.id),
+    size_eu: fallbackLabel,
+    size_us: fallbackLabel,
+    sizeLabel_eu: fallbackLabel,
+    sizeLabel_us: fallbackLabel,
   };
 };
 
@@ -344,6 +395,11 @@ export const formatCatalogItem = (item) => {
     size: sizeInfo.size,
     sizeLabel: sizeInfo.sizeLabel,
     sizeSlug: sizeInfo.sizeSlug,
+    sizeSlug_us: sizeInfo.sizeSlug_us,
+    size_eu: sizeInfo.size_eu,
+    size_us: sizeInfo.size_us,
+    sizeLabel_eu: sizeInfo.sizeLabel_eu,
+    sizeLabel_us: sizeInfo.sizeLabel_us,
     colors:
       item.color === "Beige"
         ? ["#D2AA7C"]

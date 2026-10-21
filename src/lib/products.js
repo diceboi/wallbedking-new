@@ -298,88 +298,101 @@ export function getLocalizedProductExtendedDescription(product, locale = "en") {
  * Maps bed models to their flagship page with the exact ?size= query parameter,
  * and handles sofas, mattresses, cabinets, and tables.
  */
-export function getStorefrontProductUrl(p, locale = "en") {
-  const prefix = locale ? `/${locale}` : "/en";
-  if (!p) return `${prefix}/products`;
-  if (p.link) {
-    if (p.link.startsWith("http")) return p.link;
-    return `${prefix}${p.link.startsWith("/") ? "" : "/"}${p.link}`;
-  }
-  const category = (p.parent_category || "beds").toLowerCase();
-
-  // Route standalone test products directly to their product page
-  if (String(p.name || "").toUpperCase().includes("TEST") || p.id === 235 || p.id === 236) {
-    return `${prefix}/products/beds/${p.slug || `test-product-${p.id}`}`;
-  }
-
-  if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
-    const isMorphy = Boolean(
-      p.isMorphy ??
-      ((p.name || "").includes("MORPHY") || (p.category || "").includes("MORPHY"))
-    );
-    const o = (p.orientation || "Vertical").toLowerCase();
-    const style = (p.sub_category || p.type || "Classic").toLowerCase();
-
-    let flagshipSlug = "classic-vertical-wall-bed";
-    if (isMorphy) {
-      if (style.includes("integrated")) flagshipSlug = `integrated-${o}-wall-bed`;
-      else if (style.includes("studio")) flagshipSlug = `studio-${o}-wall-bed`;
-      else flagshipSlug = `classic-${o}-wall-bed`;
-    } else {
-      if (style.includes("studio")) flagshipSlug = `studio-${o}-traditional-bed`;
-      else flagshipSlug = `classic-${o}-traditional-bed`;
+export function getStorefrontProductUrl(p, locale = null, options = {}) {
+  // Resolve target locale:
+  // If a locale is requested and product is available there, use it.
+  // If not available in requested market (e.g. US), fall back to a market where the product exists.
+  let targetLocale = locale;
+  if (p && Array.isArray(p.available_locales) && p.available_locales.length > 0) {
+    if (!targetLocale || !p.available_locales.includes(targetLocale)) {
+      targetLocale = p.available_locales.includes("us") ? "us" : p.available_locales[0];
     }
-
-    const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
-    const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
-    const sizeSlug = (minDim && maxDim)
-      ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
-      : (p.sizeSlug || null);
-
-    return `${prefix}/products/beds/${flagshipSlug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
+  } else if (!targetLocale) {
+    targetLocale = "en";
   }
 
-  if (category === "sofas") {
-    const s = (p.sub_category || p.type || "").toLowerCase();
-    const slug = (s.includes("free") || s.includes("standing"))
-      ? "free-standing-modular-sofa"
-      : "bed-front-modular-sofa";
-    return `${prefix}/products/sofas/${slug}`;
+  const prefix = targetLocale ? `/${targetLocale}` : "/en";
+  let targetUrl = `${prefix}/products`;
+
+  if (!p) return targetUrl;
+
+  if (p.link) {
+    if (p.link.startsWith("http")) targetUrl = p.link;
+    else targetUrl = `${prefix}${p.link.startsWith("/") ? "" : "/"}${p.link}`;
+  } else {
+    const category = (p.parent_category || "beds").toLowerCase();
+
+    // Route standalone test products directly to their product page
+    if (String(p.name || "").toUpperCase().includes("TEST") || p.id === 235 || p.id === 236) {
+      targetUrl = `${prefix}/products/beds/${p.slug || `test-product-${p.id}`}`;
+    } else if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
+      const isMorphy = Boolean(
+        p.isMorphy ??
+        ((p.name || "").includes("MORPHY") || (p.category || "").includes("MORPHY"))
+      );
+      const o = (p.orientation || "Vertical").toLowerCase();
+      const style = (p.sub_category || p.type || "Classic").toLowerCase();
+
+      let flagshipSlug = "classic-vertical-wall-bed";
+      if (isMorphy) {
+        if (style.includes("integrated")) flagshipSlug = `integrated-${o}-wall-bed`;
+        else if (style.includes("studio")) flagshipSlug = `studio-${o}-wall-bed`;
+        else flagshipSlug = `classic-${o}-wall-bed`;
+      } else {
+        if (style.includes("studio")) flagshipSlug = `studio-${o}-traditional-bed`;
+        else flagshipSlug = `classic-${o}-traditional-bed`;
+      }
+
+      const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
+      const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
+      const sizeSlug = (minDim && maxDim)
+        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+        : (p.sizeSlug || null);
+
+      targetUrl = `${prefix}/products/beds/${flagshipSlug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
+    } else if (category === "sofas") {
+      const s = (p.sub_category || p.type || "").toLowerCase();
+      const slug = (s.includes("free") || s.includes("standing"))
+        ? "free-standing-modular-sofa"
+        : "bed-front-modular-sofa";
+      targetUrl = `${prefix}/products/sofas/${slug}`;
+    } else if (category === "mattresses") {
+      const s = (p.sub_category || p.type || "").toLowerCase();
+      let slug = "comfort-mattress";
+      if (s.includes("supreme")) slug = "supreme-mattress";
+      else if (s.includes("luxury")) slug = "luxury-mattress";
+      const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
+      const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
+      const sizeSlug = (minDim && maxDim)
+        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+        : (p.sizeSlug || null);
+      targetUrl = `${prefix}/products/mattresses/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
+    } else if (category === "cabinets") {
+      const s = (p.sub_category || p.type || "").toLowerCase();
+      const o = (p.orientation || "").toLowerCase();
+      let slug = "vertical-wall-bed-cabinet";
+      if (s.includes("side") || s.includes("wardrobe")) slug = "side-storage-wardrobe-cabinet";
+      else if (s.includes("ext") || s.includes("overhead") || s.includes("bridge")) slug = "overhead-storage-extension-cabinet";
+      else if (s.includes("horiz") || o === "horizontal") slug = "horizontal-wall-bed-cabinet";
+      const sizeSlug = p.sizeSlug || null;
+      targetUrl = `${prefix}/products/cabinets/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
+    } else if (category === "tables") {
+      const s = (p.sub_category || p.type || "").toLowerCase();
+      let slug = "transforming-coffee-dining-table";
+      if (s.includes("mounted") || s.includes("folding")) slug = "wall-mounted-folding-table";
+      else if (s.includes("extending") || s.includes("console")) slug = "extending-console-dining-table";
+      targetUrl = `${prefix}/products/tables/${slug}`;
+    } else {
+      targetUrl = `${prefix}/products/${category}/${p.slug || p.id}`;
+    }
   }
 
-  if (category === "mattresses") {
-    const s = (p.sub_category || p.type || "").toLowerCase();
-    let slug = "comfort-mattress";
-    if (s.includes("supreme")) slug = "supreme-mattress";
-    else if (s.includes("luxury")) slug = "luxury-mattress";
-    const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
-    const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
-    const sizeSlug = (minDim && maxDim)
-      ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
-      : (p.sizeSlug || null);
-    return `${prefix}/products/mattresses/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
+  if (options.preview || options.admin) {
+    const separator = targetUrl.includes("?") ? "&" : "?";
+    targetUrl = `${targetUrl}${separator}preview=1`;
   }
 
-  if (category === "cabinets") {
-    const s = (p.sub_category || p.type || "").toLowerCase();
-    const o = (p.orientation || "").toLowerCase();
-    let slug = "vertical-wall-bed-cabinet";
-    if (s.includes("side") || s.includes("wardrobe")) slug = "side-storage-wardrobe-cabinet";
-    else if (s.includes("ext") || s.includes("overhead") || s.includes("bridge")) slug = "overhead-storage-extension-cabinet";
-    else if (s.includes("horiz") || o === "horizontal") slug = "horizontal-wall-bed-cabinet";
-    const sizeSlug = p.sizeSlug || null;
-    return `${prefix}/products/cabinets/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
-  }
-
-  if (category === "tables") {
-    const s = (p.sub_category || p.type || "").toLowerCase();
-    let slug = "transforming-coffee-dining-table";
-    if (s.includes("mounted") || s.includes("folding")) slug = "wall-mounted-folding-table";
-    else if (s.includes("extending") || s.includes("console")) slug = "extending-console-dining-table";
-    return `${prefix}/products/tables/${slug}`;
-  }
-
-  return `${prefix}/products/${category}/${p.slug || p.id}`;
+  return targetUrl;
 }
 
 export const OFFICIAL_INSTALLATION_VIDEOS = [

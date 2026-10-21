@@ -24,7 +24,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "pack_1", "pack_2", "pack_3", "pack_4", "tags", "available_locales",
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
-  "installation_manual", "installation_video"
+  "installation_manual", "installation_video",
+  "width_us", "length_us", "size_us"
 ]);
 
 export async function POST(request) {

@@ -44,7 +44,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
-import { getProductPrice, formatPrice } from "@/lib/i18n";
+import { getProductPrice, formatPrice, formatSizeLabel as formatSizeLabelI18n } from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
 import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
@@ -112,51 +112,9 @@ export default function ProductDetailPage() {
     }
     return `${cm} cm`;
   };
-  const formatSizeLabel = (label) => {
-    if (!label || !isUS) return label;
-    if (label.includes('"')) return label;
-
-    if (/\(\s*\d+\s*[xX×]\s*\d+\s*cm\s*\)/i.test(label)) {
-      return label.replace(
-        /\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi,
-        (match, w, l) => {
-          const wIn = Math.round(Number(w) / 2.54);
-          const lIn = Math.round(Number(l) / 2.54);
-          return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
-        },
-      );
-    }
-
-    if (/\b\d+\s*[xX×]\s*\d+\s*cm\b/i.test(label)) {
-      return label.replace(
-        /\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi,
-        (match, w, l) => {
-          const wIn = Math.round(Number(w) / 2.54);
-          const lIn = Math.round(Number(l) / 2.54);
-          return `${w}x${l} cm (${wIn}" x ${lIn}")`;
-        },
-      );
-    }
-
-    if (/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/.test(label)) {
-      return label.replace(
-        /\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g,
-        (match, w, l) => {
-          const wIn = Math.round(Number(w) / 2.54);
-          const lIn = Math.round(Number(l) / 2.54);
-          return `${w}x${l} (${wIn}" x ${lIn}")`;
-        },
-      );
-    }
-
-    if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
-      return label.replace(/\b(\d{3,4})\s*mm\b/gi, (match, mm) => {
-        const inches = (Number(mm) / 25.4).toFixed(1);
-        return `${mm} mm (${inches}")`;
-      });
-    }
-
-    return label;
+  const formatSizeLabel = (label, variantOrLocale = null) => {
+    const variant = (variantOrLocale && typeof variantOrLocale === "object") ? variantOrLocale : null;
+    return formatSizeLabelI18n(label, locale, variant);
   };
 
   // ── CUSTOMIZER & GALLERY STATES ──
@@ -417,6 +375,15 @@ export default function ProductDetailPage() {
     if (!variants || !variants.length || !query) return null;
     const clean = query.toLowerCase().replace(/[^a-z0-9]/g, "");
 
+    // 0. Match size_us, size_eu, or sizeSlug_us
+    const matchUs = variants.find(
+      (v) =>
+        (v.sizeSlug_us || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean ||
+        (v.size_us || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean ||
+        (v.size_eu || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean
+    );
+    if (matchUs) return matchUs;
+
     // 1. Exact sizeSlug match (e.g. "135x190", "50x52-door")
     const matchSlug = variants.find(
       (v) => (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
@@ -431,7 +398,7 @@ export default function ProductDetailPage() {
 
     // 3. Name or size category match (e.g. "door", "shelves", "double", "king", "single")
     const matchName = variants.find((v) => {
-      const s = (v.size || v.sizeLabel || v.name || "")
+      const s = (v.size || v.sizeLabel || v.name || v.name_us || "")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "");
       return s.includes(clean) || clean.includes(s);
@@ -529,9 +496,12 @@ export default function ProductDetailPage() {
 
   const availableSizes = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
+      const defaultLabel = isUS
+        ? (activeProduct.size_us || formatSizeLabelI18n(activeProduct.sizeLabel || "Standard", "us", activeProduct))
+        : (activeProduct.size_eu || activeProduct.sizeLabel || "Standard");
       return [
         {
-          label: activeProduct.sizeLabel || "Standard",
+          label: defaultLabel,
           product: activeProduct,
         },
       ];
@@ -558,7 +528,10 @@ export default function ProductDetailPage() {
       ) {
         continue;
       }
-      const label = v.sizeLabel || v.size || v.name || "Standard";
+      const rawLabel = v.sizeLabel || v.size || v.name || "Standard";
+      const label = isUS
+        ? (v.size_us || formatSizeLabelI18n(rawLabel, "us", v))
+        : (v.size_eu || rawLabel);
       if (!seen.has(label)) {
         seen.add(label);
         result.push({
@@ -568,7 +541,32 @@ export default function ProductDetailPage() {
       }
     }
     return result;
-  }, [familyVariants, activeProduct, selectedVariant?.color]);
+  }, [familyVariants, activeProduct, selectedVariant?.color, isUS]);
+
+  const selectedSizeDisplay = useMemo(() => {
+    if (selectedVariant) {
+      if (isUS) {
+        return (
+          selectedVariant.size_us ||
+          formatSizeLabelI18n(
+            selectedVariant.sizeLabel || selectedVariant.size || selectedVariant.name,
+            "us",
+            selectedVariant
+          )
+        );
+      }
+      return (
+        selectedVariant.size_eu ||
+        (selectedVariant.width && selectedVariant.length
+          ? `${Math.round(selectedVariant.width / 10)}x${Math.round(selectedVariant.length / 10)} cm`
+          : null) ||
+        selectedVariant.sizeLabel ||
+        selectedVariant.size ||
+        "Standard"
+      );
+    }
+    return formatSizeLabelI18n(productSize, locale) || availableSizes[0]?.label || "Standard";
+  }, [selectedVariant, isUS, locale, productSize, availableSizes]);
 
   const availableColors = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
@@ -879,7 +877,13 @@ export default function ProductDetailPage() {
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
   const isAvailableInRegion = isProductAvailableInLocale(displayProduct, locale);
+  const isPreview = Boolean(
+    searchParams?.get("preview") === "1" ||
+    searchParams?.get("preview") === "true" ||
+    searchParams?.get("admin") === "1"
+  );
   const isRegionallyUnavailable = Boolean(
+    !isPreview &&
     locale &&
       !isAvailableInRegion &&
       (!familyVariants || familyVariants.length === 0 || !familyVariants.some((v) => isProductAvailableInLocale(v, locale)))
@@ -1663,7 +1667,7 @@ export default function ProductDetailPage() {
                 {localizedProductName}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                <span>{formatSizeLabel(productSize)}</span>
+                <span>{selectedSizeDisplay}</span>
                 {displayProduct?.sku && (
                   <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                     SKU: {displayProduct.sku}
@@ -1758,7 +1762,7 @@ export default function ProductDetailPage() {
                     {localizedProductName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                    <span>{formatSizeLabel(productSize)}</span>
+                    <span>{selectedSizeDisplay}</span>
                     {displayProduct?.sku && (
                       <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                         SKU: {displayProduct.sku}
@@ -2030,8 +2034,7 @@ export default function ProductDetailPage() {
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
                       <span className="truncate">
-                        {formatSizeLabel(productSize) ||
-                          formatSizeLabel(availableSizes[0]?.label)}
+                        {selectedSizeDisplay}
                       </span>
                       <IconChevronDown
                         size={14}
@@ -2055,12 +2058,12 @@ export default function ProductDetailPage() {
                               setSizeOpen(false);
                             }}
                             className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
-                              productSize === item.label
+                              (selectedVariant ? (selectedVariant.id === item.product?.id || selectedVariant.sku === item.product?.sku) : productSize === item.label)
                                 ? "font-semibold text-wbk-black bg-[#F4F2F0]/60"
                                 : "text-wbk-brown"
                             }`}
                           >
-                            <span>{formatSizeLabel(item.label)}</span>
+                            <span>{item.label}</span>
                             {item.product && (
                               <span className="text-[11px] text-wbk-brown font-poppins">
                                 {getProductPrice(item.product, locale).display}

@@ -237,6 +237,12 @@ export default function CheckoutPage() {
       fName = parts[0] || "";
       lName = parts.slice(1).join(" ") || "";
     }
+    const defaultCountry = getDefaultCountry(locale);
+    const isAllowedCountry = deliveryCountries.some(
+      (c) => c.value.toLowerCase() === (addr.country || "").toLowerCase()
+    );
+    const countryToUse = isAllowedCountry ? addr.country : defaultCountry;
+
     setFormData((prev) => ({
       ...prev,
       firstName: fName || prev.firstName,
@@ -245,7 +251,7 @@ export default function CheckoutPage() {
       address2: addr.apartment || "",
       city: addr.city || prev.city,
       postcode: addr.postcode || prev.postcode,
-      country: addr.country || prev.country,
+      country: countryToUse,
       phone: addr.phone || prev.phone,
     }));
     setAddressAppliedFeedback(

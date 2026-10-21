@@ -259,7 +259,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
         "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       price: unitPrice,
       options: {
-        size: formatSizeLabel(sizeStr, locale),
+        size: formatSizeLabel(sizeStr, locale, activeProduct),
         orientation: activeProduct.orientation || selectedFormat || "Vertical",
         type: activeProduct.type || activeProduct.sub_category || "Classic",
         color: activeProduct.color || selectedColor || undefined,
@@ -351,7 +351,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
             </div>
 
             <div className="text-xs text-wbk-brown truncate">
-              {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale)}
+              {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
             </div>
 
             {/* In stock badge */}
@@ -464,7 +464,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
               <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
                 <span>{t("product.size", "Size")}</span>
                 <span className="text-wbk-brown font-normal text-[11px]">
-                  {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale)}
+                  {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
                 </span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -474,7 +474,8 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                     String(activeProduct.rawId || activeProduct.id);
                   const label = formatSizeLabel(
                     variant.sizeLabel || variant.size || variant.name,
-                    locale
+                    locale,
+                    variant
                   );
                   const pPrice = getProductPrice(variant, locale);
                   const isVariantOutOfStock =

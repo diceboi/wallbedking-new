@@ -120,9 +120,19 @@ export async function POST(request) {
           enabled: true,
         },
         shipping_address_collection: {
-          allowed_countries: [
-            "GB", "US", "DE", "FR", "ES", "IT", "PT", "IE", "AT", "BE", "NL", "CH", "HU", "DK", "SE", "FI", "PL", "CZ", "SK", "RO", "BG", "HR", "SI", "EE", "LV", "LT", "LU", "MT", "CY", "GR"
-          ],
+          allowed_countries: (
+            {
+              it: ["IT"],
+              de: ["DE"],
+              fr: ["FR"],
+              es: ["ES"],
+              por: ["PT"],
+              pt: ["PT"],
+              us: ["US"],
+              en: ["GB"],
+              uk: ["GB"],
+            }[String(locale).toLowerCase()] || ["GB"]
+          ),
         },
       });
 

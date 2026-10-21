@@ -30,6 +30,7 @@ import { BulkProductEditModal } from "@/components/admin/BulkProductEditModal";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PRODUCT_EXPORT_COLUMNS, generateCsvContent, generateTsvContent } from "@/lib/product-export";
 import { getStorefrontProductUrl } from "@/lib/products";
+import { resolveFactorySize } from "@/lib/sizes";
 
 const CATEGORIES = [
   { id: "all", label: "All Categories" },
@@ -893,7 +894,7 @@ export default function AdminProductsPage() {
               {/* Name */}
               <th
                 onClick={() => handleSort("name")}
-                className={`py-3 px-4 min-w-[200px] cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
+                className={`py-3 px-4 min-w-[280px] cursor-pointer hover:bg-[#EAE7E4] transition-colors group select-none ${
                   sortConfig.key === "name" ? "bg-amber-100/70 font-bold" : ""
                 }`}
                 title="Click to sort by Product Name (A-Z / Z-A)"
@@ -1068,11 +1069,6 @@ export default function AdminProductsPage() {
                 </div>
               </th>
 
-              {/* Target Markets */}
-              <th className="py-3 px-2.5 text-center">
-                <span title="Target Market Regional Storefronts">Markets</span>
-              </th>
-
               {/* Visibility */}
               <th
                 onClick={() => handleSort("visibility")}
@@ -1102,14 +1098,14 @@ export default function AdminProductsPage() {
           <tbody className="divide-y divide-wbk-lightgrey/40">
             {loading ? (
               <tr>
-                <td colSpan={14} className="py-12 text-center text-wbk-brown">
+                <td colSpan={13} className="py-12 text-center text-wbk-brown">
                   <IconRefresh size={22} className="animate-spin mx-auto mb-2" />
                   Loading products from Supabase...
                 </td>
               </tr>
             ) : sortedProducts.length === 0 ? (
               <tr>
-                <td colSpan={14} className="py-12 text-center text-wbk-brown">
+                <td colSpan={13} className="py-12 text-center text-wbk-brown">
                   No products found matching the current filters.
                 </td>
               </tr>
@@ -1161,10 +1157,16 @@ export default function AdminProductsPage() {
                     </td>
 
                     {/* Name & Type & Tags */}
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-wbk-black line-clamp-1 max-w-xs">
+                    <td className="py-3 px-4 min-w-[280px]">
+                      <div className="font-semibold text-wbk-black whitespace-normal break-words leading-snug">
                         {p.name}
                       </div>
+                      {p.name_us && p.name_us !== p.name && (
+                        <div className="text-[10px] text-wbk-brown mt-0.5 whitespace-normal break-words flex items-center gap-1">
+                          <span className="font-semibold text-amber-800 bg-amber-50 px-1 py-0.2 border border-amber-200 rounded-2xs text-[9px]">US</span>
+                          <span>{p.name_us}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-wbk-brown flex-wrap">
                         {p.sku && (
                           <>
@@ -1261,13 +1263,25 @@ export default function AdminProductsPage() {
                       </button>
                     </td>
 
-                    {/* Dimensions */}
-                    <td className="py-3 px-3 text-wbk-brown">
+                    {/* Dimensions & US Size */}
+                    <td className="py-3 px-3 text-wbk-brown whitespace-nowrap">
                       {p.width && p.length ? (
-                        <span>{Math.round(p.width / 10)}x{Math.round(p.length / 10)} cm</span>
+                        <div className="font-medium text-wbk-black">{Math.round(p.width / 10)}x{Math.round(p.length / 10)} cm</div>
+                      ) : p.size_eu ? (
+                        <div className="font-medium text-wbk-black">{p.size_eu}</div>
                       ) : (
-                        "—"
+                        <div>—</div>
                       )}
+                      {(() => {
+                        const usSize = p.size_us || resolveFactorySize(p)?.usLabel || (p.width_us && p.length_us ? `${p.width_us}" x ${p.length_us}"` : null);
+                        if (!usSize) return null;
+                        return (
+                          <div className="text-[10px] text-amber-900 bg-amber-50 border border-amber-200/70 px-1.5 py-0.5 rounded-2xs mt-1 inline-flex items-center gap-1 font-mono font-medium">
+                            <span className="font-bold text-amber-800 text-[9px]">US:</span>
+                            <span>{usSize}</span>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* GBP */}
@@ -1324,62 +1338,6 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
 
-                    {/* Target Markets */}
-                    <td className="py-3 px-2.5 text-center">
-                      {(() => {
-                        const locs =
-                          Array.isArray(p.available_locales) && p.available_locales.length > 0
-                            ? p.available_locales
-                            : ["en", "us", "de", "fr", "es", "por", "it"];
-                        const isAll = locs.length === 7;
-                        const flagMap = {
-                          en: "🇬🇧",
-                          us: "🇺🇸",
-                          de: "🇩🇪",
-                          fr: "🇫🇷",
-                          es: "🇪🇸",
-                          por: "🇵🇹",
-                          it: "🇮🇹",
-                        };
-
-                        if (isAll) {
-                          return (
-                            <span
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-[#F4F2F0] text-wbk-black rounded-xs border border-wbk-lightgrey/60"
-                              title="Visible across all 7 markets: UK, US, DE, FR, ES, POR, IT"
-                            >
-                              <span>🌍</span>
-                              <span>All (7)</span>
-                            </span>
-                          );
-                        }
-
-                        if (locs.length === 0) {
-                          return (
-                            <span
-                              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200"
-                              title="Hidden from all markets"
-                            >
-                              None
-                            </span>
-                          );
-                        }
-
-                        return (
-                          <div
-                            className="flex items-center justify-center gap-0.5 flex-wrap max-w-[90px] mx-auto cursor-help"
-                            title={`Megjelenik itt: ${locs.join(", ").toUpperCase()}`}
-                          >
-                            {locs.map((l) => (
-                              <span key={l} className="text-xs" title={l.toUpperCase()}>
-                                {flagMap[l] || l}
-                              </span>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </td>
-
                     {/* Visibility Switch */}
                     <td className="py-3 px-3 text-center">
                       <button
@@ -1407,14 +1365,23 @@ export default function AdminProductsPage() {
                         >
                           <IconEdit size={16} />
                         </button>
-                        <Link
-                          href={getStorefrontProductUrl(p, "en")}
-                          target="_blank"
-                          className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors cursor-pointer"
-                          title={`View on storefront: ${getStorefrontProductUrl(p, "en")}`}
-                        >
-                          <IconExternalLink size={16} />
-                        </Link>
+                        {(() => {
+                          const storefrontUrl = getStorefrontProductUrl(
+                            p,
+                            selectedMarket !== "all" ? selectedMarket : undefined,
+                            { preview: true }
+                          );
+                          return (
+                            <Link
+                              href={storefrontUrl}
+                              target="_blank"
+                              className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/60 rounded-full transition-colors cursor-pointer"
+                              title={`View on storefront: ${storefrontUrl}`}
+                            >
+                              <IconExternalLink size={16} />
+                            </Link>
+                          );
+                        })()}
                         <button
                           type="button"
                           onClick={() => handleDelete(p.id, p.name)}

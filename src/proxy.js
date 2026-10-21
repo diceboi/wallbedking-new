@@ -89,7 +89,9 @@ export function proxy(request) {
 
   // 3. For .com / non-UK storefronts: NEVER allow /en!
   // If user requests /en, redirect directly to the live UK storefront (wallbedking.co.uk)
-  if (!isUkDomain && (pathname === "/en" || pathname.startsWith("/en/"))) {
+  // (Skip redirect on localhost / development environment)
+  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("0.0.0.0");
+  if (!isUkDomain && !isLocalhost && (pathname === "/en" || pathname.startsWith("/en/"))) {
     const rest = pathname.replace(/^\/en/, "");
     return NextResponse.redirect(new URL(`https://wallbedking.co.uk${rest}`));
   }

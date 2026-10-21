@@ -110,42 +110,45 @@ const UK_COUNTRY = {
 };
 
 /**
- * Returns available delivery countries prioritized for the specific storefront locale.
- * Allowed countries are strictly: France, Germany, Portugal, Italy, Spain, USA (and UK on en).
+ * Returns available delivery countries strictly limited to the operational market of the storefront locale:
+ * - Italian storefront (it): Strictly Italy
+ * - German storefront (de): Strictly Germany
+ * - French storefront (fr): Strictly France
+ * - Spanish storefront (es): Strictly Spain
+ * - Portuguese storefront (por / pt): Strictly Portugal
+ * - US storefront (us): Strictly United States
+ * - UK storefront (en / uk): Strictly United Kingdom
  */
 export function getDeliveryCountries(locale) {
   const norm = (locale || "en").toLowerCase();
 
   const getLabel = (c) => c.names[norm] || c.names.en || c.value;
 
-  if (norm === "en") {
+  if (norm === "en" || norm === "uk") {
     return [
-      { value: UK_COUNTRY.value, label: getLabel(UK_COUNTRY), code: UK_COUNTRY.code },
-      { value: USA_COUNTRY.value, label: getLabel(USA_COUNTRY), code: USA_COUNTRY.code },
-      ...PERMITTED_EU_COUNTRIES.map((c) => ({
-        value: c.value,
-        label: getLabel(c),
-        code: c.code,
-      })),
+      {
+        value: UK_COUNTRY.value,
+        label: UK_COUNTRY.names.en,
+        code: UK_COUNTRY.code,
+      },
     ];
   }
 
   if (norm === "us") {
     return [
-      { value: USA_COUNTRY.value, label: "United States (Nationwide Delivery)", code: USA_COUNTRY.code },
-      ...PERMITTED_EU_COUNTRIES.map((c) => ({
-        value: c.value,
-        label: getLabel(c),
-        code: c.code,
-      })),
+      {
+        value: USA_COUNTRY.value,
+        label: "United States (Nationwide Delivery)",
+        code: USA_COUNTRY.code,
+      },
     ];
   }
 
   // European storefronts: de, fr, es, por, it
   const primaryCountryValue = DEFAULT_COUNTRY_BY_LOCALE[norm] || "Germany";
-
-  const primaryObj = PERMITTED_EU_COUNTRIES.find((c) => c.value === primaryCountryValue);
-  const otherEu = PERMITTED_EU_COUNTRIES.filter((c) => c.value !== primaryCountryValue);
+  const primaryObj =
+    PERMITTED_EU_COUNTRIES.find((c) => c.value === primaryCountryValue) ||
+    PERMITTED_EU_COUNTRIES[1];
 
   const localizedPrimaryLabel = {
     it: "Italia (Italy) — Spedizione Gratuita",
@@ -153,24 +156,32 @@ export function getDeliveryCountries(locale) {
     de: "Deutschland (Germany) — Kostenlose Lieferung",
     es: "España (Spain) — Envío Gratuito",
     por: "Portugal — Envio Gratuito",
+    pt: "Portugal — Envio Gratuito",
   }[norm];
 
-  const primaryList = primaryObj
-    ? [{ value: primaryObj.value, label: localizedPrimaryLabel || getLabel(primaryObj), code: primaryObj.code }]
-    : [];
-
-  const otherList = otherEu.map((c) => ({
-    value: c.value,
-    label: getLabel(c),
-    code: c.code,
-  }));
-
-  // EU storefronts include the 5 EU countries + USA
   return [
-    ...primaryList,
-    ...otherList,
-    { value: USA_COUNTRY.value, label: getLabel(USA_COUNTRY), code: USA_COUNTRY.code },
+    {
+      value: primaryObj.value,
+      label: localizedPrimaryLabel || getLabel(primaryObj),
+      code: primaryObj.code,
+    },
   ];
+}
+
+/**
+ * Validates whether a country is allowed for the specific storefront locale.
+ */
+export function isCountryAllowedForLocale(country, locale) {
+  if (!country) return false;
+  const allowed = getDeliveryCountries(locale);
+  const normCountry = String(country).toLowerCase().trim();
+  return allowed.some(
+    (c) =>
+      c.value.toLowerCase() === normCountry ||
+      c.code.toLowerCase() === normCountry ||
+      normCountry.includes(c.value.toLowerCase()) ||
+      normCountry.includes(c.code.toLowerCase())
+  );
 }
 
 /**

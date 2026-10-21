@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { validateOrderTotals, generateOrderNumber } from "@/lib/orders";
 import { getPaymentConfig } from "@/lib/payments";
+import { isCountryAllowedForLocale } from "@/lib/countries";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,13 @@ export async function POST(request) {
     if (!customer?.email || !shippingAddress?.address1 || !shippingAddress?.city || !shippingAddress?.postcode) {
       return NextResponse.json(
         { success: false, error: "Missing required customer or shipping address fields." },
+        { status: 400 }
+      );
+    }
+
+    if (shippingAddress?.country && !isCountryAllowedForLocale(shippingAddress.country, locale)) {
+      return NextResponse.json(
+        { success: false, error: `Delivery to ${shippingAddress.country} is not supported on the ${String(locale).toUpperCase()} storefront.` },
         { status: 400 }
       );
     }

@@ -22,12 +22,19 @@ export function ProductCard({ product, className = "" }) {
 
   const title = getLocalizedProductName(product, locale);
   const orientation = product.orientation || "Vertical";
-  const rawSize =
-    product.sizeLabel ||
-    product.size ||
-    (product.width && product.length
-      ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm`
-      : "Standard");
+  const isUS = locale === "us";
+  const isMultiSize = Boolean(
+    product.sizeLabel && /Available|Modular|Sizes|[-–—]/i.test(product.sizeLabel)
+  );
+
+  const rawSize = isMultiSize
+    ? product.sizeLabel
+    : (isUS ? (product.size_us || product.sizeLabel_us) : (product.size_eu || (product.width && product.length ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm` : null) || product.sizeLabel_eu)) ||
+      product.sizeLabel ||
+      product.size ||
+      (product.width && product.length
+        ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm`
+        : "Standard");
 
   const size = formatSizeLabel(rawSize, locale);
 

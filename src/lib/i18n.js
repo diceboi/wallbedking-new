@@ -300,105 +300,145 @@ export function getProductEan(product, locale = DEFAULT_LOCALE) {
   }
 }
 
+import { resolveFactorySize } from "./sizes";
+
 /**
- * Imperial vs Metric formatters for US locale
+ * Imperial vs Metric formatters for US locale.
+ * Uses official factory size mappings (e.g. 120x200 -> 48" x 80") for all beds,
+ * mattresses, and cabinets, avoiding inaccurate mathematical rounding.
  */
-export function formatSizeLabel(label, locale = "en") {
-  if (!label || locale !== "us") return label;
-  if (label.includes('"')) return label;
+export function formatSizeLabel(label, locale = "en", product = null) {
+  if (!label && !product) return "";
+  const normLocale = (locale || "en").toLowerCase();
 
-  // 1a. Parenthesized range of 2D sizes, e.g. '(76x190 - 200x200 cm)'
-  if (/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/i.test(label)) {
-    return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (m, w1, l1, w2, l2) => {
-      const w1In = Math.round(Number(w1) / 2.54);
-      const l1In = Math.round(Number(l1) / 2.54);
-      const w2In = Math.round(Number(w2) / 2.54);
-      const l2In = Math.round(Number(l2) / 2.54);
-      return `(${w1}x${l1} – ${w2}x${l2} cm / ${w1In}"x${l1In}" – ${w2In}"x${l2In}")`;
-    });
-  }
+  // 1. If an explicit label is provided, format and localize that label
+  if (label && typeof label === "string") {
+    // 1a. Parenthesized range of 2D sizes, e.g. '(76x190 - 200x200 cm)'
+    if (normLocale === "us") {
+      if (/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/i.test(label)) {
+        return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (m, w1, l1, w2, l2) => {
+          const w1In = Math.round(Number(w1) / 2.54);
+          const l1In = Math.round(Number(l1) / 2.54);
+          const w2In = Math.round(Number(w2) / 2.54);
+          const l2In = Math.round(Number(l2) / 2.54);
+          return `(${w1In}" x ${l1In}" – ${w2In}" x ${l2In}")`;
+        });
+      }
 
-  // 1b. Unparenthesized range of 2D sizes, e.g. '76x190 - 200x200 cm' or '76x190 – 200x200 cm'
-  if (/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/i.test(label)) {
-    return label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/gi, (m, w1, l1, w2, l2) => {
-      const w1In = Math.round(Number(w1) / 2.54);
-      const l1In = Math.round(Number(l1) / 2.54);
-      const w2In = Math.round(Number(w2) / 2.54);
-      const l2In = Math.round(Number(l2) / 2.54);
-      return `${w1}x${l1} – ${w2}x${l2} cm (${w1In}"x${l1In}" – ${w2In}"x${l2In}")`;
-    });
-  }
+      // 1b. Unparenthesized range of 2D sizes, e.g. '76x190 - 200x200 cm' or '76x190 – 200x200 cm'
+      if (/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/i.test(label)) {
+        return label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[-–—]\s*(\d+)\s*[xX×]\s*(\d+)\s*cm/gi, (m, w1, l1, w2, l2) => {
+          const w1In = Math.round(Number(w1) / 2.54);
+          const l1In = Math.round(Number(l1) / 2.54);
+          const w2In = Math.round(Number(w2) / 2.54);
+          const l2In = Math.round(Number(l2) / 2.54);
+          return `${w1In}" x ${l1In}" – ${w2In}" x ${l2In}"`;
+        });
+      }
 
-  // 2. 3D dimensions & packaging box sizes, e.g. '45x45x50 cm' or '215x30x12'
-  if (/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/i.test(label)) {
-    let res = label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/gi, (m, w, d, h) => {
-      const wIn = Math.round(Number(w) / 2.54);
-      const dIn = Math.round(Number(d) / 2.54);
-      const hIn = Math.round(Number(h) / 2.54);
-      return `${w}x${d}x${h} cm (${wIn}" x ${dIn}" x ${hIn}")`;
-    });
-    if (/\b(\d+)\s*kg\b/i.test(res)) {
-      res = res.replace(/\b(\d+)\s*kg\b/gi, (m, kg) => {
-        const lbs = Math.round(Number(kg) * 2.20462);
-        return `${kg} kg (${lbs} lbs)`;
+      // If already in inches format (e.g. Twin (38" x 75") or 30" x 75"), keep as is
+      if (label.includes('"')) {
+        return label;
+      }
+    }
+
+    // Direct string resolution through factory size database
+    const resolvedFromLabel = resolveFactorySize(label);
+    if (resolvedFromLabel) {
+      if (normLocale === "us") {
+        return resolvedFromLabel.usLabel;
+      } else {
+        // If on European storefront but the label had US inches, return official European cm label
+        if (label.includes('"')) {
+          return resolvedFromLabel.euLabel;
+        }
+      }
+    }
+
+    if (normLocale !== "us") {
+      return label;
+    }
+
+    // Single 2D dimension in metric: '76x190 cm' or '120 x 200'
+    const m2d = label.match(/(\d{2,3})\s*[xX×]\s*(\d{2,3})\s*(?:cm)?/i);
+    if (m2d) {
+      const wIn = Math.round(Number(m2d[1]) / 2.54);
+      const lIn = Math.round(Number(m2d[2]) / 2.54);
+      return label.replace(m2d[0], `${wIn}" x ${lIn}"`);
+    }
+
+    // 2. 3D dimensions & packaging box sizes, e.g. '45x45x50 cm' or '215x30x12'
+    if (/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/i.test(label)) {
+      let res = label.replace(/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*cm)?/gi, (m, w, d, h) => {
+        const wIn = Math.round(Number(w) / 2.54);
+        const dIn = Math.round(Number(d) / 2.54);
+        const hIn = Math.round(Number(h) / 2.54);
+        return `${wIn}" x ${dIn}" x ${hIn}"`;
+      });
+      if (/\b(\d+)\s*kg\b/i.test(res)) {
+        res = res.replace(/\b(\d+)\s*kg\b/gi, (m, kg) => {
+          const lbs = Math.round(Number(kg) * 2.20462);
+          return `${lbs} lbs`;
+        });
+      }
+      return res;
+    }
+
+    // 3. Single dimension range, e.g. '80 – 140 cm'
+    if (/(\d+)\s*[-–—]\s*(\d+)\s*cm/i.test(label)) {
+      return label.replace(/(\d+)\s*[-–—]\s*(\d+)\s*cm/gi, (m, d1, d2) => {
+        const d1In = Math.round(Number(d1) / 2.54);
+        const d2In = Math.round(Number(d2) / 2.54);
+        return `${d1In}" – ${d2In}"`;
       });
     }
-    return res;
+
+    // 4. Standalone 2D size with cm: '135x190 cm' or '(135x190 cm)'
+    if (/\(?\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b\)?/i.test(label)) {
+      return label.replace(/\(?\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b\)?/gi, (m, w, l) => {
+        const wIn = Math.round(Number(w) / 2.54);
+        const lIn = Math.round(Number(l) / 2.54);
+        return `${wIn}" x ${lIn}"`;
+      });
+    }
+
+    // 5. Millimeters: '800 mm'
+    if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
+      return label.replace(/\b(\d{3,4})\s*mm\b/gi, (m, mm) => {
+        const inches = (Number(mm) / 25.4).toFixed(1);
+        return `${inches}"`;
+      });
+    }
+
+    // 6. Single cm: '80 cm'
+    if (/\b(\d{2,3})\s*cm\b/i.test(label)) {
+      return label.replace(/\b(\d{2,3})\s*cm\b/gi, (m, cm) => {
+        const inches = (Number(cm) / 2.54).toFixed(1);
+        return `${inches}"`;
+      });
+    }
+
+    return label;
   }
 
-  // 3. Single dimension range, e.g. '80 – 140 cm'
-  if (/(\d+)\s*[-–—]\s*(\d+)\s*cm/i.test(label)) {
-    return label.replace(/(\d+)\s*[-–—]\s*(\d+)\s*cm/gi, (m, d1, d2) => {
-      const d1In = (Number(d1) / 2.54).toFixed(Number(d1) % 2.54 === 0 ? 0 : 1);
-      const d2In = (Number(d2) / 2.54).toFixed(Number(d2) % 2.54 === 0 ? 0 : 1);
-      return `${d1} – ${d2} cm (${d1In}" – ${d2In}")`;
-    });
+  // 2. Fallback: If label is omitted or empty, resolve directly from product object
+  if (product) {
+    if (normLocale === "us" && product.size_us) return product.size_us;
+    const resolvedFromProduct = resolveFactorySize(product);
+    if (resolvedFromProduct) {
+      return normLocale === "us" ? resolvedFromProduct.usLabel : resolvedFromProduct.euLabel;
+    }
+    if (product.width && product.length) {
+      const w = Math.round(product.width / 10);
+      const l = Math.round(product.length / 10);
+      if (normLocale === "us") {
+        return `${Math.round(w / 2.54)}" x ${Math.round(l / 2.54)}"`;
+      }
+      return `${w}x${l} cm`;
+    }
   }
 
-  // 4. Parenthesized 2D size: '(135x190 cm)'
-  if (/\(\s*\d+\s*[xX×]\s*\d+\s*cm\s*\)/i.test(label)) {
-    return label.replace(/\(\s*(\d+)\s*[xX×]\s*(\d+)\s*cm\s*\)/gi, (m, w, l) => {
-      const wIn = Math.round(Number(w) / 2.54);
-      const lIn = Math.round(Number(l) / 2.54);
-      return `(${w}x${l} cm / ${wIn}" x ${lIn}")`;
-    });
-  }
-
-  // 5. Standalone 2D size with cm: '135x190 cm'
-  if (/\b\d+\s*[xX×]\s*(\d+)\s*cm\b/i.test(label)) {
-    return label.replace(/\b(\d+)\s*[xX×]\s*(\d+)\s*cm\b/gi, (m, w, l) => {
-      const wIn = Math.round(Number(w) / 2.54);
-      const lIn = Math.round(Number(l) / 2.54);
-      return `${w}x${l} cm (${wIn}" x ${lIn}")`;
-    });
-  }
-
-  // 6. Just numbers '135x190'
-  if (/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/.test(label)) {
-    return label.replace(/\b(\d{2,3})\s*[xX×]\s*(\d{2,3})\b/g, (m, w, l) => {
-      const wIn = Math.round(Number(w) / 2.54);
-      const lIn = Math.round(Number(l) / 2.54);
-      return `${w}x${l} (${wIn}" x ${lIn}")`;
-    });
-  }
-
-  // 7. Millimeters: '800 mm'
-  if (/\b(\d{3,4})\s*mm\b/i.test(label)) {
-    return label.replace(/\b(\d{3,4})\s*mm\b/gi, (m, mm) => {
-      const inches = (Number(mm) / 25.4).toFixed(1);
-      return `${mm} mm (${inches}")`;
-    });
-  }
-
-  // 8. Single cm: '80 cm'
-  if (/\b(\d{2,3})\s*cm\b/i.test(label)) {
-    return label.replace(/\b(\d{2,3})\s*cm\b/gi, (m, cm) => {
-      const inches = (Number(cm) / 2.54).toFixed(1);
-      return `${cm} cm (${inches}")`;
-    });
-  }
-
-  return label;
+  return label || "";
 }
 
 export function formatWeight(kg, locale = "en") {

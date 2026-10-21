@@ -27,13 +27,15 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
   "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
   "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it",
-  "installation_manual", "installation_video"
+  "installation_manual", "installation_video",
+  "width_us", "length_us", "size_us"
 ]);
 
 const NUMERIC_COLUMNS = new Set([
   "width", "length", "height", "frame_width", "folded_up_height",
   "folded_up_projection", "folded_down_projection", "frame_distance_from_ground",
   "mounting_frame_height", "maximum_mattress_depth", "weight", "stock",
+  "width_us", "length_us",
   "price_gbp", "price_euro", "price_usd", "sale_percent",
   "sale_fix_gbp", "sale_fix_euro", "sale_fix_usd",
   "sale_price_gbp", "sale_price_euro", "sale_price_usd",

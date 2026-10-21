@@ -10,6 +10,7 @@ import { RAW_CATALOG } from "@/data/products";
 import { MenuContext } from "@/context/MenuContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
+import { formatSizeLabel } from "@/lib/i18n";
 
 const normalizeStr = (s) =>
   s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
@@ -243,7 +244,7 @@ export function SearchBar({ className = "", onSelect = null }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-wbk-black truncate group-hover:text-wbk-green transition-colors">
-                        {item.name}
+                        {(locale === "us" && item.name_us) ? item.name_us : (item[`name_${locale}`] || item.name)}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] uppercase tracking-wider text-wbk-brown">
@@ -254,8 +255,8 @@ export function SearchBar({ className = "", onSelect = null }) {
                             <span className="text-[10px] text-wbk-brown/50">•</span>
                             <span className="text-[10px] font-medium text-wbk-brown">
                               {locale === "us"
-                                ? `${Math.round(item.width / 25.4)}" x ${Math.round(item.length / 25.4)}" (${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm)`
-                                : `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`}
+                                ? (item.size_us || formatSizeLabel(`${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`, "us", item))
+                                : (item.size_eu || `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`)}
                             </span>
                           </>
                         )}
