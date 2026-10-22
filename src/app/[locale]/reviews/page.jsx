@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import {
@@ -138,11 +138,51 @@ const REVIEWS_DATA = [
 export default function ReviewsPage() {
   const { t, localizedHref } = useLocale();
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [dynamicReviews, setDynamicReviews] = useState([]);
+
+  useEffect(() => {
+    fetch(`/api/reviews?_t=${Date.now()}`, {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.reviews)) {
+          const mapped = data.reviews.map((r) => ({
+            id: r.id,
+            author: r.author_name,
+            source: r.verified_buyer ? "Verified Buyer" : "Customer Review",
+            rating: Number(r.rating) || 5,
+            date: new Date(r.created_at || Date.now()).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+            model: r.product_name || "Classic Vertical Wall Bed",
+            review: r.content,
+            photos: Array.isArray(r.photos) ? r.photos : [],
+            verified: Boolean(r.verified_buyer),
+          }));
+          setDynamicReviews(mapped);
+        }
+      })
+      .catch((err) => console.error("Failed to load customer reviews:", err));
+  }, []);
+
+  const allReviews = useMemo(() => {
+    // Dynamic verified reviews first, then curated Google reviews
+    return [...dynamicReviews, ...REVIEWS_DATA];
+  }, [dynamicReviews]);
 
   const filteredReviews = useMemo(() => {
-    if (selectedFilter === "All") return REVIEWS_DATA;
-    return REVIEWS_DATA.filter((r) => r.model.toLowerCase().includes(selectedFilter.toLowerCase()));
-  }, [selectedFilter]);
+    if (selectedFilter === "All") return allReviews;
+    return allReviews.filter((r) =>
+      (r.model || "").toLowerCase().includes(selectedFilter.toLowerCase())
+    );
+  }, [allReviews, selectedFilter]);
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -230,6 +270,23 @@ export default function ReviewsPage() {
                 <p className="text-xs sm:text-sm text-wbk-black leading-relaxed mb-6 font-normal">
                   &ldquo;{item.review}&rdquo;
                 </p>
+
+                {Array.isArray(item.photos) && item.photos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {item.photos.map((p, pIdx) => (
+                      <div
+                        key={pIdx}
+                        className="w-12 h-12 rounded border border-wbk-lightgrey/80 overflow-hidden shadow-2xs"
+                      >
+                        <img
+                          src={p}
+                          alt="Customer setup photo"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-wbk-lightgrey/50 flex items-center justify-between">

@@ -23,18 +23,32 @@ export async function GET(request) {
           ) / 10
         : 5.0;
 
-    return NextResponse.json({
-      success: true,
-      reviews,
-      stats: {
-        totalCount,
-        avgRating,
+    return NextResponse.json(
+      {
+        success: true,
+        reviews,
+        stats: {
+          totalCount,
+          avgRating,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json(
       { success: false, error: err.message || "Failed to fetch reviews" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
     );
   }
 }

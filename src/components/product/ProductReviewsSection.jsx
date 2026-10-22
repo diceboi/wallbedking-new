@@ -81,7 +81,16 @@ export function ProductReviewsSection({
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reviews?productSlug=${encodeURIComponent(productSlug || "")}`);
+      const res = await fetch(
+        `/api/reviews?productSlug=${encodeURIComponent(productSlug || "")}&_t=${Date.now()}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        }
+      );
       const data = await res.json();
       if (data.success && Array.isArray(data.reviews)) {
         setReviews(data.reviews);
