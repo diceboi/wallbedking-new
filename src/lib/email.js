@@ -402,12 +402,32 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
   const isUk = loc === "en" || (order.shipping_address?.country || "").toLowerCase().includes("kingdom");
 
   const itemsList = (order.items || [])
-    .map(
-      (item) => `
+    .map((item) => {
+      const opts = item.options || {};
+      const optionsText =
+        (opts && typeof opts === "object"
+          ? [opts.size, opts.orientation, opts.type, opts.color].filter(Boolean).join(" • ")
+          : "") || item.variant || "";
+
+      const hasSofa = Boolean(opts.sofaIncluded);
+      const sofaPriceText = opts.sofaPrice ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})` : "";
+      const sofaLabels = {
+        en: "Front Sofa Module",
+        us: "Front Sofa Module",
+        de: "Front-Sofa Modul",
+        fr: "Module Canapé Devant de Lit",
+        it: "Modulo Divano Frontale",
+        es: "Módulo Sofá Frontal",
+        por: "Módulo Sofá Frontal",
+      };
+      const sofaLabel = sofaLabels[loc] || sofaLabels.en;
+
+      return `
       <tr>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111;">
           <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed Item"}</strong>
-          ${item.variant ? `<br><span style="color:#777; font-size:12px; display:inline-block; margin-top:3px;">${item.variant}</span>` : ""}
+          ${optionsText ? `<br><span style="color:#666; font-size:12px; display:inline-block; margin-top:3px;">${optionsText}</span>` : ""}
+          ${hasSofa ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + ${sofaLabel}${sofaPriceText}</span>` : ""}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
           ${item.quantity || 1}
@@ -416,8 +436,8 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
           ${currencySymbol}${Number(item.price || 0).toFixed(2)}
         </td>
       </tr>
-    `
-    )
+    `;
+    })
     .join("");
 
   let introText = t.intro.replace("{id}", order.id);
@@ -618,7 +638,11 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
 
   const itemsRowsHtml = itemsList.length > 0 ? itemsList.map((item) => {
     const title = item.title || item.name || item.product_name || "Wall Bed King Product";
-    const variantText = item.variant || (item.options && typeof item.options === "object" ? [item.options.size, item.options.orientation, item.options.type, item.options.color].filter(Boolean).join(" • ") : "");
+    const opts = item.options && typeof item.options === "object" ? item.options : {};
+    const variantParts = [opts.size, opts.orientation, opts.type, opts.color].filter(Boolean);
+    const variantText = variantParts.length > 0 ? variantParts.join(" • ") : (item.variant || "");
+    const hasSofa = Boolean(opts.sofaIncluded);
+    const sofaPriceText = opts.sofaPrice ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})` : "";
     const sku = item.sku || item.rawId || item.productId || item.id || "";
     const qty = parseInt(item.quantity, 10) || 1;
     const unitPrice = Number(item.price || item.unitPrice || 0);
@@ -629,6 +653,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
         <td style="padding: 12px 14px; vertical-align: top;">
           <strong style="color: #111; font-size: 14px; display: block;">${title}</strong>
           ${variantText ? `<div style="color: #666; font-size: 12px; margin-top: 3px;"><strong>Option:</strong> ${variantText}</div>` : ""}
+          ${hasSofa ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + Front Sofa Included${sofaPriceText}</span></div>` : ""}
           ${sku ? `<div style="color: #888; font-size: 11px; font-family: monospace; margin-top: 2px;">SKU: ${sku}</div>` : ""}
         </td>
         <td style="padding: 12px 14px; text-align: center; vertical-align: top; font-weight: 600; color: #111;">
@@ -1887,16 +1912,22 @@ export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en
 
   const itemsList = (order.items || [])
     .map(
-      (item) => `
+      (item) => {
+        const opts = item.options || {};
+        const optText = item.variant || [opts.size, opts.orientation, opts.type].filter(Boolean).join(" • ");
+        const hasSofa = Boolean(opts.sofaIncluded);
+        return `
         <tr style="border-bottom: 1px solid #f0f0f0;">
           <td style="padding: 12px 0;">
             <strong style="color: #111; font-size: 13px;">${item.name || item.title || "Wall Bed"}</strong>
-            ${item.variant || item.options?.size || item.options?.orientation ? `<br><span style="font-size: 11px; color: #777;">${item.variant || [item.options?.size, item.options?.orientation].filter(Boolean).join(" • ")}</span>` : ""}
+            ${optText ? `<br><span style="font-size: 11px; color: #777;">${optText}</span>` : ""}
+            ${hasSofa ? `<br><span style="display:inline-block; margin-top:4px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px;">🛋️ + Front Sofa Module</span>` : ""}
           </td>
           <td style="padding: 12px 0; text-align: center; color: #444; font-size: 13px;">${item.quantity || 1}</td>
           <td style="padding: 12px 0; text-align: right; color: #111; font-weight: 600; font-size: 13px;">${currencySymbol}${Number(item.price || 0).toFixed(2)}</td>
         </tr>
-      `
+      `;
+      }
     )
     .join("");
 

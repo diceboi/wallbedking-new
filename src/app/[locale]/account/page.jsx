@@ -799,6 +799,11 @@ export default function AccountPage() {
                                   <p className="text-xs text-wbk-brown mt-0.5">
                                     {item.options?.size ? formatSizeLabel(item.options.size, locale) : ""} {item.options?.orientation && `• ${item.options.orientation}`}
                                   </p>
+                                  {item.options?.sofaIncluded && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] bg-[#FAF5EA] text-wbk-gold font-semibold px-2 py-0.5 border border-wbk-gold/40 rounded mt-1.5">
+                                      🛋️ + {t("cart.frontSofa", "Front Sofa Module")}
+                                    </span>
+                                  )}
                                   <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
                                     <IconTruck size={14} />
                                     <span>

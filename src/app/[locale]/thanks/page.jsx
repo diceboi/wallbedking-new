@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
+import Image from "next/image";
 import {
   IconCheck,
   IconTruck,
@@ -13,6 +14,7 @@ import {
   IconMail,
   IconReceipt,
   IconLoader2,
+  IconPackage,
 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -264,6 +266,48 @@ function ThanksContent() {
             </div>
           </div>
         </div>
+
+        {/* Purchased Items Breakdown (if available) */}
+        {confirmedOrder?.items && confirmedOrder.items.length > 0 && (
+          <div className="bg-white border border-wbk-lightgrey p-6 space-y-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-wbk-black border-b border-wbk-lightgrey pb-3">
+              <IconPackage size={18} className="text-wbk-gold" />
+              <span>Purchased Items</span>
+            </div>
+
+            <div className="divide-y divide-wbk-lightgrey/50">
+              {confirmedOrder.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.image && (
+                      <div className="relative w-12 h-12 bg-[#F4F2F0] border border-wbk-lightgrey shrink-0 overflow-hidden">
+                        <Image src={item.image} alt={item.title || "Item"} fill className="object-cover" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-semibold text-wbk-black truncate">{item.title}</h4>
+                      <p className="text-[11px] text-wbk-brown mt-0.5">
+                        {item.options?.size} {item.options?.orientation && `• ${item.options.orientation}`}
+                      </p>
+                      {item.options?.sofaIncluded && (
+                        <span className="inline-flex items-center gap-1 text-[10px] bg-[#FAF5EA] text-wbk-gold font-semibold px-2 py-0.5 border border-wbk-gold/40 rounded mt-1">
+                          🛋️ + Front Sofa Module {item.options.sofaPrice ? `(+${effectiveCurrency === "GBP" ? "£" : effectiveCurrency === "USD" ? "$" : "€"}${Number(item.options.sofaPrice).toFixed(2)})` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-bold text-wbk-black">
+                      {effectiveCurrency === "GBP" ? "£" : effectiveCurrency === "USD" ? "$" : "€"}
+                      {(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-wbk-brown block">Qty: {item.quantity || 1}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Guarantees & Next Steps */}
         <div className="bg-[#FAF8F5] border border-wbk-lightgrey/60 p-6 sm:p-8 space-y-4">

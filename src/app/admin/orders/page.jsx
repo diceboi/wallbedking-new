@@ -410,6 +410,11 @@ export default function AdminOrdersPage() {
                           <span className="text-wbk-black truncate max-w-[140px]">
                             {ord.items?.length || 1} {ord.items?.length === 1 ? "item" : "items"}
                           </span>
+                          {ord.items?.some((it) => it.options?.sofaIncluded) && (
+                            <span className="inline-block text-[9px] font-bold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-1.5 py-0.5 rounded shrink-0">
+                              + Sofa
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-4 text-wbk-brown whitespace-nowrap">
@@ -1013,6 +1018,11 @@ export default function AdminOrdersPage() {
                           <span className="text-[11px] text-wbk-brown block">
                             {item.options?.size} {item.options?.orientation && `(${item.options.orientation})`}
                           </span>
+                          {item.options?.sofaIncluded && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-2 py-0.5 rounded mt-1">
+                              🛋️ + Front Sofa Included {item.options.sofaPrice ? `(+£${Number(item.options.sofaPrice).toFixed(2)})` : ""}
+                            </span>
+                          )}
                           <span className="text-[11px] text-wbk-brown/80 block mt-0.5">
                             Qty: {item.quantity} × £{Number(item.price || 0).toFixed(2)}
                           </span>
