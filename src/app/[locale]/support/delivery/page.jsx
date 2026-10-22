@@ -15,86 +15,86 @@ import {
 import { IconShieldCheck } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 
-const DELIVERY_TIERS = [
-  {
-    name: "Economy Delivery",
-    price: "FREE",
-    timeline: "2 – 4 Weeks",
-    badge: "Most Popular",
-    description: "Our complimentary delivery service across mainland UK on all bed orders.",
-    features: [
-      "Zero shipping charges at checkout",
-      "Full tracking notification before dispatch",
-      "Delivered directly to your door",
-      "All mainland UK postcodes included",
-    ],
-  },
-  {
-    name: "Standard Delivery",
-    price: "£49",
-    timeline: "1 – 2 Weeks",
-    badge: "Faster Transit",
-    description: "Accelerate transit and receive your wall bed within 7 to 14 calendar days.",
-    features: [
-      "Priority warehouse staging",
-      "Dedicated courier dispatch slot",
-      "SMS & email delivery time window",
-      "Ideal for scheduled room renovations",
-    ],
-  },
-  {
-    name: "Express Delivery",
-    price: "£79",
-    timeline: "2 – 5 Working Days",
-    badge: "Speediest Option",
-    description: "Super-speedy priority service for in-stock wall bed frames and mechanisms.",
-    features: [
-      "Same-day or next-day warehouse pick",
-      "Express 2–5 business day delivery",
-      "Real-time courier tracking link",
-      "Available across mainland UK",
-    ],
-  },
-  {
-    name: "Click & Collect",
-    price: "FREE",
-    timeline: "Ready in 24–48 Hours",
-    badge: "Collect in Person",
-    description: "Collect directly from our central warehouse in Harlow, Essex (North of London).",
-    features: [
-      "Zero delivery fee",
-      "Flexible collection by appointment",
-      "Inspection upon pickup",
-      "Ample parking for vans, SUVs, or estate cars",
-    ],
-  },
-];
-
-const PRE_DELIVERY_STEPS = [
-  {
-    step: "01",
-    title: "Order Staged & Quality Checked",
-    desc: "Every steel mechanism, spring-loaded piston assembly, and beech slat bundle is inspected before packing in heavy-duty cartons.",
-  },
-  {
-    step: "02",
-    title: "Courier Dispatch & Tracking",
-    desc: "Once your order leaves our Harlow facility, you receive automated tracking credentials via SMS and email.",
-  },
-  {
-    step: "03",
-    title: "Delivery Slot Notification",
-    desc: "The logistics carrier contacts you prior to the delivery date to schedule an agreed time slot.",
-  },
-  {
-    step: "04",
-    title: "Doorstep Delivery & Inspection",
-    desc: "Flat-packed cartons are delivered to your threshold, engineered to easily fit through narrow doors, hallways, and elevators.",
-  },
-];
-
 export default function DeliveryPage() {
   const { t, localizedHref } = useLocale();
+
+  const DELIVERY_TIERS = [
+    {
+      name: t("support.tierEconomyName", "Economy Delivery"),
+      price: t("support.tierEconomyPrice", "FREE"),
+      timeline: t("support.tierEconomyTimeline", "2 – 4 Weeks"),
+      badge: t("support.tierEconomyBadge", "Most Popular"),
+      description: t("support.tierEconomyDesc", "Our complimentary delivery service across mainland UK on all bed orders."),
+      features: [
+        t("support.tierEconomyF1", "Zero shipping charges at checkout"),
+        t("support.tierEconomyF2", "Full tracking notification before dispatch"),
+        t("support.tierEconomyF3", "Delivered directly to your door"),
+        t("support.tierEconomyF4", "All mainland UK postcodes included"),
+      ],
+    },
+    {
+      name: t("support.tierStandardName", "Standard Delivery"),
+      price: t("support.tierStandardPrice", "£49"),
+      timeline: t("support.tierStandardTimeline", "1 – 2 Weeks"),
+      badge: t("support.tierStandardBadge", "Faster Transit"),
+      description: t("support.tierStandardDesc", "Accelerate transit and receive your wall bed within 7 to 14 calendar days."),
+      features: [
+        t("support.tierStandardF1", "Priority warehouse staging"),
+        t("support.tierStandardF2", "Dedicated courier dispatch slot"),
+        t("support.tierStandardF3", "SMS & email delivery time window"),
+        t("support.tierStandardF4", "Ideal for scheduled room renovations"),
+      ],
+    },
+    {
+      name: t("support.tierExpressName", "Express Delivery"),
+      price: t("support.tierExpressPrice", "£79"),
+      timeline: t("support.tierExpressTimeline", "2 – 5 Working Days"),
+      badge: t("support.tierExpressBadge", "Speediest Option"),
+      description: t("support.tierExpressDesc", "Super-speedy priority service for in-stock wall bed frames and mechanisms."),
+      features: [
+        t("support.tierExpressF1", "Same-day or next-day warehouse pick"),
+        t("support.tierExpressF2", "Express 2–5 business day delivery"),
+        t("support.tierExpressF3", "Real-time courier tracking link"),
+        t("support.tierExpressF4", "Available across mainland UK"),
+      ],
+    },
+    {
+      name: t("support.tierCollectName", "Click & Collect"),
+      price: t("support.tierCollectPrice", "FREE"),
+      timeline: t("support.tierCollectTimeline", "Ready in 24–48 Hours"),
+      badge: t("support.tierCollectBadge", "Collect in Person"),
+      description: t("support.tierCollectDesc", "Collect directly from our central warehouse in Harlow, Essex (North of London)."),
+      features: [
+        t("support.tierCollectF1", "Zero delivery fee"),
+        t("support.tierCollectF2", "Flexible collection by appointment"),
+        t("support.tierCollectF3", "Inspection upon pickup"),
+        t("support.tierCollectF4", "Ample parking for vans, SUVs, or estate cars"),
+      ],
+    },
+  ];
+
+  const PRE_DELIVERY_STEPS = [
+    {
+      step: "01",
+      title: t("support.pStep1Title", "Order Staged & Quality Checked"),
+      desc: t("support.pStep1Desc", "Every steel mechanism, spring-loaded piston assembly, and beech slat bundle is inspected before packing in heavy-duty cartons."),
+    },
+    {
+      step: "02",
+      title: t("support.pStep2Title", "Courier Dispatch & Tracking"),
+      desc: t("support.pStep2Desc", "Once your order leaves our Harlow facility, you receive automated tracking credentials via SMS and email."),
+    },
+    {
+      step: "03",
+      title: t("support.pStep3Title", "Delivery Slot Notification"),
+      desc: t("support.pStep3Desc", "The logistics carrier contacts you prior to the delivery date to schedule an agreed time slot."),
+    },
+    {
+      step: "04",
+      title: t("support.pStep4Title", "Doorstep Delivery & Inspection"),
+      desc: t("support.pStep4Desc", "Flat-packed cartons are delivered to your threshold, engineered to easily fit through narrow doors, hallways, and elevators."),
+    },
+  ];
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -240,21 +240,22 @@ export default function DeliveryPage() {
             </div>
             <div>
               <h3 className="font-new-york text-2xl text-wbk-black">
-                Collecting In Person from Harlow?
+                {t("support.harlowCollectTitle", "Collecting In Person from Harlow?")}
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-wbk-brown leading-relaxed">
-                Our central warehouse is conveniently situated in Harlow, Essex (CM20 2HU) just off the M11, north of London.
-                Please ensure you arrange an appointment at least 24 hours in advance so our warehouse team can have your
-                order staged and ready for pickup.
+                {t(
+                  "support.harlowCollectDesc",
+                  "Our central warehouse is conveniently situated in Harlow, Essex (CM20 2HU) just off the M11, north of London. Please ensure you arrange an appointment at least 24 hours in advance so our warehouse team can have your order staged and ready for pickup."
+                )}
               </p>
             </div>
           </div>
           <div className="shrink-0 flex gap-4">
             <Link
-              href="/contact"
+              href={localizedHref("/contact")}
               className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
             >
-              Book Collection Appointment
+              {t("support.bookAppointmentBtn", "Book Collection Appointment")}
             </Link>
           </div>
         </div>

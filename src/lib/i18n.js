@@ -355,6 +355,20 @@ export function formatSizeLabel(label, locale = "en", product = null) {
       }
     }
 
+    if (normLocale === "fr") {
+      let frLabel = label;
+      frLabel = frLabel.replace(/(\d+)\s+Available\s+Sizes/gi, "$1 Tailles disponibles");
+      frLabel = frLabel.replace(/Available\s+Sizes/gi, "Tailles disponibles");
+      frLabel = frLabel.replace(/(\d+)\s+Sizes\b/gi, "$1 Tailles");
+      frLabel = frLabel.replace(/Single\s+to\s+King\s+in\s+Oak,\s*Beech,\s*Pine\s*&\s*White/gi, "Simple à King en Chêne, Hêtre, Pin et Blanc");
+      frLabel = frLabel.replace(/Double\s*&\s*King\s+in\s+Oak,\s*Beech,\s*Pine\s*&\s*White/gi, "Double et King en Chêne, Hêtre, Pin et Blanc");
+      frLabel = frLabel.replace(/Door\s*\+\s*Hanger\s+or\s+Shelves\s+in\s+4\s+Finishes/gi, "Porte + Penderie ou Étagères en 4 Finitions");
+      frLabel = frLabel.replace(/Single\s+to\s+King/gi, "Simple à King");
+      frLabel = frLabel.replace(/Double\s*&\s*King/gi, "Double et King");
+      frLabel = frLabel.replace(/Modular\s+Sizes/gi, "Tailles modulaires");
+      return frLabel;
+    }
+
     if (normLocale !== "us") {
       return label;
     }

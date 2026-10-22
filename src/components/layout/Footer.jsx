@@ -60,7 +60,7 @@ export function Footer() {
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
             <div key={title}>
               <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-wbk-gold font-poppins">
-                {title}
+                {t(`footer.${title.toLowerCase()}`, title)}
               </p>
               <ul className="space-y-2.5">
                 {links
@@ -79,9 +79,7 @@ export function Footer() {
                       href={localizedHref(link.href)}
                       className="text-sm text-wbk-lightgrey/80 transition-colors duration-150 hover:text-wbk-white font-poppins"
                     >
-                      {link.id && link.id in { beds: 1, sofas: 1, tables: 1, mattresses: 1, cabinets: 1, configurator: 1, about: 1, contact: 1, reviews: 1 }
-                        ? t(`nav.${link.id}`, link.label)
-                        : link.label}
+                      {link.id ? t(`footer.${link.id}`, t(`nav.${link.id}`, link.label)) : link.label}
                     </Link>
                   </li>
                 ))}

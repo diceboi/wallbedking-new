@@ -112,6 +112,10 @@ export function getLocalizedProductName(product, locale = "en") {
   if (product[directKey] && String(product[directKey]).trim()) {
     return String(product[directKey]).trim();
   }
+  const directTitleKey = `title_${normLocale}`;
+  if (product[directTitleKey] && String(product[directTitleKey]).trim()) {
+    return String(product[directTitleKey]).trim();
+  }
 
   // 2. Portuguese alias handling (por <-> pt)
   if (normLocale === "por" || normLocale === "pt") {
@@ -468,6 +472,48 @@ export function parseYouTubeVideo(input) {
     embedUrl: `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`,
     watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
   };
+}
+
+/**
+ * Calculate Morphy Sofa add-on surcharge for a bed.
+ * - Vertical beds: width <= 120cm => 499, width >= 135cm => 998 (in all currencies)
+ * - Horizontal beds: always 998 (in all currencies)
+ */
+export function calculateSofaPrice(itemOrProduct, orientationStr = null, sizeStr = null) {
+  const isHoriz =
+    (orientationStr && String(orientationStr).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.options?.orientation && String(itemOrProduct.options.orientation).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.sub_category && String(itemOrProduct.sub_category).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.slug && String(itemOrProduct.slug).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.name && String(itemOrProduct.name).toLowerCase().includes("horizontal"));
+
+  if (isHoriz) {
+    return 998;
+  }
+
+  // Determine width in cm
+  let widthCm = null;
+
+  if (itemOrProduct?.width) {
+    const w = Number(itemOrProduct.width);
+    if (!isNaN(w) && w > 0) {
+      widthCm = w > 250 ? Math.round(w / 10) : w;
+    }
+  }
+
+  if (!widthCm) {
+    const text = `${sizeStr || ""} ${itemOrProduct?.options?.size || ""} ${itemOrProduct?.size || ""} ${itemOrProduct?.slug || ""} ${itemOrProduct?.name || ""}`;
+    const match = text.match(/(?:^|[^\d])(\d{2,3})\s*[xX*]\s*(\d{2,3})/);
+    if (match) {
+      widthCm = parseInt(match[1], 10);
+    } else {
+      const lower = text.toLowerCase();
+      if (lower.includes("single") || lower.includes("twin")) widthCm = 90;
+      else if (lower.includes("double") || lower.includes("queen") || lower.includes("king")) widthCm = 140;
+    }
+  }
+
+  return (widthCm && widthCm <= 120) ? 499 : 998;
 }
 
 export { findProductBySlug, getProductVariants };

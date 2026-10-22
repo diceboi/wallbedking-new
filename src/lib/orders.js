@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { ALL_PRODUCTS, RAW_CATALOG } from "@/data/products";
+import { calculateSofaPrice } from "@/lib/products";
 
 export const DELIVERY_OPTIONS = {
   delivery_option_economy: {
@@ -209,7 +210,11 @@ export async function validateOrderTotals(
       const isSofaIncluded = Boolean(item.options?.sofaIncluded);
       let sofaSurcharge = 0;
       if (isSofaIncluded) {
-        sofaSurcharge = curr === "USD" ? 350 : (curr === "EUR" ? 320 : 280);
+        sofaSurcharge = calculateSofaPrice(
+          prodSource || item,
+          item.options?.orientation,
+          item.options?.size
+        );
       }
 
       unitPrice = finalPrice + sofaSurcharge;

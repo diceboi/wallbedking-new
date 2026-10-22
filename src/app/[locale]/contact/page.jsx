@@ -91,7 +91,7 @@ export default function ContactPage() {
           <div className="lg:col-span-5 space-y-8">
             <div>
               <h2 className="font-new-york text-2xl sm:text-3xl text-wbk-black mb-6">
-                Direct Contact Channels
+                {t("contact.channelsTitle", "Direct Contact Channels")}
               </h2>
               <div className="space-y-4">
                 {/* Telephone Support */}
@@ -101,10 +101,10 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs uppercase font-semibold tracking-wider text-wbk-brown">
-                      Telephone Support
+                      {t("contact.telSupport", "Telephone Support")}
                     </p>
                     <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
-                      Available Mon–Fri 9–20, Sat 9–12. Direct phone lines can be found under the telephone question in our{" "}
+                      {t("contact.telDesc", "Available Mon–Fri 9–20, Sat 9–12. Direct phone lines can be found under the telephone question in our")}{" "}
                       <Link href={localizedHref("/support/faq")} className="text-wbk-black font-semibold underline hover:text-wbk-green">
                         FAQ
                       </Link>.
@@ -120,7 +120,7 @@ export default function ContactPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="text-xs uppercase font-semibold tracking-wider text-wbk-black font-semibold">
-                        Online Live Chat
+                        {t("contact.liveChat", "Online Live Chat")}
                       </p>
                       <span className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 border border-emerald-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -128,14 +128,14 @@ export default function ContactPage() {
                       </span>
                     </div>
                     <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
-                      Chat directly with our product engineers and customer support specialists in real time.
+                      {t("contact.liveChatDesc", "Chat directly with our product engineers and customer support specialists in real time.")}
                     </p>
                     <button
                       type="button"
                       onClick={openZendeskChat}
                       className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-xs font-medium uppercase tracking-wider transition-colors cursor-pointer"
                     >
-                      <span>Start Live Chat</span>
+                      <span>{t("contact.startLiveChat", "Start Live Chat")}</span>
                     </button>
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs uppercase font-semibold tracking-wider text-wbk-brown">
-                      Email Inquiries
+                      {t("contact.emailInquiries", "Email Inquiries")}
                     </p>
                     <a
                       href="mailto:support@wallbedking.com"
@@ -156,7 +156,7 @@ export default function ContactPage() {
                       support@wallbedking.com
                     </a>
                     <p className="text-[11px] text-wbk-brown mt-0.5">
-                      Average response time: within 4–12 business hours
+                      {t("contact.emailDesc", "Average response time: within 4–12 business hours")}
                     </p>
                   </div>
                 </div>
@@ -168,16 +168,18 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs uppercase font-semibold tracking-wider text-wbk-brown">
-                      Opening Hours
+                      {t("contact.hours", "Opening Hours")}
                     </p>
                     <div className="mt-1 text-xs text-wbk-black space-y-0.5">
                       <p>
-                        <strong className="font-semibold">Monday – Friday:</strong> 9:00am – 8:00pm
+                        {t("contact.hoursMonFri", "Monday – Friday: 9:00am – 8:00pm")}
                       </p>
                       <p>
-                        <strong className="font-semibold">Saturday:</strong> 9:00am – 12:00pm
+                        {t("contact.hoursSat", "Saturday: 9:00am – 12:00pm")}
                       </p>
-                      <p className="text-wbk-brown text-[11px]">Sunday: Closed (Online orders open)</p>
+                      <p className="text-wbk-brown text-[11px]">
+                        {t("contact.hoursSun", "Sunday: Closed (Online orders open)")}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -192,21 +194,22 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-poppins font-semibold text-sm text-wbk-black">
-                    Showroom & Warehouse (Appointment Only)
+                    {t("contact.showroomCardTitle", "Showroom & Warehouse (Appointment Only)")}
                   </h3>
                   <p className="text-xs text-wbk-brown">Harlow, Essex, CM20 2HU</p>
                 </div>
               </div>
 
               <p className="text-xs text-wbk-brown leading-relaxed">
-                Experience our Classic, Studio, and Integrated models in person before ordering.
-                Please book an appointment at least 24 hours prior to arrival so a product specialist is
-                available to demonstrate mechanisms and guide your selection.
+                {t(
+                  "contact.showroomCardDesc",
+                  "Experience our Classic, Studio, and Integrated models in person before ordering. Please book an appointment at least 24 hours prior to arrival so a product specialist is available to demonstrate mechanisms and guide your selection."
+                )}
               </p>
 
               <div className="pt-2 flex items-center gap-2 text-xs font-semibold text-wbk-black">
                 <IconCalendarEvent size={16} className="text-wbk-gold" />
-                <span>Appointments required for all visits and collections</span>
+                <span>{t("contact.appointmentReq", "Appointments required for all visits and collections")}</span>
               </div>
             </div>
           </div>
@@ -215,10 +218,10 @@ export default function ContactPage() {
           <div className="lg:col-span-7">
             <div className="bg-white p-8 sm:p-10 rounded-none border border-wbk-lightgrey shadow-sm">
               <h2 className="font-new-york text-2xl sm:text-3xl text-wbk-black mb-2">
-                Send Us a Message
+                {t("contact.sendMessageTitle", "Send Us a Message")}
               </h2>
               <p className="text-xs sm:text-sm text-wbk-brown mb-8">
-                Fill out the form below and our team will get back to you promptly with answers and technical guidance.
+                {t("contact.sendMessageDesc", "Fill out the form below and our team will get back to you promptly with answers and technical guidance.")}
               </p>
 
               {submitted ? (
@@ -346,10 +349,10 @@ export default function ContactPage() {
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold">
-                Find Us On Google Maps
+                {t("contact.mapBadge", "Find Us On Google Maps")}
               </span>
               <h2 className="font-new-york text-2xl sm:text-3xl text-wbk-black mt-1">
-                Showroom & Distribution Warehouse
+                {t("contact.mapTitle", "Showroom & Distribution Warehouse")}
               </h2>
             </div>
             <p className="text-xs text-wbk-brown">

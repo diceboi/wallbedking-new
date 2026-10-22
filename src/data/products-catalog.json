@@ -19076,7 +19076,7 @@
     "name_en": "Sofa 800 Bed Front",
     "name_us": "Sofa 800 Bed Front",
     "name_de": "Sofa 800 Bed Front",
-    "name_fr": "Sofa 800 Bed Front",
+    "name_fr": "Canapé 800 Devant de Lit",
     "name_es": "Sofa 800 Bed Front",
     "name_por": "Sofa 800 Bed Front",
     "name_it": "Sofa 800 Bed Front",
@@ -19119,7 +19119,8 @@
     "extended_description_it": null,
     "size_us": "32\" x 34\"",
     "width_us": 32,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 800 Devant de Lit"
   },
   {
     "id": 160,
@@ -19189,7 +19190,7 @@
     "name_en": "Sofa 1000 Bed Front",
     "name_us": "Sofa 1000 Bed Front",
     "name_de": "Sofa 1000 Bed Front",
-    "name_fr": "Sofa 1000 Bed Front",
+    "name_fr": "Canapé 1000 Devant de Lit",
     "name_es": "Sofa 1000 Bed Front",
     "name_por": "Sofa 1000 Bed Front",
     "name_it": "Sofa 1000 Bed Front",
@@ -19232,7 +19233,8 @@
     "extended_description_it": null,
     "size_us": "40\" x 34\"",
     "width_us": 40,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1000 Devant de Lit"
   },
   {
     "id": 161,
@@ -19302,7 +19304,7 @@
     "name_en": "Sofa 1200 Bed Front",
     "name_us": "Sofa 1200 Bed Front",
     "name_de": "Sofa 1200 Bed Front",
-    "name_fr": "Sofa 1200 Bed Front",
+    "name_fr": "Canapé 1200 Devant de Lit",
     "name_es": "Sofa 1200 Bed Front",
     "name_por": "Sofa 1200 Bed Front",
     "name_it": "Sofa 1200 Bed Front",
@@ -19345,7 +19347,8 @@
     "extended_description_it": null,
     "size_us": "48\" x 34\"",
     "width_us": 48,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1200 Devant de Lit"
   },
   {
     "id": 162,
@@ -19415,7 +19418,7 @@
     "name_en": "Sofa 1400 Bed Front",
     "name_us": "Sofa 1400 Bed Front",
     "name_de": "Sofa 1400 Bed Front",
-    "name_fr": "Sofa 1400 Bed Front",
+    "name_fr": "Canapé 1400 Devant de Lit",
     "name_es": "Sofa 1400 Bed Front",
     "name_por": "Sofa 1400 Bed Front",
     "name_it": "Sofa 1400 Bed Front",
@@ -19458,7 +19461,8 @@
     "extended_description_it": null,
     "size_us": "56\" x 34\"",
     "width_us": 56,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1400 Devant de Lit"
   },
   {
     "id": 163,
@@ -19528,7 +19532,7 @@
     "name_en": "Sofa Corner Seat Bed Front",
     "name_us": "Sofa Corner Seat Bed Front",
     "name_de": "Sofa Corner Seat Bed Front",
-    "name_fr": "Sofa Corner Seat Bed Front",
+    "name_fr": "Canapé Module d'Angle Devant de Lit",
     "name_es": "Sofa Corner Seat Bed Front",
     "name_por": "Sofa Corner Seat Bed Front",
     "name_it": "Sofa Corner Seat Bed Front",
@@ -19571,7 +19575,8 @@
     "extended_description_it": null,
     "size_us": "34\" x 34\"",
     "width_us": 34,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé Module d'Angle Devant de Lit"
   },
   {
     "id": 164,
@@ -19641,7 +19646,7 @@
     "name_en": "Sofa Base Module 800 Bed Front",
     "name_us": "Sofa Base Module 800 Bed Front",
     "name_de": "Sofa Base Module 800 Bed Front",
-    "name_fr": "Sofa Base Module 800 Bed Front",
+    "name_fr": "Canapé Module de Base 800 Devant de Lit",
     "name_es": "Sofa Base Module 800 Bed Front",
     "name_por": "Sofa Base Module 800 Bed Front",
     "name_it": "Sofa Base Module 800 Bed Front",
@@ -19684,7 +19689,8 @@
     "extended_description_it": null,
     "size_us": "32\" x 32\"",
     "width_us": 32,
-    "length_us": 32
+    "length_us": 32,
+    "title_fr": "Canapé Module de Base 800 Devant de Lit"
   },
   {
     "id": 165,
@@ -19754,7 +19760,7 @@
     "name_en": "Sofa Base Module 600 Bed Front",
     "name_us": "Sofa Base Module 600 Bed Front",
     "name_de": "Sofa Base Module 600 Bed Front",
-    "name_fr": "Sofa Base Module 600 Bed Front",
+    "name_fr": "Canapé Module de Base 600 Devant de Lit",
     "name_es": "Sofa Base Module 600 Bed Front",
     "name_por": "Sofa Base Module 600 Bed Front",
     "name_it": "Sofa Base Module 600 Bed Front",
@@ -19797,7 +19803,8 @@
     "extended_description_it": null,
     "size_us": "24\" x 32\"",
     "width_us": 24,
-    "length_us": 32
+    "length_us": 32,
+    "title_fr": "Canapé Module de Base 600 Devant de Lit"
   },
   {
     "id": 166,
@@ -19867,7 +19874,7 @@
     "name_en": "Sofa Armrest Bed Front",
     "name_us": "Sofa Armrest Bed Front",
     "name_de": "Sofa Armrest Bed Front",
-    "name_fr": "Sofa Armrest Bed Front",
+    "name_fr": "Canapé Accoudoir Devant de Lit",
     "name_es": "Sofa Armrest Bed Front",
     "name_por": "Sofa Armrest Bed Front",
     "name_it": "Sofa Armrest Bed Front",
@@ -19910,7 +19917,8 @@
     "extended_description_it": null,
     "size_us": "27\" x 2\"",
     "width_us": 27,
-    "length_us": 2
+    "length_us": 2,
+    "title_fr": "Canapé Accoudoir Devant de Lit"
   },
   {
     "id": 167,
@@ -19980,7 +19988,7 @@
     "name_en": "Sofa 800 Free Standing",
     "name_us": "Sofa 800 Free Standing",
     "name_de": "Sofa 800 Free Standing",
-    "name_fr": "Sofa 800 Free Standing",
+    "name_fr": "Canapé 800 Autoportant",
     "name_es": "Sofa 800 Free Standing",
     "name_por": "Sofa 800 Free Standing",
     "name_it": "Sofa 800 Free Standing",
@@ -20023,7 +20031,8 @@
     "extended_description_it": null,
     "size_us": "34\" x 33\"",
     "width_us": 34,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 800 Autoportant"
   },
   {
     "id": 168,
@@ -20093,7 +20102,7 @@
     "name_en": "Sofa 1000 Free Standing",
     "name_us": "Sofa 1000 Free Standing",
     "name_de": "Sofa 1000 Free Standing",
-    "name_fr": "Sofa 1000 Free Standing",
+    "name_fr": "Canapé 1000 Autoportant",
     "name_es": "Sofa 1000 Free Standing",
     "name_por": "Sofa 1000 Free Standing",
     "name_it": "Sofa 1000 Free Standing",
@@ -20136,7 +20145,8 @@
     "extended_description_it": null,
     "size_us": "42\" x 33\"",
     "width_us": 42,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1000 Autoportant"
   },
   {
     "id": 169,
@@ -20207,7 +20217,7 @@
     "name_en": "Sofa 1200 Free Standing",
     "name_us": "Sofa 1200 Free Standing",
     "name_de": "Sofa 1200 Free Standing",
-    "name_fr": "Sofa 1200 Free Standing",
+    "name_fr": "Canapé 1200 Autoportant",
     "name_es": "Sofa 1200 Free Standing",
     "name_por": "Sofa 1200 Free Standing",
     "name_it": "Sofa 1200 Free Standing",
@@ -20249,7 +20259,8 @@
     "extended_description_it": null,
     "size_us": "50\" x 33\"",
     "width_us": 50,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1200 Autoportant"
   },
   {
     "id": 170,
@@ -20320,7 +20331,7 @@
     "name_en": "Sofa 1400 Free Standing",
     "name_us": "Sofa 1400 Free Standing",
     "name_de": "Sofa 1400 Free Standing",
-    "name_fr": "Sofa 1400 Free Standing",
+    "name_fr": "Canapé 1400 Autoportant",
     "name_es": "Sofa 1400 Free Standing",
     "name_por": "Sofa 1400 Free Standing",
     "name_it": "Sofa 1400 Free Standing",
@@ -20362,7 +20373,8 @@
     "extended_description_it": null,
     "size_us": "58\" x 33\"",
     "width_us": 58,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1400 Autoportant"
   },
   {
     "id": 171,
@@ -20432,7 +20444,7 @@
     "name_en": "Sofa 800 Bed Front",
     "name_us": "Sofa 800 Bed Front",
     "name_de": "Sofa 800 Bed Front",
-    "name_fr": "Sofa 800 Bed Front",
+    "name_fr": "Canapé 800 Devant de Lit",
     "name_es": "Sofa 800 Bed Front",
     "name_por": "Sofa 800 Bed Front",
     "name_it": "Sofa 800 Bed Front",
@@ -20475,7 +20487,8 @@
     "extended_description_it": null,
     "size_us": "32\" x 34\"",
     "width_us": 32,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 800 Devant de Lit"
   },
   {
     "id": 172,
@@ -20545,7 +20558,7 @@
     "name_en": "Sofa 1000 Bed Front",
     "name_us": "Sofa 1000 Bed Front",
     "name_de": "Sofa 1000 Bed Front",
-    "name_fr": "Sofa 1000 Bed Front",
+    "name_fr": "Canapé 1000 Devant de Lit",
     "name_es": "Sofa 1000 Bed Front",
     "name_por": "Sofa 1000 Bed Front",
     "name_it": "Sofa 1000 Bed Front",
@@ -20588,7 +20601,8 @@
     "extended_description_it": null,
     "size_us": "40\" x 34\"",
     "width_us": 40,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1000 Devant de Lit"
   },
   {
     "id": 173,
@@ -20658,7 +20672,7 @@
     "name_en": "Sofa 1200 Bed Front",
     "name_us": "Sofa 1200 Bed Front",
     "name_de": "Sofa 1200 Bed Front",
-    "name_fr": "Sofa 1200 Bed Front",
+    "name_fr": "Canapé 1200 Devant de Lit",
     "name_es": "Sofa 1200 Bed Front",
     "name_por": "Sofa 1200 Bed Front",
     "name_it": "Sofa 1200 Bed Front",
@@ -20701,7 +20715,8 @@
     "extended_description_it": null,
     "size_us": "48\" x 34\"",
     "width_us": 48,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1200 Devant de Lit"
   },
   {
     "id": 174,
@@ -20771,7 +20786,7 @@
     "name_en": "Sofa 1400 Bed Front",
     "name_us": "Sofa 1400 Bed Front",
     "name_de": "Sofa 1400 Bed Front",
-    "name_fr": "Sofa 1400 Bed Front",
+    "name_fr": "Canapé 1400 Devant de Lit",
     "name_es": "Sofa 1400 Bed Front",
     "name_por": "Sofa 1400 Bed Front",
     "name_it": "Sofa 1400 Bed Front",
@@ -20814,7 +20829,8 @@
     "extended_description_it": null,
     "size_us": "56\" x 34\"",
     "width_us": 56,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé 1400 Devant de Lit"
   },
   {
     "id": 175,
@@ -20884,7 +20900,7 @@
     "name_en": "Sofa Corner Seat Bed Front",
     "name_us": "Sofa Corner Seat Bed Front",
     "name_de": "Sofa Corner Seat Bed Front",
-    "name_fr": "Sofa Corner Seat Bed Front",
+    "name_fr": "Canapé Module d'Angle Devant de Lit",
     "name_es": "Sofa Corner Seat Bed Front",
     "name_por": "Sofa Corner Seat Bed Front",
     "name_it": "Sofa Corner Seat Bed Front",
@@ -20927,7 +20943,8 @@
     "extended_description_it": null,
     "size_us": "34\" x 34\"",
     "width_us": 34,
-    "length_us": 34
+    "length_us": 34,
+    "title_fr": "Canapé Module d'Angle Devant de Lit"
   },
   {
     "id": 176,
@@ -20997,7 +21014,7 @@
     "name_en": "Sofa Base Module 800 Bed Front",
     "name_us": "Sofa Base Module 800 Bed Front",
     "name_de": "Sofa Base Module 800 Bed Front",
-    "name_fr": "Sofa Base Module 800 Bed Front",
+    "name_fr": "Canapé Module de Base 800 Devant de Lit",
     "name_es": "Sofa Base Module 800 Bed Front",
     "name_por": "Sofa Base Module 800 Bed Front",
     "name_it": "Sofa Base Module 800 Bed Front",
@@ -21040,7 +21057,8 @@
     "extended_description_it": null,
     "size_us": "32\" x 32\"",
     "width_us": 32,
-    "length_us": 32
+    "length_us": 32,
+    "title_fr": "Canapé Module de Base 800 Devant de Lit"
   },
   {
     "id": 177,
@@ -21110,7 +21128,7 @@
     "name_en": "Sofa Base Module 600 Bed Front",
     "name_us": "Sofa Base Module 600 Bed Front",
     "name_de": "Sofa Base Module 600 Bed Front",
-    "name_fr": "Sofa Base Module 600 Bed Front",
+    "name_fr": "Canapé Module de Base 600 Devant de Lit",
     "name_es": "Sofa Base Module 600 Bed Front",
     "name_por": "Sofa Base Module 600 Bed Front",
     "name_it": "Sofa Base Module 600 Bed Front",
@@ -21153,7 +21171,8 @@
     "extended_description_it": null,
     "size_us": "24\" x 32\"",
     "width_us": 24,
-    "length_us": 32
+    "length_us": 32,
+    "title_fr": "Canapé Module de Base 600 Devant de Lit"
   },
   {
     "id": 178,
@@ -21223,7 +21242,7 @@
     "name_en": "Sofa Armrest Bed Front",
     "name_us": "Sofa Armrest Bed Front",
     "name_de": "Sofa Armrest Bed Front",
-    "name_fr": "Sofa Armrest Bed Front",
+    "name_fr": "Canapé Accoudoir Devant de Lit",
     "name_es": "Sofa Armrest Bed Front",
     "name_por": "Sofa Armrest Bed Front",
     "name_it": "Sofa Armrest Bed Front",
@@ -21266,7 +21285,8 @@
     "extended_description_it": null,
     "size_us": "27\" x 2\"",
     "width_us": 27,
-    "length_us": 2
+    "length_us": 2,
+    "title_fr": "Canapé Accoudoir Devant de Lit"
   },
   {
     "id": 179,
@@ -21336,7 +21356,7 @@
     "name_en": "Sofa 800 Free Standing",
     "name_us": "Sofa 800 Free Standing",
     "name_de": "Sofa 800 Free Standing",
-    "name_fr": "Sofa 800 Free Standing",
+    "name_fr": "Canapé 800 Autoportant",
     "name_es": "Sofa 800 Free Standing",
     "name_por": "Sofa 800 Free Standing",
     "name_it": "Sofa 800 Free Standing",
@@ -21379,7 +21399,8 @@
     "extended_description_it": null,
     "size_us": "34\" x 33\"",
     "width_us": 34,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 800 Autoportant"
   },
   {
     "id": 180,
@@ -21449,7 +21470,7 @@
     "name_en": "Sofa 1000 Free Standing",
     "name_us": "Sofa 1000 Free Standing",
     "name_de": "Sofa 1000 Free Standing",
-    "name_fr": "Sofa 1000 Free Standing",
+    "name_fr": "Canapé 1000 Autoportant",
     "name_es": "Sofa 1000 Free Standing",
     "name_por": "Sofa 1000 Free Standing",
     "name_it": "Sofa 1000 Free Standing",
@@ -21492,7 +21513,8 @@
     "extended_description_it": null,
     "size_us": "42\" x 33\"",
     "width_us": 42,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1000 Autoportant"
   },
   {
     "id": 181,
@@ -21562,7 +21584,7 @@
     "name_en": "Sofa 1200 Free Standing",
     "name_us": "Sofa 1200 Free Standing",
     "name_de": "Sofa 1200 Free Standing",
-    "name_fr": "Sofa 1200 Free Standing",
+    "name_fr": "Canapé 1200 Autoportant",
     "name_es": "Sofa 1200 Free Standing",
     "name_por": "Sofa 1200 Free Standing",
     "name_it": "Sofa 1200 Free Standing",
@@ -21605,7 +21627,8 @@
     "extended_description_it": null,
     "size_us": "50\" x 33\"",
     "width_us": 50,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1200 Autoportant"
   },
   {
     "id": 182,
@@ -21675,7 +21698,7 @@
     "name_en": "Sofa 1400 Free Standing",
     "name_us": "Sofa 1400 Free Standing",
     "name_de": "Sofa 1400 Free Standing",
-    "name_fr": "Sofa 1400 Free Standing",
+    "name_fr": "Canapé 1400 Autoportant",
     "name_es": "Sofa 1400 Free Standing",
     "name_por": "Sofa 1400 Free Standing",
     "name_it": "Sofa 1400 Free Standing",
@@ -21718,7 +21741,8 @@
     "extended_description_it": null,
     "size_us": "58\" x 33\"",
     "width_us": 58,
-    "length_us": 33
+    "length_us": 33,
+    "title_fr": "Canapé 1400 Autoportant"
   },
   {
     "id": 183,
@@ -21784,7 +21808,7 @@
     "name_en": "Single Comfort Mattress",
     "name_us": "Single Comfort Mattress 36\" x 75\"",
     "name_de": "Single Comfort Mattress",
-    "name_fr": "Single Comfort Mattress",
+    "name_fr": "Matelas Simple Confort",
     "name_es": "Single Comfort Mattress",
     "name_por": "Single Comfort Mattress",
     "name_it": "Single Comfort Mattress",
@@ -21826,7 +21850,8 @@
     "extended_description_it": "Ottimizzato per meccanismi a ribalta. Fodera anallergica con cerniera, perfetto bilanciamento del peso e 1 anno di garanzia con 30 giorni di prova.",
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Simple Confort"
   },
   {
     "id": 184,
@@ -21892,7 +21917,7 @@
     "name_en": "Small double Comfort Mattress",
     "name_us": "Three Quarter Comfort Mattress 48\" x 75\"",
     "name_de": "Small double Comfort Mattress",
-    "name_fr": "Small double Comfort Mattress",
+    "name_fr": "Matelas Petit Double Confort",
     "name_es": "Small double Comfort Mattress",
     "name_por": "Small double Comfort Mattress",
     "name_it": "Small double Comfort Mattress",
@@ -21934,7 +21959,8 @@
     "extended_description_it": "Ottimizzato per meccanismi a ribalta. Fodera anallergica con cerniera, perfetto bilanciamento del peso e 1 anno di garanzia con 30 giorni di prova.",
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Petit Double Confort"
   },
   {
     "id": 185,
@@ -22000,7 +22026,7 @@
     "name_en": "Double Comfort Mattress",
     "name_us": "Full Comfort Mattress 54\" x 75\"",
     "name_de": "Double Comfort Mattress",
-    "name_fr": "Double Comfort Mattress",
+    "name_fr": "Matelas Double Confort",
     "name_es": "Double Comfort Mattress",
     "name_por": "Double Comfort Mattress",
     "name_it": "Double Comfort Mattress",
@@ -22042,7 +22068,8 @@
     "extended_description_it": "Ottimizzato per meccanismi a ribalta. Fodera anallergica con cerniera, perfetto bilanciamento del peso e 1 anno di garanzia con 30 giorni di prova.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Double Confort"
   },
   {
     "id": 186,
@@ -22106,7 +22133,7 @@
     "name_en": "King Comfort Mattress",
     "name_us": "Queen Comfort Mattress 60\" x 80\"",
     "name_de": "King Comfort Mattress",
-    "name_fr": "King Comfort Mattress",
+    "name_fr": "Matelas King Confort",
     "name_es": "King Comfort Mattress",
     "name_por": "King Comfort Mattress",
     "name_it": "King Comfort Mattress",
@@ -22148,7 +22175,8 @@
     "extended_description_it": "Ottimizzato per meccanismi a ribalta. Fodera anallergica con cerniera, perfetto bilanciamento del peso e 1 anno di garanzia con 30 giorni di prova.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Matelas King Confort"
   },
   {
     "id": 187,
@@ -22212,7 +22240,7 @@
     "name_en": "Single Luxury Mattress",
     "name_us": "Single Luxury Mattress 36\" x 75\"",
     "name_de": "Single Luxury Mattress",
-    "name_fr": "Single Luxury Mattress",
+    "name_fr": "Matelas Simple Luxe",
     "name_es": "Single Luxury Mattress",
     "name_por": "Single Luxury Mattress",
     "name_it": "Single Luxury Mattress",
@@ -22255,7 +22283,8 @@
     "extended_description_it": null,
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Simple Luxe"
   },
   {
     "id": 188,
@@ -22319,7 +22348,7 @@
     "name_en": "Small double Luxury Mattress",
     "name_us": "Three Quarter Luxury Mattress 48\" x 75\"",
     "name_de": "Small double Luxury Mattress",
-    "name_fr": "Small double Luxury Mattress",
+    "name_fr": "Matelas Petit Double Luxe",
     "name_es": "Small double Luxury Mattress",
     "name_por": "Small double Luxury Mattress",
     "name_it": "Small double Luxury Mattress",
@@ -22362,7 +22391,8 @@
     "extended_description_it": null,
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Petit Double Luxe"
   },
   {
     "id": 189,
@@ -22426,7 +22456,7 @@
     "name_en": "Double Luxury Mattress",
     "name_us": "Full Luxury Mattress 54\" x 75\"",
     "name_de": "Double Luxury Mattress",
-    "name_fr": "Double Luxury Mattress",
+    "name_fr": "Matelas Double Luxe",
     "name_es": "Double Luxury Mattress",
     "name_por": "Double Luxury Mattress",
     "name_it": "Double Luxury Mattress",
@@ -22469,7 +22499,8 @@
     "extended_description_it": null,
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Double Luxe"
   },
   {
     "id": 190,
@@ -22533,7 +22564,7 @@
     "name_en": "King Luxury Mattress",
     "name_us": "Queen Luxury Mattress 60\" x 80\"",
     "name_de": "King Luxury Mattress",
-    "name_fr": "King Luxury Mattress",
+    "name_fr": "Matelas King Luxe",
     "name_es": "King Luxury Mattress",
     "name_por": "King Luxury Mattress",
     "name_it": "King Luxury Mattress",
@@ -22576,7 +22607,8 @@
     "extended_description_it": null,
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Matelas King Luxe"
   },
   {
     "id": 191,
@@ -22640,7 +22672,7 @@
     "name_en": "Single Supreme Mattress",
     "name_us": "Single Supreme Mattress 36\" x 75\"",
     "name_de": "Single Supreme Mattress",
-    "name_fr": "Single Supreme Mattress",
+    "name_fr": "Matelas Simple Suprême",
     "name_es": "Single Supreme Mattress",
     "name_por": "Single Supreme Mattress",
     "name_it": "Single Supreme Mattress",
@@ -22683,7 +22715,8 @@
     "extended_description_it": null,
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Simple Suprême"
   },
   {
     "id": 192,
@@ -22747,7 +22780,7 @@
     "name_en": "Small double Supreme Mattress",
     "name_us": "Three Quarter Supreme Mattress 48\" x 75\"",
     "name_de": "Small double Supreme Mattress",
-    "name_fr": "Small double Supreme Mattress",
+    "name_fr": "Matelas Petit Double Suprême",
     "name_es": "Small double Supreme Mattress",
     "name_por": "Small double Supreme Mattress",
     "name_it": "Small double Supreme Mattress",
@@ -22790,7 +22823,8 @@
     "extended_description_it": null,
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Petit Double Suprême"
   },
   {
     "id": 193,
@@ -22855,7 +22889,7 @@
     "name_en": "Double Supreme Mattress",
     "name_us": "Full Supreme Mattress 54\" x 75\"",
     "name_de": "Double Supreme Mattress",
-    "name_fr": "Double Supreme Mattress",
+    "name_fr": "Matelas Double Suprême",
     "name_es": "Double Supreme Mattress",
     "name_por": "Double Supreme Mattress",
     "name_it": "Double Supreme Mattress",
@@ -22897,7 +22931,8 @@
     "extended_description_it": null,
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Matelas Double Suprême"
   },
   {
     "id": 194,
@@ -22962,7 +22997,7 @@
     "name_en": "King Supreme Mattress",
     "name_us": "Queen Supreme Mattress 60\" x 80\"",
     "name_de": "King Supreme Mattress",
-    "name_fr": "King Supreme Mattress",
+    "name_fr": "Matelas King Suprême",
     "name_es": "King Supreme Mattress",
     "name_por": "King Supreme Mattress",
     "name_it": "King Supreme Mattress",
@@ -23004,7 +23039,8 @@
     "extended_description_it": null,
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Matelas King Suprême"
   },
   {
     "id": 195,
@@ -23070,7 +23106,7 @@
     "name_en": "Single Vertical Cabinet - Pine",
     "name_us": "Single 36\" x 75\" Vertical Cabinet - Pine",
     "name_de": "Single Vertical Cabinet - Pine",
-    "name_fr": "Single Vertical Cabinet - Pine",
+    "name_fr": "Armoire Verticale Simple – Pin",
     "name_es": "Single Vertical Cabinet - Pine",
     "name_por": "Single Vertical Cabinet - Pine",
     "name_it": "Single Vertical Cabinet - Pine",
@@ -23113,7 +23149,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Simple – Pin"
   },
   {
     "id": 196,
@@ -23179,7 +23216,7 @@
     "name_en": "Small Double Vertical Cabinet - Pine",
     "name_us": "Three Quarter 48\" x 75\" Vertical Cabinet - Pine",
     "name_de": "Small Double Vertical Cabinet - Pine",
-    "name_fr": "Small Double Vertical Cabinet - Pine",
+    "name_fr": "Armoire Verticale Petit Double – Pin",
     "name_es": "Small Double Vertical Cabinet - Pine",
     "name_por": "Small Double Vertical Cabinet - Pine",
     "name_it": "Small Double Vertical Cabinet - Pine",
@@ -23222,7 +23259,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Petit Double – Pin"
   },
   {
     "id": 197,
@@ -23288,7 +23326,7 @@
     "name_en": "Double Vertical Cabinet - Pine",
     "name_us": "Full 54\" x 75\" Vertical Cabinet - Pine",
     "name_de": "Double Vertical Cabinet - Pine",
-    "name_fr": "Double Vertical Cabinet - Pine",
+    "name_fr": "Armoire Verticale Double – Pin",
     "name_es": "Double Vertical Cabinet - Pine",
     "name_por": "Double Vertical Cabinet - Pine",
     "name_it": "Double Vertical Cabinet - Pine",
@@ -23331,7 +23369,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Double – Pin"
   },
   {
     "id": 198,
@@ -23397,7 +23436,7 @@
     "name_en": "King Vertical Cabinet - Pine",
     "name_us": "Queen 60\" x 80\" Vertical Cabinet - Pine",
     "name_de": "King Vertical Cabinet - Pine",
-    "name_fr": "King Vertical Cabinet - Pine",
+    "name_fr": "Armoire Verticale King – Pin",
     "name_es": "King Vertical Cabinet - Pine",
     "name_por": "King Vertical Cabinet - Pine",
     "name_it": "King Vertical Cabinet - Pine",
@@ -23440,7 +23479,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Verticale King – Pin"
   },
   {
     "id": 199,
@@ -23506,7 +23546,7 @@
     "name_en": "Single Vertical Cabinet - Beech",
     "name_us": "Single 36\" x 75\" Vertical Cabinet - Beech",
     "name_de": "Single Vertical Cabinet - Beech",
-    "name_fr": "Single Vertical Cabinet - Beech",
+    "name_fr": "Armoire Verticale Simple – Hêtre",
     "name_es": "Single Vertical Cabinet - Beech",
     "name_por": "Single Vertical Cabinet - Beech",
     "name_it": "Single Vertical Cabinet - Beech",
@@ -23549,7 +23589,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Simple – Hêtre"
   },
   {
     "id": 200,
@@ -23615,7 +23656,7 @@
     "name_en": "Small Double Vertical Cabinet - Beech",
     "name_us": "Three Quarter 48\" x 75\" Vertical Cabinet - Beech",
     "name_de": "Small Double Vertical Cabinet - Beech",
-    "name_fr": "Small Double Vertical Cabinet - Beech",
+    "name_fr": "Armoire Verticale Petit Double – Hêtre",
     "name_es": "Small Double Vertical Cabinet - Beech",
     "name_por": "Small Double Vertical Cabinet - Beech",
     "name_it": "Small Double Vertical Cabinet - Beech",
@@ -23658,7 +23699,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Petit Double – Hêtre"
   },
   {
     "id": 201,
@@ -23724,7 +23766,7 @@
     "name_en": "Double Vertical Cabinet - Beech",
     "name_us": "Full 54\" x 75\" Vertical Cabinet - Beech",
     "name_de": "Double Vertical Cabinet - Beech",
-    "name_fr": "Double Vertical Cabinet - Beech",
+    "name_fr": "Armoire Verticale Double – Hêtre",
     "name_es": "Double Vertical Cabinet - Beech",
     "name_por": "Double Vertical Cabinet - Beech",
     "name_it": "Double Vertical Cabinet - Beech",
@@ -23767,7 +23809,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Double – Hêtre"
   },
   {
     "id": 202,
@@ -23833,7 +23876,7 @@
     "name_en": "King Vertical Cabinet - Beech",
     "name_us": "Queen 60\" x 80\" Vertical Cabinet - Beech",
     "name_de": "King Vertical Cabinet - Beech",
-    "name_fr": "King Vertical Cabinet - Beech",
+    "name_fr": "Armoire Verticale King – Hêtre",
     "name_es": "King Vertical Cabinet - Beech",
     "name_por": "King Vertical Cabinet - Beech",
     "name_it": "King Vertical Cabinet - Beech",
@@ -23876,7 +23919,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Verticale King – Hêtre"
   },
   {
     "id": 203,
@@ -23942,7 +23986,7 @@
     "name_en": "Single Vertical Cabinet - Oak",
     "name_us": "Single 36\" x 75\" Vertical Cabinet - Oak",
     "name_de": "Single Vertical Cabinet - Oak",
-    "name_fr": "Single Vertical Cabinet - Oak",
+    "name_fr": "Armoire Verticale Simple – Chêne",
     "name_es": "Single Vertical Cabinet - Oak",
     "name_por": "Single Vertical Cabinet - Oak",
     "name_it": "Single Vertical Cabinet - Oak",
@@ -23985,7 +24029,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Simple – Chêne"
   },
   {
     "id": 204,
@@ -24051,7 +24096,7 @@
     "name_en": "Small Double Vertical Cabinet - Oak",
     "name_us": "Three Quarter 48\" x 75\" Vertical Cabinet - Oak",
     "name_de": "Small Double Vertical Cabinet - Oak",
-    "name_fr": "Small Double Vertical Cabinet - Oak",
+    "name_fr": "Armoire Verticale Petit Double – Chêne",
     "name_es": "Small Double Vertical Cabinet - Oak",
     "name_por": "Small Double Vertical Cabinet - Oak",
     "name_it": "Small Double Vertical Cabinet - Oak",
@@ -24094,7 +24139,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Petit Double – Chêne"
   },
   {
     "id": 205,
@@ -24160,7 +24206,7 @@
     "name_en": "Double Vertical Cabinet - Oak",
     "name_us": "Full 54\" x 75\" Vertical Cabinet - Oak",
     "name_de": "Double Vertical Cabinet - Oak",
-    "name_fr": "Double Vertical Cabinet - Oak",
+    "name_fr": "Armoire Verticale Double – Chêne",
     "name_es": "Double Vertical Cabinet - Oak",
     "name_por": "Double Vertical Cabinet - Oak",
     "name_it": "Double Vertical Cabinet - Oak",
@@ -24203,7 +24249,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Double – Chêne"
   },
   {
     "id": 206,
@@ -24269,7 +24316,7 @@
     "name_en": "King Vertical Cabinet - Oak",
     "name_us": "Queen 60\" x 80\" Vertical Cabinet - Oak",
     "name_de": "King Vertical Cabinet - Oak",
-    "name_fr": "King Vertical Cabinet - Oak",
+    "name_fr": "Armoire Verticale King – Chêne",
     "name_es": "King Vertical Cabinet - Oak",
     "name_por": "King Vertical Cabinet - Oak",
     "name_it": "King Vertical Cabinet - Oak",
@@ -24312,7 +24359,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Verticale King – Chêne"
   },
   {
     "id": 207,
@@ -24378,7 +24426,7 @@
     "name_en": "Single Vertical Cabinet - White",
     "name_us": "Single 36\" x 75\" Vertical Cabinet - White",
     "name_de": "Single Vertical Cabinet - White",
-    "name_fr": "Single Vertical Cabinet - White",
+    "name_fr": "Armoire Verticale Simple – Blanc",
     "name_es": "Single Vertical Cabinet - White",
     "name_por": "Single Vertical Cabinet - White",
     "name_it": "Single Vertical Cabinet - White",
@@ -24421,7 +24469,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "36\" x 75\"",
     "width_us": 36,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Simple – Blanc"
   },
   {
     "id": 208,
@@ -24487,7 +24536,7 @@
     "name_en": "Small Double Vertical Cabinet - White",
     "name_us": "Three Quarter 48\" x 75\" Vertical Cabinet - White",
     "name_de": "Small Double Vertical Cabinet - White",
-    "name_fr": "Small Double Vertical Cabinet - White",
+    "name_fr": "Armoire Verticale Petit Double – Blanc",
     "name_es": "Small Double Vertical Cabinet - White",
     "name_por": "Small Double Vertical Cabinet - White",
     "name_it": "Small Double Vertical Cabinet - White",
@@ -24530,7 +24579,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Three Quarter (48\" x 75\")",
     "width_us": 48,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Petit Double – Blanc"
   },
   {
     "id": 209,
@@ -24596,7 +24646,7 @@
     "name_en": "Double Vertical Cabinet - White",
     "name_us": "Full 54\" x 75\" Vertical Cabinet - White",
     "name_de": "Double Vertical Cabinet - White",
-    "name_fr": "Double Vertical Cabinet - White",
+    "name_fr": "Armoire Verticale Double – Blanc",
     "name_es": "Double Vertical Cabinet - White",
     "name_por": "Double Vertical Cabinet - White",
     "name_it": "Double Vertical Cabinet - White",
@@ -24639,7 +24689,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Verticale Double – Blanc"
   },
   {
     "id": 210,
@@ -24705,7 +24756,7 @@
     "name_en": "King Vertical Cabinet - White",
     "name_us": "Queen 60\" x 80\" Vertical Cabinet - White",
     "name_de": "King Vertical Cabinet - White",
-    "name_fr": "King Vertical Cabinet - White",
+    "name_fr": "Armoire Verticale King – Blanc",
     "name_es": "King Vertical Cabinet - White",
     "name_por": "King Vertical Cabinet - White",
     "name_it": "King Vertical Cabinet - White",
@@ -24748,7 +24799,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Verticale King – Blanc"
   },
   {
     "id": 211,
@@ -24814,7 +24866,7 @@
     "name_en": "Double Horizontal Cabinet - Pine",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet - Pine",
     "name_de": "Double Horizontal Cabinet - Pine",
-    "name_fr": "Double Horizontal Cabinet - Pine",
+    "name_fr": "Armoire Horizontale Double – Pin",
     "name_es": "Double Horizontal Cabinet - Pine",
     "name_por": "Double Horizontal Cabinet - Pine",
     "name_it": "Double Horizontal Cabinet - Pine",
@@ -24857,7 +24909,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Horizontale Double – Pin"
   },
   {
     "id": 212,
@@ -24923,7 +24976,7 @@
     "name_en": "King Horizontal Cabinet - Pine",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet - Pine",
     "name_de": "King Horizontal Cabinet - Pine",
-    "name_fr": "King Horizontal Cabinet - Pine",
+    "name_fr": "Armoire Horizontale King – Pin",
     "name_es": "King Horizontal Cabinet - Pine",
     "name_por": "King Horizontal Cabinet - Pine",
     "name_it": "King Horizontal Cabinet - Pine",
@@ -24966,7 +25019,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Horizontale King – Pin"
   },
   {
     "id": 213,
@@ -25032,7 +25086,7 @@
     "name_en": "Double Horizontal Cabinet - Beech",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet - Beech",
     "name_de": "Double Horizontal Cabinet - Beech",
-    "name_fr": "Double Horizontal Cabinet - Beech",
+    "name_fr": "Armoire Horizontale Double – Hêtre",
     "name_es": "Double Horizontal Cabinet - Beech",
     "name_por": "Double Horizontal Cabinet - Beech",
     "name_it": "Double Horizontal Cabinet - Beech",
@@ -25075,7 +25129,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Horizontale Double – Hêtre"
   },
   {
     "id": 214,
@@ -25141,7 +25196,7 @@
     "name_en": "King Horizontal Cabinet - Beech",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet - Beech",
     "name_de": "King Horizontal Cabinet - Beech",
-    "name_fr": "King Horizontal Cabinet - Beech",
+    "name_fr": "Armoire Horizontale King – Hêtre",
     "name_es": "King Horizontal Cabinet - Beech",
     "name_por": "King Horizontal Cabinet - Beech",
     "name_it": "King Horizontal Cabinet - Beech",
@@ -25184,7 +25239,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Horizontale King – Hêtre"
   },
   {
     "id": 215,
@@ -25250,7 +25306,7 @@
     "name_en": "Double Horizontal Cabinet - Oak",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet - Oak",
     "name_de": "Double Horizontal Cabinet - Oak",
-    "name_fr": "Double Horizontal Cabinet - Oak",
+    "name_fr": "Armoire Horizontale Double – Chêne",
     "name_es": "Double Horizontal Cabinet - Oak",
     "name_por": "Double Horizontal Cabinet - Oak",
     "name_it": "Double Horizontal Cabinet - Oak",
@@ -25293,7 +25349,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Horizontale Double – Chêne"
   },
   {
     "id": 216,
@@ -25359,7 +25416,7 @@
     "name_en": "King Horizontal Cabinet - Oak",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet - Oak",
     "name_de": "King Horizontal Cabinet - Oak",
-    "name_fr": "King Horizontal Cabinet - Oak",
+    "name_fr": "Armoire Horizontale King – Chêne",
     "name_es": "King Horizontal Cabinet - Oak",
     "name_por": "King Horizontal Cabinet - Oak",
     "name_it": "King Horizontal Cabinet - Oak",
@@ -25402,7 +25459,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Horizontale King – Chêne"
   },
   {
     "id": 217,
@@ -25468,7 +25526,7 @@
     "name_en": "Double Horizontal Cabinet - White",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet - White",
     "name_de": "Double Horizontal Cabinet - White",
-    "name_fr": "Double Horizontal Cabinet - White",
+    "name_fr": "Armoire Horizontale Double – Blanc",
     "name_es": "Double Horizontal Cabinet - White",
     "name_por": "Double Horizontal Cabinet - White",
     "name_it": "Double Horizontal Cabinet - White",
@@ -25511,7 +25569,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Armoire Horizontale Double – Blanc"
   },
   {
     "id": 218,
@@ -25577,7 +25636,7 @@
     "name_en": "King Horizontal Cabinet - White",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet - White",
     "name_de": "King Horizontal Cabinet - White",
-    "name_fr": "King Horizontal Cabinet - White",
+    "name_fr": "Armoire Horizontale King – Blanc",
     "name_es": "King Horizontal Cabinet - White",
     "name_por": "King Horizontal Cabinet - White",
     "name_it": "King Horizontal Cabinet - White",
@@ -25620,7 +25679,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Armoire Horizontale King – Blanc"
   },
   {
     "id": 219,
@@ -25686,7 +25746,7 @@
     "name_en": "Double Horizontal Cabinet Extension - Pine",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet Extension - Pine",
     "name_de": "Double Horizontal Cabinet Extension - Pine",
-    "name_fr": "Double Horizontal Cabinet Extension - Pine",
+    "name_fr": "Extension d'Armoire Horizontale Double – Pin",
     "name_es": "Double Horizontal Cabinet Extension - Pine",
     "name_por": "Double Horizontal Cabinet Extension - Pine",
     "name_it": "Double Horizontal Cabinet Extension - Pine",
@@ -25729,7 +25789,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Extension d'Armoire Horizontale Double – Pin"
   },
   {
     "id": 220,
@@ -25795,7 +25856,7 @@
     "name_en": "King Horizontal Cabinet Extension - Pine",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet Extension - Pine",
     "name_de": "King Horizontal Cabinet Extension - Pine",
-    "name_fr": "King Horizontal Cabinet Extension - Pine",
+    "name_fr": "Extension d'Armoire Horizontale King – Pin",
     "name_es": "King Horizontal Cabinet Extension - Pine",
     "name_por": "King Horizontal Cabinet Extension - Pine",
     "name_it": "King Horizontal Cabinet Extension - Pine",
@@ -25838,7 +25899,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Extension d'Armoire Horizontale King – Pin"
   },
   {
     "id": 221,
@@ -25904,7 +25966,7 @@
     "name_en": "Double Horizontal Cabinet Extension - Beech",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet Extension - Beech",
     "name_de": "Double Horizontal Cabinet Extension - Beech",
-    "name_fr": "Double Horizontal Cabinet Extension - Beech",
+    "name_fr": "Extension d'Armoire Horizontale Double – Hêtre",
     "name_es": "Double Horizontal Cabinet Extension - Beech",
     "name_por": "Double Horizontal Cabinet Extension - Beech",
     "name_it": "Double Horizontal Cabinet Extension - Beech",
@@ -25947,7 +26009,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Extension d'Armoire Horizontale Double – Hêtre"
   },
   {
     "id": 222,
@@ -26013,7 +26076,7 @@
     "name_en": "King Horizontal Cabinet Extension - Beech",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet Extension - Beech",
     "name_de": "King Horizontal Cabinet Extension - Beech",
-    "name_fr": "King Horizontal Cabinet Extension - Beech",
+    "name_fr": "Extension d'Armoire Horizontale King – Hêtre",
     "name_es": "King Horizontal Cabinet Extension - Beech",
     "name_por": "King Horizontal Cabinet Extension - Beech",
     "name_it": "King Horizontal Cabinet Extension - Beech",
@@ -26056,7 +26119,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Extension d'Armoire Horizontale King – Hêtre"
   },
   {
     "id": 223,
@@ -26122,7 +26186,7 @@
     "name_en": "Double Horizontal Cabinet Extension - Oak",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet Extension - Oak",
     "name_de": "Double Horizontal Cabinet Extension - Oak",
-    "name_fr": "Double Horizontal Cabinet Extension - Oak",
+    "name_fr": "Extension d'Armoire Horizontale Double – Chêne",
     "name_es": "Double Horizontal Cabinet Extension - Oak",
     "name_por": "Double Horizontal Cabinet Extension - Oak",
     "name_it": "Double Horizontal Cabinet Extension - Oak",
@@ -26165,7 +26229,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Extension d'Armoire Horizontale Double – Chêne"
   },
   {
     "id": 224,
@@ -26231,7 +26296,7 @@
     "name_en": "King Horizontal Cabinet Extension - Oak",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet Extension - Oak",
     "name_de": "King Horizontal Cabinet Extension - Oak",
-    "name_fr": "King Horizontal Cabinet Extension - Oak",
+    "name_fr": "Extension d'Armoire Horizontale King – Chêne",
     "name_es": "King Horizontal Cabinet Extension - Oak",
     "name_por": "King Horizontal Cabinet Extension - Oak",
     "name_it": "King Horizontal Cabinet Extension - Oak",
@@ -26274,7 +26339,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Extension d'Armoire Horizontale King – Chêne"
   },
   {
     "id": 225,
@@ -26340,7 +26406,7 @@
     "name_en": "Double Horizontal Cabinet Extension - White",
     "name_us": "Full 54\" x 75\" Horizontal Cabinet Extension - White",
     "name_de": "Double Horizontal Cabinet Extension - White",
-    "name_fr": "Double Horizontal Cabinet Extension - White",
+    "name_fr": "Extension d'Armoire Horizontale Double – Blanc",
     "name_es": "Double Horizontal Cabinet Extension - White",
     "name_por": "Double Horizontal Cabinet Extension - White",
     "name_it": "Double Horizontal Cabinet Extension - White",
@@ -26383,7 +26449,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Full (54\" x 75\")",
     "width_us": 54,
-    "length_us": 75
+    "length_us": 75,
+    "title_fr": "Extension d'Armoire Horizontale Double – Blanc"
   },
   {
     "id": 226,
@@ -26449,7 +26516,7 @@
     "name_en": "King Horizontal Cabinet Extension - White",
     "name_us": "Queen 60\" x 80\" Horizontal Cabinet Extension - White",
     "name_de": "King Horizontal Cabinet Extension - White",
-    "name_fr": "King Horizontal Cabinet Extension - White",
+    "name_fr": "Extension d'Armoire Horizontale King – Blanc",
     "name_es": "King Horizontal Cabinet Extension - White",
     "name_por": "King Horizontal Cabinet Extension - White",
     "name_it": "King Horizontal Cabinet Extension - White",
@@ -26492,7 +26559,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "Queen (60\" x 80\")",
     "width_us": 60,
-    "length_us": 80
+    "length_us": 80,
+    "title_fr": "Extension d'Armoire Horizontale King – Blanc"
   },
   {
     "id": 227,
@@ -26558,7 +26626,7 @@
     "name_en": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
     "name_us": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
     "name_de": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
-    "name_fr": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Pin",
     "name_es": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
     "name_por": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
     "name_it": "Vertical Cabinet Side Unit with Door + Hanger - Pine",
@@ -26601,7 +26669,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Pin"
   },
   {
     "id": 228,
@@ -26667,7 +26736,7 @@
     "name_en": "Vertical Cabinet Side Unit with Shelves - Pine",
     "name_us": "Vertical Cabinet Side Unit with Shelves - Pine",
     "name_de": "Vertical Cabinet Side Unit with Shelves - Pine",
-    "name_fr": "Vertical Cabinet Side Unit with Shelves - Pine",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Pin",
     "name_es": "Vertical Cabinet Side Unit with Shelves - Pine",
     "name_por": "Vertical Cabinet Side Unit with Shelves - Pine",
     "name_it": "Vertical Cabinet Side Unit with Shelves - Pine",
@@ -26710,7 +26779,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Pin"
   },
   {
     "id": 229,
@@ -26776,7 +26846,7 @@
     "name_en": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
     "name_us": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
     "name_de": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
-    "name_fr": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Hêtre",
     "name_es": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
     "name_por": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
     "name_it": "Vertical Cabinet Side Unit with Door + Hanger - Beech",
@@ -26819,7 +26889,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Hêtre"
   },
   {
     "id": 230,
@@ -26885,7 +26956,7 @@
     "name_en": "Vertical Cabinet Side Unit with Shelves - Beech",
     "name_us": "Vertical Cabinet Side Unit with Shelves - Beech",
     "name_de": "Vertical Cabinet Side Unit with Shelves - Beech",
-    "name_fr": "Vertical Cabinet Side Unit with Shelves - Beech",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Hêtre",
     "name_es": "Vertical Cabinet Side Unit with Shelves - Beech",
     "name_por": "Vertical Cabinet Side Unit with Shelves - Beech",
     "name_it": "Vertical Cabinet Side Unit with Shelves - Beech",
@@ -26928,7 +26999,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Hêtre"
   },
   {
     "id": 231,
@@ -26994,7 +27066,7 @@
     "name_en": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
     "name_us": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
     "name_de": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
-    "name_fr": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Chêne",
     "name_es": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
     "name_por": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
     "name_it": "Vertical Cabinet Side Unit with Door + Hanger - Oak",
@@ -27037,7 +27109,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Chêne"
   },
   {
     "id": 232,
@@ -27103,7 +27176,7 @@
     "name_en": "Vertical Cabinet Side Unit with Shelves - Oak",
     "name_us": "Vertical Cabinet Side Unit with Shelves - Oak",
     "name_de": "Vertical Cabinet Side Unit with Shelves - Oak",
-    "name_fr": "Vertical Cabinet Side Unit with Shelves - Oak",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Chêne",
     "name_es": "Vertical Cabinet Side Unit with Shelves - Oak",
     "name_por": "Vertical Cabinet Side Unit with Shelves - Oak",
     "name_it": "Vertical Cabinet Side Unit with Shelves - Oak",
@@ -27146,7 +27219,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Chêne"
   },
   {
     "id": 233,
@@ -27212,7 +27286,7 @@
     "name_en": "Vertical Cabinet Side Unit with Door + Hanger - White",
     "name_us": "Vertical Cabinet Side Unit with Door + Hanger - White",
     "name_de": "Vertical Cabinet Side Unit with Door + Hanger - White",
-    "name_fr": "Vertical Cabinet Side Unit with Door + Hanger - White",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Blanc",
     "name_es": "Vertical Cabinet Side Unit with Door + Hanger - White",
     "name_por": "Vertical Cabinet Side Unit with Door + Hanger - White",
     "name_it": "Vertical Cabinet Side Unit with Door + Hanger - White",
@@ -27255,7 +27329,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Porte + Penderie – Blanc"
   },
   {
     "id": 234,
@@ -27321,7 +27396,7 @@
     "name_en": "Vertical Cabinet Side Unit with Shelves - White",
     "name_us": "Vertical Cabinet Side Unit with Shelves - White",
     "name_de": "Vertical Cabinet Side Unit with Shelves - White",
-    "name_fr": "Vertical Cabinet Side Unit with Shelves - White",
+    "name_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Blanc",
     "name_es": "Vertical Cabinet Side Unit with Shelves - White",
     "name_por": "Vertical Cabinet Side Unit with Shelves - White",
     "name_it": "Vertical Cabinet Side Unit with Shelves - White",
@@ -27364,7 +27439,8 @@
     "extended_description_it": "Realizzati con pannelli nobilitati melaminici di alta qualità. Progettati specificamente per i nostri telai Classic con cerniere ad ampia apertura per un facile accesso.",
     "size_us": "20\" x 20.5\"",
     "width_us": 20,
-    "length_us": 20.5
+    "length_us": 20.5,
+    "title_fr": "Unité Latérale d'Armoire Verticale avec Étagères – Blanc"
   },
   {
     "id": 235,

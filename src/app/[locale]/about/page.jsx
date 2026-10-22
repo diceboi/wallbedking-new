@@ -92,15 +92,15 @@ const PILLARS = [
   },
 ];
 
-const STATS = [
-  { value: "50,000+", label: "Homes Transformed Across UK & Europe" },
-  { value: "30+ Years", label: "Engineered Mechanism Lifespan" },
-  { value: "4.9 / 5", label: "Customer Satisfaction Rating" },
-  { value: "100%", label: "Recyclable Heavy Gauge Steel" },
-];
-
 export default function AboutPage() {
   const { t, localizedHref, market } = useLocale();
+
+  const STATS = [
+    { value: t("about.stat1Value", "50,000+"), label: t("about.stat1Label", "Homes Transformed Across UK & Europe") },
+    { value: t("about.stat2Value", "30+ Years"), label: t("about.stat2Label", "Engineered Mechanism Lifespan") },
+    { value: t("about.stat3Value", "4.9 / 5"), label: t("about.stat3Label", "Customer Satisfaction Rating") },
+    { value: t("about.stat4Value", "100%"), label: t("about.stat4Label", "Recyclable Heavy Gauge Steel") },
+  ];
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -117,7 +117,7 @@ export default function AboutPage() {
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              European Engineering & Space-Saving Innovation
+              {t("about.heroBadge", "European Engineering & Space-Saving Innovation")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
               {t("about.title", "Reclaiming space. Redefining how we live.")}
@@ -156,25 +156,20 @@ export default function AboutPage() {
                 {t("about.storyTitle", "Our Story & Purpose")}
               </span>
               <h2 className="font-new-york text-3xl sm:text-4xl text-wbk-black leading-tight">
-                Designed for everyday living, not just guest rooms.
+                {t("about.storyHeading", "Designed for everyday living, not just guest rooms.")}
               </h2>
               <p className="text-sm sm:text-base text-wbk-brown leading-relaxed">
-                Modern living spaces—whether in London apartments, regional family homes, or contemporary
-                studios—are more multifunctional than ever. Yet conventional beds permanently consume
-                over 80% of floor space in bedrooms, guest rooms, and home offices.
+                {t("about.storyP1", "Modern living spaces—whether in London apartments, regional family homes, or contemporary studios—are more multifunctional than ever. Yet conventional beds permanently consume over 80% of floor space in bedrooms, guest rooms, and home offices.")}
               </p>
               <p className="text-sm sm:text-base text-wbk-brown leading-relaxed">
-                Wall Bed King was founded to disrupt this dilemma. By manufacturing our own cold-rolled
-                steel mechanisms and pairing them with counterbalanced gas struts and sprung birch wood
-                slats, we eliminated the clunky, heavy springs and flimsy frames of yesterday. The result
-                is an effortless, feather-light foldaway bed engineered for decades of daily use.
+                {t("about.storyP2", "Wall Bed King was founded to disrupt this dilemma. By manufacturing our own cold-rolled steel mechanisms and pairing them with counterbalanced gas struts and sprung birch wood slats, we eliminated the clunky, heavy springs and flimsy frames of yesterday. The result is an effortless, feather-light foldaway bed engineered for decades of daily use.")}
               </p>
               <div className="pt-2">
                 <Link
                   href={localizedHref("/products/beds")}
                   className="inline-flex items-center gap-2 px-6 py-3.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-wbk-green transition-colors"
                 >
-                  <span>{t("home.exploreModels", "Explore Bed Collection")}</span>
+                  <span>{t("about.exploreModels", "Explore Bed Collection")}</span>
                   <IconArrowRight size={16} />
                 </Link>
               </div>

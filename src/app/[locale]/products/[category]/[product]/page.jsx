@@ -44,7 +44,11 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
-import { getProductPrice, formatPrice, formatSizeLabel as formatSizeLabelI18n } from "@/lib/i18n";
+import {
+  getProductPrice,
+  formatPrice,
+  formatSizeLabel as formatSizeLabelI18n,
+} from "@/lib/i18n";
 import { resolveCategory } from "@/data/slugs";
 import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
@@ -57,6 +61,7 @@ import {
   getLocalizedProductDescription,
   getLocalizedProductExtendedDescription,
   parseYouTubeVideo,
+  calculateSofaPrice,
 } from "@/lib/products";
 import { getMorphyFaqs } from "@/data/morphyFaq";
 import { trackViewItem } from "@/lib/analytics";
@@ -79,8 +84,10 @@ const ConfiguratorCanvas = dynamic(
 
 export default function ProductDetailPage() {
   const { locale, t, localizedHref } = useLocale();
-  const { findProductBySlug: catalogFindBySlug, getProductVariants: catalogGetVariants } =
-    useProductCatalog();
+  const {
+    findProductBySlug: catalogFindBySlug,
+    getProductVariants: catalogGetVariants,
+  } = useProductCatalog();
   const params = useParams();
   const router = useRouter();
   const rawCategory = params?.category || "beds";
@@ -113,7 +120,10 @@ export default function ProductDetailPage() {
     return `${cm} cm`;
   };
   const formatSizeLabel = (label, variantOrLocale = null) => {
-    const variant = (variantOrLocale && typeof variantOrLocale === "object") ? variantOrLocale : null;
+    const variant =
+      variantOrLocale && typeof variantOrLocale === "object"
+        ? variantOrLocale
+        : null;
     return formatSizeLabelI18n(label, locale, variant);
   };
 
@@ -139,7 +149,8 @@ export default function ProductDetailPage() {
 
   // Desktop Add to Cart ref & visibility state for floating bar
   const desktopAddToCartRef = useRef(null);
-  const [isDesktopAddToCartVisible, setIsDesktopAddToCartVisible] = useState(true);
+  const [isDesktopAddToCartVisible, setIsDesktopAddToCartVisible] =
+    useState(true);
   const [isDesktop, setIsDesktop] = useState(false);
 
   // Ref to close open customizer dropdowns on outside click
@@ -250,7 +261,7 @@ export default function ProductDetailPage() {
       },
       {
         threshold: 0.1,
-      }
+      },
     );
 
     observer.observe(el);
@@ -378,15 +389,17 @@ export default function ProductDetailPage() {
     // 0. Match size_us, size_eu, or sizeSlug_us
     const matchUs = variants.find(
       (v) =>
-        (v.sizeSlug_us || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean ||
+        (v.sizeSlug_us || "").toLowerCase().replace(/[^a-z0-9]/g, "") ===
+          clean ||
         (v.size_us || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean ||
-        (v.size_eu || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean
+        (v.size_eu || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
     );
     if (matchUs) return matchUs;
 
     // 1. Exact sizeSlug match (e.g. "135x190", "50x52-door")
     const matchSlug = variants.find(
-      (v) => (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
+      (v) =>
+        (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === clean,
     );
     if (matchSlug) return matchSlug;
 
@@ -432,7 +445,8 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (activeProduct && activeProduct.id) {
       const price = getProductPrice(activeProduct, locale) || 0;
-      const currency = locale === "us" ? "USD" : (locale === "en" ? "GBP" : "EUR");
+      const currency =
+        locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR";
       trackViewItem({
         id: String(activeProduct.id),
         name:
@@ -492,13 +506,24 @@ export default function ProductDetailPage() {
       return ["Vertical", "Horizontal", "Side Units", "Extensions"];
     }
     return [];
-  }, [isBedProduct, activeProduct.parent_category, activeProduct?.isMorphy, activeProduct?.name, activeProduct?.title]);
+  }, [
+    isBedProduct,
+    activeProduct.parent_category,
+    activeProduct?.isMorphy,
+    activeProduct?.name,
+    activeProduct?.title,
+  ]);
 
   const availableSizes = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
       const defaultLabel = isUS
-        ? (activeProduct.size_us || formatSizeLabelI18n(activeProduct.sizeLabel || "Standard", "us", activeProduct))
-        : (activeProduct.size_eu || activeProduct.sizeLabel || "Standard");
+        ? activeProduct.size_us ||
+          formatSizeLabelI18n(
+            activeProduct.sizeLabel || "Standard",
+            "us",
+            activeProduct,
+          )
+        : activeProduct.size_eu || activeProduct.sizeLabel || "Standard";
       return [
         {
           label: defaultLabel,
@@ -530,8 +555,8 @@ export default function ProductDetailPage() {
       }
       const rawLabel = v.sizeLabel || v.size || v.name || "Standard";
       const label = isUS
-        ? (v.size_us || formatSizeLabelI18n(rawLabel, "us", v))
-        : (v.size_eu || rawLabel);
+        ? v.size_us || formatSizeLabelI18n(rawLabel, "us", v)
+        : v.size_eu || rawLabel;
       if (!seen.has(label)) {
         seen.add(label);
         result.push({
@@ -549,9 +574,11 @@ export default function ProductDetailPage() {
         return (
           selectedVariant.size_us ||
           formatSizeLabelI18n(
-            selectedVariant.sizeLabel || selectedVariant.size || selectedVariant.name,
+            selectedVariant.sizeLabel ||
+              selectedVariant.size ||
+              selectedVariant.name,
             "us",
-            selectedVariant
+            selectedVariant,
           )
         );
       }
@@ -565,7 +592,11 @@ export default function ProductDetailPage() {
         "Standard"
       );
     }
-    return formatSizeLabelI18n(productSize, locale) || availableSizes[0]?.label || "Standard";
+    return (
+      formatSizeLabelI18n(productSize, locale) ||
+      availableSizes[0]?.label ||
+      "Standard"
+    );
   }, [selectedVariant, isUS, locale, productSize, availableSizes]);
 
   const availableColors = useMemo(() => {
@@ -577,7 +608,7 @@ export default function ProductDetailPage() {
         v.visibility !== "Hidden" &&
         v.visibility !== "hidden" &&
         v.visibility !== false &&
-        v.is_visible !== false
+        v.is_visible !== false,
     );
     const colors = Array.from(
       new Set(visibleVariants.map((v) => v.color).filter(Boolean)),
@@ -620,11 +651,12 @@ export default function ProductDetailPage() {
             (v.sizeSlug === sizeQuery ||
               v.slug === sizeQuery ||
               v.sizeLabel === sizeQuery ||
-              (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") === cleanSize)
+              (v.sizeSlug || "").toLowerCase().replace(/[^a-z0-9]/g, "") ===
+                cleanSize),
         );
         if (!targetVariant) {
           const colorVariants = familyVariants.filter(
-            (v) => v.color?.toLowerCase() === colorQuery.toLowerCase()
+            (v) => v.color?.toLowerCase() === colorQuery.toLowerCase(),
           );
           targetVariant = findMatchingVariant(colorVariants, sizeQuery);
         }
@@ -634,7 +666,7 @@ export default function ProductDetailPage() {
       }
       if (!targetVariant && colorQuery) {
         targetVariant = familyVariants.find(
-          (v) => v.color?.toLowerCase() === colorQuery.toLowerCase()
+          (v) => v.color?.toLowerCase() === colorQuery.toLowerCase(),
         );
       }
       if (!targetVariant && activeProduct.defaultSizeSlug) {
@@ -703,27 +735,41 @@ export default function ProductDetailPage() {
 
     const isMorphy = Boolean(
       activeProduct?.isMorphy ??
-      ((activeProduct?.name || "").includes("MORPHY") || (activeProduct?.category || "").includes("MORPHY"))
+      ((activeProduct?.name || "").includes("MORPHY") ||
+        (activeProduct?.category || "").includes("MORPHY")),
     );
     const o = (activeProduct.orientation || "Vertical").toLowerCase();
-    const style = (activeProduct.sub_category || activeProduct.type || "Classic").toLowerCase();
+    const style = (
+      activeProduct.sub_category ||
+      activeProduct.type ||
+      "Classic"
+    ).toLowerCase();
 
     let canonicalSlug = "classic-vertical-wall-bed";
     if (isMorphy) {
-      if (style.includes("integrated")) canonicalSlug = `integrated-${o}-wall-bed`;
+      if (style.includes("integrated"))
+        canonicalSlug = `integrated-${o}-wall-bed`;
       else if (style.includes("studio")) canonicalSlug = `studio-${o}-wall-bed`;
       else canonicalSlug = `classic-${o}-wall-bed`;
     } else {
-      if (style.includes("studio")) canonicalSlug = `studio-${o}-traditional-bed`;
+      if (style.includes("studio"))
+        canonicalSlug = `studio-${o}-traditional-bed`;
       else canonicalSlug = `classic-${o}-traditional-bed`;
     }
 
     if (productSlug && productSlug !== canonicalSlug) {
-      const minDim = Math.min(Number(activeProduct.width) || 0, Number(activeProduct.length) || 0);
-      const maxDim = Math.max(Number(activeProduct.width) || 0, Number(activeProduct.length) || 0);
-      const sizeSlug = (minDim && maxDim)
-        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
-        : (activeProduct.sizeSlug || searchParams?.get("size") || "");
+      const minDim = Math.min(
+        Number(activeProduct.width) || 0,
+        Number(activeProduct.length) || 0,
+      );
+      const maxDim = Math.max(
+        Number(activeProduct.width) || 0,
+        Number(activeProduct.length) || 0,
+      );
+      const sizeSlug =
+        minDim && maxDim
+          ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+          : activeProduct.sizeSlug || searchParams?.get("size") || "";
       const query = sizeSlug ? `?size=${sizeSlug}` : "";
       const canonicalPath = `/${locale || "en"}/products/beds/${canonicalSlug}${query}`;
       if (typeof window !== "undefined") {
@@ -868,7 +914,8 @@ export default function ProductDetailPage() {
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
         if (match.sizeSlug) url.searchParams.set("size", match.sizeSlug);
-        if (match.color) url.searchParams.set("color", match.color.toLowerCase());
+        if (match.color)
+          url.searchParams.set("color", match.color.toLowerCase());
         window.history.replaceState(null, "", url.toString());
       }
     }
@@ -876,17 +923,22 @@ export default function ProductDetailPage() {
 
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
-  const isAvailableInRegion = isProductAvailableInLocale(displayProduct, locale);
+  const isAvailableInRegion = isProductAvailableInLocale(
+    displayProduct,
+    locale,
+  );
   const isPreview = Boolean(
     searchParams?.get("preview") === "1" ||
     searchParams?.get("preview") === "true" ||
-    searchParams?.get("admin") === "1"
+    searchParams?.get("admin") === "1",
   );
   const isRegionallyUnavailable = Boolean(
     !isPreview &&
     locale &&
-      !isAvailableInRegion &&
-      (!familyVariants || familyVariants.length === 0 || !familyVariants.some((v) => isProductAvailableInLocale(v, locale)))
+    !isAvailableInRegion &&
+    (!familyVariants ||
+      familyVariants.length === 0 ||
+      !familyVariants.some((v) => isProductAvailableInLocale(v, locale))),
   );
 
   // Auto-redirect countdown if product is not available in current storefront region
@@ -894,7 +946,9 @@ export default function ProductDetailPage() {
     if (!isRegionallyUnavailable || redirectCancelled || !mounted) return;
 
     if (redirectCountdown <= 0) {
-      router.replace(localizedHref ? localizedHref("/products") : `/${locale}/products`);
+      router.replace(
+        localizedHref ? localizedHref("/products") : `/${locale}/products`,
+      );
       return;
     }
 
@@ -903,7 +957,15 @@ export default function ProductDetailPage() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [isRegionallyUnavailable, redirectCountdown, redirectCancelled, mounted, router, localizedHref, locale]);
+  }, [
+    isRegionallyUnavailable,
+    redirectCountdown,
+    redirectCancelled,
+    mounted,
+    router,
+    localizedHref,
+    locale,
+  ]);
 
   const isOutOfStock =
     !isAvailableInRegion ||
@@ -913,51 +975,60 @@ export default function ProductDetailPage() {
     displayProduct?.in_stock === false;
   const has3D = false;
 
-  const isMorphyBed = Boolean(
-    displayProduct?.isMorphy ||
-    activeProduct?.isMorphy ||
-    (displayProduct?.name || "").toUpperCase().includes("MORPHY") ||
-    (activeProduct?.name || "").toUpperCase().includes("MORPHY") ||
-    (displayProduct?.category || "").toUpperCase().includes("MORPHY") ||
-    (productSlug || "").includes("morphy") ||
-    [
-      "classic-vertical-wall-bed",
-      "classic-horizontal-wall-bed",
-      "studio-vertical-wall-bed",
-      "studio-horizontal-wall-bed",
-      "integrated-vertical-wall-bed",
-      "integrated-horizontal-wall-bed",
-    ].includes(productSlug)
-  ) && !(productSlug || "").includes("traditional");
+  const isMorphyBed =
+    Boolean(
+      displayProduct?.isMorphy ||
+      activeProduct?.isMorphy ||
+      (displayProduct?.name || "").toUpperCase().includes("MORPHY") ||
+      (activeProduct?.name || "").toUpperCase().includes("MORPHY") ||
+      (displayProduct?.category || "").toUpperCase().includes("MORPHY") ||
+      (productSlug || "").includes("morphy") ||
+      [
+        "classic-vertical-wall-bed",
+        "classic-horizontal-wall-bed",
+        "studio-vertical-wall-bed",
+        "studio-horizontal-wall-bed",
+        "integrated-vertical-wall-bed",
+        "integrated-horizontal-wall-bed",
+      ].includes(productSlug),
+    ) && !(productSlug || "").includes("traditional");
 
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale);
-  const sofaSurcharge =
-    isMorphyBed && sofaIncluded
-      ? productPricing.currency === "GBP"
-        ? 280
-        : productPricing.currency === "USD"
-          ? 350
-          : 320
-      : 0;
+  const sofaPriceValue = calculateSofaPrice(
+    displayProduct,
+    productFormat,
+    productSize
+  );
+  const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
   const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
   const currentEan = getLocalizedProductGtin(displayProduct, locale);
-  const localizedDescription = getLocalizedProductDescription(displayProduct, locale);
-  const localizedExtendedDescription = getLocalizedProductExtendedDescription(displayProduct, locale);
+  const localizedDescription = getLocalizedProductDescription(
+    displayProduct,
+    locale,
+  );
+  const localizedExtendedDescription = getLocalizedProductExtendedDescription(
+    displayProduct,
+    locale,
+  );
 
   const categoryBreadcrumbHref = useMemo(() => {
     if (categorySlug === "beds") {
-      return isMorphyBed ? "/products/beds?collection=morphy" : "/products/beds?collection=traditional";
+      return isMorphyBed
+        ? "/products/beds?collection=morphy"
+        : "/products/beds?collection=traditional";
     }
     return `/products/${categorySlug}`;
   }, [categorySlug, isMorphyBed]);
 
   const categoryBreadcrumbLabel = useMemo(() => {
     if (categorySlug === "beds") {
-      return isMorphyBed ? t("nav.morphyBeds", "MORPHY™ Beds") : t("nav.traditionalBeds", "Traditional Beds");
+      return isMorphyBed
+        ? t("nav.morphyBeds", "MORPHY™ Beds")
+        : t("nav.traditionalBeds", "Traditional Beds");
     }
     return t(`categories.${categorySlug}`, categorySlug.replace("-", " "));
   }, [categorySlug, isMorphyBed, t]);
@@ -982,13 +1053,22 @@ export default function ProductDetailPage() {
   }, [selectedVariant, displayProduct, productSize]);
 
   const getSofaImgStyle = useCallback(() => {
-    const s = (productStyle || displayProduct?.type || displayProduct?.sub_category || "").toLowerCase();
+    const s = (
+      productStyle ||
+      displayProduct?.type ||
+      displayProduct?.sub_category ||
+      ""
+    ).toLowerCase();
     if (s.includes("studio")) return "studio";
     return "classic";
   }, [productStyle, displayProduct]);
 
   const getSofaImgOrient = useCallback(() => {
-    const o = (productFormat || displayProduct?.orientation || "").toLowerCase();
+    const o = (
+      productFormat ||
+      displayProduct?.orientation ||
+      ""
+    ).toLowerCase();
     if (o.includes("horizontal")) return "horizontal";
     return "vertical";
   }, [productFormat, displayProduct]);
@@ -1013,7 +1093,6 @@ export default function ProductDetailPage() {
     ];
   }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName]);
 
-
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {
     if (displayProduct.features && displayProduct.features.length > 0) {
@@ -1022,8 +1101,16 @@ export default function ProductDetailPage() {
     if (activeProduct?.features && activeProduct.features.length > 0) {
       return activeProduct.features;
     }
-    const cat = (displayProduct.parent_category || categorySlug || "").toLowerCase();
-    const subCat = (displayProduct.sub_category || displayProduct.type || "").toLowerCase();
+    const cat = (
+      displayProduct.parent_category ||
+      categorySlug ||
+      ""
+    ).toLowerCase();
+    const subCat = (
+      displayProduct.sub_category ||
+      displayProduct.type ||
+      ""
+    ).toLowerCase();
 
     if (cat === "cabinets") {
       const isHoriz = subCat.includes("horiz");
@@ -1071,38 +1158,38 @@ export default function ProductDetailPage() {
       if (locale === "fr") {
         if (isHoriz) {
           return [
-            "Portes : Ouverture à 90 degrés",
-            "Matériau : Panneau de particules mélaminé haute densité",
-            "Adapté aux cadres de lit escamotable horizontaux Classic Double et King",
-            "Livré à plat pour un montage aisé",
-            "Garantie : 1 an contre les défauts de fabrication",
+            "Portes : ouverture à 90 degrés",
+            "Matériau : Panneau de meuble mélaminé",
+            "Convient aux cadres de lit escamotable horizontaux Classic Double et King",
+            "Emballé à plat pour un montage facile",
+            "Garantie : 1 an pour les défauts de fabrication",
           ];
         }
         if (isExt) {
           return [
-            "Spécialement développé pour les armoires horizontales Double et King",
-            "Compense la différence de hauteur pour s'aligner parfaitement aux meubles latéraux",
-            "Matériau : Panneau de particules mélaminé haute densité",
-            "Livré à plat pour un montage aisé",
-            "Garantie : 1 an contre les défauts de fabrication",
+            "Conçu spécifiquement pour les armoires horizontales Double et King",
+            "Compense la différence de hauteur pour s'aligner parfaitement avec les unités latérales.",
+            "Matériau : Panneau de meubles mélaminé",
+            "Emballé à plat pour un montage facile",
+            "Garantie : 1 an pour les défauts de fabrication",
           ];
         }
         if (isSide) {
           return [
-            "Hauteur : Aligné sur les armoires verticales et horizontales avec rehausse",
-            "Largeur : 50 cm, Profondeur : 52 cm",
-            "Au choix : Porte avec penderie (ouverture 90°) ou étagères ouvertes",
-            "Matériau : Panneau de particules mélaminé haute densité",
-            "Livré à plat pour un montage aisé",
-            "Garantie : 1 an contre les défauts de fabrication",
+            "Hauteur : Correspond à la verticale Armoires doubles/king et armoires horizontales avec extension",
+            "Largeur : 50cm, Profondeur : 52cm",
+            "Choix de style : Porte de placard avec tringle à vêtements (ouverture à 90°) ou étagères ouvertes",
+            "Matériau : Panneau de meubles en mélamine",
+            "Emballé à plat pour un montage facile",
+            "Garantie : 1 an pour les défauts de fabrication",
           ];
         }
         return [
-          "Portes : Ouverture à 170 degrés pour un accès large et facile",
-          "Matériau : Panneau de particules mélaminé haute densité",
-          "Adapté aux lits escamotables verticaux Classic Single, Small Double, Double et King",
-          "Livré à plat pour un montage aisé",
-          "Garantie : 1 an contre les défauts de fabrication",
+          "Portes : ouverture à 170 degrés pour un accès large et facile",
+          "Matériau : Panneau de meuble mélaminé",
+          "Convient aux lits muraux Classic Vertical Simple, Petit Double, Double et King.",
+          "Emballé à plat pour un montage facile",
+          "Garantie : 1 an pour les défauts de fabrication",
         ];
       }
 
@@ -1296,31 +1383,31 @@ export default function ProductDetailPage() {
       if (locale === "fr") {
         if (isSupreme) {
           return [
-            'Épaisseur de 25 cm (10")',
-            "1 500 ressorts ensachés individuels combinés à de la mousse à mémoire de forme",
-            "Technologie Motion Isolation™ pour éliminer les mouvements du partenaire",
-            "Confort enveloppant haut de gamme et soulagement ciblé de la pression",
-            "Garantie satisfait ou remboursé de 30 jours",
-            "Garantie : 1 an contre les défauts de fabrication",
+            "Profil d'épaisseur de 10” (25cm)",
+            "1 500 ressorts ensachés individuellement combinés avec de la mousse à mémoire de forme",
+            "Technologie d'Isolation des Mouvements™ pour éliminer les perturbations du partenaire",
+            "Un contouring luxueux comme un nuage et un soulagement ciblé de la pression",
+            "Garantie de remboursement complet de 30 jours",
+            "Garantie : 1 an pour les défauts de fabrication",
           ];
         }
         if (isLuxury) {
           return [
-            'Épaisseur de 25 cm (10")',
-            'Couche de 75 mm (3") de mousse à mémoire de forme pour un confort profond',
-            "Mousse viscoélastique épaisse combinée à une base reflex haute résilience",
-            "Soutien orthopédique mi-ferme pour l'alignement de la colonne",
-            "Garantie satisfait ou remboursé de 30 jours",
-            "Garantie : 1 an contre les défauts de fabrication",
+            "Profil d'épaisseur de 10” (25cm)",
+            "Couche de 3” de mousse à mémoire pour un confort soulageant profondément la pression",
+            "Mousse à mémoire épaisse combinée à une base en mousse réflexe à haute résilience",
+            "Soutien orthopédique de fermeté moyenne pour l'alignement de la colonne vertébrale",
+            "Garantie de remboursement complet de 30 jours",
+            "Garantie : 1 an pour les défauts de fabrication",
           ];
         }
         return [
-          'Épaisseur de 20 cm (8") pour un pliage fluide dans le lit escamotable',
-          'Couche de 50 mm (2") de mousse à mémoire de forme ergonomique',
-          "Base haute densité assurant un soutien dorsal durable",
-          "Conçu pour un sommeil réparateur quotidien dans les lits escamotables",
-          "Garantie satisfait ou remboursé de 30 jours",
-          "Garantie : 1 an contre les défauts de fabrication",
+          "Profil de 8” (20cm) d'épaisseur pour un pliage sans couture du lit mural",
+          "Couche de 2” de mousse à mémoire de forme pour un confort soulageant la pression",
+          "Base en mousse haute densité pour un soutien durable de la colonne vertébrale",
+          "Conçu pour un sommeil reposant quotidien dans les lits escamotables",
+          "Garantie de remboursement complet de 30 jours",
+          "Garantie : 1 an pour les défauts de fabrication",
         ];
       }
 
@@ -1451,8 +1538,14 @@ export default function ProductDetailPage() {
     // Default for wall beds
     return [
       t("product.bulletSteel", "Premium solid carbon steel metal framework"),
-      t("product.bulletMechanism", "Heavy duty counter-balance mechanism (10,000+ cycle test)"),
-      t("product.bulletLegs", "Automatic self-folding leg system for safety and ease"),
+      t(
+        "product.bulletMechanism",
+        "Heavy duty counter-balance mechanism (10,000+ cycle test)",
+      ),
+      t(
+        "product.bulletLegs",
+        "Automatic self-folding leg system for safety and ease",
+      ),
     ];
   }, [displayProduct, activeProduct, categorySlug, locale, t]);
 
@@ -1477,6 +1570,7 @@ export default function ProductDetailPage() {
         orientation: productFormat,
         type: productStyle,
         sofaIncluded: Boolean(sofaIncluded),
+        sofaPrice: sofaPriceValue,
       },
       href: `/products/${categorySlug}/${productSlug}${productSize ? `?size=${encodeURIComponent(productSize)}` : ""}`,
     };
@@ -1512,17 +1606,13 @@ export default function ProductDetailPage() {
   const handlePrevImage = (e) => {
     e?.stopPropagation?.();
     const list = activeLightboxImages || galleryImages;
-    setLightboxIndex((prev) =>
-      prev === 0 ? list.length - 1 : prev - 1,
-    );
+    setLightboxIndex((prev) => (prev === 0 ? list.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e) => {
     e?.stopPropagation?.();
     const list = activeLightboxImages || galleryImages;
-    setLightboxIndex((prev) =>
-      prev === list.length - 1 ? 0 : prev + 1,
-    );
+    setLightboxIndex((prev) => (prev === list.length - 1 ? 0 : prev + 1));
   };
 
   // Keyboard navigation for Lightbox
@@ -1547,10 +1637,10 @@ export default function ProductDetailPage() {
 
   const isHiddenProduct = Boolean(
     activeProduct &&
-      (activeProduct.visibility === "Hidden" ||
-        activeProduct.visibility === "hidden" ||
-        activeProduct.visibility === false ||
-        activeProduct.is_visible === false)
+    (activeProduct.visibility === "Hidden" ||
+      activeProduct.visibility === "hidden" ||
+      activeProduct.visibility === false ||
+      activeProduct.is_visible === false),
   );
 
   if (isHiddenProduct || isRegionallyUnavailable) {
@@ -1567,12 +1657,15 @@ export default function ProductDetailPage() {
                 {t("product.regionUnavailableBadge", "Regional Availability")}
               </span>
               <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                {t("product.notAvailableTitle", "Product Not Available in This Market")}
+                {t(
+                  "product.notAvailableTitle",
+                  "Product Not Available in This Market",
+                )}
               </h1>
               <p className="text-xs text-wbk-brown leading-relaxed max-w-sm mx-auto">
                 {t(
                   "product.notAvailableDesc",
-                  "We're sorry, but this product is not currently offered or available for delivery in your selected country / storefront."
+                  "We're sorry, but this product is not currently offered or available for delivery in your selected country / storefront.",
                 )}
               </p>
             </div>
@@ -1581,18 +1674,29 @@ export default function ProductDetailPage() {
             <div className="p-3.5 bg-white border border-wbk-lightgrey/80 flex items-center gap-3 text-left">
               <div className="w-12 h-12 bg-[#F4F2F0] shrink-0 flex items-center justify-center overflow-hidden">
                 <img
-                  src={displayProduct?.image || activeProduct?.image || "/hero2.webp"}
+                  src={
+                    displayProduct?.image ||
+                    activeProduct?.image ||
+                    "/hero2.webp"
+                  }
                   alt={displayProduct?.title || "Product"}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-semibold text-wbk-black truncate">
-                  {localizedProductName || displayProduct?.title || displayProduct?.name}
+                  {localizedProductName ||
+                    displayProduct?.title ||
+                    displayProduct?.name}
                 </div>
                 <div className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-0.5">
                   <IconAlertCircle size={13} className="shrink-0" />
-                  <span>{t("product.notSoldInStore", "Not available in this storefront")}</span>
+                  <span>
+                    {t(
+                      "product.notSoldInStore",
+                      "Not available in this storefront",
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1600,21 +1704,32 @@ export default function ProductDetailPage() {
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col gap-2.5">
               <Link
-                href={localizedHref ? localizedHref("/products") : `/${locale}/products`}
+                href={
+                  localizedHref
+                    ? localizedHref("/products")
+                    : `/${locale}/products`
+                }
                 className="w-full py-3.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
               >
-                <span>{t("product.exploreAvailable", "Explore Available Products")}</span>
+                <span>
+                  {t("product.exploreAvailable", "Explore Available Products")}
+                </span>
                 <IconArrowRight size={15} />
               </Link>
             </div>
 
             <p className="text-[11px] text-wbk-brown">
               {redirectCancelled ? (
-                <span>{t("product.redirectCancelled", "Automatic redirect paused.")}</span>
+                <span>
+                  {t("product.redirectCancelled", "Automatic redirect paused.")}
+                </span>
               ) : (
                 <span>
                   {t("product.redirectingIn", "Redirecting to catalog in")}{" "}
-                  <strong className="font-semibold text-wbk-black">{redirectCountdown}s</strong>...{" "}
+                  <strong className="font-semibold text-wbk-black">
+                    {redirectCountdown}s
+                  </strong>
+                  ...{" "}
                   <button
                     type="button"
                     onClick={() => setRedirectCancelled(true)}
@@ -1653,12 +1768,15 @@ export default function ProductDetailPage() {
               </Link>
               <span>/</span>
               <Link
-                href={localizedHref ? localizedHref(categoryBreadcrumbHref) : categoryBreadcrumbHref}
+                href={
+                  localizedHref
+                    ? localizedHref(categoryBreadcrumbHref)
+                    : categoryBreadcrumbHref
+                }
                 className="capitalize hover:text-wbk-black transition-colors"
               >
                 {categoryBreadcrumbLabel}
               </Link>
-
             </nav>
 
             {/* Title */}
@@ -1703,7 +1821,10 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
-                    {t("product.notAvailableInRegion", "Not Available in Your Region")}
+                    {t(
+                      "product.notAvailableInRegion",
+                      "Not Available in Your Region",
+                    )}
                   </span>
                 </div>
               ) : isOutOfStock ? (
@@ -1742,19 +1863,24 @@ export default function ProductDetailPage() {
               <div className="hidden lg:block space-y-3">
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
                   <Link
-                    href={localizedHref ? localizedHref("/products") : "/products"}
+                    href={
+                      localizedHref ? localizedHref("/products") : "/products"
+                    }
                     className="hover:text-wbk-black transition-colors"
                   >
                     {t("nav.allWallBeds", "Products")}
                   </Link>
                   <span>/</span>
                   <Link
-                    href={localizedHref ? localizedHref(categoryBreadcrumbHref) : categoryBreadcrumbHref}
+                    href={
+                      localizedHref
+                        ? localizedHref(categoryBreadcrumbHref)
+                        : categoryBreadcrumbHref
+                    }
                     className="capitalize hover:text-wbk-black transition-colors"
                   >
                     {categoryBreadcrumbLabel}
                   </Link>
-
                 </nav>
 
                 <div className="space-y-1">
@@ -1963,7 +2089,10 @@ export default function ProductDetailPage() {
                           );
                         })()}
                       </div>
-                      <IconChevronDown size={14} className="text-wbk-brown shrink-0 ml-1" />
+                      <IconChevronDown
+                        size={14}
+                        className="text-wbk-brown shrink-0 ml-1"
+                      />
                     </button>
                     {colorOpen && (
                       <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
@@ -1973,7 +2102,8 @@ export default function ProductDetailPage() {
                             activeProduct?.color ||
                             availableColors[0];
                           const isSelected =
-                            currentColor?.toLowerCase() === colorName.toLowerCase();
+                            currentColor?.toLowerCase() ===
+                            colorName.toLowerCase();
                           const colorHexMap = {
                             Oak: "#BCA37F",
                             Beech: "#D8AC78",
@@ -2033,9 +2163,7 @@ export default function ProductDetailPage() {
                       }}
                       className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
                     >
-                      <span className="truncate">
-                        {selectedSizeDisplay}
-                      </span>
+                      <span className="truncate">{selectedSizeDisplay}</span>
                       <IconChevronDown
                         size={14}
                         className="text-wbk-brown shrink-0 ml-1"
@@ -2058,7 +2186,12 @@ export default function ProductDetailPage() {
                               setSizeOpen(false);
                             }}
                             className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
-                              (selectedVariant ? (selectedVariant.id === item.product?.id || selectedVariant.sku === item.product?.sku) : productSize === item.label)
+                              (
+                                selectedVariant
+                                  ? selectedVariant.id === item.product?.id ||
+                                    selectedVariant.sku === item.product?.sku
+                                  : productSize === item.label
+                              )
                                 ? "font-semibold text-wbk-black bg-[#F4F2F0]/60"
                                 : "text-wbk-brown"
                             }`}
@@ -2084,14 +2217,8 @@ export default function ProductDetailPage() {
                         {t("common.frontSofa", "+ Front Sofa")}:
                       </label>
                       <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
-                        +{formatPrice(
-                          productPricing.currency === "GBP"
-                            ? 280
-                            : productPricing.currency === "USD"
-                              ? 350
-                              : 320,
-                          locale
-                        )}
+                        +
+                        {formatPrice(sofaPriceValue, locale)}
                       </span>
                     </div>
                     <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
@@ -2150,14 +2277,21 @@ export default function ProductDetailPage() {
                       {sofaIncluded && (
                         <motion.div
                           initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                          animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+                          animate={{
+                            opacity: 1,
+                            height: "auto",
+                            marginTop: 10,
+                          }}
                           exit={{ opacity: 0, height: 0, marginTop: 0 }}
                           transition={{ duration: 0.25, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
                           <div className="flex items-center justify-between pb-1.5 px-0.5">
                             <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
-                              {t("product.sofaCombinationViews", "Bed & Sofa Views")}
+                              {t(
+                                "product.sofaCombinationViews",
+                                "Bed & Sofa Views",
+                              )}
                             </span>
                             <span className="text-[10px] text-wbk-brown/70 font-poppins flex items-center gap-1">
                               <IconZoomIn size={11} />
@@ -2242,7 +2376,10 @@ export default function ProductDetailPage() {
                       className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
                     />
                     <span>
-                      {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                      {t(
+                        "waitlist.joinWaitlistBtn",
+                        "Join Waitlist / Notify Me",
+                      )}
                     </span>
                   </button>
                 ) : (
@@ -2306,8 +2443,10 @@ export default function ProductDetailPage() {
             {/* ── CENTER COLUMN: 3D VIEWER OR 2D MAIN IMAGE (Order 1 on mobile, Column 2 on desktop) ── */}
             <div
               style={{
-                height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
-                maxHeight: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                height:
+                  isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                maxHeight:
+                  isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
               }}
               className="order-1 lg:order-2 lg:col-span-7 flex flex-col items-center justify-center w-full relative pointer-events-none self-center"
             >
@@ -2315,7 +2454,10 @@ export default function ProductDetailPage() {
                 /* 3D Mode Canvas Container - Mobilon keretes kártya, Asztalin keret nélküli tiszta háttér */
                 <div
                   style={{
-                    height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                    height:
+                      isDesktop && leftColHeight
+                        ? `${leftColHeight}px`
+                        : undefined,
                   }}
                   className="relative w-full h-[360px] sm:h-[450px] lg:h-full bg-[#F8F7F5] lg:bg-transparent border border-wbk-lightgrey/50 lg:border-none rounded-2xl lg:rounded-none overflow-hidden lg:overflow-visible flex items-center justify-center shadow-xs lg:shadow-none pointer-events-auto"
                 >
@@ -2533,8 +2675,10 @@ export default function ProductDetailPage() {
             {/* ── RIGHT COLUMN: VERTICAL STEP-SCROLLING GALLERY (Desktop Only, hidden on mobile) ── */}
             <div
               style={{
-                height: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
-                maxHeight: isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                height:
+                  isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
+                maxHeight:
+                  isDesktop && leftColHeight ? `${leftColHeight}px` : undefined,
               }}
               className="hidden lg:flex lg:col-span-2 lg:order-3 flex-col justify-between overflow-hidden pointer-events-auto"
             >
@@ -2729,7 +2873,10 @@ export default function ProductDetailPage() {
               <div>
                 <div className="font-semibold text-wbk-black text-sm">98%</div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  {t("reviews.recommendedRate", "proportion recommended by our users")}
+                  {t(
+                    "reviews.recommendedRate",
+                    "proportion recommended by our users",
+                  )}
                 </div>
               </div>
             </div>
@@ -2743,7 +2890,10 @@ export default function ProductDetailPage() {
                   {locale === "en" || locale === "us" ? "0.06%" : "0,06%"}
                 </div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  {t("reviews.warrantyClaimRate", "extremely low warranty claim rate")}
+                  {t(
+                    "reviews.warrantyClaimRate",
+                    "extremely low warranty claim rate",
+                  )}
                 </div>
               </div>
             </div>
@@ -2755,7 +2905,10 @@ export default function ProductDetailPage() {
               <div>
                 <div className="font-semibold text-wbk-black text-sm">201</div>
                 <div className="text-wbk-brown text-[11px] leading-relaxed">
-                  {t("reviews.writtenEvaluations", "written customer evaluations")}
+                  {t(
+                    "reviews.writtenEvaluations",
+                    "written customer evaluations",
+                  )}
                 </div>
               </div>
             </div>
@@ -3025,13 +3178,17 @@ export default function ProductDetailPage() {
                       {/* Bed-Specific: Mechanism */}
                       {(displayProduct.parent_category === "beds" ||
                         displayProduct.parent_category === "morphy-beds" ||
-                        displayProduct.parent_category === "traditional-beds") && (
+                        displayProduct.parent_category ===
+                          "traditional-beds") && (
                         <tr className="border-b border-wbk-lightgrey/40">
                           <td className="py-2.5 font-medium">
                             {t("product.mechanism", "Mechanism")}
                           </td>
                           <td className="py-2.5 text-right text-wbk-brown">
-                            {t("product.gasPistonVal", "Gas Piston Cylinder System")}
+                            {t(
+                              "product.gasPistonVal",
+                              "Gas Piston Cylinder System",
+                            )}
                           </td>
                         </tr>
                       )}
@@ -3040,28 +3197,53 @@ export default function ProductDetailPage() {
                       {displayProduct.parent_category === "cabinets" && (
                         <>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Material</td>
+                            <td className="py-2.5 font-medium">
+                              {t("product.material", "Material")}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              {displayProduct.material || "Melamine-faced furniture board"}
+                              {locale === "fr"
+                                ? displayProduct.sub_category === "Extensions"
+                                  ? "Plateau de meuble en mélamine"
+                                  : "Planche de meuble mélaminée"
+                                : displayProduct.material ||
+                                  "Melamine-faced furniture board"}
                             </td>
                           </tr>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Door Opening</td>
+                            <td className="py-2.5 font-medium">
+                              {t("product.doorOpening", "Door Opening")}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              {displayProduct.door_opening ||
-                                (displayProduct.sub_category === "Vertical"
-                                  ? "170 degrees opening"
+                              {locale === "fr"
+                                ? displayProduct.sub_category === "Vertical"
+                                  ? "Ouverture à 170 degrés"
                                   : displayProduct.sub_category === "Horizontal"
-                                  ? "90 degrees opening"
-                                  : displayProduct.sub_category === "Side Units"
-                                  ? "90 degrees opening / Open shelving"
-                                  : "Top overhead clearance")}
+                                    ? "Ouverture à 90 degrés"
+                                    : displayProduct.sub_category ===
+                                        "Side Units"
+                                      ? "Ouverture à 90 degrés / Étagères ouvertes"
+                                      : "Dégagement supérieur"
+                                : displayProduct.door_opening ||
+                                  (displayProduct.sub_category === "Vertical"
+                                    ? "170 degrees opening"
+                                    : displayProduct.sub_category ===
+                                        "Horizontal"
+                                      ? "90 degrees opening"
+                                      : displayProduct.sub_category ===
+                                          "Side Units"
+                                        ? "90 degrees opening / Open shelving"
+                                        : "Top overhead clearance")}
                             </td>
                           </tr>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Assembly</td>
+                            <td className="py-2.5 font-medium">
+                              {t("product.assembly", "Assembly")}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              {displayProduct.assembly || "Flat-packed for easy assembly"}
+                              {locale === "fr"
+                                ? "Emballé à plat pour un assemblage facile"
+                                : displayProduct.assembly ||
+                                  "Flat-packed for easy assembly"}
                             </td>
                           </tr>
                         </>
@@ -3071,7 +3253,12 @@ export default function ProductDetailPage() {
                       {displayProduct.parent_category === "mattresses" && (
                         <>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Mattress Depth / Profile</td>
+                            <td className="py-2.5 font-medium">
+                              {t(
+                                "product.mattressDepth",
+                                "Mattress Depth / Profile",
+                              )}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
                               {displayProduct.thickness ||
                                 (displayProduct.sub_category === "Comfort"
@@ -3080,64 +3267,101 @@ export default function ProductDetailPage() {
                             </td>
                           </tr>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Comfort Layer</td>
+                            <td className="py-2.5 font-medium">
+                              {t("product.comfortLayer", "Comfort Layer")}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              {displayProduct.sub_category === "Comfort"
-                                ? "2” Memory Foam Layer"
-                                : displayProduct.sub_category === "Luxury"
-                                ? "3” Memory Foam Layer"
-                                : "Memory Foam + Motion Isolation Technology™"}
+                              {locale === "fr"
+                                ? displayProduct.sub_category === "Comfort"
+                                  ? "2” Couche de mousse à mémoire"
+                                  : displayProduct.sub_category === "Luxury"
+                                    ? "3” Couche de mousse à mémoire"
+                                    : "Mousse à mémoire + Technologie d'isolation des mouvements™"
+                                : displayProduct.sub_category === "Comfort"
+                                  ? "2” Memory Foam Layer"
+                                  : displayProduct.sub_category === "Luxury"
+                                    ? "3” Memory Foam Layer"
+                                    : "Memory Foam + Motion Isolation Technology™"}
                             </td>
                           </tr>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Core Construction</td>
+                            <td className="py-2.5 font-medium">
+                              {t(
+                                "product.coreConstruction",
+                                "Core Construction",
+                              )}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              {displayProduct.sub_category === "Comfort"
-                                ? "High-Density Foam Support Base"
-                                : displayProduct.sub_category === "Luxury"
-                                ? "High-Resilience Reflex Foam Base"
-                                : "1,500 Individual Pocket Springs"}
+                              {locale === "fr"
+                                ? displayProduct.sub_category === "Comfort"
+                                  ? "Base de support en mousse haute densité"
+                                  : displayProduct.sub_category === "Luxury"
+                                    ? "Base en mousse à haute résilience"
+                                    : "1 500 ressorts ensachés individuels"
+                                : displayProduct.sub_category === "Comfort"
+                                  ? "High-Density Foam Support Base"
+                                  : displayProduct.sub_category === "Luxury"
+                                    ? "High-Resilience Reflex Foam Base"
+                                    : "1,500 Individual Pocket Springs"}
                             </td>
                           </tr>
                           <tr className="border-b border-wbk-lightgrey/40">
-                            <td className="py-2.5 font-medium">Trial Period</td>
+                            <td className="py-2.5 font-medium">
+                              {t("product.trialPeriod", "Trial Period")}
+                            </td>
                             <td className="py-2.5 text-right text-wbk-brown">
-                              30-Day Money Back Guarantee
+                              {t(
+                                "product.trialPeriodVal",
+                                "30-Day Money Back Guarantee",
+                              )}
                             </td>
                           </tr>
                         </>
                       )}
 
                       {/* Dimensions for Beds and Mattresses */}
-                      {displayProduct.width && displayProduct.parent_category !== "cabinets" && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">
-                            {t("product.mattressSize", "Mattress Size (W x L)")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {isUS
-                              ? `${Math.round(displayProduct.width / 25.4)}" x ${Math.round((displayProduct.length || 2000) / 25.4)}" (${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm)`
-                              : `${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm`}
-                          </td>
-                        </tr>
-                      )}
+                      {displayProduct.width &&
+                        displayProduct.parent_category !== "cabinets" && (
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">
+                              {t(
+                                "product.mattressSize",
+                                "Mattress Size (W x L)",
+                              )}
+                            </td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {isUS
+                                ? `${Math.round(displayProduct.width / 25.4)}" x ${Math.round((displayProduct.length || 2000) / 25.4)}" (${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm)`
+                                : `${displayProduct.width / 10} x ${displayProduct.length ? displayProduct.length / 10 : 200} cm`}
+                            </td>
+                          </tr>
+                        )}
 
                       {/* Cabinet Dimensions */}
-                      {displayProduct.parent_category === "cabinets" && displayProduct.width && (
-                        <tr className="border-b border-wbk-lightgrey/40">
-                          <td className="py-2.5 font-medium">Cabinet Dimensions (H x W x D)</td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.height && displayProduct.length
-                              ? `H${displayProduct.height / 10}cm x W${displayProduct.width / 10}cm x D${displayProduct.length / 10}cm`
-                              : `${formatCm(displayProduct.width / 10)}`}
-                          </td>
-                        </tr>
-                      )}
+                      {displayProduct.parent_category === "cabinets" &&
+                        displayProduct.width && (
+                          <tr className="border-b border-wbk-lightgrey/40">
+                            <td className="py-2.5 font-medium">
+                              {t(
+                                "product.cabinetDimensions",
+                                "Cabinet Dimensions (H x W x D)",
+                              )}
+                            </td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.height && displayProduct.length
+                                ? locale === "fr"
+                                  ? `H${displayProduct.height / 10}cm x L${displayProduct.width / 10}cm x P${displayProduct.length / 10}cm`
+                                  : `H${displayProduct.height / 10}cm x W${displayProduct.width / 10}cm x D${displayProduct.length / 10}cm`
+                                : `${formatCm(displayProduct.width / 10)}`}
+                            </td>
+                          </tr>
+                        )}
 
                       {/* Bed Frame Specifications (only for beds) */}
                       {(displayProduct.parent_category === "beds" ||
                         displayProduct.parent_category === "morphy-beds" ||
-                        displayProduct.parent_category === "traditional-beds") && (
+                        displayProduct.parent_category ===
+                          "traditional-beds") && (
                         <>
                           {displayProduct.frame_width && (
                             <tr className="border-b border-wbk-lightgrey/40">
@@ -3152,7 +3376,10 @@ export default function ProductDetailPage() {
                           {displayProduct.folded_up_height && (
                             <tr className="border-b border-wbk-lightgrey/40">
                               <td className="py-2.5 font-medium">
-                                {t("product.foldedUpHeight", "Folded up height")}
+                                {t(
+                                  "product.foldedUpHeight",
+                                  "Folded up height",
+                                )}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown">
                                 {formatMm(displayProduct.folded_up_height)}
@@ -3162,7 +3389,10 @@ export default function ProductDetailPage() {
                           {displayProduct.folded_up_projection && (
                             <tr className="border-b border-wbk-lightgrey/40">
                               <td className="py-2.5 font-medium">
-                                {t("product.bedDepthFolded", "Bed depth (Folded)")}
+                                {t(
+                                  "product.bedDepthFolded",
+                                  "Bed depth (Folded)",
+                                )}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown">
                                 {formatMm(displayProduct.folded_up_projection)}
@@ -3175,14 +3405,19 @@ export default function ProductDetailPage() {
                                 {t("product.bedDepthOpen", "Bed depth (Open)")}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown">
-                                {formatMm(displayProduct.folded_down_projection)}
+                                {formatMm(
+                                  displayProduct.folded_down_projection,
+                                )}
                               </td>
                             </tr>
                           )}
                           {displayProduct.mounting_frame_height && (
                             <tr className="border-b border-wbk-lightgrey/40">
                               <td className="py-2.5 font-medium">
-                                {t("product.mountingFrameHeight", "Mounting frame height")}
+                                {t(
+                                  "product.mountingFrameHeight",
+                                  "Mounting frame height",
+                                )}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown">
                                 {formatMm(displayProduct.mounting_frame_height)}
@@ -3192,7 +3427,10 @@ export default function ProductDetailPage() {
                           {displayProduct.maximum_mattress_depth && (
                             <tr className="border-b border-wbk-lightgrey/40">
                               <td className="py-2.5 font-medium">
-                                {t("product.maxMattressThickness", "Max mattress thickness")}
+                                {t(
+                                  "product.maxMattressThickness",
+                                  "Max mattress thickness",
+                                )}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown">
                                 {isUS
@@ -3212,9 +3450,15 @@ export default function ProductDetailPage() {
                           {displayProduct.warranty ||
                             (displayProduct.parent_category === "beds" ||
                             displayProduct.parent_category === "morphy-beds" ||
-                            displayProduct.parent_category === "traditional-beds"
-                              ? t("product.lifetimeMechanism", "Lifetime mechanism warranty")
-                              : "1 year for manufacturing defects")}
+                            displayProduct.parent_category ===
+                              "traditional-beds"
+                              ? t(
+                                  "product.lifetimeMechanism",
+                                  "Lifetime mechanism warranty",
+                                )
+                              : locale === "fr"
+                                ? "1 an pour les défauts de fabrication"
+                                : "1 year for manufacturing defects")}
                         </td>
                       </tr>
                     </tbody>
@@ -3300,7 +3544,10 @@ export default function ProductDetailPage() {
                         {t("product.uploadSetupPhoto", "Upload Setup Photo")}
                       </span>
                       <span className="text-[10px] text-wbk-brown font-poppins mt-1">
-                        {t("product.showOffDesign", "Show off your room design")}
+                        {t(
+                          "product.showOffDesign",
+                          "Show off your room design",
+                        )}
                       </span>
                     </div>
 
@@ -3348,10 +3595,16 @@ export default function ProductDetailPage() {
                       <div className="bg-[#F4F2F0]/60 p-6 sm:p-8 rounded-none border border-wbk-lightgrey/40 text-center space-y-4 max-w-3xl mx-auto">
                         <div className="space-y-1">
                           <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider font-poppins bg-red-50 px-2 py-0.5 border border-red-200/80 rounded-xs">
-                            {t("product.officialVideoBadge", "Official Video Walkthrough")}
+                            {t(
+                              "product.officialVideoBadge",
+                              "Official Video Walkthrough",
+                            )}
                           </span>
                           <h4 className="font-new-york text-xl sm:text-2xl text-wbk-black">
-                            {t("product.watchSetupGuide", "Watch Setup & Assembly Guide")}
+                            {t(
+                              "product.watchSetupGuide",
+                              "Watch Setup & Assembly Guide",
+                            )}
                           </h4>
                           <p className="text-xs font-poppins text-wbk-brown leading-relaxed max-w-lg mx-auto">
                             {t(
@@ -3391,7 +3644,10 @@ export default function ProductDetailPage() {
                   return (
                     <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40 text-center space-y-4 max-w-2xl mx-auto">
                       <h4 className="font-new-york text-xl text-wbk-black">
-                        {t("product.watchSetupPlaceholder", "Watch setup guide")}
+                        {t(
+                          "product.watchSetupPlaceholder",
+                          "Watch setup guide",
+                        )}
                       </h4>
                       <p className="text-xs font-poppins text-wbk-brown leading-relaxed">
                         {t(
@@ -3406,258 +3662,318 @@ export default function ProductDetailPage() {
             )}
 
             {/* Support & Guides Tab */}
-            {activeTab === "support" && (() => {
-              const currentManualUrl =
-                displayProduct?.installation_manual ||
-                selectedVariant?.installation_manual ||
-                activeProduct?.installation_manual ||
-                (() => {
-                  if (!familyVariants || !familyVariants.length) return null;
-                  const matchInFamily = familyVariants.find(
-                    (v) => (v.id === displayProduct?.id || v.id === selectedVariant?.id) && v.installation_manual
-                  );
-                  if (matchInFamily?.installation_manual) return matchInFamily.installation_manual;
-                  const activeW = Math.min(
-                    Number(displayProduct?.width || selectedVariant?.width || 0),
-                    Number(displayProduct?.length || selectedVariant?.length || 0)
-                  );
-                  if (activeW > 0) {
-                    const matchSize = familyVariants.find(
+            {activeTab === "support" &&
+              (() => {
+                const currentManualUrl =
+                  displayProduct?.installation_manual ||
+                  selectedVariant?.installation_manual ||
+                  activeProduct?.installation_manual ||
+                  (() => {
+                    if (!familyVariants || !familyVariants.length) return null;
+                    const matchInFamily = familyVariants.find(
                       (v) =>
-                        Math.min(Number(v.width || 0), Number(v.length || 0)) === activeW &&
-                        v.installation_manual
+                        (v.id === displayProduct?.id ||
+                          v.id === selectedVariant?.id) &&
+                        v.installation_manual,
                     );
-                    if (matchSize?.installation_manual) return matchSize.installation_manual;
-                  }
-                  return null;
-                })() ||
-                null;
+                    if (matchInFamily?.installation_manual)
+                      return matchInFamily.installation_manual;
+                    const activeW = Math.min(
+                      Number(
+                        displayProduct?.width || selectedVariant?.width || 0,
+                      ),
+                      Number(
+                        displayProduct?.length || selectedVariant?.length || 0,
+                      ),
+                    );
+                    if (activeW > 0) {
+                      const matchSize = familyVariants.find(
+                        (v) =>
+                          Math.min(
+                            Number(v.width || 0),
+                            Number(v.length || 0),
+                          ) === activeW && v.installation_manual,
+                      );
+                      if (matchSize?.installation_manual)
+                        return matchSize.installation_manual;
+                    }
+                    return null;
+                  })() ||
+                  null;
 
-              const currentVideoInput =
-                displayProduct?.installation_video ||
-                selectedVariant?.installation_video ||
-                activeProduct?.installation_video ||
-                (() => {
-                  if (!familyVariants || !familyVariants.length) return null;
-                  const matchInFamily = familyVariants.find(
-                    (v) => (v.id === displayProduct?.id || v.id === selectedVariant?.id) && v.installation_video
-                  );
-                  if (matchInFamily?.installation_video) return matchInFamily.installation_video;
-                  const matchAnyInFamily = familyVariants.find((v) => v.installation_video);
-                  if (matchAnyInFamily?.installation_video) return matchAnyInFamily.installation_video;
-                  return null;
-                })() ||
-                null;
+                const currentVideoInput =
+                  displayProduct?.installation_video ||
+                  selectedVariant?.installation_video ||
+                  activeProduct?.installation_video ||
+                  (() => {
+                    if (!familyVariants || !familyVariants.length) return null;
+                    const matchInFamily = familyVariants.find(
+                      (v) =>
+                        (v.id === displayProduct?.id ||
+                          v.id === selectedVariant?.id) &&
+                        v.installation_video,
+                    );
+                    if (matchInFamily?.installation_video)
+                      return matchInFamily.installation_video;
+                    const matchAnyInFamily = familyVariants.find(
+                      (v) => v.installation_video,
+                    );
+                    if (matchAnyInFamily?.installation_video)
+                      return matchAnyInFamily.installation_video;
+                    return null;
+                  })() ||
+                  null;
 
-              const parsedVideo = parseYouTubeVideo(currentVideoInput);
+                const parsedVideo = parseYouTubeVideo(currentVideoInput);
 
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-8"
-                >
-                  <div className="space-y-2">
-                    <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
-                      {t("product.supportHeading", "Support & Installation Guides")}
-                    </h3>
-                    <p className="font-poppins text-xs sm:text-sm text-wbk-brown max-w-2xl leading-relaxed">
-                      {t(
-                        "product.supportSubheading",
-                        "Follow our official step-by-step video walkthroughs and download precision PDF assembly manuals to ensure seamless and safe installation.",
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Section 1: Official YouTube Installation Video */}
-                  <div className="max-w-3xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <IconBrandYoutube size={20} className="text-red-600" />
-                        <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
-                          {t("product.videoWalkthrough", "Video Walkthrough")}
-                        </h4>
-                      </div>
-                      {parsedVideo && (
-                        <a
-                          href={parsedVideo.watchUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-red-600 transition-colors font-medium"
-                        >
-                          <span>{t("product.watchOnYoutube", "Watch on YouTube")}</span>
-                          <IconExternalLink size={14} />
-                        </a>
-                      )}
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-8"
+                  >
+                    <div className="space-y-2">
+                      <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
+                        {t(
+                          "product.supportHeading",
+                          "Support & Installation Guides",
+                        )}
+                      </h3>
+                      <p className="font-poppins text-xs sm:text-sm text-wbk-brown max-w-2xl leading-relaxed">
+                        {t(
+                          "product.supportSubheading",
+                          "Follow our official step-by-step video walkthroughs and download precision PDF assembly manuals to ensure seamless and safe installation.",
+                        )}
+                      </p>
                     </div>
 
-                    {parsedVideo ? (
-                      <div className="bg-white border border-wbk-lightgrey/70 shadow-sm overflow-hidden">
-                        {/* 16:9 Responsive Video Player */}
-                        <div className="relative aspect-video w-full bg-black">
-                          <iframe
-                            src={parsedVideo.embedUrl}
-                            title="WallBedKing Installation Guide"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                            className="absolute inset-0 w-full h-full border-0"
-                            loading="lazy"
+                    {/* Section 1: Official YouTube Installation Video */}
+                    <div className="max-w-3xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <IconBrandYoutube
+                            size={20}
+                            className="text-red-600"
                           />
+                          <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
+                            {t("product.videoWalkthrough", "Video Walkthrough")}
+                          </h4>
                         </div>
-
-                        {/* Video Meta Bar */}
-                        <div className="p-4 sm:p-5 bg-[#FAF9F8] border-t border-wbk-lightgrey/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider font-poppins bg-red-50 px-2 py-0.5 border border-red-200/80 rounded-xs">
-                                {t("product.youtubeTutorial", "YouTube Tutorial")}
-                              </span>
-                              <span className="text-[11px] text-wbk-brown font-mono">
-                                {t("product.officialAssemblyGuide", "Official Assembly Guide")}
-                              </span>
-                            </div>
-                            <p className="text-xs text-wbk-brown leading-relaxed">
-                              {t(
-                                "product.videoMetaDesc",
-                                "Watch the step-by-step frame assembly, wall fixing anchors, and counterbalance piston calibration.",
-                              )}
-                            </p>
-                          </div>
-
+                        {parsedVideo && (
                           <a
                             href={parsedVideo.watchUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider transition-colors shrink-0 cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-red-600 transition-colors font-medium"
                           >
-                            <IconBrandYoutube size={16} className="text-red-600" />
-                            <span>{t("product.openInApp", "Open in App")}</span>
-                          </a>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-6 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                          <div className="w-10 h-10 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
-                            <IconBrandYoutube size={22} stroke={1.6} />
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
-                              {t("product.comingSoon", "Coming soon")}
+                            <span>
+                              {t("product.watchOnYoutube", "Watch on YouTube")}
                             </span>
-                            <h5 className="font-poppins font-medium text-sm text-wbk-black mt-1">
-                              {t("product.videoComingSoonTitle", "Video walkthrough for this model")}
-                            </h5>
-                            <p className="text-xs text-wbk-brown mt-0.5">
-                              {t(
-                                "product.videoComingSoonDesc",
-                                "Our engineering team is producing an updated video guide for this configuration. In the meantime, please refer to the PDF assembly manual below.",
-                              )}
-                            </p>
+                            <IconExternalLink size={14} />
+                          </a>
+                        )}
+                      </div>
+
+                      {parsedVideo ? (
+                        <div className="bg-white border border-wbk-lightgrey/70 shadow-sm overflow-hidden">
+                          {/* 16:9 Responsive Video Player */}
+                          <div className="relative aspect-video w-full bg-black">
+                            <iframe
+                              src={parsedVideo.embedUrl}
+                              title="WallBedKing Installation Guide"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              className="absolute inset-0 w-full h-full border-0"
+                              loading="lazy"
+                            />
+                          </div>
+
+                          {/* Video Meta Bar */}
+                          <div className="p-4 sm:p-5 bg-[#FAF9F8] border-t border-wbk-lightgrey/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider font-poppins bg-red-50 px-2 py-0.5 border border-red-200/80 rounded-xs">
+                                  {t(
+                                    "product.youtubeTutorial",
+                                    "YouTube Tutorial",
+                                  )}
+                                </span>
+                                <span className="text-[11px] text-wbk-brown font-mono">
+                                  {t(
+                                    "product.officialAssemblyGuide",
+                                    "Official Assembly Guide",
+                                  )}
+                                </span>
+                              </div>
+                              <p className="text-xs text-wbk-brown leading-relaxed">
+                                {t(
+                                  "product.videoMetaDesc",
+                                  "Watch the step-by-step frame assembly, wall fixing anchors, and counterbalance piston calibration.",
+                                )}
+                              </p>
+                            </div>
+
+                            <a
+                              href={parsedVideo.watchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider transition-colors shrink-0 cursor-pointer shadow-2xs"
+                            >
+                              <IconBrandYoutube
+                                size={16}
+                                className="text-red-600"
+                              />
+                              <span>
+                                {t("product.openInApp", "Open in App")}
+                              </span>
+                            </a>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 2: PDF Download Manual */}
-                  <div className="max-w-3xl space-y-3 pt-2">
-                    <div className="flex items-center gap-2">
-                      <IconFileText size={20} className="text-wbk-gold" />
-                      <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
-                        {t("product.pdfManualHeading", "PDF Assembly Manual")}
-                      </h4>
+                      ) : (
+                        <div className="p-6 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3.5">
+                            <div className="w-10 h-10 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
+                              <IconBrandYoutube size={22} stroke={1.6} />
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
+                                {t("product.comingSoon", "Coming soon")}
+                              </span>
+                              <h5 className="font-poppins font-medium text-sm text-wbk-black mt-1">
+                                {t(
+                                  "product.videoComingSoonTitle",
+                                  "Video walkthrough for this model",
+                                )}
+                              </h5>
+                              <p className="text-xs text-wbk-brown mt-0.5">
+                                {t(
+                                  "product.videoComingSoonDesc",
+                                  "Our engineering team is producing an updated video guide for this configuration. In the meantime, please refer to the PDF assembly manual below.",
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {currentManualUrl ? (
-                      <div className="p-6 sm:p-7 bg-white border border-wbk-lightgrey/60 hover:border-wbk-gold transition-all duration-300 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 group">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-sm bg-[#F5F2EF] text-wbk-gold flex items-center justify-center shrink-0 border border-wbk-lightgrey/50 group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
-                            <IconFileText size={26} stroke={1.6} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-semibold text-wbk-gold uppercase tracking-wider font-poppins bg-[#FAF8F5] px-2 py-0.5 border border-wbk-gold/30 rounded-xs">
-                                {t("product.pdfDocument", "PDF Document")}
-                              </span>
-                              <span className="text-[11px] text-wbk-brown/70 font-mono">
-                                {t("product.officialAssemblyGuide", "Official Assembly Guide")}
-                              </span>
-                            </div>
-                            <h4 className="font-poppins font-medium text-base text-wbk-black">
-                              {t("product.pdfManualTitle", "Wall Bed Installation & Assembly Manual")}
-                            </h4>
-                            <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
-                              {t(
-                                "product.pdfManualDesc",
-                                "Complete illustrated guide covering wall fixation, frame assembly, gas piston calibration, and safety precautions.",
-                              )}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-wbk-lightgrey/40">
-                          <a
-                            href={currentManualUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
-                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold text-white hover:text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-xs cursor-pointer"
-                          >
-                            <IconDownload size={15} />
-                            <span>{t("product.downloadPdf", "Download PDF")}</span>
-                          </a>
-                          <a
-                            href={currentManualUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2.5 border border-wbk-lightgrey/80 text-wbk-brown hover:text-wbk-black hover:border-wbk-black rounded-full transition-colors cursor-pointer"
-                            title={t("product.openInNewTab", "Open in new tab")}
-                          >
-                            <IconExternalLink size={16} />
-                          </a>
-                        </div>
+                    {/* Section 2: PDF Download Manual */}
+                    <div className="max-w-3xl space-y-3 pt-2">
+                      <div className="flex items-center gap-2">
+                        <IconFileText size={20} className="text-wbk-gold" />
+                        <h4 className="font-poppins font-semibold text-sm uppercase tracking-wider text-wbk-black">
+                          {t("product.pdfManualHeading", "PDF Assembly Manual")}
+                        </h4>
                       </div>
-                    ) : (
-                      <div className="p-6 sm:p-7 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 rounded-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
-                            <IconClock size={24} stroke={1.6} />
+
+                      {currentManualUrl ? (
+                        <div className="p-6 sm:p-7 bg-white border border-wbk-lightgrey/60 hover:border-wbk-gold transition-all duration-300 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 group">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-sm bg-[#F5F2EF] text-wbk-gold flex items-center justify-center shrink-0 border border-wbk-lightgrey/50 group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
+                              <IconFileText size={26} stroke={1.6} />
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-semibold text-wbk-gold uppercase tracking-wider font-poppins bg-[#FAF8F5] px-2 py-0.5 border border-wbk-gold/30 rounded-xs">
+                                  {t("product.pdfDocument", "PDF Document")}
+                                </span>
+                                <span className="text-[11px] text-wbk-brown/70 font-mono">
+                                  {t(
+                                    "product.officialAssemblyGuide",
+                                    "Official Assembly Guide",
+                                  )}
+                                </span>
+                              </div>
+                              <h4 className="font-poppins font-medium text-base text-wbk-black">
+                                {t(
+                                  "product.pdfManualTitle",
+                                  "Wall Bed Installation & Assembly Manual",
+                                )}
+                              </h4>
+                              <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
+                                {t(
+                                  "product.pdfManualDesc",
+                                  "Complete illustrated guide covering wall fixation, frame assembly, gas piston calibration, and safety precautions.",
+                                )}
+                              </p>
+                            </div>
                           </div>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
+
+                          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-wbk-lightgrey/40">
+                            <a
+                              href={currentManualUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-wbk-black hover:bg-wbk-gold text-white hover:text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-full transition-all duration-300 shadow-xs cursor-pointer"
+                            >
+                              <IconDownload size={15} />
+                              <span>
+                                {t("product.downloadPdf", "Download PDF")}
+                              </span>
+                            </a>
+                            <a
+                              href={currentManualUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2.5 border border-wbk-lightgrey/80 text-wbk-brown hover:text-wbk-black hover:border-wbk-black rounded-full transition-colors cursor-pointer"
+                              title={t(
+                                "product.openInNewTab",
+                                "Open in new tab",
+                              )}
+                            >
+                              <IconExternalLink size={16} />
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-6 sm:p-7 bg-[#FAF9F8] border border-dashed border-wbk-lightgrey/80 rounded-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-sm bg-[#EDE8E3] text-wbk-brown flex items-center justify-center shrink-0 border border-wbk-lightgrey/40">
+                              <IconClock size={24} stroke={1.6} />
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider font-poppins bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-xs">
+                                  {t("product.inProgress", "In progress")}
+                                </span>
+                                <span className="text-[11px] text-wbk-brown font-poppins">
+                                  {t(
+                                    "product.preparationUnderWay",
+                                    "Preparation under way",
+                                  )}
+                                </span>
+                              </div>
+                              <h4 className="font-poppins font-medium text-base text-wbk-black">
+                                {t(
+                                  "product.pdfManualTitle",
+                                  "Wall Bed Installation & Assembly Manual",
+                                )}
+                              </h4>
+                              <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
+                                {t(
+                                  "product.manualInProgressDesc",
+                                  "The official assembly guide for this specific model and size is currently in progress and will be available for download here shortly. If you need immediate assistance or assembly advice, please reach out to our team.",
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 pt-2 sm:pt-0">
+                            <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-lightgrey/40 text-wbk-brown text-xs font-medium rounded-full">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                              <span>
                                 {t("product.inProgress", "In progress")}
                               </span>
-                              <span className="text-[11px] text-wbk-brown font-poppins">
-                                {t("product.preparationUnderWay", "Preparation under way")}
-                              </span>
-                            </div>
-                            <h4 className="font-poppins font-medium text-base text-wbk-black">
-                              {t("product.pdfManualTitle", "Wall Bed Installation & Assembly Manual")}
-                            </h4>
-                            <p className="text-xs text-wbk-brown font-poppins leading-relaxed max-w-xl">
-                              {t(
-                                "product.manualInProgressDesc",
-                                "The official assembly guide for this specific model and size is currently in progress and will be available for download here shortly. If you need immediate assistance or assembly advice, please reach out to our team.",
-                              )}
-                            </p>
+                            </span>
                           </div>
                         </div>
-
-                        <div className="shrink-0 pt-2 sm:pt-0">
-                          <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-lightgrey/40 text-wbk-brown text-xs font-medium rounded-full">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                            <span>{t("product.inProgress", "In progress")}</span>
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })()}
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })()}
 
             {/* Reviews Tab */}
             {activeTab === "reviews" && (
@@ -3670,7 +3986,9 @@ export default function ProductDetailPage() {
                 <ProductReviewsSection
                   productSlug={productSlug}
                   productName={
-                    localizedProductName || activeProduct?.name || "Wall Bed King Murphy Bed"
+                    localizedProductName ||
+                    activeProduct?.name ||
+                    "Wall Bed King Murphy Bed"
                   }
                   initialOpen={
                     searchParams?.get("review") === "true" ||
@@ -3972,86 +4290,90 @@ export default function ProductDetailPage() {
 
       {/* ── LIGHTBOX MODAL OVERLAY ── */}
       <AnimatePresence>
-        {lightboxIndex !== -1 && (() => {
-          const activeLightboxList = activeLightboxImages || galleryImages;
-          return (
-            <motion.div
-              key="product-lightbox-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setLightboxIndex(-1)}
-              className="fixed inset-0 z-[999] bg-wbk-black/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
-            >
-              {/* Close button */}
-              <button
-                onClick={() => setLightboxIndex(-1)}
-                className="absolute top-3 sm:top-6 right-3 sm:right-6 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-                aria-label="Close lightbox"
-              >
-                <IconX size={20} />
-              </button>
-
-              {/* Navigation buttons */}
-              {activeLightboxList.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-                    aria-label="Previous image"
-                  >
-                    <IconChevronLeft size={24} />
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
-                    aria-label="Next image"
-                  >
-                    <IconChevronRight size={24} />
-                  </button>
-                </>
-              )}
-
-              {/* Modal Image Card with White Background */}
+        {lightboxIndex !== -1 &&
+          (() => {
+            const activeLightboxList = activeLightboxImages || galleryImages;
+            return (
               <motion.div
-                initial={{ scale: 0.96, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.96, opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                onClick={(e) => e.stopPropagation()}
-                className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
+                key="product-lightbox-overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setLightboxIndex(-1)}
+                className="fixed inset-0 z-[999] bg-wbk-black/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
               >
-                <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
-                  <AnimatePresence mode="wait">
-                    <motion.img
-                      key={activeLightboxList[lightboxIndex]?.src || lightboxIndex}
-                      src={activeLightboxList[lightboxIndex]?.src}
-                      alt={activeLightboxList[lightboxIndex]?.alt}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
-                    />
-                  </AnimatePresence>
-                </div>
+                {/* Close button */}
+                <button
+                  onClick={() => setLightboxIndex(-1)}
+                  className="absolute top-3 sm:top-6 right-3 sm:right-6 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                  aria-label="Close lightbox"
+                >
+                  <IconX size={20} />
+                </button>
 
-                {(activeLightboxList[lightboxIndex]?.alt ||
-                  activeLightboxList.length > 1) && (
-                  <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 w-full flex items-center justify-between text-xs text-wbk-brown font-poppins px-1">
-                    <p className="font-medium text-wbk-black truncate pr-4 text-xs">
-                      {activeLightboxList[lightboxIndex]?.alt}
-                    </p>
-                    <span className="font-semibold text-wbk-black/70 shrink-0 text-[11px] tracking-wider">
-                      {lightboxIndex + 1} / {activeLightboxList.length}
-                    </span>
-                  </div>
+                {/* Navigation buttons */}
+                {activeLightboxList.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevImage}
+                      className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                      aria-label="Previous image"
+                    >
+                      <IconChevronLeft size={24} />
+                    </button>
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 text-wbk-black hover:text-white bg-white/90 hover:bg-wbk-black border border-wbk-lightgrey/80 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-30"
+                      aria-label="Next image"
+                    >
+                      <IconChevronRight size={24} />
+                    </button>
+                  </>
                 )}
+
+                {/* Modal Image Card with White Background */}
+                <motion.div
+                  initial={{ scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.96, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
+                >
+                  <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={
+                          activeLightboxList[lightboxIndex]?.src ||
+                          lightboxIndex
+                        }
+                        src={activeLightboxList[lightboxIndex]?.src}
+                        alt={activeLightboxList[lightboxIndex]?.alt}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
+                      />
+                    </AnimatePresence>
+                  </div>
+
+                  {(activeLightboxList[lightboxIndex]?.alt ||
+                    activeLightboxList.length > 1) && (
+                    <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 w-full flex items-center justify-between text-xs text-wbk-brown font-poppins px-1">
+                      <p className="font-medium text-wbk-black truncate pr-4 text-xs">
+                        {activeLightboxList[lightboxIndex]?.alt}
+                      </p>
+                      <span className="font-semibold text-wbk-black/70 shrink-0 text-[11px] tracking-wider">
+                        {lightboxIndex + 1} / {activeLightboxList.length}
+                      </span>
+                    </div>
+                  )}
+                </motion.div>
               </motion.div>
-            </motion.div>
-          );
-        })()}
+            );
+          })()}
       </AnimatePresence>
 
       {/* ── PERSISTENT STICKY BOTTOM BAR: PRODUCT TITLE, SIZE, TOTAL PRICE & ADD TO CART ── */}
@@ -4114,7 +4436,10 @@ export default function ProductDetailPage() {
                       className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
                     />
                     <span className="hidden sm:inline">
-                      {t("waitlist.joinWaitlistBtn", "Join Waitlist / Notify Me")}
+                      {t(
+                        "waitlist.joinWaitlistBtn",
+                        "Join Waitlist / Notify Me",
+                      )}
                     </span>
                   </button>
                 ) : (

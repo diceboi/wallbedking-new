@@ -16,6 +16,10 @@ export function NewProductSection() {
   const [lineCoords, setLineCoords] = useState({ x1: 0, y1: 0, x2: 0, y2: 0 });
   const [selectedSize, setSelectedSize] = useState("80x100 cm");
   const [sizeOpen, setSizeOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [colorOpen, setColorOpen] = useState(false);
+  const [selectedOrientation, setSelectedOrientation] = useState(null);
+  const [orientationOpen, setOrientationOpen] = useState(false);
 
   // Dynamic calculation of connection line endpoints between floating dot and floating card
   useEffect(() => {
@@ -207,22 +211,81 @@ export function NewProductSection() {
             </div>
 
             {/* Color Select */}
-            <button
-              type="button"
-              className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
-            >
-              <span>{t("product.selectColor", "Select color")}</span>
-              <IconChevronDown size={14} />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setColorOpen(!colorOpen);
+                  setSizeOpen(false);
+                  setOrientationOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
+              >
+                <span>{selectedColor ? selectedColor.name : t("product.selectColor", "Select color")}</span>
+                <IconChevronDown size={14} />
+              </button>
+
+              {colorOpen && (
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-wbk-lightgrey shadow-lg z-50 text-xs overflow-hidden">
+                  {[
+                    { name: locale === "fr" ? "Beige" : "Beige", hex: "#D2AA7C" },
+                    { name: locale === "fr" ? "Gris clair" : "Light Grey", hex: "#A5988E" },
+                    { name: locale === "fr" ? "Blanc" : "White", hex: "#FFFFFF" },
+                    { name: locale === "fr" ? "Noir" : "Black", hex: "#090A0A" },
+                  ].map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => {
+                        setSelectedColor(c);
+                        setColorOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-wbk-lightgrey/20 transition-colors cursor-pointer"
+                    >
+                      <span className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: c.hex }} />
+                      <span>{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Orientation Select */}
-            <button
-              type="button"
-              className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
-            >
-              <span>{t("product.selectOrientation", "Select orientation")}</span>
-              <IconChevronDown size={14} />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setOrientationOpen(!orientationOpen);
+                  setSizeOpen(false);
+                  setColorOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs md:text-sm font-medium border border-wbk-lightgrey bg-wbk-white/45 text-wbk-black hover:bg-wbk-lightgrey/20 transition-all cursor-pointer"
+              >
+                <span>{selectedOrientation || t("product.selectOrientation", "Select orientation")}</span>
+                <IconChevronDown size={14} />
+              </button>
+
+              {orientationOpen && (
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-wbk-lightgrey shadow-lg z-50 text-xs overflow-hidden">
+                  {[
+                    locale === "fr" ? "Devant de lit (Bed Front)" : "Bed Front",
+                    locale === "fr" ? "Indépendant (Free Standing)" : "Free Standing",
+                  ].map((orient) => (
+                    <button
+                      key={orient}
+                      type="button"
+                      onClick={() => {
+                        setSelectedOrientation(orient);
+                        setOrientationOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-wbk-lightgrey/20 transition-colors cursor-pointer"
+                    >
+                      {orient}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* ── Right Interactive Material Info Card (Mobile & Desktop) ── */}
