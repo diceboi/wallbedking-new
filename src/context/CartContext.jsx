@@ -253,22 +253,28 @@ export function CartProvider({ children }) {
         });
         const data = await res.json();
         if (isSubscribed && data?.success && Array.isArray(data?.items)) {
-          let hasPriceDiff = false;
+          let hasDiff = false;
           const updatedItems = items.map((origItem, idx) => {
             const validated = data.items[idx];
-            if (validated && validated.price !== origItem.price) {
-              hasPriceDiff = true;
-              return {
-                ...origItem,
-                price: validated.price,
-                rawId: validated.rawId || origItem.rawId,
-                slug: validated.slug || origItem.slug,
-              };
+            if (validated) {
+              const priceChanged = validated.price !== origItem.price;
+              const stockStatusChanged = Boolean(validated.isOutOfStock) !== Boolean(origItem.isOutOfStock);
+              if (priceChanged || stockStatusChanged) {
+                hasDiff = true;
+                return {
+                  ...origItem,
+                  price: validated.price,
+                  rawId: validated.rawId || origItem.rawId,
+                  slug: validated.slug || origItem.slug,
+                  isOutOfStock: Boolean(validated.isOutOfStock),
+                  stock: validated.stock ?? origItem.stock,
+                };
+              }
             }
             return origItem;
           });
 
-          if (hasPriceDiff) {
+          if (hasDiff) {
             setItems(updatedItems);
           }
         }
@@ -294,6 +300,13 @@ export function CartProvider({ children }) {
    * @param {boolean} openDrawer - whether to open the slide-over drawer automatically
    */
   const addItem = useCallback((item, quantity = 1, openDrawer = true) => {
+    if (
+      item.isOutOfStock ||
+      (item.stock !== undefined && item.stock !== null && Number(item.stock) <= 0)
+    ) {
+      console.warn("[CartContext] Item is out of stock and cannot be added:", item);
+      return;
+    }
     // Generate unique ID based on product & specific configuration
     const configHash = [
       item.productId || item.id,

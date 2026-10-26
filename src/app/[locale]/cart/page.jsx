@@ -56,6 +56,12 @@ export default function CartPage() {
   const [deliveryNote, setDeliveryNote] = useState("");
   const isStripeAvailable = isStripeEnabled;
 
+  const hasOutOfStockItems = items.some(
+    (i) =>
+      i.isOutOfStock ||
+      (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+  );
+
   if (!isMounted) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -203,6 +209,14 @@ export default function CartPage() {
                             {item.options.sofaIncluded && (
                               <span className="text-[11px] bg-[#F4F2F0] text-wbk-gold px-2 py-0.5 border border-wbk-lightgrey/60 font-semibold">
                                 + {t("cart.frontSofa", "Front Sofa Module")}
+                              </span>
+                            )}
+                            {(item.isOutOfStock ||
+                              (item.stock !== undefined &&
+                                item.stock !== null &&
+                                Number(item.stock) <= 0)) && (
+                              <span className="text-[11px] bg-red-50 text-red-600 px-2 py-0.5 border border-red-200 font-semibold">
+                                {t("waitlist.outOfStock", "Out of Stock")}
                               </span>
                             )}
                           </div>
@@ -449,20 +463,40 @@ export default function CartPage() {
 
                 {/* Primary Checkout Actions */}
                 <div className="space-y-3 pt-2">
-                  <Link
-                    href={localizedHref("/checkout")}
-                    className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all rounded-full shadow-md group cursor-pointer"
-                  >
-                    <IconLock size={16} />
-                    <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
-                    <IconArrowRight
-                      size={16}
-                      className="group-hover:translate-x-1 transition-transform"
-                    />
-                  </Link>
+                  {hasOutOfStockItems && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs">
+                      {t(
+                        "cart.hasOutOfStockNotice",
+                        "Please remove out-of-stock item(s) from your cart to proceed to checkout."
+                      )}
+                    </div>
+                  )}
+
+                  {hasOutOfStockItems ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-neutral-300 text-neutral-500 text-xs font-semibold uppercase tracking-[0.16em] rounded-full shadow-none cursor-not-allowed select-none"
+                    >
+                      <IconLock size={16} />
+                      <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href={localizedHref("/checkout")}
+                      className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-all rounded-full shadow-md group cursor-pointer"
+                    >
+                      <IconLock size={16} />
+                      <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
+                      <IconArrowRight
+                        size={16}
+                        className="group-hover:translate-x-1 transition-transform"
+                      />
+                    </Link>
+                  )}
 
                   {/* Express Checkout Divider & Instant Buttons */}
-                  {isQuickPayEnabled && (isStripeAvailable || isPayPalEnabled) && (
+                  {!hasOutOfStockItems && isQuickPayEnabled && (isStripeAvailable || isPayPalEnabled) && (
                     <>
                       <div className="relative flex items-center justify-center py-1">
                         <div className="border-t border-wbk-lightgrey w-full"></div>

@@ -967,12 +967,69 @@ export default function ProductDetailPage() {
     locale,
   ]);
 
-  const isOutOfStock =
-    !isAvailableInRegion ||
-    (displayProduct?.stock !== undefined &&
+  const isOutOfStock = useMemo(() => {
+    if (!isAvailableInRegion) return true;
+    if (displayProduct?.isFallback || activeProduct?.isFallback) return true;
+
+    const isHidden = (item) => {
+      if (!item) return false;
+      const v = String(item.visibility || "").toLowerCase().trim();
+      return (
+        v === "hidden" ||
+        v === "false" ||
+        item.visibility === false ||
+        item.is_visible === false
+      );
+    };
+    if (isHidden(displayProduct) || isHidden(activeProduct)) return true;
+
+    if (displayProduct?.in_stock === false) return true;
+    if (
+      displayProduct?.stock !== undefined &&
       displayProduct?.stock !== null &&
-      Number(displayProduct.stock) <= 0) ||
-    displayProduct?.in_stock === false;
+      Number(displayProduct.stock) <= 0
+    ) {
+      return true;
+    }
+
+    if (selectedVariant) {
+      if (selectedVariant.in_stock === false) return true;
+      if (
+        selectedVariant.stock !== undefined &&
+        selectedVariant.stock !== null &&
+        Number(selectedVariant.stock) <= 0
+      ) {
+        return true;
+      }
+      if (isHidden(selectedVariant)) return true;
+    }
+
+    if (familyVariants && familyVariants.length > 0) {
+      const allVariantsOutOfStock = familyVariants.every((v) => {
+        const vStockZero =
+          (v.stock !== undefined &&
+            v.stock !== null &&
+            Number(v.stock) <= 0) ||
+          v.in_stock === false;
+        return vStockZero || isHidden(v);
+      });
+      if (allVariantsOutOfStock) return true;
+    } else {
+      const hasPositiveStock =
+        displayProduct?.stock !== undefined &&
+        displayProduct?.stock !== null &&
+        Number(displayProduct.stock) > 0;
+      if (!hasPositiveStock) return true;
+    }
+
+    return false;
+  }, [
+    isAvailableInRegion,
+    displayProduct,
+    activeProduct,
+    selectedVariant,
+    familyVariants,
+  ]);
   const has3D = false;
 
   const isMorphyBed =
@@ -1596,12 +1653,18 @@ export default function ProductDetailPage() {
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      setIsWaitlistModalOpen(true);
+      return;
+    }
+
     const itemToAdd = {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
       rawId: displayProduct?.id || displayProduct?.rawId || null,
       slug: displayProduct?.slug || productSlug || "",
       title: localizedProductName,
+      stock: displayProduct?.stock ?? null,
       image:
         currentMainImage?.src ||
         displayProduct?.image ||
@@ -1685,7 +1748,7 @@ export default function ProductDetailPage() {
       activeProduct.is_visible === false),
   );
 
-  if (isHiddenProduct || isRegionallyUnavailable) {
+  if (isRegionallyUnavailable) {
     return (
       <div className="bg-wbk-white min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 sm:py-24 text-center font-poppins">
         <Container size="sm">
@@ -2256,7 +2319,17 @@ export default function ProductDetailPage() {
                                 : "text-wbk-brown"
                             }`}
                           >
-                            <span>{item.label}</span>
+                            <span className="flex items-center gap-1.5">
+                              <span>{item.label}</span>
+                              {((item.product?.stock !== undefined &&
+                                item.product?.stock !== null &&
+                                Number(item.product.stock) <= 0) ||
+                                item.product?.in_stock === false) && (
+                                <span className="text-[10px] text-[#B85A53] font-normal">
+                                  ({t("waitlist.outOfStock", "Out of Stock")})
+                                </span>
+                              )}
+                            </span>
                             {item.product && (
                               <span className="text-[11px] text-wbk-brown font-poppins">
                                 {getProductPrice(item.product, locale).display}

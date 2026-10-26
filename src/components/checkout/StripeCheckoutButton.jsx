@@ -34,6 +34,18 @@ export function StripeCheckoutButton({
       return;
     }
 
+    const hasOutOfStock = items.some(
+      (i) =>
+        i.isOutOfStock ||
+        (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+    );
+    if (hasOutOfStock) {
+      setErrorMessage(
+        "One or more items in your cart are currently out of stock. Please remove them from your cart to proceed."
+      );
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage("");
 

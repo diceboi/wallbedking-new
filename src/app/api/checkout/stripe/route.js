@@ -38,6 +38,17 @@ export async function POST(request) {
           locale
         );
 
+        if (valCalc?.hasOutOfStockItems) {
+          const outNames = valCalc.outOfStockItems.map((i) => i.title).join(", ");
+          return NextResponse.json(
+            {
+              error: `Sorry, the following item(s) are currently out of stock or unavailable: ${outNames}. Please remove them from your cart to proceed.`,
+              outOfStock: true,
+            },
+            { status: 400 }
+          );
+        }
+
         if (valCalc?.items && valCalc.items.length > 0) {
           const discountMultiplier = valCalc.subtotal > 0 ? Math.max(0, (valCalc.subtotal - valCalc.discountAmount) / valCalc.subtotal) : 1;
           const recomputed = valCalc.items.map((it) => {

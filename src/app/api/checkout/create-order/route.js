@@ -52,6 +52,18 @@ export async function POST(request) {
     // 1. Server-side validation of prices and totals strictly matching market currency
     const calculation = await validateOrderTotals(items, deliveryOption, promoCode, targetCurrency, locale);
 
+    if (calculation?.hasOutOfStockItems) {
+      const outNames = calculation.outOfStockItems.map((i) => i.title).join(", ");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Sorry, the following item(s) are currently out of stock or unavailable: ${outNames}. Please remove them from your cart to proceed.`,
+          outOfStock: true,
+        },
+        { status: 400 }
+      );
+    }
+
     const customerName = [
       shippingAddress.firstName || customer.firstName || "",
       shippingAddress.lastName || customer.lastName || "",

@@ -32,6 +32,12 @@ export function CartDrawer() {
   } = useCart();
   const { t, formatPrice, localizedHref, locale } = useLocale();
 
+  const hasOutOfStockItems = items.some(
+    (i) =>
+      i.isOutOfStock ||
+      (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+  );
+
   // Prevent background scrolling when cart drawer is open WITHOUT breaking sticky headers
   useEffect(() => {
     if (!isCartOpen) return;
@@ -197,6 +203,14 @@ export function CartDrawer() {
                                 + {t("cart.frontSofa", "Front Sofa")}
                               </span>
                             )}
+                            {(item.isOutOfStock ||
+                              (item.stock !== undefined &&
+                                item.stock !== null &&
+                                Number(item.stock) <= 0)) && (
+                              <span className="text-[10px] bg-red-50 text-red-600 font-semibold px-1.5 py-0.5 border border-red-200">
+                                {t("waitlist.outOfStock", "Out of Stock")}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -260,15 +274,35 @@ export function CartDrawer() {
 
                 {/* Checkout CTA Buttons */}
                 <div className="space-y-2 pt-1">
-                  <Link
-                    href={localizedHref("/checkout")}
-                    onClick={closeCart}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 rounded-full shadow-md group cursor-pointer"
-                  >
-                    <IconLock size={15} />
-                    <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
-                    <IconArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  {hasOutOfStockItems && (
+                    <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-none">
+                      {t(
+                        "cart.hasOutOfStockNotice",
+                        "Please remove out-of-stock item(s) from your cart to proceed to checkout."
+                      )}
+                    </div>
+                  )}
+
+                  {hasOutOfStockItems ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-neutral-300 text-neutral-500 text-xs font-semibold uppercase tracking-[0.16em] rounded-full shadow-none cursor-not-allowed select-none"
+                    >
+                      <IconLock size={15} />
+                      <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href={localizedHref("/checkout")}
+                      onClick={closeCart}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 rounded-full shadow-md group cursor-pointer"
+                    >
+                      <IconLock size={15} />
+                      <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
+                      <IconArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  )}
 
                   <Link
                     href={localizedHref("/cart")}

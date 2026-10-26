@@ -412,6 +412,21 @@ export default function CheckoutPage() {
     if (e && e.preventDefault) e.preventDefault();
     setErrorMessage("");
 
+    const hasOutOfStock = items.some(
+      (i) =>
+        i.isOutOfStock ||
+        (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+    );
+    if (hasOutOfStock) {
+      setErrorMessage(
+        t(
+          "cart.hasOutOfStockNotice",
+          "One or more items in your cart are currently out of stock. Please return to the cart and remove them before placing your order."
+        )
+      );
+      return;
+    }
+
     // Basic validation
     if (
       !formData.email ||

@@ -83,7 +83,15 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
 
   // Render PayPal Buttons when SDK is ready
   useEffect(() => {
-    if (!sdkReady || !containerRef.current || !window.paypal || disabled || items.length === 0) {
+    const hasOutOfStock = items.some(
+      (i) =>
+        i.isOutOfStock ||
+        (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+    );
+    if (!sdkReady || !containerRef.current || !window.paypal || disabled || items.length === 0 || hasOutOfStock) {
+      if (containerRef.current && hasOutOfStock) {
+        containerRef.current.innerHTML = "";
+      }
       return;
     }
 
@@ -129,6 +137,10 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
                 }),
               });
               const valData = await valRes.json();
+              if (valData?.hasOutOfStockItems) {
+                const outNames = (valData.outOfStockItems || []).map((i) => i.title).join(", ");
+                throw new Error(`The following item(s) are currently out of stock: ${outNames}. Please remove them to proceed.`);
+              }
               if (valData?.success && Array.isArray(valData?.items) && valData.items.length > 0) {
                 effectiveItems = valData.items;
                 effectiveShippingVal = Number(valData.shippingAmount) || 0;
@@ -136,6 +148,7 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
               }
             } catch (vErr) {
               console.warn("[PayPal Checkout] Real-time database validation notice:", vErr);
+              throw vErr;
             }
 
             // Calculate precise monetary values in cents to avoid IEEE 754 rounding mismatches

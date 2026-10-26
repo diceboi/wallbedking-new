@@ -152,7 +152,7 @@ export async function validateOrderTotals(
 
         const { data } = await supabaseAdmin
           .from("products")
-          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd")
+          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, in_stock, visibility, is_visible")
           .or(orClauses.join(","))
           .maybeSingle();
 
@@ -226,6 +226,21 @@ export async function validateOrderTotals(
     const itemTotal = unitPrice * qty;
     subtotal += itemTotal;
 
+    const isHidden =
+      prodSource &&
+      (String(prodSource.visibility || "").toLowerCase() === "hidden" ||
+        prodSource.visibility === false ||
+        prodSource.is_visible === false);
+
+    const isStockZero =
+      prodSource &&
+      ((prodSource.stock !== undefined &&
+        prodSource.stock !== null &&
+        Number(prodSource.stock) <= 0) ||
+        prodSource.in_stock === false);
+
+    const isOutOfStock = Boolean(isHidden || isStockZero);
+
     validatedItems.push({
       id: item.id || (numericId ? `wbk-${numericId}` : slug),
       rawId: numericId || item.rawId || item.id,
@@ -236,6 +251,8 @@ export async function validateOrderTotals(
       quantity: qty,
       options: item.options || {},
       itemTotal,
+      isOutOfStock,
+      stock: prodSource?.stock ?? null,
     });
   }
 
@@ -258,8 +275,13 @@ export async function validateOrderTotals(
   const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + shippingAmount) * 100) / 100);
   const vatAmount = Math.round((totalAmount / 6) * 100) / 100; // 20% included UK VAT is 1/6th of gross
 
+  const hasOutOfStockItems = validatedItems.some((it) => it.isOutOfStock);
+  const outOfStockItems = validatedItems.filter((it) => it.isOutOfStock);
+
   return {
     items: validatedItems,
+    hasOutOfStockItems,
+    outOfStockItems,
     subtotal,
     discountAmount,
     promoCode: promo ? normalizedPromo : null,

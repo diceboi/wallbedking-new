@@ -1450,6 +1450,19 @@ export function getDynamicFlagships(templates, rawItems, category) {
         ? Array.from(variantLocalesSet)
         : template.available_locales || allKnownLocales;
 
+    // Compute aggregated stock across matching visible variants
+    const matchingInStockVariants = matching.filter(
+      (m) =>
+        isProductVisible(m) &&
+        (m.stock === undefined || m.stock === null || Number(m.stock) > 0) &&
+        m.in_stock !== false
+    );
+    const totalMatchingStock = matching.reduce(
+      (sum, m) => sum + (Number(m.stock) || 0),
+      0
+    );
+    const flagshipInStock = matchingInStockVariants.length > 0;
+
     return {
       ...template,
       available_locales: dynamicAvailableLocales,
@@ -1483,6 +1496,8 @@ export function getDynamicFlagships(templates, rawItems, category) {
       numericPrice: effectiveStartingPriceGbp,
       price: `from £${effectiveStartingPriceGbp}`,
       sale_percent: dynamicSalePercent,
+      stock: flagshipInStock ? (totalMatchingStock > 0 ? totalMatchingStock : 99) : 0,
+      in_stock: flagshipInStock,
     };
   }).filter(Boolean);
 }
@@ -1922,22 +1937,30 @@ export const findProductBySlug = (
 ) => {
   if (!productSlug) return null;
   const cleanSlug = productSlug.toLowerCase();
-  const flagships = (allFlagships || ALL_FLAGSHIP_PRODUCTS).filter(isProductVisible);
-  const catalog = (rawCatalog || RAW_CATALOG).filter(isProductVisible);
+  const allFlagshipsList = allFlagships || ALL_FLAGSHIP_PRODUCTS;
+  const allCatalogList = rawCatalog || RAW_CATALOG;
 
-  // 1. Exact match or alias match against ALL Flagship products (beds, sofas, mattresses, cabinets)
-  const flagshipMatch = flagships.find(
+  // 1. Exact match or alias match against ALL Flagship products (checking visible first, then all)
+  let flagshipMatch = allFlagshipsList.find(
     (f) =>
-      f.slug === cleanSlug ||
-      (f.aliases && f.aliases.some((a) => a.toLowerCase() === cleanSlug))
+      isProductVisible(f) &&
+      (f.slug === cleanSlug ||
+        (f.aliases && f.aliases.some((a) => a.toLowerCase() === cleanSlug)))
   );
+  if (!flagshipMatch) {
+    flagshipMatch = allFlagshipsList.find(
+      (f) =>
+        f.slug === cleanSlug ||
+        (f.aliases && f.aliases.some((a) => a.toLowerCase() === cleanSlug))
+    );
+  }
   if (flagshipMatch) {
     return { ...flagshipMatch };
   }
 
   // 2. Special backward compatibility alias for integrated-bed
   if (cleanSlug === "integrated-bed") {
-    const integratedFlagship = flagships.find(
+    const integratedFlagship = allFlagshipsList.find(
       (f) => f.slug === "integrated-vertical-wall-bed"
     );
     if (integratedFlagship) {
@@ -1945,22 +1968,40 @@ export const findProductBySlug = (
     }
   }
 
-  // 3. Search by exact slug or match in catalog
-  const rawItem = catalog.find(
+  // 3. Search by exact slug or match in catalog (checking visible first, then all)
+  let rawItem = allCatalogList.find(
     (p) =>
-      p.slug === cleanSlug ||
-      String(p.id) === cleanSlug ||
-      `wbk-${p.id}` === cleanSlug
+      isProductVisible(p) &&
+      (p.slug === cleanSlug ||
+        String(p.id) === cleanSlug ||
+        `wbk-${p.id}` === cleanSlug)
   );
+  if (!rawItem) {
+    rawItem = allCatalogList.find(
+      (p) =>
+        p.slug === cleanSlug ||
+        String(p.id) === cleanSlug ||
+        `wbk-${p.id}` === cleanSlug
+    );
+  }
 
   if (rawItem) {
     return formatCatalogItem(rawItem);
   }
 
-  // 4. Substring match
-  const subMatch = catalog.find(
-    (p) => p.slug && (p.slug.includes(cleanSlug) || cleanSlug.includes(p.slug))
+  // 4. Substring match (checking visible first, then all)
+  let subMatch = allCatalogList.find(
+    (p) =>
+      isProductVisible(p) &&
+      p.slug &&
+      (p.slug.includes(cleanSlug) || cleanSlug.includes(p.slug))
   );
+  if (!subMatch) {
+    subMatch = allCatalogList.find(
+      (p) =>
+        p.slug && (p.slug.includes(cleanSlug) || cleanSlug.includes(p.slug))
+    );
+  }
   if (subMatch) {
     return formatCatalogItem(subMatch);
   }
@@ -2073,12 +2114,18 @@ export const getFallbackProduct = (categorySlug, productSlug) => {
 
   return {
     id: cleanSlug,
-    rawId: 1,
+    rawId: null,
     slug: cleanSlug,
     title: title,
     name: title,
     price: "£799",
     numericPrice: 799,
+    stock: 0,
+    in_stock: false,
+    isOutOfStock: true,
+    visibility: "Hidden",
+    is_visible: false,
+    isFallback: true,
     has3D: isIntegrated,
     image: isIntegrated
       ? "/product-images/morphy-integrated/160x200.jpg"

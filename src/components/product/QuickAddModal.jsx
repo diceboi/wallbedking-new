@@ -184,11 +184,36 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     Number(product?.price_gbp) ||
     0;
   const totalPrice = unitPrice * quantity;
-  const isOutOfStock =
+  const isHiddenProd = (item) => {
+    if (!item) return false;
+    const v = String(item.visibility || "").toLowerCase().trim();
+    return (
+      v === "hidden" ||
+      v === "false" ||
+      item.visibility === false ||
+      item.is_visible === false
+    );
+  };
+
+  const isOutOfStock = Boolean(
     (activeProduct?.stock !== undefined &&
       activeProduct?.stock !== null &&
       Number(activeProduct.stock) <= 0) ||
-    activeProduct?.in_stock === false;
+      activeProduct?.in_stock === false ||
+      isHiddenProd(activeProduct) ||
+      isHiddenProd(product) ||
+      (variants.length > 0 &&
+        variants.every(
+          (v) =>
+            (v.stock !== undefined &&
+              v.stock !== null &&
+              Number(v.stock) <= 0) ||
+            v.in_stock === false ||
+            isHiddenProd(v)
+        )) ||
+      (variants.length === 0 &&
+        (!activeProduct?.stock || Number(activeProduct?.stock) <= 0))
+  );
 
   const handleSelectSize = (variant) => {
     setSelectedVariant(variant);
