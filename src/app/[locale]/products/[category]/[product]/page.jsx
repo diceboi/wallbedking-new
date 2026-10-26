@@ -54,6 +54,7 @@ import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
+import { BundleComponentsBreakdown } from "@/components/product/BundleComponentsBreakdown";
 import {
   isProductAvailableInLocale,
   getLocalizedProductName,
@@ -2075,8 +2076,14 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Dropdowns */}
-              <div className="space-y-3" ref={dropdownsRef}>
+              {/* Dropdowns or Bundle Breakdown */}
+              {displayProduct?.is_bundle ? (
+                <BundleComponentsBreakdown
+                  bundle={displayProduct}
+                  selectedCurrency={locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR"}
+                />
+              ) : (
+                <div className="space-y-3" ref={dropdownsRef}>
                 {/* Format / Orientation */}
                 {availableFormats.length > 0 && (
                   <div className="relative">
@@ -2463,6 +2470,7 @@ export default function ProductDetailPage() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* ── DESKTOP ADD TO CART & PRICING BLOCK (Desktop only, hidden on mobile) ── */}
               <div

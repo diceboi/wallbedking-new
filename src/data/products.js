@@ -1,5 +1,6 @@
 // Central Product & Category Catalog for WallBedKing
 import catalog from './products-catalog.json';
+import bundlesCatalog from './bundles.json';
 
 export const RAW_CATALOG = catalog;
 
@@ -1706,6 +1707,86 @@ export const DYNAMIC_FLAGSHIP_MATTRESSES = getDynamicFlagshipMattresses(RAW_CATA
 export const DYNAMIC_FLAGSHIP_CABINETS = getDynamicFlagshipCabinets(RAW_CATALOG);
 export const DYNAMIC_FLAGSHIP_EXTRAS = getDynamicFlagshipExtras(RAW_CATALOG);
 
+export const formatBundleItem = (bundle, rawCatalog = RAW_CATALOG) => {
+  const items = (bundle.items || []).map((it) => {
+    const prod = rawCatalog.find((p) => p.id === it.product_id || p.id === Number(it.product_id));
+    return {
+      ...it,
+      product: prod ? formatCatalogItem(prod) : null,
+    };
+  });
+
+  let subtotal_gbp = 0;
+  let subtotal_euro = 0;
+  let subtotal_usd = 0;
+  let minStock = Infinity;
+
+  for (const it of items) {
+    const p = it.product;
+    const qty = it.quantity || 1;
+    if (p) {
+      subtotal_gbp += (Number(p.price_gbp) || p.numericPrice || 0) * qty;
+      subtotal_euro += (Number(p.price_euro) || p.numericPrice || 0) * qty;
+      subtotal_usd += (Number(p.price_usd) || p.numericPrice || 0) * qty;
+      const stock = Number(p.stock ?? 0);
+      if (stock < minStock) minStock = stock;
+    }
+  }
+
+  if (minStock === Infinity) minStock = 0;
+
+  const discountPercent = Number(bundle.discount_percent || 10);
+  const price_gbp = Math.round(subtotal_gbp * (1 - discountPercent / 100));
+  const price_euro = Math.round(subtotal_euro * (1 - discountPercent / 100));
+  const price_usd = Math.round(subtotal_usd * (1 - discountPercent / 100));
+
+  const gallery = Array.isArray(bundle.product_images) && bundle.product_images.length > 0
+    ? bundle.product_images.map((src, i) => ({ src, alt: `${bundle.name} - View ${i + 1}` }))
+    : [
+        { src: bundle.image, alt: bundle.name },
+        { src: bundle.hover_image || bundle.image, alt: `${bundle.name} Details` },
+      ];
+
+  return {
+    ...bundle,
+    id: `bundle-${bundle.id}`,
+    rawId: bundle.id,
+    title: bundle.name,
+    image: bundle.image,
+    hoverImage: bundle.hover_image || bundle.image,
+    hover_image: bundle.hover_image || bundle.image,
+    link: `/products/bundles/${bundle.slug}`,
+    categoryKey: "bundles",
+    parent_category: "bundles",
+    sub_category: bundle.sub_category || "Classic+ Packages",
+    badge: bundle.badge || "Classic+ Package • 10% Off",
+    price: `£${price_gbp}`,
+    numericPrice: price_gbp,
+    salePrice: null,
+    regularPrice: subtotal_gbp,
+    price_gbp,
+    price_euro,
+    price_usd,
+    sale_price_gbp: null,
+    sale_price_euro: null,
+    sale_price_usd: null,
+    subtotal_gbp,
+    subtotal_euro,
+    subtotal_usd,
+    stock: minStock,
+    is_bundle: true,
+    bundle_items: items,
+    items,
+    gallery,
+    product_images: bundle.product_images || [bundle.image],
+    available_locales: bundle.available_locales || ["en", "us", "de", "fr", "es", "por", "it"],
+    tags: Array.isArray(bundle.tags) ? bundle.tags : ["bundle"],
+    features: Array.isArray(bundle.features) ? bundle.features : [],
+  };
+};
+
+export const DYNAMIC_FLAGSHIP_BUNDLES = (bundlesCatalog || []).map((b) => formatBundleItem(b, RAW_CATALOG));
+
 export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_BEDS,
   ...DYNAMIC_FLAGSHIP_SOFAS,
@@ -1713,6 +1794,7 @@ export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_MATTRESSES,
   ...DYNAMIC_FLAGSHIP_CABINETS,
   ...DYNAMIC_FLAGSHIP_EXTRAS,
+  ...DYNAMIC_FLAGSHIP_BUNDLES,
 ];
 
 // All bed variants for internal lookups and configurator sizing
@@ -1733,6 +1815,7 @@ export const ALL_PRODUCTS = {
   mattresses: DYNAMIC_FLAGSHIP_MATTRESSES,
   cabinets: DYNAMIC_FLAGSHIP_CABINETS,
   extras: DYNAMIC_FLAGSHIP_EXTRAS,
+  bundles: DYNAMIC_FLAGSHIP_BUNDLES,
 };
 
 /**
@@ -1749,6 +1832,8 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
   const dynamicFlagshipCabinets = getDynamicFlagshipCabinets(visibleItems);
   const dynamicFlagshipExtras = getDynamicFlagshipExtras(visibleItems);
 
+  const dynamicBundles = (bundlesCatalog || []).map((b) => formatBundleItem(b, visibleItems));
+
   const allFlagships = [
     ...dynamicFlagshipBeds,
     ...dynamicFlagshipSofas,
@@ -1756,6 +1841,7 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
     ...dynamicFlagshipMattresses,
     ...dynamicFlagshipCabinets,
     ...dynamicFlagshipExtras,
+    ...dynamicBundles,
   ];
 
   const dynamicFlagshipMorphyBeds = dynamicFlagshipBeds.filter((b) => b.isMorphy);
@@ -1781,6 +1867,7 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
     mattresses: dynamicFlagshipMattresses,
     cabinets: dynamicFlagshipCabinets,
     extras: dynamicFlagshipExtras,
+    bundles: dynamicBundles,
   };
 
   const allBedVariants = visibleItems
@@ -1951,6 +2038,18 @@ export const findProductBySlug = (
   const allFlagshipsList = allFlagships || ALL_FLAGSHIP_PRODUCTS;
   const allCatalogList = rawCatalog || RAW_CATALOG;
 
+  // 0. Check Bundles if category is bundles or slug matches a bundle
+  const bundleMatch = DYNAMIC_FLAGSHIP_BUNDLES.find(
+    (b) =>
+      b.slug === cleanSlug ||
+      String(b.rawId) === cleanSlug ||
+      `wbk-${b.rawId}` === cleanSlug ||
+      `bundle-${b.rawId}` === cleanSlug
+  );
+  if (bundleMatch) {
+    return { ...bundleMatch };
+  }
+
   // 1. Exact match or alias match against ALL Flagship products (checking visible first, then all)
   let flagshipMatch = allFlagshipsList.find(
     (f) =>
@@ -2023,6 +2122,9 @@ export const findProductBySlug = (
 // Get all matching variant items for the same family/model
 export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => {
   if (!currentProduct) return [];
+  if (currentProduct.is_bundle || currentProduct.parent_category === "bundles") {
+    return [currentProduct];
+  }
   const catalog = rawCatalog || RAW_CATALOG;
   const parentCat = currentProduct.parent_category || "beds";
   const type = currentProduct.type || "Classic";
