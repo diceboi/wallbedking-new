@@ -6,7 +6,10 @@ import { sendOrderConfirmationEmail } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const stripeSecretKey =
+    process.env.STRIPE_SECRET_KEY ||
+    process.env.STRIPE_SECRET_KEY_UK ||
+    process.env.STRIPE_SECRET_KEY_EU;
   const webhookSecrets = [
     process.env.STRIPE_WEBHOOK_SECRET,
     process.env.STRIPE_WEBHOOK_SECRET_UK,

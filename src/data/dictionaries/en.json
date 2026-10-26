@@ -9,7 +9,10 @@
     "installation": "Installation",
     "reviews": "Reviews",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "trade": "Trade",
+    "tradeFull": "Trade Customers",
+    "caseStudies": "Case Studies"
   },
   "nav": {
     "beds": "Wall Beds",
@@ -39,7 +42,9 @@
     "contact": "Contact",
     "categoryOverview": "Category Overview",
     "exploreAll": "Explore all models",
-    "from": "from"
+    "from": "from",
+    "trade": "Trade Customers",
+    "caseStudies": "Case Studies"
   },
   "header": {
     "searchPlaceholder": "Search wall beds, sofas, mattresses...",
@@ -866,5 +871,39 @@
     "noResults": "No products found matching your search.",
     "tryAdjusting": "Try checking the spelling or adjust your filters to see more results.",
     "clearFilters": "Clear all filters"
+  },
+  "tradePage": {
+    "heroBadge": "European Engineering & Commercial Partnerships",
+    "heroTitle": "The Smart Space Partner for Trade Professionals",
+    "heroSubtitle": "Unlock hidden value in every square metre. Precision-engineered Murphy beds for hotels, developers, cabinet makers, healthcare facilities, and commercial residential projects.",
+    "requestQuote": "Request a Trade Quote",
+    "exploreSectors": "Explore Trade Sectors",
+    "viewCaseStudies": "View Case Studies",
+    "pillarsBadge": "Why Trade Partners Choose Us",
+    "pillarsTitle": "Engineered for Commercial Reliability",
+    "sectorsBadge": "Commercial Applications",
+    "sectorsTitle": "Sectors We Specialize In",
+    "formBadge": "Direct B2B Inquiry",
+    "formTitle": "Start Your Trade Partnership",
+    "formSubtitle": "Contact our commercial team to discuss project requirements, volume pricing, or request technical CAD packages.",
+    "formName": "Full Name",
+    "formCompany": "Company / Organization",
+    "formEmail": "Work Email",
+    "formPhone": "Phone Number",
+    "formSector": "Project Sector / Type",
+    "formUnits": "Estimated Units",
+    "formMessage": "Project Details & Requirements",
+    "formSubmit": "Send Trade Inquiry",
+    "formSubmitting": "Submitting...",
+    "formSuccess": "Thank you! Our commercial team will review your project and get back to you within 24 hours.",
+    "formError": "Failed to send inquiry. Please try again or email us directly at trade@wallbedking.com"
+  },
+  "caseStudiesPage": {
+    "heroBadge": "Commercial Projects & Proven Results",
+    "heroTitle": "Trade Customer Case Studies",
+    "heroSubtitle": "Discover how architects, developers, public services, and boutique hospitality providers transform spaces and maximise ROI with Wall Bed King.",
+    "quoteBanner": "Transforming Spaces with Precision Engineering",
+    "startProjectCta": "Ready to discuss your commercial project?",
+    "contactTrade": "Contact Trade Team"
   }
 }

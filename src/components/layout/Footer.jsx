@@ -25,6 +25,8 @@ const FOOTER_LINKS = {
   ],
   Company: [
     { label: "About Us",            href: "/about", id: "about" },
+    { label: "Trade Customers",     href: "/trade", id: "trade" },
+    { label: "Case Studies",        href: "/case-studies", id: "caseStudies" },
     { label: "Contact & Showroom",  href: "/contact", id: "contact" },
     { label: "Customer Reviews",    href: "/reviews", id: "reviews" },
     { label: "Terms of Service",    href: "/terms", id: "terms" },

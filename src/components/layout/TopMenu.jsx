@@ -68,6 +68,20 @@ export function TopMenu() {
           </Link>
           <span className="text-white/20">|</span>
           <Link
+            href={localizedHref("/trade")}
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
+          >
+            {t("topbar.trade", "Trade")}
+          </Link>
+          <span className="text-white/20">|</span>
+          <Link
+            href={localizedHref("/case-studies")}
+            className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
+          >
+            {t("topbar.caseStudies", "Case Studies")}
+          </Link>
+          <span className="text-white/20">|</span>
+          <Link
             href={localizedHref("/reviews")}
             className="text-[#A5988E] hover:text-wbk-white transition-colors duration-150 cursor-pointer"
           >

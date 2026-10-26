@@ -27,7 +27,9 @@
     "allMorphyBeds": "Todas las Camas MORPHY™",
     "allTraditionalBeds": "Todas las Camas Tradicionales",
     "allMorphyTagline": "Descubrir todos los modelos MORPHY™",
-    "allTraditionalTagline": "Descubrir los modelos clásicos abatibles"
+    "allTraditionalTagline": "Descubrir los modelos clásicos abatibles",
+    "trade": "Clientes Profesionales",
+    "caseStudies": "Casos de estudio"
   },
   "header": {
     "searchPlaceholder": "Buscar camas abatibles, sofás, colchones...",
@@ -379,16 +381,19 @@
     "cookies": "Preferencias de cookies"
   },
   "topbar": {
-    "freeDelivery": "Envío Gratuito",
+    "freeDelivery": "Envío gratuito a España",
     "freeDeliveryShort": "Envío Gratis",
-    "warranty": "Garantía de Mecanismo de por Vida",
-    "precision": "Mecanismos de Alta Precisión",
-    "delivery": "Envío y Entrega",
+    "warranty": "Garantía de mecanismo de por vida",
+    "precision": "Mecanismos de ingeniería de precisión",
+    "delivery": "Envío & Entrega",
     "faq": "Preguntas Frecuentes",
     "installation": "Instalación",
     "reviews": "Opiniones",
-    "about": "Nosotros",
-    "contact": "Contacto"
+    "about": "Sobre nosotros",
+    "contact": "Contacto",
+    "trade": "Profesionales",
+    "tradeFull": "Clientes Profesionales",
+    "caseStudies": "Casos de estudio"
   },
   "auth": {
     "recoveryBadge": "Recuperación de contraseña",
@@ -583,5 +588,39 @@
     "backToProfile": "Volver al menú de perfil",
     "items": "artículos",
     "item": "artículo"
+  },
+  "tradePage": {
+    "heroBadge": "Ingeniería europea y soluciones comerciales",
+    "heroTitle": "El socio inteligente para la optimización del espacio",
+    "heroSubtitle": "Descubra el valor oculto de cada metro cuadrado. Camas abatibles de precisión para hoteles, promotores, carpinteros, residencias y proyectos a medida.",
+    "requestQuote": "Solicitar presupuesto pro",
+    "exploreSectors": "Ver sectores",
+    "viewCaseStudies": "Ver casos de estudio",
+    "pillarsBadge": "Ventajas profesionales",
+    "pillarsTitle": "Diseñado para uso comercial intensivo",
+    "sectorsBadge": "Sectores comerciales",
+    "sectorsTitle": "Sectores en los que nos especializamos",
+    "formBadge": "Consulta B2B directa",
+    "formTitle": "Inicie su colaboración profesional",
+    "formSubtitle": "Contacte con nuestro equipo comercial para requisitos de proyecto, precios por volumen o planos CAD.",
+    "formName": "Nombre completo",
+    "formCompany": "Empresa / Entidad",
+    "formEmail": "Email corporativo",
+    "formPhone": "Teléfono",
+    "formSector": "Sector del proyecto",
+    "formUnits": "Unidades estimadas",
+    "formMessage": "Detalles del proyecto",
+    "formSubmit": "Enviar consulta profesional",
+    "formSubmitting": "Enviando...",
+    "formSuccess": "¡Gracias! Nuestro equipo comercial responderá a su consulta en menos de 24 horas.",
+    "formError": "Error al enviar. Contáctenos directamente en support@wallbedking.com"
+  },
+  "caseStudiesPage": {
+    "heroBadge": "Proyectos comerciales y resultados comprobados",
+    "heroTitle": "Casos de estudio de clientes profesionales",
+    "heroSubtitle": "Descubra cómo arquitectos, promotores y profesionales de la hostelería rentabilizan sus espacios con Wall Bed King.",
+    "quoteBanner": "Espacios maximizados con ingeniería europea",
+    "startProjectCta": "¿Preparado para iniciar su proyecto comercial?",
+    "contactTrade": "Contactar con el equipo comercial"
   }
 }

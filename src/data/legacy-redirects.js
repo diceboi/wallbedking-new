@@ -24,9 +24,9 @@ const COM_LEGACY_REDIRECTS = {
   "/de/terms-conditions": "/de/terms",
   "/de/impressum": "/de/ueber-uns",
   "/de/about": "/de/ueber-uns",
-  "/de/gewerbe": "/de/ueber-uns",
-  "/de/kommerzkunden": "/de/ueber-uns",
-  "/de/fallbeispiele": "/de/ueber-uns",
+  "/de/gewerbe": "/de/gewerbekunden",
+  "/de/kommerzkunden": "/de/gewerbekunden",
+  "/de/fallbeispiele": "/de/fallbeispiele",
   "/de/reviews": "/de/bewertungen",
   "/de/faq": "/de/support/faq",
   "/de/haufig-gestellte-fragen": "/de/support/faq",
@@ -54,8 +54,8 @@ const COM_LEGACY_REDIRECTS = {
   "/fr/terms-conditions": "/fr/terms",
   "/fr/apropos": "/fr/a-propos",
   "/fr/about": "/fr/a-propos",
-  "/fr/professionnels": "/fr/a-propos",
-  "/fr/etudes-cas": "/fr/a-propos",
+  "/fr/professionnels": "/fr/professionnels",
+  "/fr/etudes-cas": "/fr/etudes-cas",
   "/fr/reviews": "/fr/avis",
   "/fr/questions-frequentes": "/fr/support/faq",
   "/fr/faq": "/fr/support/faq",
@@ -78,9 +78,9 @@ const COM_LEGACY_REDIRECTS = {
   "/es/terminos-condiciones": "/es/terms",
   "/es/terms-conditions": "/es/terms",
   "/es/términos-condiciones": "/es/terms",
-  "/es/profesionales": "/es/sobre-nosotros",
-  "/es/clientes-comerciales": "/es/sobre-nosotros",
-  "/es/casos-particulares": "/es/sobre-nosotros",
+  "/es/profesionales": "/es/clientes-comerciales",
+  "/es/clientes-comerciales": "/es/clientes-comerciales",
+  "/es/casos-particulares": "/es/casos-estudio",
   "/es/preguntas-frecuentes": "/es/support/preguntas-frecuentes",
   "/es/entrega": "/es/support/envio",
   "/es/privacidad": "/es/privacy",
@@ -104,9 +104,9 @@ const COM_LEGACY_REDIRECTS = {
   "/it/termini-condizioni": "/it/terms",
   "/it/termini e condizioni": "/it/terms",
   "/it/terms-conditions": "/it/terms",
-  "/it/rivenditori": "/it/chi-siamo",
-  "/it/commercio": "/it/chi-siamo",
-  "/it/casi-specifici": "/it/chi-siamo",
+  "/it/rivenditori": "/it/commercio",
+  "/it/commercio": "/it/commercio",
+  "/it/casi-specifici": "/it/casi-studio",
   "/it/contact": "/it/contatti",
   "/it/domande-frequenti": "/it/support/domande-frequenti",
   "/it/consegna": "/it/support/spedizione",
@@ -131,9 +131,9 @@ const COM_LEGACY_REDIRECTS = {
   "/pt/feedvcwpt": "/por/products/camas-rebativeis",
   "/pt/termos-condicoes": "/por/terms",
   "/pt/terms-conditions": "/por/terms",
-  "/pt/profissionais": "/por/sobre-nos",
-  "/pt/clientes-comerciais": "/por/sobre-nos",
-  "/pt/analise-casos": "/por/sobre-nos",
+  "/pt/profissionais": "/por/clientes-comerciais",
+  "/pt/clientes-comerciais": "/por/clientes-comerciais",
+  "/pt/analise-casos": "/por/estudos-caso",
   "/pt/contacto": "/por/contacto",
   "/pt/comentarios": "/por/avaliacoes",
   "/pt/faq": "/por/support/perguntas-frequentes",
@@ -156,9 +156,9 @@ const COM_LEGACY_REDIRECTS = {
   "/por/recondicionados": "/por/products/camas-rebativeis",
   "/por/termos-condicoes": "/por/terms",
   "/por/terms-conditions": "/por/terms",
-  "/por/profissionais": "/por/sobre-nos",
-  "/por/clientes-comerciais": "/por/sobre-nos",
-  "/por/analise-casos": "/por/sobre-nos",
+  "/por/profissionais": "/por/clientes-comerciais",
+  "/por/clientes-comerciais": "/por/clientes-comerciais",
+  "/por/analise-casos": "/por/estudos-caso",
   "/por/cesta": "/por/cart",
   "/por/faq": "/por/support/perguntas-frequentes",
   "/por/entrega": "/por/support/envio",
@@ -185,6 +185,8 @@ const COM_LEGACY_REDIRECTS = {
   "/clearance": "/de/products/schrankbetten",
   "/delivery": "/de/support/delivery",
   "/faq": "/de/support/faq",
+  "/trade": "/de/gewerbekunden",
+  "/case-studies": "/de/fallbeispiele",
   "/contact": "/de/contact",
   "/feedback": "/de/bewertungen",
   "/reviews": "/de/bewertungen",
@@ -223,8 +225,8 @@ const UK_LEGACY_REDIRECTS = {
   "/morphy-plus": "/en/products/beds?collection=morphy",
   "/refurbished": "/en/products/beds",
   "/reasons-buy": "/en/about",
-  "/trade": "/en/about",
-  "/case-studies": "/en/about",
+  "/trade": "/en/trade",
+  "/case-studies": "/en/case-studies",
   "/sitemap": "/en",
   "/sofa-configurator": "/en/configurator",
   "/coronavirus-covid-19": "/en",
@@ -352,15 +354,13 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
   }
 
   // Safety guard: NEVER redirect to the exact same URL (prevents ERR_TOO_MANY_REDIRECTS)
-  if (
-    !target ||
+  const isSelf =
     target === rawPath ||
-    target === normalized ||
-    target === `${normalized}/` ||
-    `${target}/` === normalized ||
     target === `${rawPath}/` ||
-    `${target}/` === rawPath
-  ) {
+    `${target}/` === rawPath ||
+    (target === normalized && (rawPath === normalized || rawPath === `${normalized}/`));
+
+  if (!target || isSelf) {
     return null;
   }
 

@@ -27,7 +27,9 @@
     "allMorphyBeds": "Tous les Lits MORPHY™",
     "allTraditionalBeds": "Tous les Lits Traditionnels",
     "allMorphyTagline": "Découvrir tous les modèles MORPHY™",
-    "allTraditionalTagline": "Découvrir les lits escamotables classiques"
+    "allTraditionalTagline": "Découvrir les lits escamotables classiques",
+    "trade": "Professionnels",
+    "caseStudies": "Études de cas"
   },
   "header": {
     "searchPlaceholder": "Rechercher lits escamotables, canapés, matelas...",
@@ -532,16 +534,19 @@
     "reviews": "Avis clients"
   },
   "topbar": {
-    "freeDelivery": "Livraison Gratuite",
+    "freeDelivery": "Livraison gratuite en France",
     "freeDeliveryShort": "Livraison Gratuite",
-    "warranty": "Garantie Mécanisme à Vie",
-    "precision": "Mécanismes de Haute Précision",
+    "warranty": "Garantie mécanisme à vie",
+    "precision": "Mécanismes de haute précision",
     "delivery": "Livraison & Expédition",
     "faq": "FAQ",
     "installation": "Installation",
-    "reviews": "Avis",
+    "reviews": "Avis clients",
     "about": "À propos",
-    "contact": "Contact"
+    "contact": "Contact",
+    "trade": "Professionnels",
+    "tradeFull": "Professionnels",
+    "caseStudies": "Études de cas"
   },
   "auth": {
     "recoveryBadge": "Récupération du mot de passe",
@@ -825,5 +830,39 @@
     "backToProfile": "Retour au menu profil",
     "items": "articles",
     "item": "article"
+  },
+  "tradePage": {
+    "heroBadge": "Ingénierie européenne & partenariats professionnels",
+    "heroTitle": "Le partenaire intelligent de l’optimisation de l’espace",
+    "heroSubtitle": "Révélez la valeur cachée de chaque mètre carré. Lits escamotables de précision pour hôtels, promoteurs, menuisiers, établissements de santé et projets sur mesure.",
+    "requestQuote": "Demander un devis professionnel",
+    "exploreSectors": "Découvrir les secteurs",
+    "viewCaseStudies": "Voir les études de cas",
+    "pillarsBadge": "Pourquoi choisir Wall Bed King",
+    "pillarsTitle": "Conçu pour les exigences des professionnels",
+    "sectorsBadge": "Applications commerciales",
+    "sectorsTitle": "Nos secteurs d’expertise",
+    "formBadge": "Demande directe B2B",
+    "formTitle": "Devenez partenaire Wall Bed King",
+    "formSubtitle": "Contactez notre équipe dédiée aux professionnels pour discuter de votre projet, demander des tarifs volume ou des fichiers CAD.",
+    "formName": "Nom complet",
+    "formCompany": "Société / Organisation",
+    "formEmail": "Email professionnel",
+    "formPhone": "Numéro de téléphone",
+    "formSector": "Secteur d'activité",
+    "formUnits": "Quantité estimée",
+    "formMessage": "Détails et spécifications du projet",
+    "formSubmit": "Envoyer la demande pro",
+    "formSubmitting": "Envoi en cours...",
+    "formSuccess": "Merci ! Notre équipe dédiée vous contactera sous 24 heures ouvrées.",
+    "formError": "Échec de l'envoi. Veuillez nous contacter directement à support@wallbedking.com"
+  },
+  "caseStudiesPage": {
+    "heroBadge": "Projets professionnels & retours d'expérience",
+    "heroTitle": "Études de cas clients professionnels",
+    "heroSubtitle": "Découvrez comment architectes, promoteurs, services d'urgence et gestionnaires hôteliers optimisent chaque mètre carré avec Wall Bed King.",
+    "quoteBanner": "Optimisation des espaces par l'ingénierie de précision",
+    "startProjectCta": "Prêt à collaborer sur votre prochain projet ?",
+    "contactTrade": "Contacter l'équipe pro"
   }
 }

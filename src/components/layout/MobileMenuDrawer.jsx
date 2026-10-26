@@ -16,6 +16,8 @@ import {
   IconTools,
   IconWorld,
   IconHelpCircle,
+  IconBriefcase,
+  IconFileText,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
@@ -331,8 +333,28 @@ export function MobileMenuDrawer() {
                       </Link>
                     </div>
 
+                    {/* Trade & Commercial B2B Links */}
+                    <div className="grid grid-cols-2 divide-x divide-wbk-lightgrey border-t border-b border-wbk-lightgrey/80 bg-[#FAF8F6]">
+                      <Link
+                        href={localizedHref("/trade")}
+                        onClick={closeMobileMenu}
+                        className="py-3 px-2 text-center text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <IconBriefcase size={14} className="text-wbk-gold shrink-0" strokeWidth={1.75} />
+                        <span className="truncate">{t("topbar.tradeFull", "Trade Customers")}</span>
+                      </Link>
+                      <Link
+                        href={localizedHref("/case-studies")}
+                        onClick={closeMobileMenu}
+                        className="py-3 px-2 text-center text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <IconFileText size={14} className="text-wbk-gold shrink-0" strokeWidth={1.75} />
+                        <span className="truncate">{t("topbar.caseStudies", "Case Studies")}</span>
+                      </Link>
+                    </div>
+
                     {/* Secondary Information & Support Links */}
-                    <div className="px-4 py-3 bg-[#FBF9F8] border-t border-wbk-lightgrey flex items-center justify-around text-xs text-wbk-brown font-medium">
+                    <div className="px-4 py-3 bg-[#FBF9F8] flex items-center justify-around text-xs text-wbk-brown font-medium">
                       <Link
                         href={localizedHref("/support/delivery")}
                         onClick={closeMobileMenu}
@@ -343,11 +365,19 @@ export function MobileMenuDrawer() {
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link
-                        href={localizedHref("/support/faq")}
+                        href={localizedHref("/reviews")}
                         onClick={closeMobileMenu}
                         className="hover:text-wbk-black transition-colors py-1"
                       >
-                        {t("topbar.faq", "FAQ")}
+                        {t("topbar.reviews", "Reviews")}
+                      </Link>
+                      <span className="text-wbk-lightgrey">|</span>
+                      <Link
+                        href={localizedHref("/about")}
+                        onClick={closeMobileMenu}
+                        className="hover:text-wbk-black transition-colors py-1"
+                      >
+                        {t("topbar.about", "About")}
                       </Link>
                       <span className="text-wbk-lightgrey">|</span>
                       <Link

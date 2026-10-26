@@ -27,7 +27,9 @@
     "allMorphyBeds": "Alle MORPHY™ Betten",
     "allTraditionalBeds": "Alle klassischen Betten",
     "allMorphyTagline": "Alle MORPHY™ Modelle entdecken",
-    "allTraditionalTagline": "Klassische Schrankbett-Modelle entdecken"
+    "allTraditionalTagline": "Klassische Schrankbett-Modelle entdecken",
+    "trade": "Gewerbekunden",
+    "caseStudies": "Fallbeispiele"
   },
   "header": {
     "searchPlaceholder": "Schrankbetten, Sofas, Matratzen suchen...",
@@ -379,16 +381,19 @@
     "cookies": "Cookie-Einstellungen"
   },
   "topbar": {
-    "freeDelivery": "Kostenlose Lieferung",
+    "freeDelivery": "Kostenlose EU-Lieferung",
     "freeDeliveryShort": "Gratis Versand",
-    "warranty": "Lebenslange Mechanik-Garantie",
-    "precision": "Präzisionsgefertigte Mechanik",
+    "warranty": "Lebenslange Mechanismen-Garantie",
+    "precision": "Präzisionsgefertigte Mechanismen",
     "delivery": "Lieferung & Versand",
     "faq": "FAQ",
     "installation": "Montage",
     "reviews": "Bewertungen",
     "about": "Über uns",
-    "contact": "Kontakt"
+    "contact": "Kontakt",
+    "trade": "Gewerbe",
+    "tradeFull": "Gewerbekunden",
+    "caseStudies": "Fallbeispiele"
   },
   "auth": {
     "recoveryBadge": "Passwort-Wiederherstellung",
@@ -583,5 +588,39 @@
     "backToProfile": "Zurück zum Profilmenü",
     "items": "Artikel",
     "item": "Artikel"
+  },
+  "tradePage": {
+    "heroBadge": "Deutsche & Europäische Ingenieurskunst für Gewerbepartner",
+    "heroTitle": "Ihr Partner für intelligente Raumoptimierung",
+    "heroSubtitle": "Erschließen Sie den verborgenen Wert jedes Quadratmeters. Präzisionsgefertigte Schrankbetten für Hotels, Projektentwickler, Schreiner, Pflegeeinrichtungen und individuelle Bauprojekte.",
+    "requestQuote": "Gewerbeangebot anfordern",
+    "exploreSectors": "Branchen entdecken",
+    "viewCaseStudies": "Fallbeispiele ansehen",
+    "pillarsBadge": "Ihre Vorteile als Gewerbepartner",
+    "pillarsTitle": "Konstruiert für gewerbliche Höchstbelastung",
+    "sectorsBadge": "Gewerbliche Einsatzbereiche",
+    "sectorsTitle": "Branchen, auf die wir spezialisiert sind",
+    "formBadge": "Direkte B2B-Anfrage",
+    "formTitle": "Starten Sie Ihre Gewerbepartnerschaft",
+    "formSubtitle": "Kontaktieren Sie unser Gewerbeteam für Projektanforderungen, Mengenrabatte oder CAD-Zeichnungen.",
+    "formName": "Vollständiger Name",
+    "formCompany": "Unternehmen / Organisation",
+    "formEmail": "Geschäftliche E-Mail",
+    "formPhone": "Telefonnummer",
+    "formSector": "Projektbereich / Branche",
+    "formUnits": "Geschätzte Stückzahl",
+    "formMessage": "Projektdetails & Anforderungen",
+    "formSubmit": "B2B-Anfrage absenden",
+    "formSubmitting": "Wird gesendet...",
+    "formSuccess": "Vielen Dank! Unser Gewerbeteam wird sich innerhalb von 24 Stunden bei Ihnen melden.",
+    "formError": "Fehler beim Absenden. Bitte kontaktieren Sie uns direkt unter support@wallbedking.com"
+  },
+  "caseStudiesPage": {
+    "heroBadge": "Gewerbliche Projekte & Erfolge",
+    "heroTitle": "Fallbeispiele unserer Gewerbekunden",
+    "heroSubtitle": "Erfahren Sie, wie Architekten, Projektentwickler, Notfalldienste und Hoteliers mit Wall Bed King wertvollen Raum schaffen und Erträge maximieren.",
+    "quoteBanner": "Raumgewinn durch Präzisionsmechanik",
+    "startProjectCta": "Möchten Sie Ihr nächstes Projekt mit uns realisieren?",
+    "contactTrade": "Gewerbeteam kontaktieren"
   }
 }

@@ -27,7 +27,9 @@
     "allMorphyBeds": "Tutti i Letti MORPHY™",
     "allTraditionalBeds": "Tutti i Letti Tradizionali",
     "allMorphyTagline": "Scopri tutti i modelli MORPHY™",
-    "allTraditionalTagline": "Scopri i modelli classici a scomparsa"
+    "allTraditionalTagline": "Scopri i modelli classici a scomparsa",
+    "trade": "Clienti Business",
+    "caseStudies": "Casi studio"
   },
   "header": {
     "searchPlaceholder": "Cerca letti a scomparsa, divani, materassi...",
@@ -379,16 +381,19 @@
     "cookies": "Preferenze cookie"
   },
   "topbar": {
-    "freeDelivery": "Spedizione Gratuita",
+    "freeDelivery": "Spedizione gratuita in Italia",
     "freeDeliveryShort": "Spedizione Gratis",
-    "warranty": "Garanzia a Vita sul Meccanismo",
-    "precision": "Meccanismi di Precisione Ingegneristica",
+    "warranty": "Garanzia a vita sul meccanismo",
+    "precision": "Meccanismi di precisione ingegneristica",
     "delivery": "Spedizione & Consegna",
-    "faq": "FAQ",
+    "faq": "Domande Frequenti",
     "installation": "Installazione",
     "reviews": "Recensioni",
     "about": "Chi siamo",
-    "contact": "Contatti"
+    "contact": "Contatti",
+    "trade": "Rivenditori",
+    "tradeFull": "Clienti Business",
+    "caseStudies": "Casi studio"
   },
   "auth": {
     "recoveryBadge": "Reimpostazione password",
@@ -583,5 +588,39 @@
     "backToProfile": "Torna al menu profilo",
     "items": "articoli",
     "item": "articolo"
+  },
+  "tradePage": {
+    "heroBadge": "Ingegneria europea e soluzioni professionali",
+    "heroTitle": "Il partner intelligente per ottimizzare gli spazi",
+    "heroSubtitle": "Scoprite il valore nascosto di ogni metro quadrato. Letti a scomparsa di precisione per hotel, sviluppatori immobiliari, falegnami, strutture sanitarie e progetti su misura.",
+    "requestQuote": "Richiedi preventivo pro",
+    "exploreSectors": "Esplora i settori",
+    "viewCaseStudies": "Vedi i casi studio",
+    "pillarsBadge": "Vantaggi per professionisti",
+    "pillarsTitle": "Costruiti per l'uso intensivo commerciale",
+    "sectorsBadge": "Applicazioni commerciali",
+    "sectorsTitle": "I nostri settori di specializzazione",
+    "formBadge": "Richiesta diretta B2B",
+    "formTitle": "Diventa partner commerciale",
+    "formSubtitle": "Contattate il nostro team B2B per consulenza di progetto, prezzi a volume o schede tecniche CAD.",
+    "formName": "Nome completo",
+    "formCompany": "Azienda / Organizzazione",
+    "formEmail": "Email aziendale",
+    "formPhone": "Telefono",
+    "formSector": "Settore del progetto",
+    "formUnits": "Unità stimate",
+    "formMessage": "Dettagli del progetto",
+    "formSubmit": "Invia richiesta commerciale",
+    "formSubmitting": "Invio in corso...",
+    "formSuccess": "Grazie! Il nostro team vi contatterà entro 24 ore lavorative.",
+    "formError": "Errore durante l'invio. Scriveteci direttamente a support@wallbedking.com"
+  },
+  "caseStudiesPage": {
+    "heroBadge": "Progetti professionali & casi di successo",
+    "heroTitle": "Casi studio clienti commerciali",
+    "heroSubtitle": "Scoprite come architetti, costruttori e strutture ricettive massimizzano i loro spazi e ricavi con Wall Bed King.",
+    "quoteBanner": "Massimizzare gli spazi con ingegneria di precisione",
+    "startProjectCta": "Pronti a collaborare al vostro prossimo progetto?",
+    "contactTrade": "Contatta il team commerciale"
   }
 }
