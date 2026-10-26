@@ -67,7 +67,9 @@ export function ProductSlider() {
           return item;
         });
 
-    return list.filter((p) => isProductAvailableInLocale(p, locale));
+    return list
+      .filter((p) => p.categoryKey !== "sofas" && p.parent_category !== "sofas" && p.category !== "sofas")
+      .filter((p) => isProductAvailableInLocale(p, locale));
   }, [allFlagships, locale]);
 
   return (
