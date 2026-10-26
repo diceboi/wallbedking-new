@@ -76,24 +76,36 @@ export function LocaleProvider({ children, initialLocale = DEFAULT_LOCALE }) {
   const switchLocale = useCallback(
     (targetLocale) => {
       const normTarget = normalizeLocale(targetLocale);
+      const isTargetUk = normTarget === "en";
 
-      // Temporary redirect for UK locale to the live UK storefront (wallbedking.co.uk)
-      if (normTarget === "en") {
-        if (typeof window !== "undefined") {
-          window.location.href = "https://wallbedking.co.uk";
-        }
-        return;
-      }
+      if (typeof window !== "undefined") {
+        const isCurrentHostUk = window.location.hostname.includes("wallbedking.co.uk");
+        const isDevOrPreview =
+          window.location.hostname.includes("localhost") ||
+          window.location.hostname.includes("127.0.0.1") ||
+          window.location.hostname.includes("vercel.app");
 
-      if (normTarget === currentLocale) return;
+        const newPath = mapUrlToLocale(pathname, normTarget);
 
-      // Set cookie for persistence (1 year)
-      if (typeof document !== "undefined") {
+        // Set cookie for persistence (1 year)
         document.cookie = `NEXT_LOCALE=${normTarget}; path=/; max-age=31536000; SameSite=Lax`;
-      }
 
-      const newUrl = mapUrlToLocale(pathname, normTarget);
-      router.push(newUrl);
+        // 1. Switching to UK while on .com -> Cross-domain redirect to wallbedking.co.uk
+        if (isTargetUk && !isCurrentHostUk && !isDevOrPreview) {
+          window.location.href = `https://wallbedking.co.uk${newPath}`;
+          return;
+        }
+
+        // 2. Switching to non-UK while on .co.uk -> Cross-domain redirect to wallbedking.com
+        if (!isTargetUk && isCurrentHostUk && !isDevOrPreview) {
+          window.location.href = `https://www.wallbedking.com${newPath}`;
+          return;
+        }
+
+        if (normTarget === currentLocale) return;
+
+        router.push(newPath);
+      }
     },
     [currentLocale, pathname, router]
   );

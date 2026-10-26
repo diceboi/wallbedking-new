@@ -181,31 +181,15 @@ export function MobileMenuDrawer() {
               <div className="flex items-center gap-1.5 flex-wrap">
                 {LANGUAGES.map((lang) => {
                   const isSelected = locale === lang.code;
-                  const isUk = lang.code === "en";
-
-                  if (isUk) {
-                    return (
-                      <a
-                        key={lang.code}
-                        href="https://wallbedking.co.uk"
-                        onClick={closeMobileMenu}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
-                          isSelected
-                            ? "bg-wbk-black text-wbk-white shadow-2xs"
-                            : "bg-white text-wbk-black hover:bg-wbk-green hover:text-white border border-wbk-lightgrey"
-                        }`}
-                      >
-                        <FlagIcon country={lang.code} size={14} />
-                        <span>{lang.label}</span>
-                      </a>
-                    );
-                  }
 
                   return (
                     <button
                       key={lang.code}
                       type="button"
-                      onClick={() => switchLocale(lang.code)}
+                      onClick={() => {
+                        closeMobileMenu();
+                        switchLocale(lang.code);
+                      }}
                       className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-wbk-black text-wbk-white shadow-2xs"

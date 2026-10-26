@@ -87,9 +87,9 @@ export function proxy(request) {
     return NextResponse.redirect(request.nextUrl);
   }
 
-  // 3. For .com / non-UK storefronts: NEVER allow /en!
+  // 3. Cross-domain storefront segregation:
+  // A. For .com / non-UK storefronts: NEVER allow /en!
   // If user requests /en, redirect directly to the live UK storefront (wallbedking.co.uk)
-  // (Skip redirect on localhost and Vercel preview / staging environments)
   const isDevOrPreview =
     host.includes("localhost") ||
     host.includes("127.0.0.1") ||
@@ -97,6 +97,16 @@ export function proxy(request) {
     host.includes("vercel.app");
   if (!isUkDomain && !isDevOrPreview && (pathname === "/en" || pathname.startsWith("/en/"))) {
     return NextResponse.redirect(new URL(`https://wallbedking.co.uk${pathname}`));
+  }
+
+  // B. For UK storefront (wallbedking.co.uk): NEVER allow non-UK locales (/de, /fr, /es, /por, /it, /us, /pt)!
+  // If user requests a non-UK locale on wallbedking.co.uk, redirect directly to wallbedking.com
+  const NON_UK_LOCALES = ["de", "fr", "es", "por", "it", "us", "pt"];
+  const isNonUkLocalePath = NON_UK_LOCALES.some(
+    (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
+  );
+  if (isUkDomain && !isDevOrPreview && isNonUkLocalePath) {
+    return NextResponse.redirect(new URL(`https://www.wallbedking.com${pathname}`));
   }
 
   // 4. Check if pathname already starts with a supported locale

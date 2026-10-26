@@ -316,25 +316,6 @@ export function Header() {
                   >
                     {LANGUAGES.map((lang) => {
                       const isSelected = locale === lang.code;
-                      const isUk = lang.code === "en";
-
-                      if (isUk) {
-                        return (
-                          <a
-                            key={lang.code}
-                            href="https://wallbedking.co.uk"
-                            onClick={() => setLangOpen(false)}
-                            className={`flex items-center gap-2.5 w-full px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors cursor-pointer ${
-                              isSelected
-                                ? "text-wbk-green font-semibold bg-[#F4F2F0]"
-                                : "text-wbk-black hover:text-wbk-green hover:bg-[#FBF9F8]"
-                            }`}
-                          >
-                            <FlagIcon country={lang.code} size={16} />
-                            <span>{lang.label}</span>
-                          </a>
-                        );
-                      }
 
                       return (
                         <button
