@@ -622,5 +622,9 @@
     "quoteBanner": "Espacios maximizados con ingeniería europea",
     "startProjectCta": "¿Preparado para iniciar su proyecto comercial?",
     "contactTrade": "Contactar con el equipo comercial"
+  },
+  "configurator": {
+    "underDevelopment": "En desarrollo",
+    "cartUnderDevNotice": "El pedido online de sofás modulares está temporalmente desactivado (en desarrollo). ¡Aún puedes guardar y compartir tus diseños 3D!"
   }
 }

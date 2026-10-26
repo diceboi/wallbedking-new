@@ -15,6 +15,7 @@ import {
   TbRulerMeasure,
   TbArrowBackUp,
   TbShoppingCartPlus,
+  TbShoppingCartOff,
   TbShare,
   TbCopy,
   TbCheck,
@@ -183,41 +184,12 @@ export function ConfigSummary() {
   };
 
   const handleAddToCart = () => {
-    if (selectedModules.length === 0) {
-      alert(t("configurator.addAtLeastOne", "Please add at least one sofa module first."));
-      return;
-    }
-
-    const configData = exportConfiguration();
-
-    // Add each unique configured module group to the WBK cart
-    groupedList.forEach((group, index) => {
-      const isLast = index === groupedList.length - 1;
-      const itemToAdd = {
-        id: `sofa-${group.moduleId}-${group.fabricId}-${Date.now()}-${index}`,
-        productId: `sofa-${group.moduleId}`,
-        title: `${group.name} (${group.fabricName})`,
-        image: getAssetUrl(group.thumbnail) || "/sofa-configurator/sofa-800-thumbnail.webp",
-        price: group.price,
-        options: {
-          type: "Modular Sofa Component",
-          color: group.fabricName,
-          fabric: group.fabricName,
-          size: group.def
-            ? (locale === "us"
-                ? `${Math.round(group.def.dimensions.width / 2.54)}×${Math.round(group.def.dimensions.depth / 2.54)} in (${group.def.dimensions.width}×${group.def.dimensions.depth} cm)`
-                : `${group.def.dimensions.width}×${group.def.dimensions.depth} cm`)
-            : "Modular",
-        },
-        href: localizedHref(`/configurator?config=${encodeURIComponent(configData)}`),
-      };
-
-      // Open drawer on the last item added
-      addItem(itemToAdd, group.count, isLast);
-    });
-
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 2500);
+    alert(
+      t(
+        "configurator.cartUnderDevNotice",
+        "Online ordering for modular sofas is temporarily disabled while under development. You can still save and share your 3D designs!"
+      )
+    );
   };
 
   return (
@@ -257,6 +229,17 @@ export function ConfigSummary() {
                 className="border-b border-wbk-lightgrey overflow-hidden bg-[#FBF9F8]"
               >
                 <div className="p-3.5 max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-2">
+                  {/* Under Development Banner */}
+                  <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 text-amber-900 text-[11px] rounded-sm">
+                    <span className="text-sm shrink-0">⚠️</span>
+                    <span className="leading-snug">
+                      {t(
+                        "configurator.cartUnderDevNotice",
+                        "Online ordering for modular sofas is temporarily disabled while under development. You can still save and share your 3D designs!"
+                      )}
+                    </span>
+                  </div>
+
                   <div className="flex items-center justify-between text-[11px] font-semibold text-wbk-brown uppercase tracking-wider">
                     <span>{t("configurator.configuredModules", "Configured Modules")} ({selectedModules.length})</span>
                     <button
@@ -366,31 +349,20 @@ export function ConfigSummary() {
                 <TbShare size={18} />
               </button>
 
-              {/* Add to Cart Button */}
+              {/* Add to Cart Button - Temporarily Disabled (Under Development) */}
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={selectedModules.length === 0}
-                className={`h-10 px-5 flex items-center gap-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-sm ${
-                  selectedModules.length === 0
-                    ? "bg-wbk-lightgrey text-wbk-brown cursor-not-allowed"
-                    : justAdded
-                    ? "bg-wbk-green text-white cursor-pointer"
-                    : "bg-wbk-black hover:bg-wbk-green text-white cursor-pointer"
-                }`}
-              >
-                {justAdded ? (
-                  <>
-                    <TbCheck size={16} />
-                    <span>{t("configurator.added", "Added!")}</span>
-                  </>
-                ) : (
-                  <>
-                    <TbShoppingCartPlus size={16} />
-                    <span className="hidden xs:inline">{t("configurator.addToCart", "Add to Cart")}</span>
-                    <span className="xs:hidden">{t("configurator.addToCart", "Add to Cart")}</span>
-                  </>
+                title={t(
+                  "configurator.cartUnderDevNotice",
+                  "Online ordering for modular sofas is temporarily disabled while under development. You can still save and share your 3D designs!"
                 )}
+                className="h-10 px-3.5 sm:px-4 flex items-center gap-1.5 sm:gap-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-all cursor-pointer shadow-xs select-none"
+              >
+                <TbShoppingCartOff size={16} className="text-amber-600 shrink-0" />
+                <span className="text-[11px] font-semibold whitespace-nowrap">
+                  {t("configurator.underDevelopment", "Under Development")}
+                </span>
               </button>
             </div>
           </div>

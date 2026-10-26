@@ -905,5 +905,9 @@
     "quoteBanner": "Transforming Spaces with Precision Engineering",
     "startProjectCta": "Ready to discuss your commercial project?",
     "contactTrade": "Contact Trade Team"
+  },
+  "configurator": {
+    "underDevelopment": "Under Development",
+    "cartUnderDevNotice": "Online ordering for modular sofas is temporarily disabled while under development. You can still save and share your 3D designs!"
   }
 }

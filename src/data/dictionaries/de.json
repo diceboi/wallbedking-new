@@ -622,5 +622,9 @@
     "quoteBanner": "Raumgewinn durch Präzisionsmechanik",
     "startProjectCta": "Möchten Sie Ihr nächstes Projekt mit uns realisieren?",
     "contactTrade": "Gewerbeteam kontaktieren"
+  },
+  "configurator": {
+    "underDevelopment": "In Entwicklung",
+    "cartUnderDevNotice": "Die Online-Bestellung von modularen Sofas ist vorübergehend pausiert (in Entwicklung). Sie können Ihre 3D-Konfigurationen weiterhin speichern und teilen!"
   }
 }

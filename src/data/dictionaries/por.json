@@ -622,5 +622,9 @@
     "quoteBanner": "Otimização de espaço com engenharia de precisão",
     "startProjectCta": "Pronto para colaborar no seu próximo projeto?",
     "contactTrade": "Contactar equipa comercial"
+  },
+  "configurator": {
+    "underDevelopment": "Em desenvolvimento",
+    "cartUnderDevNotice": "A encomenda online de sofás modulares está temporariamente desativada (em desenvolvimento). Ainda pode guardar e partilhar os seus designs 3D!"
   }
 }

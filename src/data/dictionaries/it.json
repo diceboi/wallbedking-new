@@ -622,5 +622,9 @@
     "quoteBanner": "Massimizzare gli spazi con ingegneria di precisione",
     "startProjectCta": "Pronti a collaborare al vostro prossimo progetto?",
     "contactTrade": "Contatta il team commerciale"
+  },
+  "configurator": {
+    "underDevelopment": "In sviluppo",
+    "cartUnderDevNotice": "L'ordine online di divani modulari è temporaneamente sospeso (in sviluppo). Puoi comunque salvare e condividere le tue configurazioni 3D!"
   }
 }

@@ -864,5 +864,9 @@
     "quoteBanner": "Optimisation des espaces par l'ingénierie de précision",
     "startProjectCta": "Prêt à collaborer sur votre prochain projet ?",
     "contactTrade": "Contacter l'équipe pro"
+  },
+  "configurator": {
+    "underDevelopment": "En cours de développement",
+    "cartUnderDevNotice": "La commande en ligne de canapés modulaires est temporairement suspendue (en cours de développement). Vous pouvez toujours enregistrer et partager vos configurations 3D !"
   }
 }
