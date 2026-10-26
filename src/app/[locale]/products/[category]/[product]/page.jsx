@@ -993,6 +993,48 @@ export default function ProductDetailPage() {
       ].includes(productSlug),
     ) && !(productSlug || "").includes("traditional");
 
+  const isTraditionalBed =
+    !isMorphyBed &&
+    Boolean(
+      categorySlug === "traditional-beds" ||
+      displayProduct?.parent_category === "traditional-beds" ||
+      activeProduct?.parent_category === "traditional-beds" ||
+      (productSlug || "").includes("traditional")
+    );
+
+  const morphyCounterpartSlug = useMemo(() => {
+    if (!isTraditionalBed) return null;
+    const MORPHY_TRADITIONAL_MAP = {
+      "classic-vertical-traditional-bed": "classic-vertical-wall-bed",
+      "classic-horizontal-traditional-bed": "classic-horizontal-wall-bed",
+      "studio-vertical-traditional-bed": "studio-vertical-wall-bed",
+      "studio-horizontal-traditional-bed": "studio-horizontal-wall-bed",
+    };
+    if (MORPHY_TRADITIONAL_MAP[productSlug]) {
+      return MORPHY_TRADITIONAL_MAP[productSlug];
+    }
+    const o = (productFormat || activeProduct?.orientation || "vertical").toLowerCase();
+    const isStudio = (displayProduct?.name || activeProduct?.name || productSlug || "")
+      .toLowerCase()
+      .includes("studio");
+    return isStudio ? `studio-${o}-wall-bed` : `classic-${o}-wall-bed`;
+  }, [isTraditionalBed, productSlug, productFormat, activeProduct, displayProduct]);
+
+  const targetMorphySizeSlug = useMemo(() => {
+    return (
+      selectedVariant?.sizeSlug ||
+      searchParams?.get("size") ||
+      (displayProduct?.slug || "").match(/\d+x\d+/)?.[0] ||
+      ""
+    );
+  }, [selectedVariant, searchParams, displayProduct]);
+
+  const morphyHref = useMemo(() => {
+    if (!morphyCounterpartSlug) return "";
+    const query = targetMorphySizeSlug ? `?size=${targetMorphySizeSlug}` : "";
+    return localizedHref(`/products/beds/${morphyCounterpartSlug}${query}`);
+  }, [morphyCounterpartSlug, targetMorphySizeSlug, localizedHref]);
+
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale);
   const sofaPriceValue = calculateSofaPrice(
@@ -1828,20 +1870,29 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               ) : isOutOfStock ? (
-                <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
-                    {t("waitlist.outOfStock", "Out of Stock")}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsWaitlistModalOpen(true)}
-                    className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <IconBell size={13} className="text-wbk-gold" />
-                    {t("waitlist.joinWaitlist", "Join Waitlist")}
-                  </button>
-                </div>
+                isTraditionalBed ? (
+                  <div className="flex items-center gap-1.5 pt-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#B85A53] shrink-0" />
+                    <span className="text-xs font-semibold text-[#B85A53] tracking-tight">
+                      {t("waitlist.outOfStock", "Out of Stock")}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                      {t("waitlist.outOfStock", "Out of Stock")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsWaitlistModalOpen(true)}
+                      className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <IconBell size={13} className="text-wbk-gold" />
+                      {t("waitlist.joinWaitlist", "Join Waitlist")}
+                    </button>
+                  </div>
+                )
               ) : (
                 <div className="flex items-center gap-1.5 pt-1.5">
                   <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
@@ -1921,26 +1972,35 @@ export default function ProductDetailPage() {
                       </div>
                     )}
                   {isOutOfStock ? (
-                    <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
-                        {t(
-                          "waitlist.currentlyOutOfStock",
-                          "Currently Out of Stock",
-                        )}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsWaitlistModalOpen(true)}
-                        className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <IconBell size={13} className="text-wbk-gold" />
-                        {t(
-                          "waitlist.joinWaitlistBtn",
-                          "Join Waitlist / Notify Me",
-                        )}
-                      </button>
-                    </div>
+                    isTraditionalBed ? (
+                      <div className="flex items-center gap-1.5 pt-2">
+                        <span className="w-2 h-2 rounded-full bg-[#B85A53] shrink-0" />
+                        <span className="text-xs font-semibold text-[#B85A53] tracking-tight">
+                          {t("waitlist.outOfStock", "Out of Stock")}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2 pt-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                          {t(
+                            "waitlist.currentlyOutOfStock",
+                            "Currently Out of Stock",
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsWaitlistModalOpen(true)}
+                          className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <IconBell size={13} className="text-wbk-gold" />
+                          {t(
+                            "waitlist.joinWaitlistBtn",
+                            "Join Waitlist / Notify Me",
+                          )}
+                        </button>
+                      </div>
+                    )
                   ) : (
                     <div className="flex items-center gap-1.5 pt-2">
                       <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
@@ -2366,22 +2426,37 @@ export default function ProductDetailPage() {
 
                 {/* Desktop CTA Button */}
                 {isOutOfStock ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsWaitlistModalOpen(true)}
-                    className="w-full py-3 px-5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer group"
-                  >
-                    <IconBell
-                      size={16}
-                      className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
-                    />
-                    <span>
-                      {t(
-                        "waitlist.joinWaitlistBtn",
-                        "Join Waitlist / Notify Me",
-                      )}
-                    </span>
-                  </button>
+                  isTraditionalBed && morphyHref ? (
+                    <Link
+                      href={morphyHref}
+                      className="w-full py-3.5 px-6 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer group"
+                    >
+                      <span>
+                        {t("product.checkOutMorphy", "Check out MORPHY")}
+                      </span>
+                      <IconArrowRight
+                        size={16}
+                        className="transition-transform duration-300 group-hover:translate-x-1"
+                      />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsWaitlistModalOpen(true)}
+                      className="w-full py-3 px-5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer group"
+                    >
+                      <IconBell
+                        size={16}
+                        className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
+                      />
+                      <span>
+                        {t(
+                          "waitlist.joinWaitlistBtn",
+                          "Join Waitlist / Notify Me",
+                        )}
+                      </span>
+                    </button>
+                  )
                 ) : (
                   <button
                     type="button"
@@ -2417,10 +2492,21 @@ export default function ProductDetailPage() {
                 {/* Micro Guarantee / Delivery Note */}
                 <div className="flex items-center justify-between text-[11px] text-wbk-brown pt-0.5">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-green shrink-0" />
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isOutOfStock && isTraditionalBed
+                          ? "bg-[#B85A53]"
+                          : "bg-wbk-green"
+                      }`}
+                    />
                     <span>
                       {isOutOfStock
-                        ? t("common.restockSoon", "Restock in progress")
+                        ? isTraditionalBed
+                          ? t(
+                              "product.availableInMorphy",
+                              "Available in Morphy Collection",
+                            )
+                          : t("common.restockSoon", "Restock in progress")
                         : t("common.freeDelivery", "Free UK/EU Delivery")}
                     </span>
                   </span>
@@ -4422,26 +4508,42 @@ export default function ProductDetailPage() {
                 </div>
 
                 {isOutOfStock ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsWaitlistModalOpen(true)}
-                    title={t(
-                      "waitlist.joinWaitlistBtn",
-                      "Join Waitlist / Notify Me",
-                    )}
-                    className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
-                  >
-                    <IconBell
-                      size={16}
-                      className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
-                    />
-                    <span className="hidden sm:inline">
-                      {t(
+                  isTraditionalBed && morphyHref ? (
+                    <Link
+                      href={morphyHref}
+                      title={t("product.checkOutMorphy", "Check out MORPHY")}
+                      className="flex items-center justify-center gap-1.5 px-5 py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
+                    >
+                      <span>
+                        {t("product.checkOutMorphy", "Check out MORPHY")}
+                      </span>
+                      <IconArrowRight
+                        size={14}
+                        className="transition-transform group-hover:translate-x-0.5"
+                      />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsWaitlistModalOpen(true)}
+                      title={t(
                         "waitlist.joinWaitlistBtn",
                         "Join Waitlist / Notify Me",
                       )}
-                    </span>
-                  </button>
+                      className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
+                    >
+                      <IconBell
+                        size={16}
+                        className="animate-bounce text-wbk-black group-hover:text-white transition-colors"
+                      />
+                      <span className="hidden sm:inline">
+                        {t(
+                          "waitlist.joinWaitlistBtn",
+                          "Join Waitlist / Notify Me",
+                        )}
+                      </span>
+                    </button>
+                  )
                 ) : (
                   <button
                     type="button"

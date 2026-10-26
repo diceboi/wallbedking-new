@@ -8,7 +8,7 @@
     "flag": "🇬🇧",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Credit / Debit Card",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -64,7 +64,7 @@
     "flag": "🇺🇸",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Credit / Debit Card",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -120,7 +120,7 @@
     "flag": "🇩🇪",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Kredit- / Debitkarte",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -176,7 +176,7 @@
     "flag": "🇫🇷",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Carte Bancaire",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -232,7 +232,7 @@
     "flag": "🇪🇸",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Tarjeta de Crédito / Débito",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -288,7 +288,7 @@
     "flag": "🇵🇹",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Cartão de Crédito / Débito",
         "sublabel": "Stripe & Apple Pay"
       },
@@ -344,7 +344,7 @@
     "flag": "🇮🇹",
     "payments": {
       "stripe": {
-        "enabled": false,
+        "enabled": true,
         "label": "Carta di Credito / Debito",
         "sublabel": "Stripe & Apple Pay"
       },
