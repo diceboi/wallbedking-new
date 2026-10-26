@@ -60,6 +60,14 @@ export const CATEGORY_SLUGS = {
     por: "acessorios",
     it: "accessori",
   },
+  bundles: {
+    en: "bundles",
+    de: "bundles",
+    fr: "lots",
+    es: "paquetes",
+    por: "pacotes",
+    it: "pacchetti",
+  },
 };
 
 /**

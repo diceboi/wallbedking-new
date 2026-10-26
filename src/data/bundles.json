@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1,
+    "sku": "BDL-CLP-SV-90",
+    "slug": "classic-plus-single-vertical-package",
+    "name": "Classic+ Single Vertical Wall Bed & Cabinet Package",
+    "name_en": "Classic+ Single Vertical Wall Bed & Cabinet Package",
+    "name_us": "Classic+ Single Vertical Murphy Bed & Cabinet Package",
+    "name_de": "Classic+ Vertikales Schrankbett & Schrank Komplett-Set (Einzelbett)",
+    "name_fr": "Pack Classic+ Lit Escamotable Vertical 1 Place & Armoire",
+    "name_es": "Pack Classic+ Cama Abatible Vertical Individual & Armario",
+    "name_por": "Pacote Classic+ Cama Rebatível Vertical de Solteiro & Armário",
+    "name_it": "Set Classic+ Letto a Scomparsa Verticale Singolo & Armadio",
+    "description": "Our signature Classic+ package brings together the best-selling WallBedKing Single Vertical Classic Wall Bed and its perfectly matched precision-engineered Cabinet Enclosure. Save 10% when purchased together as a complete bundle.",
+    "description_en": "Our signature Classic+ package brings together the best-selling WallBedKing Single Vertical Classic Wall Bed and its perfectly matched precision-engineered Cabinet Enclosure. Save 10% when purchased together as a complete bundle.",
+    "description_us": "Our signature Classic+ package brings together the best-selling WallBedKing Single Vertical Classic Murphy Bed and its perfectly matched precision-engineered Cabinet Enclosure. Save 10% when purchased together as a complete bundle.",
+    "description_de": "Unser bewährtes Classic+ Set kombiniert das meistverkaufte vertikale WallBedKing Schrankbett mit dem passgenauen Schranksystem. Sparen Sie 10% beim Kauf als Komplettpaket.",
+    "description_fr": "Notre ensemble exclusif Classic+ réunit le lit escamotable vertical WallBedKing et son armoire de rangement parfaitement adaptée. Économisez 10% sur l'ensemble.",
+    "description_es": "Nuestro exclusivo paquete Classic+ combina la cama abatible vertical WallBedKing con su armario a juego de alta precisión. Ahorre un 10% comprándolo en pack.",
+    "description_por": "O nosso conjunto Classic+ combina a cama rebatível vertical WallBedKing com o seu armário correspondente. Poupe 10% na compra do pacote completo.",
+    "description_it": "Il nostro pacchetto Classic+ unisce il letto a scomparsa verticale WallBedKing e il suo armadio guardaroba coordinato. Risparmia il 10% acquistando il set completo.",
+    "category": "bundles",
+    "parent_category": "bundles",
+    "sub_category": "Classic+ Packages",
+    "badge": "Classic+ Package • 10% Off",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/90x200-SV-WHITE-CABINET_ANGLE_1.webp",
+    "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/90x200-CV-TRADITIONAL_1.webp",
+    "product_images": [
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/90x200-SV-WHITE-CABINET_ANGLE_1.webp",
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/90x200-CV-TRADITIONAL_1.webp",
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/90x200-CV-TRADITIONAL_2.webp"
+    ],
+    "meta_title": "Classic+ Single Vertical Wall Bed & Cabinet Package | WallBedKing",
+    "meta_description": "Get the complete space-saving solution with our Classic+ Single Vertical Wall Bed and matching cabinet. Pre-paired set with 10% bundle savings.",
+    "warranty": "5-year manufacturer warranty",
+    "visibility": "Visible",
+    "is_visible": true,
+    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
+    "tags": ["bundle", "classic-plus", "bed-and-cabinet", "space-saving"],
+    "features": [
+      "Guaranteed cabinet & wall bed dimensional compatibility",
+      "Integrated heavy-duty German gas piston mechanism",
+      "Solid beech wood sprung slatted mattress base included",
+      "High quality melamine-faced cabinet enclosure with smooth edge-banding",
+      "Exclusive 10% package discount included"
+    ],
+    "discount_type": "percent",
+    "discount_percent": 10,
+    "discount_fix_gbp": 0,
+    "discount_fix_euro": 0,
+    "discount_fix_usd": 0,
+    "sort_order": 1,
+    "items": [
+      {
+        "product_id": 2,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "product_id": 207,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "sku": "BDL-MOR-DV-140",
+    "slug": "morphy-classic-plus-double-vertical-package",
+    "name": "MORPHY™ Classic+ Double Vertical Wall Bed & Cabinet Package",
+    "name_en": "MORPHY™ Classic+ Double Vertical Wall Bed & Cabinet Package",
+    "name_us": "MORPHY™ Classic+ Full / Double Vertical Murphy Bed & Cabinet Package",
+    "name_de": "MORPHY™ Classic+ Vertikales Doppel-Schrankbett & Schrank Set",
+    "name_fr": "Pack MORPHY™ Classic+ Lit Escamotable 2 Places & Armoire",
+    "name_es": "Pack MORPHY™ Classic+ Cama Abatible Doble & Armario",
+    "name_por": "Pacote MORPHY™ Classic+ Cama Rebatível Casal & Armário",
+    "name_it": "Set MORPHY™ Classic+ Letto Matrimoniale a Scomparsa & Armadio",
+    "description": "Next-generation MORPHY™ double vertical wall bed paired with our custom Beech double cabinet enclosure. Whisper-quiet gas piston operation, seamless aesthetic enclosure, and a 10% bundle discount.",
+    "description_en": "Next-generation MORPHY™ double vertical wall bed paired with our custom Beech double cabinet enclosure. Whisper-quiet gas piston operation, seamless aesthetic enclosure, and a 10% bundle discount.",
+    "description_us": "Next-generation MORPHY™ full/double vertical murphy bed paired with our custom Beech double cabinet enclosure. Whisper-quiet gas piston operation, seamless aesthetic enclosure, and a 10% bundle discount.",
+    "description_de": "Das MORPHY™ Classic+ Doppelbett-Set vereint Spitzenkomfort und Schrankschutz im eleganten Buche-Design. Sparen Sie 10% im Set.",
+    "description_fr": "Pack MORPHY™ Classic+ lit escamotable 2 places avec armoire assortie en hêtre. Confort optimal et 10% de réduction immédiate.",
+    "description_es": "Pack MORPHY™ Classic+ cama abatible de matrimonio con armario en acabado haya. Ahorre un 10% comprándolo junto.",
+    "description_por": "Pacote MORPHY™ Classic+ cama de casal rebatível com armário em faia. Economize 10% no conjunto.",
+    "description_it": "Set MORPHY™ Classic+ letto matrimoniale a scomparsa con armadio coordinato finitura faggio. Risparmio del 10% sul pacchetto.",
+    "category": "bundles",
+    "parent_category": "bundles",
+    "sub_category": "Morphy Sets",
+    "badge": "Morphy Classic+ • 10% Off",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-BEECH-CABINET_ANGLE_1.webp",
+    "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/160x200-CV-MORPHY_1.webp",
+    "product_images": [
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-BEECH-CABINET_ANGLE_1.webp",
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/160x200-CV-MORPHY_1.webp"
+    ],
+    "meta_title": "MORPHY™ Classic+ Double Bed & Cabinet Package | WallBedKing",
+    "meta_description": "Upgrade your living space with our premium MORPHY™ Double Wall Bed and matching Beech Cabinet. Complete bundle with 10% savings.",
+    "warranty": "5-year manufacturer warranty",
+    "visibility": "Visible",
+    "is_visible": true,
+    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
+    "tags": ["bundle", "morphy-classic-plus", "bed-and-cabinet", "double-bed"],
+    "features": [
+      "Next-generation MORPHY™ reinforced steel frame",
+      "Engineered German gas struts with smooth whisper-quiet operation",
+      "Precision-crafted Beech cabinet unit for maximum dust protection",
+      "Integrated sprung beech slats for orthopedic mattress support",
+      "Automatic 10% bundle discount applied"
+    ],
+    "discount_type": "percent",
+    "discount_percent": 10,
+    "discount_fix_gbp": 0,
+    "discount_fix_euro": 0,
+    "discount_fix_usd": 0,
+    "sort_order": 2,
+    "items": [
+      {
+        "product_id": 56,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "product_id": 201,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "sku": "BDL-CLP-SDV-120",
+    "slug": "classic-plus-small-double-vertical-package",
+    "name": "Classic+ Small Double Vertical Wall Bed & Cabinet Package",
+    "name_en": "Classic+ Small Double Vertical Wall Bed & Cabinet Package",
+    "name_us": "Classic+ Small Double Vertical Murphy Bed & Cabinet Package",
+    "name_de": "Classic+ Vertikales 120cm Schrankbett & Kiefer-Schrank Set",
+    "name_fr": "Pack Classic+ Lit Escamotable 120cm & Armoire Pin",
+    "name_es": "Pack Classic+ Cama Abatible 120cm & Armario Pino",
+    "name_por": "Pacote Classic+ Cama Rebatível 120cm & Armário Pinho",
+    "name_it": "Set Classic+ Letto a Scomparsa 120cm Piazza e Mezza & Armadio Pino",
+    "description": "Ideal for guest bedrooms and home offices: the 120x200cm Small Double Classic Vertical Wall Bed paired with the warm Pine Cabinet Enclosure. Save 10% on the complete setup.",
+    "description_en": "Ideal for guest bedrooms and home offices: the 120x200cm Small Double Classic Vertical Wall Bed paired with the warm Pine Cabinet Enclosure. Save 10% on the complete setup.",
+    "description_us": "Ideal for guest bedrooms and home offices: the 120x200cm Small Double Classic Vertical Murphy Bed paired with the warm Pine Cabinet Enclosure. Save 10% on the complete setup.",
+    "description_de": "Ideal für Gäste- und Arbeitszimmer: 120cm Schrankbett mit passendem Kieferschrank. 10% Set-Vorteil.",
+    "description_fr": "Parfait pour les chambres d'amis et bureaux: lit escamotable 120cm et armoire en pin. Économie de 10% en pack.",
+    "description_es": "Ideal para habitaciones de invitados: cama abatible 120cm con armario en acabado pino. 10% de descuento en el conjunto.",
+    "description_por": "Ideal para quartos de hóspedes: cama rebatível 120cm e armário em pinho. 10% de desconto no pacote.",
+    "description_it": "Ideale per camere ospiti e studi: letto a scomparsa da 120cm con armadio in finitura pino. Risparmio del 10% nel set.",
+    "category": "bundles",
+    "parent_category": "bundles",
+    "sub_category": "Classic+ Packages",
+    "badge": "Classic+ Package • 10% Off",
+    "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/120x200-SDV-PINE-CABINET_ANGLE_1.webp",
+    "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/120x200-CV-TRADITIONAL_1.webp",
+    "product_images": [
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/120x200-SDV-PINE-CABINET_ANGLE_1.webp",
+      "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/120x200-CV-TRADITIONAL_1.webp"
+    ],
+    "meta_title": "Classic+ Small Double Vertical Wall Bed & Cabinet Package | WallBedKing",
+    "meta_description": "Transform your room with our 120cm Small Double Wall Bed and matching Pine Cabinet. Guaranteed fit and 10% discount.",
+    "warranty": "5-year manufacturer warranty",
+    "visibility": "Visible",
+    "is_visible": true,
+    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
+    "tags": ["bundle", "classic-plus", "small-double", "pine-cabinet"],
+    "features": [
+      "Perfect 120x200cm small double footprint",
+      "Gas-assisted mechanism for effortless daily opening and closing",
+      "Warm natural pine wood grain finish cabinet",
+      "Full wall-mounting hardware and comprehensive instructions included",
+      "10% combined bundle savings"
+    ],
+    "discount_type": "percent",
+    "discount_percent": 10,
+    "discount_fix_gbp": 0,
+    "discount_fix_euro": 0,
+    "discount_fix_usd": 0,
+    "sort_order": 3,
+    "items": [
+      {
+        "product_id": 4,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "product_id": 196,
+        "quantity": 1,
+        "is_required": true,
+        "sort_order": 2
+      }
+    ]
+  }
+]

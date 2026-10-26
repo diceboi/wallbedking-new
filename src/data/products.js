@@ -137,6 +137,17 @@ export const CATEGORIES_INFO = {
     image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     subcategories: ["Lighting", "Hardware"]
   },
+  bundles: {
+    label: "Bundles & Packages",
+    title: "Bed & Cabinet Packages",
+    label_fr: "Ensembles et Lots",
+    title_fr: "Ensembles Lit et Armoire",
+    slug: "bundles",
+    description: "Complete wall bed packages with matching cabinets. Guaranteed fit, seamless aesthetics, and bundle savings.",
+    description_fr: "Packs complets lit escamotable et armoire assortie. Compatibilité garantie et économies sur votre pack.",
+    image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/90x200-SV-WHITE-CABINET_ANGLE_1.webp",
+    subcategories: ["Classic+ Packages", "Morphy Sets"]
+  },
 };
 
 export const SUPABASE_MATTRESS_IMAGES_BASE =

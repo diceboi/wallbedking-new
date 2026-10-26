@@ -21,6 +21,7 @@ import {
   IconFileSpreadsheet,
   IconLayoutNavbar,
   IconTruck,
+  IconLayersLinked,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -42,6 +43,13 @@ export const ADMIN_NAV_ITEMS = [
     href: "/admin/products",
     icon: IconPackage,
     hasCount: true,
+  },
+  {
+    id: "bundles",
+    label: "Product Bundles",
+    href: "/admin/bundles",
+    icon: IconLayersLinked,
+    badge: "New",
   },
   {
     id: "export",

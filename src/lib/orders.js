@@ -219,6 +219,62 @@ export async function validateOrderTotals(
 
       unitPrice = finalPrice + sofaSurcharge;
     } else {
+      // Check if item is a product bundle
+      let bundleSource = null;
+      try {
+        const { readLocalBundlesFile, enrichBundleWithProducts, fetchProductsForComponents } = await import("@/lib/bundles");
+        const allBundles = readLocalBundlesFile();
+        const found = allBundles.find(
+          (b) => (slug && b.slug === slug) || (numericId && b.id === numericId) || (typeof item.id === "string" && b.slug === item.id)
+        );
+        if (found) {
+          const compIds = (found.items || []).map((ci) => ci.product_id);
+          const pMap = await fetchProductsForComponents(compIds);
+          bundleSource = enrichBundleWithProducts(found, pMap);
+        }
+      } catch (bundleErr) {
+        console.warn("[validateOrderTotals] Bundle check notice:", bundleErr.message);
+      }
+
+      if (bundleSource) {
+        if (curr === "USD") {
+          unitPrice = bundleSource.calculated_price_usd;
+        } else if (curr === "EUR") {
+          unitPrice = bundleSource.calculated_price_euro;
+        } else {
+          unitPrice = bundleSource.calculated_price_gbp;
+        }
+
+        const isHidden = bundleSource.visibility === "Hidden" || bundleSource.has_hidden_component;
+        const isStockZero = bundleSource.calculated_stock <= 0 || bundleSource.has_zero_stock_component;
+        const isOutOfStock = Boolean(isHidden || isStockZero);
+
+        const itemTotal = unitPrice * qty;
+        subtotal += itemTotal;
+
+        validatedItems.push({
+          id: item.id || `bundle-${bundleSource.slug}`,
+          rawId: bundleSource.id,
+          slug: bundleSource.slug,
+          title: item.title || bundleSource.name,
+          image: item.image || bundleSource.image,
+          price: unitPrice,
+          quantity: qty,
+          options: item.options || {},
+          itemTotal,
+          isOutOfStock,
+          stock: bundleSource.calculated_stock,
+          is_bundle: true,
+          bundle_components: (bundleSource.items || []).map((bi) => ({
+            product_id: bi.product_id,
+            name: bi.product?.name,
+            sku: bi.product?.sku,
+            quantity: bi.quantity,
+          })),
+        });
+        continue;
+      }
+
       // Custom or modular items not in products catalog (e.g. modular sofa components)
       unitPrice = Math.max(0, Number(item.price) || 0);
     }
