@@ -5,13 +5,21 @@ import { LOCALES } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 export default async function RootIndexPage() {
+  const headerList = await headers();
+  const host = headerList.get("host") || "";
+  const isUkDomain = host.includes("wallbedking.co.uk");
+
+  if (isUkDomain) {
+    redirect("/en");
+  }
+
   const cookieStore = await cookies();
   const savedLocale = cookieStore.get("NEXT_LOCALE")?.value?.toLowerCase();
 
   // If user previously explicitly selected a market, respect that choice
   if (savedLocale) {
     if (savedLocale === "en") {
-      redirect("https://wallbedking.co.uk");
+      redirect(isUkDomain ? "/en" : "https://wallbedking.co.uk");
     }
     if (LOCALES.includes(savedLocale)) {
       redirect(`/${savedLocale}`);
@@ -19,7 +27,6 @@ export default async function RootIndexPage() {
   }
 
   // Otherwise, inspect browser Accept-Language header
-  const headerList = await headers();
   const acceptLang = (headerList.get("accept-language") || "").toLowerCase();
 
   // Parse language tokens in user preference order
@@ -48,7 +55,7 @@ export default async function RootIndexPage() {
       redirect("/us");
     }
     if (token === "en-gb" || token === "en-ie") {
-      redirect("https://wallbedking.co.uk");
+      redirect(isUkDomain ? "/en" : "https://wallbedking.co.uk");
     }
   }
 

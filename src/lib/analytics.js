@@ -1,5 +1,6 @@
 "use client";
 
+export const GTM_ID_UK = process.env.NEXT_PUBLIC_GTM_ID_UK || "GTM-NF5VPKX";
 export const GTM_ID_EU = process.env.NEXT_PUBLIC_GTM_ID_EU || "GTM-WBV7QDZL";
 export const GTM_ID_US = process.env.NEXT_PUBLIC_GTM_ID_US || "GTM-NFQT94XD";
 export const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || "G-G6BY900NX4";
@@ -12,7 +13,9 @@ export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "124108051
  * Get GTM Container ID for the current locale/market
  */
 export function getGtmContainerId(locale = "en") {
-  return locale === "us" ? GTM_ID_US : GTM_ID_EU;
+  if (locale === "us") return GTM_ID_US;
+  if (locale === "en") return GTM_ID_UK;
+  return GTM_ID_EU;
 }
 
 /**

@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_WEBHOOK_SECRET_UK,
+  ].filter(Boolean);
 
   if (!stripeSecretKey) {
     return NextResponse.json(
@@ -22,8 +25,21 @@ export async function POST(request) {
   let event;
   try {
     const rawBody = await request.text();
-    if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    if (webhookSecrets.length > 0 && sig) {
+      let verified = false;
+      let lastErr = null;
+      for (const secret of webhookSecrets) {
+        try {
+          event = stripe.webhooks.constructEvent(rawBody, sig, secret);
+          verified = true;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (!verified) {
+        throw lastErr || new Error("Failed to verify Stripe signature with available secrets");
+      }
     } else {
       // In development without webhook secret, parse payload safely
       event = JSON.parse(rawBody);

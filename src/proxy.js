@@ -89,11 +89,14 @@ export function proxy(request) {
 
   // 3. For .com / non-UK storefronts: NEVER allow /en!
   // If user requests /en, redirect directly to the live UK storefront (wallbedking.co.uk)
-  // (Skip redirect on localhost / development environment)
-  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("0.0.0.0");
-  if (!isUkDomain && !isLocalhost && (pathname === "/en" || pathname.startsWith("/en/"))) {
-    const rest = pathname.replace(/^\/en/, "");
-    return NextResponse.redirect(new URL(`https://wallbedking.co.uk${rest}`));
+  // (Skip redirect on localhost and Vercel preview / staging environments)
+  const isDevOrPreview =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("0.0.0.0") ||
+    host.includes("vercel.app");
+  if (!isUkDomain && !isDevOrPreview && (pathname === "/en" || pathname.startsWith("/en/"))) {
+    return NextResponse.redirect(new URL(`https://wallbedking.co.uk${pathname}`));
   }
 
   // 4. Check if pathname already starts with a supported locale
@@ -139,7 +142,7 @@ export function proxy(request) {
   const savedLocale = request.cookies.get("NEXT_LOCALE")?.value?.toLowerCase();
   if (savedLocale === "en") {
     // If previously saved cookie was UK 'en', redirect to live UK site
-    return NextResponse.redirect(new URL("https://wallbedking.co.uk"));
+    return NextResponse.redirect(new URL("https://wallbedking.co.uk/en"));
   }
   if (COM_LOCALES.includes(savedLocale)) {
     const targetPath = pathname === "/" ? `/${savedLocale}` : `/${savedLocale}${pathname}`;
@@ -151,7 +154,7 @@ export function proxy(request) {
   const acceptLang = request.headers.get("accept-language");
   const detected = detectLocaleFromAcceptLanguage(acceptLang);
   if (detected === "uk_redirect") {
-    return NextResponse.redirect(new URL("https://wallbedking.co.uk"));
+    return NextResponse.redirect(new URL("https://wallbedking.co.uk/en"));
   }
   if (detected && COM_LOCALES.includes(detected)) {
     const targetPath = pathname === "/" ? `/${detected}` : `/${detected}${pathname}`;
