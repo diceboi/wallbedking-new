@@ -1,6 +1,6 @@
 [
   {
-    "id": 1,
+    "id": 2,
     "sku": "BDL-CLP-SV-90",
     "slug": "classic-plus-single-vertical-package",
     "name": "Classic+ Single Vertical Wall Bed & Cabinet Package",
@@ -19,10 +19,19 @@
     "description_es": "Nuestro exclusivo paquete Classic+ combina la cama abatible vertical WallBedKing con su armario a juego de alta precisión. Ahorre un 10% comprándolo en pack.",
     "description_por": "O nosso conjunto Classic+ combina a cama rebatível vertical WallBedKing com o seu armário correspondente. Poupe 10% na compra do pacote completo.",
     "description_it": "Il nostro pacchetto Classic+ unisce il letto a scomparsa verticale WallBedKing e il suo armadio guardaroba coordinato. Risparmia il 10% acquistando il set completo.",
+    "extended_description": null,
+    "extended_description_en": null,
+    "extended_description_us": null,
+    "extended_description_de": null,
+    "extended_description_fr": null,
+    "extended_description_es": null,
+    "extended_description_por": null,
+    "extended_description_it": null,
     "category": "bundles",
     "parent_category": "bundles",
     "sub_category": "Classic+ Packages",
     "badge": "Classic+ Package • 10% Off",
+    "tagline": null,
     "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/90x200-SV-WHITE-CABINET_ANGLE_1.webp",
     "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/90x200-CV-TRADITIONAL_1.webp",
     "product_images": [
@@ -35,8 +44,21 @@
     "warranty": "5-year manufacturer warranty",
     "visibility": "Visible",
     "is_visible": true,
-    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
-    "tags": ["bundle", "classic-plus", "bed-and-cabinet", "space-saving"],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "tags": [
+      "bundle",
+      "classic-plus",
+      "bed-and-cabinet",
+      "space-saving"
+    ],
     "features": [
       "Guaranteed cabinet & wall bed dimensional compatibility",
       "Integrated heavy-duty German gas piston mechanism",
@@ -50,6 +72,8 @@
     "discount_fix_euro": 0,
     "discount_fix_usd": 0,
     "sort_order": 1,
+    "created_at": "2026-10-27T10:29:10.196152+00:00",
+    "updated_at": "2026-10-27T10:32:07.612Z",
     "items": [
       {
         "product_id": 2,
@@ -66,7 +90,7 @@
     ]
   },
   {
-    "id": 2,
+    "id": 3,
     "sku": "BDL-MOR-DV-140",
     "slug": "morphy-classic-plus-double-vertical-package",
     "name": "MORPHY™ Classic+ Double Vertical Wall Bed & Cabinet Package",
@@ -85,10 +109,19 @@
     "description_es": "Pack MORPHY™ Classic+ cama abatible de matrimonio con armario en acabado haya. Ahorre un 10% comprándolo junto.",
     "description_por": "Pacote MORPHY™ Classic+ cama de casal rebatível com armário em faia. Economize 10% no conjunto.",
     "description_it": "Set MORPHY™ Classic+ letto matrimoniale a scomparsa con armadio coordinato finitura faggio. Risparmio del 10% sul pacchetto.",
+    "extended_description": null,
+    "extended_description_en": null,
+    "extended_description_us": null,
+    "extended_description_de": null,
+    "extended_description_fr": null,
+    "extended_description_es": null,
+    "extended_description_por": null,
+    "extended_description_it": null,
     "category": "bundles",
     "parent_category": "bundles",
     "sub_category": "Morphy Sets",
     "badge": "Morphy Classic+ • 10% Off",
+    "tagline": null,
     "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-BEECH-CABINET_ANGLE_1.webp",
     "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/160x200-CV-MORPHY_1.webp",
     "product_images": [
@@ -100,8 +133,21 @@
     "warranty": "5-year manufacturer warranty",
     "visibility": "Visible",
     "is_visible": true,
-    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
-    "tags": ["bundle", "morphy-classic-plus", "bed-and-cabinet", "double-bed"],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "tags": [
+      "bundle",
+      "morphy-classic-plus",
+      "bed-and-cabinet",
+      "double-bed"
+    ],
     "features": [
       "Next-generation MORPHY™ reinforced steel frame",
       "Engineered German gas struts with smooth whisper-quiet operation",
@@ -115,6 +161,8 @@
     "discount_fix_euro": 0,
     "discount_fix_usd": 0,
     "sort_order": 2,
+    "created_at": "2026-10-27T10:29:10.446831+00:00",
+    "updated_at": "2026-10-27T10:29:10.446831+00:00",
     "items": [
       {
         "product_id": 56,
@@ -131,7 +179,7 @@
     ]
   },
   {
-    "id": 3,
+    "id": 4,
     "sku": "BDL-CLP-SDV-120",
     "slug": "classic-plus-small-double-vertical-package",
     "name": "Classic+ Small Double Vertical Wall Bed & Cabinet Package",
@@ -150,10 +198,19 @@
     "description_es": "Ideal para habitaciones de invitados: cama abatible 120cm con armario en acabado pino. 10% de descuento en el conjunto.",
     "description_por": "Ideal para quartos de hóspedes: cama rebatível 120cm e armário em pinho. 10% de desconto no pacote.",
     "description_it": "Ideale per camere ospiti e studi: letto a scomparsa da 120cm con armadio in finitura pino. Risparmio del 10% nel set.",
+    "extended_description": null,
+    "extended_description_en": null,
+    "extended_description_us": null,
+    "extended_description_de": null,
+    "extended_description_fr": null,
+    "extended_description_es": null,
+    "extended_description_por": null,
+    "extended_description_it": null,
     "category": "bundles",
     "parent_category": "bundles",
     "sub_category": "Classic+ Packages",
     "badge": "Classic+ Package • 10% Off",
+    "tagline": null,
     "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/120x200-SDV-PINE-CABINET_ANGLE_1.webp",
     "hover_image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/120x200-CV-TRADITIONAL_1.webp",
     "product_images": [
@@ -165,8 +222,21 @@
     "warranty": "5-year manufacturer warranty",
     "visibility": "Visible",
     "is_visible": true,
-    "available_locales": ["en", "us", "de", "fr", "es", "por", "it"],
-    "tags": ["bundle", "classic-plus", "small-double", "pine-cabinet"],
+    "available_locales": [
+      "en",
+      "us",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
+    ],
+    "tags": [
+      "bundle",
+      "classic-plus",
+      "small-double",
+      "pine-cabinet"
+    ],
     "features": [
       "Perfect 120x200cm small double footprint",
       "Gas-assisted mechanism for effortless daily opening and closing",
@@ -180,6 +250,8 @@
     "discount_fix_euro": 0,
     "discount_fix_usd": 0,
     "sort_order": 3,
+    "created_at": "2026-10-27T10:29:10.621879+00:00",
+    "updated_at": "2026-10-27T10:29:10.621879+00:00",
     "items": [
       {
         "product_id": 4,

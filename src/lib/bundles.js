@@ -302,8 +302,8 @@ export async function getAllEnrichedBundles({ includeHidden = true } = {}) {
     }
   }
 
-  // 2. Fallback to local bundles.json if Supabase table not created or query failed
-  if (!isFromSupabase || rawBundles.length === 0) {
+  // 2. Fallback to local bundles.json ONLY if Supabase table not created or query failed completely
+  if (!isFromSupabase) {
     rawBundles = readLocalBundlesFile();
   }
 
@@ -338,4 +338,74 @@ export async function getAllEnrichedBundles({ includeHidden = true } = {}) {
 export async function getEnrichedBundleBySlug(slug, { includeHidden = true } = {}) {
   const bundles = await getAllEnrichedBundles({ includeHidden });
   return bundles.find((b) => b.slug === slug) || null;
+}
+
+/**
+ * Get single enriched bundle by ID
+ */
+export async function getEnrichedBundleById(id, { includeHidden = true } = {}) {
+  const bundles = await getAllEnrichedBundles({ includeHidden });
+  return bundles.find((b) => String(b.id) === String(id) || b.slug === id) || null;
+}
+
+export const ALLOWED_BUNDLE_COLUMNS = [
+  "sku",
+  "slug",
+  "name",
+  "name_en",
+  "name_us",
+  "name_de",
+  "name_fr",
+  "name_es",
+  "name_por",
+  "name_it",
+  "description",
+  "description_en",
+  "description_us",
+  "description_de",
+  "description_fr",
+  "description_es",
+  "description_por",
+  "description_it",
+  "extended_description",
+  "extended_description_en",
+  "extended_description_us",
+  "extended_description_de",
+  "extended_description_fr",
+  "extended_description_es",
+  "extended_description_por",
+  "extended_description_it",
+  "category",
+  "parent_category",
+  "sub_category",
+  "badge",
+  "tagline",
+  "image",
+  "hover_image",
+  "product_images",
+  "meta_title",
+  "meta_description",
+  "warranty",
+  "visibility",
+  "is_visible",
+  "available_locales",
+  "tags",
+  "features",
+  "discount_type",
+  "discount_percent",
+  "discount_fix_gbp",
+  "discount_fix_euro",
+  "discount_fix_usd",
+  "sort_order",
+];
+
+export function sanitizeBundleForSupabase(data) {
+  const clean = {};
+  for (const col of ALLOWED_BUNDLE_COLUMNS) {
+    if (data[col] !== undefined) {
+      clean[col] = data[col];
+    }
+  }
+  clean.updated_at = new Date().toISOString();
+  return clean;
 }

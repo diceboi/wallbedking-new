@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   getAllEnrichedBundles,
+  getEnrichedBundleById,
   readLocalBundlesFile,
   writeLocalBundlesFile,
-  enrichBundleWithProducts,
-  fetchProductsForComponents,
+  sanitizeBundleForSupabase,
 } from "@/lib/bundles";
 import { revalidateProductsCache } from "@/lib/products-db";
 
@@ -73,8 +73,6 @@ export async function POST(request) {
         .replace(/^-|-$/g, "")
     ).trim();
 
-    const newId = body.id || Date.now();
-
     const items = Array.isArray(body.items) ? body.items : [];
     if (items.length === 0) {
       return NextResponse.json(
@@ -84,7 +82,6 @@ export async function POST(request) {
     }
 
     const bundleData = {
-      id: newId,
       sku: body.sku || `BDL-${slug.toUpperCase().slice(0, 12)}`,
       slug,
       name: body.name.trim(),
@@ -144,70 +141,86 @@ export async function POST(request) {
 
     // 1. Try persisting to Supabase
     let supabaseSuccess = false;
+    let finalBundleId = body.id || null;
+
     if (SUPABASE_URL && SERVICE_KEY) {
       try {
-        const { items: _, ...bundleRow } = bundleData;
+        const cleanRow = sanitizeBundleForSupabase(bundleData);
+        // Do not pass ID so Supabase uses its serial sequence
+        delete cleanRow.id;
+
         const res = await fetch(`${SUPABASE_URL}/rest/v1/bundles`, {
           method: "POST",
           headers: {
             ...supabaseHeaders,
             Prefer: "return=representation",
           },
-          body: JSON.stringify(bundleRow),
+          body: JSON.stringify(cleanRow),
         });
 
         if (res.ok) {
           const createdBundle = await res.json();
-          const savedId = createdBundle[0]?.id || newId;
-          bundleData.id = savedId;
+          if (createdBundle && createdBundle[0]?.id) {
+            finalBundleId = createdBundle[0].id;
+            bundleData.id = finalBundleId;
 
-          // Insert items
-          const itemsPayload = bundleData.items.map((it) => ({
-            bundle_id: savedId,
-            product_id: it.product_id,
-            quantity: it.quantity,
-            is_required: it.is_required,
-            sort_order: it.sort_order,
-          }));
+            // Insert items
+            const itemsPayload = bundleData.items.map((it) => ({
+              bundle_id: finalBundleId,
+              product_id: it.product_id,
+              quantity: it.quantity,
+              is_required: it.is_required,
+              sort_order: it.sort_order,
+            }));
 
-          const itemsRes = await fetch(`${SUPABASE_URL}/rest/v1/bundle_items`, {
-            method: "POST",
-            headers: supabaseHeaders,
-            body: JSON.stringify(itemsPayload),
-          });
+            const itemsRes = await fetch(`${SUPABASE_URL}/rest/v1/bundle_items`, {
+              method: "POST",
+              headers: supabaseHeaders,
+              body: JSON.stringify(itemsPayload),
+            });
 
-          if (itemsRes.ok) {
-            supabaseSuccess = true;
+            if (itemsRes.ok) {
+              supabaseSuccess = true;
+            } else {
+              console.warn("[admin/bundles POST] Items insert error:", await itemsRes.text());
+            }
           }
+        } else {
+          console.warn("[admin/bundles POST] Bundle insert error:", await res.text());
         }
       } catch (err) {
         console.warn("[admin/bundles POST] Supabase write notice:", err.message);
       }
     }
 
-    // 2. Always synchronize local bundles.json fallback
-    const localBundles = readLocalBundlesFile();
-    const existingIdx = localBundles.findIndex((b) => b.id === bundleData.id || b.slug === bundleData.slug);
-    if (existingIdx >= 0) {
-      localBundles[existingIdx] = bundleData;
-    } else {
-      localBundles.push(bundleData);
+    if (!finalBundleId) {
+      finalBundleId = Date.now();
+      bundleData.id = finalBundleId;
     }
-    writeLocalBundlesFile(localBundles);
+
+    // 2. Always synchronize local bundles.json fallback
+    try {
+      const localBundles = readLocalBundlesFile();
+      const existingIdx = localBundles.findIndex((b) => b.id === bundleData.id || b.slug === bundleData.slug);
+      if (existingIdx >= 0) {
+        localBundles[existingIdx] = bundleData;
+      } else {
+        localBundles.push(bundleData);
+      }
+      writeLocalBundlesFile(localBundles);
+    } catch (_) {}
 
     // Revalidate Next.js cache
     try {
       revalidateProductsCache();
     } catch (_) {}
 
-    // Enrich and return
-    const allProdIds = bundleData.items.map((it) => it.product_id);
-    const pMap = await fetchProductsForComponents(allProdIds);
-    const enriched = enrichBundleWithProducts(bundleData, pMap);
+    // Fetch fresh enriched bundle
+    const enriched = await getEnrichedBundleById(finalBundleId, { includeHidden: true });
 
     return NextResponse.json({
       success: true,
-      bundle: enriched,
+      bundle: enriched || bundleData,
       persisted_to_supabase: supabaseSuccess,
     });
   } catch (error) {
