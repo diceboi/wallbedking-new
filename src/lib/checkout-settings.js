@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { supabaseAdmin } from "./supabase";
+import { supabaseAdmin } from "./supabase.js";
 
 const SETTINGS_FILE = path.join(
   process.cwd(),
@@ -10,7 +10,7 @@ const SETTINGS_FILE = path.join(
 );
 
 /**
- * Read local JSON settings file
+ * Read local JSON settings file with /tmp fallback
  */
 export function getLocalCheckoutSettings() {
   try {
@@ -55,19 +55,30 @@ export function saveLocalCheckoutSettings(settings) {
 }
 
 /**
- * Get all checkout settings for all locales
- * Attempts to read from Supabase if table exists, otherwise returns local file
+ * Get all checkout settings with database connection metadata
  */
-export async function getAllCheckoutSettings() {
-  let settings = getLocalCheckoutSettings();
+export async function getAllCheckoutSettingsWithMeta() {
+  const localSettings = getLocalCheckoutSettings();
+  let settings = { ...localSettings };
+  let fromSupabase = false;
+  let dbTableMissing = false;
+  let supabaseCount = 0;
+  let errorMsg = null;
 
-  // Try fetching from Supabase table "checkout_settings"
   try {
     const { data, error } = await supabaseAdmin
       .from("checkout_settings")
       .select("*");
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      if (error.code === "PGRST205" || error.message?.includes("not find")) {
+        dbTableMissing = true;
+      }
+      errorMsg = error.message;
+      console.warn("[checkout-settings] Supabase table query notice:", error.message);
+    } else if (Array.isArray(data) && data.length > 0) {
+      fromSupabase = true;
+      supabaseCount = data.length;
       data.forEach((row) => {
         if (row.locale && row.config) {
           settings[row.locale] = {
@@ -77,11 +88,31 @@ export async function getAllCheckoutSettings() {
           };
         }
       });
+    } else {
+      // Table exists but is empty
+      fromSupabase = false;
     }
-  } catch (e) {
-    // Supabase table might not exist yet, perfectly fine to use local file
+  } catch (err) {
+    dbTableMissing = true;
+    errorMsg = err.message;
+    console.warn("[checkout-settings] Supabase error:", err.message);
   }
 
+  return {
+    settings,
+    fromSupabase,
+    dbTableMissing,
+    supabaseCount,
+    errorMsg,
+  };
+}
+
+/**
+ * Get all checkout settings for all locales
+ * Primarily loads from Supabase public.checkout_settings, fallback to local JSON
+ */
+export async function getAllCheckoutSettings() {
+  const { settings } = await getAllCheckoutSettingsWithMeta();
   return settings;
 }
 
@@ -90,48 +121,69 @@ export async function getAllCheckoutSettings() {
  */
 export async function getCheckoutSettingsForLocale(locale = "en") {
   const normLocale = (locale || "en").toLowerCase();
-  const allSettings = await getAllCheckoutSettings();
+  const { settings, fromSupabase } = await getAllCheckoutSettingsWithMeta();
 
-  if (allSettings[normLocale]) {
-    return allSettings[normLocale];
-  }
+  const config =
+    settings[normLocale] ||
+    settings.en ||
+    Object.values(settings)[0] ||
+    null;
 
-  // Fallback to UK or first available
-  return allSettings.en || Object.values(allSettings)[0] || null;
+  return { config, fromSupabase };
 }
 
 /**
  * Save settings for all or a specific locale
+ * Primarily syncs to Supabase, also writes to local/tmp fallback
  */
 export async function saveCheckoutSettings(updatedSettings) {
   // 1. Save locally or in serverless /tmp
-  saveLocalCheckoutSettings(updatedSettings);
+  const savedLocal = saveLocalCheckoutSettings(updatedSettings);
 
-  // 2. Best-effort sync to Supabase only if table exists
+  // 2. Save directly to Supabase checkout_settings table
+  let savedToSupabase = false;
+  let dbTableMissing = false;
+  let supabaseError = null;
+
   try {
-    const { error: testErr } = await supabaseAdmin
-      .from("checkout_settings")
-      .select("locale")
-      .limit(1);
+    const upsertRows = Object.entries(updatedSettings).map(([locale, config]) => ({
+      locale,
+      config,
+      updated_at: new Date().toISOString(),
+    }));
 
-    if (!testErr) {
-      await Promise.allSettled(
-        Object.entries(updatedSettings).map(([locale, config]) =>
-          supabaseAdmin.from("checkout_settings").upsert(
-            {
-              locale,
-              config,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "locale" }
-          )
-        )
-      );
+    const { error } = await supabaseAdmin
+      .from("checkout_settings")
+      .upsert(upsertRows, { onConflict: "locale" });
+
+    if (error) {
+      if (error.code === "PGRST205" || error.message?.includes("not find")) {
+        dbTableMissing = true;
+      }
+      supabaseError = error.message;
+      console.warn("[checkout-settings] Supabase table sync failed:", error.message);
+    } else {
+      savedToSupabase = true;
     }
   } catch (err) {
-    console.warn("[checkout-settings] Supabase table sync:", err.message);
+    supabaseError = err.message;
+    dbTableMissing = true;
+    console.warn("[checkout-settings] Supabase table sync exception:", err.message);
   }
 
-  return true;
+  return {
+    success: savedToSupabase || savedLocal,
+    savedToSupabase,
+    savedLocal,
+    dbTableMissing,
+    error: supabaseError,
+  };
 }
 
+/**
+ * Sync initial local settings file into Supabase checkout_settings table
+ */
+export async function syncLocalSettingsToSupabase() {
+  const localSettings = getLocalCheckoutSettings();
+  return await saveCheckoutSettings(localSettings);
+}

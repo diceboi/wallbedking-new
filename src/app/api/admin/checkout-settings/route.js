@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   getAllCheckoutSettings,
+  getAllCheckoutSettingsWithMeta,
   saveCheckoutSettings,
+  syncLocalSettingsToSupabase,
 } from "@/lib/checkout-settings";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +16,20 @@ const noCacheHeaders = {
 
 /**
  * GET /api/admin/checkout-settings
- * Returns all shipping and payment configurations across all markets
+ * Returns all shipping and payment configurations across all markets with Supabase status
  */
 export async function GET() {
   try {
-    const settings = await getAllCheckoutSettings();
+    const { settings, fromSupabase, dbTableMissing, supabaseCount } =
+      await getAllCheckoutSettingsWithMeta();
+
     return NextResponse.json(
       {
         success: true,
         settings,
+        fromSupabase,
+        dbTableMissing,
+        supabaseCount,
       },
       { headers: noCacheHeaders }
     );
@@ -37,7 +44,7 @@ export async function GET() {
 
 /**
  * POST /api/admin/checkout-settings
- * Updates shipping and payment settings across markets
+ * Updates shipping and payment settings in Supabase public.checkout_settings table
  */
 export async function POST(req) {
   try {
@@ -47,6 +54,24 @@ export async function POST(req) {
       return NextResponse.json(
         { success: false, error: "Invalid payload" },
         { status: 400, headers: noCacheHeaders }
+      );
+    }
+
+    // Special action: force sync local defaults to Supabase
+    if (body.action === "sync_to_supabase") {
+      const result = await syncLocalSettingsToSupabase();
+      return NextResponse.json(
+        {
+          success: result.success,
+          savedToSupabase: result.savedToSupabase,
+          dbTableMissing: result.dbTableMissing,
+          message: result.savedToSupabase
+            ? "Successfully synced all market configurations to Supabase."
+            : result.dbTableMissing
+            ? "Table 'public.checkout_settings' does not exist in Supabase yet. Please run supabase/checkout_settings.sql."
+            : result.error || "Failed to sync to Supabase.",
+        },
+        { headers: noCacheHeaders }
       );
     }
 
@@ -65,12 +90,21 @@ export async function POST(req) {
       newSettings = body;
     }
 
-    await saveCheckoutSettings(newSettings);
+    const saveResult = await saveCheckoutSettings(newSettings);
+
+    const message = saveResult.savedToSupabase
+      ? "Shipping & payment settings successfully saved to Supabase database!"
+      : saveResult.dbTableMissing
+      ? "Saved locally, but 'public.checkout_settings' table was not found in Supabase. Run supabase/checkout_settings.sql to persist in DB."
+      : "Settings saved locally.";
 
     return NextResponse.json(
       {
-        success: true,
-        message: "Shipping and payment settings saved successfully.",
+        success: saveResult.success,
+        savedToSupabase: saveResult.savedToSupabase,
+        savedLocal: saveResult.savedLocal,
+        dbTableMissing: saveResult.dbTableMissing,
+        message,
         settings: newSettings,
       },
       { headers: noCacheHeaders }

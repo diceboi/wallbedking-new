@@ -20,6 +20,7 @@ import {
   IconCurrencyPound,
   IconCurrencyDollar,
   IconCurrencyEuro,
+  IconDatabase,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -41,6 +42,9 @@ export default function AdminShippingPaymentPage() {
   const [toast, setToast] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [copySourceLocale, setCopySourceLocale] = useState("");
+  const [fromSupabase, setFromSupabase] = useState(false);
+  const [dbTableMissing, setDbTableMissing] = useState(false);
+  const [syncingToSupabase, setSyncingToSupabase] = useState(false);
 
   const showToast = (type, text) => {
     setToast({ type, text });
@@ -62,6 +66,8 @@ export default function AdminShippingPaymentPage() {
       const data = await res.json();
       if (data.success && data.settings) {
         setSettings(data.settings);
+        setFromSupabase(Boolean(data.fromSupabase));
+        setDbTableMissing(Boolean(data.dbTableMissing));
         setHasChanges(false);
       } else {
         showToast("error", "Failed to load checkout settings.");
@@ -212,12 +218,25 @@ export default function AdminShippingPaymentPage() {
         if (data.settings) {
           setSettings(data.settings);
         }
+        if (data.savedToSupabase) {
+          setFromSupabase(true);
+          setDbTableMissing(false);
+        } else if (data.dbTableMissing) {
+          setDbTableMissing(true);
+          setFromSupabase(false);
+        }
         setHasChanges(false);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("wbk_settings_updated"));
           localStorage.setItem("wbk_settings_updated", Date.now().toString());
         }
-        showToast("success", "Beállítások sikeresen elmentve!");
+        if (data.savedToSupabase) {
+          showToast("success", "Beállítások elmentve és Supabase adatbázisba szinkronizálva!");
+        } else if (data.dbTableMissing) {
+          showToast("error", "Helyi gyorsítótárba mentve, de a Supabase tábla hiányzik! Futtasd le a supabase/checkout_settings.sql szkriptet.");
+        } else {
+          showToast("success", "Beállítások sikeresen elmentve!");
+        }
       } else {
         showToast("error", data.error || "A mentés nem sikerült.");
       }
@@ -225,6 +244,28 @@ export default function AdminShippingPaymentPage() {
       showToast("error", "Hálózati hiba történt a mentés során.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSyncToSupabase = async () => {
+    setSyncingToSupabase(true);
+    try {
+      const res = await fetch("/api/admin/checkout-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_to_supabase" }),
+      });
+      const data = await res.json();
+      if (data.savedToSupabase) {
+        showToast("success", "Minden piac beállítása sikeresen szinkronizálva a Supabase adatbázisba!");
+        fetchSettings();
+      } else {
+        showToast("error", data.message || "A szinkronizálás nem sikerült.");
+      }
+    } catch (err) {
+      showToast("error", "Hálózati hiba történt a szinkronizálás során.");
+    } finally {
+      setSyncingToSupabase(false);
     }
   };
 
@@ -282,6 +323,81 @@ export default function AdminShippingPaymentPage() {
           </div>
         }
       />
+
+      {/* Database Storage Status Banner */}
+      {fromSupabase ? (
+        <div className="bg-emerald-50 border border-emerald-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-emerald-900">
+          <div className="flex items-center gap-2">
+            <IconDatabase size={16} className="text-emerald-600 shrink-0" />
+            <span className="font-semibold">Connected to Supabase Database:</span>
+            <span>
+              Shipping and payment methods are loaded dynamically and saved directly in{" "}
+              <code className="bg-emerald-100 px-1 py-0.5 rounded font-mono text-emerald-800">
+                public.checkout_settings
+              </code>
+              .
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSyncToSupabase}
+              disabled={syncingToSupabase}
+              className="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded text-[11px] font-medium transition-colors cursor-pointer"
+            >
+              {syncingToSupabase ? "Syncing..." : "Force DB Re-sync"}
+            </button>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-medium text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live DB Synced
+            </span>
+          </div>
+        </div>
+      ) : dbTableMissing ? (
+        <div className="bg-amber-50 border border-amber-300 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
+          <div className="flex items-start gap-2.5">
+            <IconAlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-900">Database Table Setup Ready</p>
+              <p className="text-amber-800 mt-0.5">
+                To store shipping and payment options directly in Supabase, run the migration script in{" "}
+                <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-semibold">
+                  supabase/checkout_settings.sql
+                </code>{" "}
+                in your Supabase SQL Editor. Currently operating in fallback cache mode.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText("supabase/checkout_settings.sql");
+                showToast("success", "Szkript elérési út másolva: supabase/checkout_settings.sql");
+              }}
+              className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer"
+            >
+              Copy Script Path
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-sky-50 border border-sky-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-sky-950">
+          <div className="flex items-center gap-2">
+            <IconDatabase size={16} className="text-sky-600 shrink-0" />
+            <span className="font-semibold">Supabase Table Ready:</span>
+            <span>Table found, but no market records yet. Click to sync default settings.</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleSyncToSupabase}
+            disabled={syncingToSupabase}
+            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer self-start sm:self-center"
+          >
+            {syncingToSupabase ? "Syncing to Supabase..." : "Sync All Defaults to Supabase"}
+          </button>
+        </div>
+      )}
 
       {/* Floating Save Notification if Unsaved Changes */}
       {hasChanges && (
