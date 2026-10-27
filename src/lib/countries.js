@@ -96,42 +96,94 @@ const USA_COUNTRY = {
   },
 };
 
-const UK_COUNTRY = {
-  value: "United Kingdom",
-  code: "GB",
-  names: {
-    en: "United Kingdom (Free Mainland Delivery)",
-    fr: "Royaume-Uni (UK)",
-    de: "Vereinigtes Königreich (UK)",
-    es: "Reino Unido (UK)",
-    por: "Reino Unido (UK)",
-    it: "Regno Unito (UK)",
+const UK_COUNTRIES = [
+  {
+    value: "United Kingdom",
+    label: "United Kingdom (Free Mainland Delivery)",
+    code: "GB",
   },
-};
+  {
+    value: "England",
+    label: "England (United Kingdom)",
+    code: "GB",
+  },
+  {
+    value: "Scotland",
+    label: "Scotland (United Kingdom)",
+    code: "GB",
+  },
+  {
+    value: "Wales",
+    label: "Wales (United Kingdom)",
+    code: "GB",
+  },
+  {
+    value: "Northern Ireland",
+    label: "Northern Ireland (United Kingdom)",
+    code: "GB",
+  },
+  {
+    value: "Isle of Man",
+    label: "Isle of Man",
+    code: "IM",
+  },
+  {
+    value: "Channel Islands",
+    label: "Channel Islands (Jersey & Guernsey)",
+    code: "JE",
+  },
+  {
+    value: "Ireland",
+    label: "Republic of Ireland",
+    code: "IE",
+  },
+];
+
+const UK_ALIASES = [
+  "united kingdom",
+  "uk",
+  "great britain",
+  "britain",
+  "england",
+  "scotland",
+  "wales",
+  "northern ireland",
+  "gb",
+  "anglia",
+  "isle of man",
+  "channel islands",
+  "jersey",
+  "guernsey",
+  "ireland",
+];
 
 /**
- * Returns available delivery countries strictly limited to the operational market of the storefront locale:
+ * Returns true if a given country / locale corresponds to the UK or UK constituent nations
+ */
+export function isUkAddress(country, locale) {
+  const normLoc = (locale || "").toLowerCase();
+  if (normLoc === "en" || normLoc === "uk") return true;
+  const c = String(country || "").toLowerCase().trim();
+  return /kingdom|england|scotland|wales|britain|gb|anglia|man|channel|guernsey|jersey/i.test(c);
+}
+
+/**
+ * Returns available delivery countries for the specific storefront locale:
  * - Italian storefront (it): Strictly Italy
  * - German storefront (de): Strictly Germany
  * - French storefront (fr): Strictly France
  * - Spanish storefront (es): Strictly Spain
  * - Portuguese storefront (por / pt): Strictly Portugal
  * - US storefront (us): Strictly United States
- * - UK storefront (en / uk): Strictly United Kingdom
+ * - UK storefront (en / uk): United Kingdom, England, Scotland, Wales, N. Ireland, Crown Dependencies & Ireland
  */
 export function getDeliveryCountries(locale) {
   const norm = (locale || "en").toLowerCase();
 
-  const getLabel = (c) => c.names[norm] || c.names.en || c.value;
+  const getLabel = (c) => c.names?.[norm] || c.names?.en || c.label || c.value;
 
   if (norm === "en" || norm === "uk") {
-    return [
-      {
-        value: UK_COUNTRY.value,
-        label: UK_COUNTRY.names.en,
-        code: UK_COUNTRY.code,
-      },
-    ];
+    return UK_COUNTRIES;
   }
 
   if (norm === "us") {
@@ -173,8 +225,15 @@ export function getDeliveryCountries(locale) {
  */
 export function isCountryAllowedForLocale(country, locale) {
   if (!country) return false;
-  const allowed = getDeliveryCountries(locale);
+  const normLoc = (locale || "en").toLowerCase();
   const normCountry = String(country).toLowerCase().trim();
+
+  // If UK storefront, accept any constituent nation, dependency or alias
+  if (normLoc === "en" || normLoc === "uk") {
+    if (UK_ALIASES.includes(normCountry)) return true;
+  }
+
+  const allowed = getDeliveryCountries(locale);
   return allowed.some(
     (c) =>
       c.value.toLowerCase() === normCountry ||
@@ -191,7 +250,7 @@ export function getPostcodePlaceholder(locale, country) {
   const c = (country || "").toLowerCase();
   const loc = (locale || "").toLowerCase();
 
-  if (c.includes("kingdom") || loc === "en") {
+  if (isUkAddress(c, loc)) {
     return "e.g. SW1A 1AA";
   }
   if (c.includes("united states") || c.includes("usa") || loc === "us") {
@@ -222,7 +281,7 @@ export function getCityPlaceholder(locale, country) {
   const c = (country || "").toLowerCase();
   const loc = (locale || "").toLowerCase();
 
-  if (c.includes("kingdom") || loc === "en") return "e.g. London";
+  if (isUkAddress(c, loc)) return "e.g. London";
   if (c.includes("united states") || c.includes("usa") || loc === "us") return "e.g. New York";
   if (c.includes("ital") || loc === "it") return "es. Roma";
   if (c.includes("germany") || c.includes("deutschland") || loc === "de") return "z.B. Berlin";

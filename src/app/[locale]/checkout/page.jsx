@@ -38,6 +38,8 @@ import { BANK_DETAILS, getBankI18n } from "@/lib/bank-details";
 import {
   getDefaultCountry,
   getDeliveryCountries,
+  isCountryAllowedForLocale,
+  isUkAddress,
   getPostcodePlaceholder,
   getCityPlaceholder,
 } from "@/lib/countries";
@@ -135,7 +137,11 @@ export default function CheckoutPage() {
   // Ensure selected country is valid for the current delivery countries list
   useEffect(() => {
     if (deliveryCountries.length > 0 && formData.country) {
-      const isValid = deliveryCountries.some((c) => c.value === formData.country);
+      const isValid =
+        isCountryAllowedForLocale(formData.country, locale) ||
+        deliveryCountries.some(
+          (c) => c.value.toLowerCase() === formData.country.toLowerCase()
+        );
       if (!isValid) {
         setFormData((prev) => ({
           ...prev,
@@ -143,7 +149,7 @@ export default function CheckoutPage() {
         }));
       }
     }
-  }, [deliveryCountries, formData.country]);
+  }, [deliveryCountries, formData.country, locale]);
 
   // Ensure active payment method stays valid if gateway availability changes
   useEffect(() => {
@@ -238,9 +244,11 @@ export default function CheckoutPage() {
       lName = parts.slice(1).join(" ") || "";
     }
     const defaultCountry = getDefaultCountry(locale);
-    const isAllowedCountry = deliveryCountries.some(
-      (c) => c.value.toLowerCase() === (addr.country || "").toLowerCase()
-    );
+    const isAllowedCountry =
+      isCountryAllowedForLocale(addr.country, locale) ||
+      deliveryCountries.some(
+        (c) => c.value.toLowerCase() === (addr.country || "").toLowerCase()
+      );
     const countryToUse = isAllowedCountry ? addr.country : defaultCountry;
 
     setFormData((prev) => ({
@@ -521,7 +529,7 @@ export default function CheckoutPage() {
   if (orderComplete) {
     const isBank = (formData.paymentMethod || "").toLowerCase().includes("bank");
     const bankI18n = getBankI18n(locale);
-    const isUk = locale === "en" || (formData.country || "").toLowerCase().includes("kingdom");
+    const isUk = isUkAddress(formData.country, locale);
     const payableTotal = completedOrderTotal !== null ? completedOrderTotal : finalTotal;
 
     return (

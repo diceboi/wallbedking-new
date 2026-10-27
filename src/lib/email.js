@@ -399,7 +399,12 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
   const isBankTransfer = (order.payment_method || "").toLowerCase().includes("bank");
   const isPaid = (order.payment_status || "").toLowerCase() === "paid";
   const bankI18n = getBankI18n(loc);
-  const isUk = loc === "en" || (order.shipping_address?.country || "").toLowerCase().includes("kingdom");
+  const isUk =
+    loc === "en" ||
+    loc === "uk" ||
+    /kingdom|england|scotland|wales|britain|gb|anglia/i.test(
+      order.shipping_address?.country || ""
+    );
 
   const itemsList = (order.items || [])
     .map((item) => {
