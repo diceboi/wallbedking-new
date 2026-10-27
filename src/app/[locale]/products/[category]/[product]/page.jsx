@@ -2499,8 +2499,16 @@ export default function ProductDetailPage() {
                   </div>
 
                   {productPricing.isOnSale && (
-                    <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold uppercase tracking-wider rounded">
-                      {t("product.sale", "Sale")}
+                    <span
+                      className={`px-2 py-0.5 border text-[10px] font-bold uppercase tracking-wider rounded ${
+                        displayProduct?.is_bundle
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-red-50 text-red-700 border-red-200"
+                      }`}
+                    >
+                      {displayProduct?.is_bundle
+                        ? `${productPricing.discountLabel || "-10%"} ${t("product.bundleBadge", "Pack")}`
+                        : t("product.sale", "Sale")}
                     </span>
                   )}
                 </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getCheckoutSettingsForLocale,
-  getAllCheckoutSettings,
+  getAllCheckoutSettingsWithMeta,
 } from "@/lib/checkout-settings";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/checkout/settings?locale=por
  * Returns shipping & payment configuration for a given locale (or all if not specified)
+ * Primarily served directly from Supabase public.checkout_settings
  */
 export async function GET(request) {
   try {
@@ -22,22 +23,27 @@ export async function GET(request) {
     };
 
     if (locale) {
-      const config = await getCheckoutSettingsForLocale(locale);
+      const { config, fromSupabase } = await getCheckoutSettingsForLocale(locale);
       return NextResponse.json(
         {
           success: true,
           locale,
           config,
+          fromSupabase,
         },
         { headers }
       );
     }
 
-    const all = await getAllCheckoutSettings();
+    const { settings, fromSupabase, dbTableMissing } =
+      await getAllCheckoutSettingsWithMeta();
+
     return NextResponse.json(
       {
         success: true,
-        settings: all,
+        settings,
+        fromSupabase,
+        dbTableMissing,
       },
       { headers }
     );

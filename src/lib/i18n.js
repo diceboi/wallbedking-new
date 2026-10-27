@@ -220,6 +220,28 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
     }
   }
 
+  // Handle pre-paired bundle packages: regularPrice is the combined subtotal, finalSalePrice is the bundle price
+  if (product.is_bundle) {
+    let bundleSubtotal = 0;
+    if (currency === "USD") {
+      bundleSubtotal = Number(product.subtotal_usd || product.calculated_subtotal_usd || 0);
+    } else if (currency === "EUR") {
+      bundleSubtotal = Number(product.subtotal_euro || product.calculated_subtotal_euro || 0);
+    } else {
+      bundleSubtotal = Number(product.subtotal_gbp || product.calculated_subtotal_gbp || 0);
+    }
+
+    if (bundleSubtotal > regularPrice && regularPrice > 0) {
+      finalSalePrice = regularPrice;
+      regularPrice = bundleSubtotal;
+      discountType = "percent";
+      discountAmount = Number(
+        product.discount_percent ||
+          Math.round(((bundleSubtotal - finalSalePrice) / bundleSubtotal) * 100)
+      );
+    }
+  }
+
   const isOnSale = finalSalePrice != null && finalSalePrice < regularPrice;
   const effectivePrice = isOnSale ? finalSalePrice : regularPrice;
 
