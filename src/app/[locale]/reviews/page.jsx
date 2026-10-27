@@ -139,6 +139,7 @@ export default function ReviewsPage() {
   const { t, localizedHref } = useLocale();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [dynamicReviews, setDynamicReviews] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(24);
 
   useEffect(() => {
     fetch(`/api/reviews?_t=${Date.now()}`, {
@@ -173,8 +174,26 @@ export default function ReviewsPage() {
   }, []);
 
   const allReviews = useMemo(() => {
-    // Dynamic verified reviews first, then curated Google reviews
-    return [...dynamicReviews, ...REVIEWS_DATA];
+    if (!dynamicReviews || dynamicReviews.length === 0) {
+      return REVIEWS_DATA;
+    }
+    const seen = new Set(
+      dynamicReviews.map(
+        (r) =>
+          (r.author || "").toLowerCase().trim() +
+          "|" +
+          (r.review || "").toLowerCase().slice(0, 30).trim()
+      )
+    );
+    const additional = REVIEWS_DATA.filter(
+      (r) =>
+        !seen.has(
+          (r.author || "").toLowerCase().trim() +
+          "|" +
+          (r.review || "").toLowerCase().slice(0, 30).trim()
+        )
+    );
+    return [...dynamicReviews, ...additional];
   }, [dynamicReviews]);
 
   const filteredReviews = useMemo(() => {
@@ -183,6 +202,15 @@ export default function ReviewsPage() {
       (r.model || "").toLowerCase().includes(selectedFilter.toLowerCase())
     );
   }, [allReviews, selectedFilter]);
+
+  const displayedReviews = useMemo(() => {
+    return filteredReviews.slice(0, visibleCount);
+  }, [filteredReviews, visibleCount]);
+
+  const handleFilterChange = (tab) => {
+    setSelectedFilter(tab);
+    setVisibleCount(24);
+  };
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -227,12 +255,12 @@ export default function ReviewsPage() {
       {/* Filter Tabs */}
       <Container size="xl" className="pt-12">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-wbk-lightgrey/60">
-          <div className="flex items-center gap-2">
-            {["All", "Classic", "Studio", "Mattress"].map((tab) => (
+          <div className="flex flex-wrap items-center gap-2">
+            {["All", "Classic", "Studio", "Cabinet", "Mattress"].map((tab) => (
               <button
                 key={tab}
                 type="button"
-                onClick={() => setSelectedFilter(tab)}
+                onClick={() => handleFilterChange(tab)}
                 className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   selectedFilter === tab
                     ? "bg-wbk-black text-white shadow-xs"
@@ -244,13 +272,13 @@ export default function ReviewsPage() {
             ))}
           </div>
           <span className="text-xs text-wbk-brown">
-            {t("categories.showing", "Showing")} {filteredReviews.length} {t("reviews.title", "reviews")}
+            {t("categories.showing", "Showing")} {displayedReviews.length} of {filteredReviews.length} {t("reviews.title", "reviews")}
           </span>
         </div>
 
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-8">
-          {filteredReviews.map((item) => (
+          {displayedReviews.map((item) => (
             <div
               key={item.id}
               className="bg-white p-7 rounded-none border border-wbk-lightgrey/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
@@ -302,6 +330,26 @@ export default function ReviewsPage() {
             </div>
           ))}
         </div>
+
+        {/* Load More Pagination */}
+        {visibleCount < filteredReviews.length && (
+          <div className="pt-12 pb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 24)}
+              className="w-full sm:w-auto px-8 py-3 bg-wbk-black text-white hover:bg-wbk-brown text-xs font-semibold uppercase tracking-wider rounded-none transition-colors cursor-pointer shadow-xs"
+            >
+              Load More Reviews (+24)
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibleCount(filteredReviews.length)}
+              className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-stone-50 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-none transition-colors cursor-pointer"
+            >
+              Show All ({filteredReviews.length})
+            </button>
+          </div>
+        )}
       </Container>
     </div>
   );

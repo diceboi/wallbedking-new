@@ -225,10 +225,16 @@ const UK_LEGACY_REDIRECTS = {
   "/morphy-plus": "/en/products/beds?collection=morphy",
   "/refurbished": "/en/products/beds",
   "/reasons-buy": "/en/about",
+  "/about": "/en/about",
   "/trade": "/en/trade",
   "/case-studies": "/en/case-studies",
   "/sitemap": "/en",
+  "/sitemaps": "/en",
   "/sofa-configurator": "/en/configurator",
+  "/configurator": "/en/configurator",
+  "/beds": "/en/products/beds",
+  "/sofas": "/en/products/sofas",
+  "/account": "/en/account",
   "/coronavirus-covid-19": "/en",
   "/new": "/en",
 };
@@ -289,7 +295,7 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
   }
 
   // 2. If a preferred locale is specified and path is a root legacy path, resolve to that locale
-  if (!target && preferredLocale && preferredLocale !== "de") {
+  if (!target && !isUkDomain && preferredLocale && preferredLocale !== "de") {
     const loc = preferredLocale === "pt" ? "por" : preferredLocale;
     const catMap = {
       beds: { de: "schrankbetten", fr: "lits-escamotables", es: "camas-abatibles", por: "camas-rebativeis", it: "letti-a-scomparsa", us: "beds", en: "beds" },
@@ -328,6 +334,9 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
       target = `/${loc}/reviews`;
     } else if (normalized === "/faq") {
       target = `/${loc}/support/faq`;
+    } else if (normalized === "/trade") {
+      const tradeMap = { de: "gewerbekunden", fr: "professionnels", es: "clientes-comerciales", por: "clientes-comerciais", it: "commercio", us: "trade", en: "trade" };
+      target = `/${loc}/${tradeMap[loc] || "trade"}`;
     } else if (normalized === "/delivery") {
       const delivMap = { de: "lieferung", fr: "livraison", es: "envio", por: "envio", it: "spedizione", us: "delivery", en: "delivery" };
       target = `/${loc}/support/${delivMap[loc] || "delivery"}`;
@@ -335,12 +344,14 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
   }
 
   // 3. Check COM legacy redirects (exact normalized lookup)
-  if (!target && COM_LEGACY_REDIRECTS[normalized]) {
+  // CRITICAL: On UK domain, never match COM un-prefixed redirects to /de/...
+  const isLocalePrefixed = /^\/(de|fr|es|por|it|us|pt)\b/i.test(normalized);
+  if (!target && (!isUkDomain || isLocalePrefixed) && COM_LEGACY_REDIRECTS[normalized]) {
     target = COM_LEGACY_REDIRECTS[normalized];
   }
 
   // 4. Fallback check for raw path without .php
-  if (!target) {
+  if (!target && (!isUkDomain || isLocalePrefixed)) {
     const rawClean = rawPath.replace(/\.(php|html)$/i, "").toLowerCase();
     if (COM_LEGACY_REDIRECTS[rawClean]) {
       target = COM_LEGACY_REDIRECTS[rawClean];
@@ -369,6 +380,12 @@ function resolveLegacyRedirect(rawPath, isUkDomain = false, preferredLocale = nu
 
 /**
  * Builds array of redirects for next.config.js
+ * CRITICAL ARCHITECTURAL RULE:
+ * Only add LOCALE-PREFIXED redirects to next.config.js (e.g. /de/..., /fr/..., /es/..., /it/..., /por/..., /us/..., /pt/...).
+ * Root un-prefixed redirects (e.g. /trade, /reviews, /classic, /wallbeds) MUST NOT be in next.config.js
+ * because Next.js static redirects are domain-agnostic on Vercel and would wrongly redirect
+ * wallbedking.co.uk/trade -> /de/gewerbekunden across the entire platform!
+ * All un-prefixed routes are dynamically and host-sensitively handled in src/proxy.js!
  */
 function getNextConfigRedirects() {
   const redirects = [];
@@ -385,8 +402,14 @@ function getNextConfigRedirects() {
     });
   }
 
-  // Add COM redirects for both clean path and .php path
+  // Add COM redirects for locale-prefixed paths ONLY
   for (const [source, destination] of Object.entries(COM_LEGACY_REDIRECTS)) {
+    const isLocalePrefixed = /^\/(de|fr|es|por|it|us|pt)\b/i.test(source);
+    if (!isLocalePrefixed) {
+      // Handled dynamically by middleware proxy.js based on host/domain!
+      continue;
+    }
+
     addRule(source, destination);
     if (!source.endsWith(".shtml") && source !== "/") {
       addRule(`${source}.php`, destination);

@@ -100,12 +100,17 @@ export async function getApprovedReviews(productSlug) {
   // 1. Try Supabase first if available
   if (supabaseAdmin) {
     try {
-      const { data, error } = await supabaseAdmin
+      let query = supabaseAdmin
         .from("product_reviews")
         .select("*")
-        .eq("product_slug", productSlug)
         .eq("status", "approved")
         .order("created_at", { ascending: false });
+
+      if (productSlug) {
+        query = query.eq("product_slug", productSlug);
+      }
+
+      const { data, error } = await query;
 
       if (!error && Array.isArray(data) && data.length > 0) {
         return data;

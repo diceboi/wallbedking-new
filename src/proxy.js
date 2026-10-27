@@ -29,6 +29,12 @@ function detectLocaleFromAcceptLanguage(acceptLanguageHeader) {
 export function proxy(request) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
+  const isDevOrPreview =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("0.0.0.0") ||
+    host.includes("[::1]") ||
+    host.includes("vercel.app");
   const isUkDomain = host.includes("wallbedking.co.uk");
 
   // 1. Ignore Next.js internals, APIs, and Admin
@@ -46,7 +52,8 @@ export function proxy(request) {
   const detectedLang = detectLocaleFromAcceptLanguage(acceptLangHeader);
   const preferredLocale = savedCookieLocale || (detectedLang !== "uk_redirect" ? detectedLang : null) || null;
 
-  const legacyTarget = resolveLegacyRedirect(pathname, isUkDomain, preferredLocale);
+  // On localhost/dev, default legacy URL resolution to UK store unless explicit locale prefix is provided
+  const legacyTarget = resolveLegacyRedirect(pathname, isUkDomain || isDevOrPreview, preferredLocale);
   if (
     legacyTarget &&
     legacyTarget !== pathname &&
@@ -80,21 +87,16 @@ export function proxy(request) {
     return NextResponse.next();
   }
 
-  // 2. Handle /pt alias -> redirect to /por
+  // Handle /pt alias -> redirect to /por
   if (pathname === "/pt" || pathname.startsWith("/pt/")) {
     const newPath = pathname.replace(/^\/pt/, "/por");
     request.nextUrl.pathname = newPath;
     return NextResponse.redirect(request.nextUrl);
   }
 
-  // 3. Cross-domain storefront segregation:
+  // Cross-domain storefront segregation (PRODUCTION ONLY):
   // A. For .com / non-UK storefronts: NEVER allow /en!
   // If user requests /en, redirect directly to the live UK storefront (wallbedking.co.uk)
-  const isDevOrPreview =
-    host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.includes("0.0.0.0") ||
-    host.includes("vercel.app");
   if (!isUkDomain && !isDevOrPreview && (pathname === "/en" || pathname.startsWith("/en/"))) {
     return NextResponse.redirect(new URL(`https://wallbedking.co.uk${pathname}`));
   }
@@ -140,6 +142,17 @@ export function proxy(request) {
   }
 
   // 5. If missing locale (e.g. root '/' or static path without locale prefix):
+  // For local development and preview environments: NEVER redirect externally!
+  if (isDevOrPreview) {
+    const devLocale =
+      (savedCookieLocale && LOCALES.includes(savedCookieLocale) ? savedCookieLocale : null) ||
+      (detectedLang && detectedLang !== "uk_redirect" && LOCALES.includes(detectedLang) ? detectedLang : null) ||
+      "en";
+    const targetPath = pathname === "/" ? `/${devLocale}` : `/${devLocale}${pathname}`;
+    request.nextUrl.pathname = targetPath;
+    return NextResponse.redirect(request.nextUrl);
+  }
+
   // On .co.uk domain, default is always 'en'
   if (isUkDomain) {
     const targetPath = pathname === "/" ? "/en" : `/en${pathname}`;
