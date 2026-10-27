@@ -152,7 +152,7 @@ export async function validateOrderTotals(
 
         const { data } = await supabaseAdmin
           .from("products")
-          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, in_stock, visibility, is_visible")
+          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
           .or(orClauses.join(","))
           .maybeSingle();
 
@@ -282,20 +282,30 @@ export async function validateOrderTotals(
     const itemTotal = unitPrice * qty;
     subtotal += itemTotal;
 
+    const isTestProduct = Boolean(
+      /test/i.test(prodSource?.name || "") ||
+      /test/i.test(prodSource?.slug || "") ||
+      /test/i.test(prodSource?.sku || "") ||
+      /test/i.test(item?.title || "") ||
+      /test/i.test(item?.slug || "")
+    );
+
     const isHidden =
       prodSource &&
       (String(prodSource.visibility || "").toLowerCase() === "hidden" ||
-        prodSource.visibility === false ||
-        prodSource.is_visible === false);
+        prodSource.visibility === false);
 
     const isStockZero =
       prodSource &&
-      ((prodSource.stock !== undefined &&
-        prodSource.stock !== null &&
-        Number(prodSource.stock) <= 0) ||
-        prodSource.in_stock === false);
+      prodSource.stock !== undefined &&
+      prodSource.stock !== null &&
+      Number(prodSource.stock) <= 0;
 
-    const isOutOfStock = Boolean(isHidden || isStockZero);
+    // A product is out of stock if its stock is 0 (or if hidden with 0 stock).
+    // Test products (and unlisted items with stock > 0) are always buyable.
+    const isOutOfStock = isTestProduct
+      ? Boolean(isStockZero)
+      : Boolean(isStockZero || (isHidden && isStockZero));
 
     validatedItems.push({
       id: item.id || (numericId ? `wbk-${numericId}` : slug),

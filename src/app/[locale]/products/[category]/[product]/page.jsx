@@ -972,6 +972,14 @@ export default function ProductDetailPage() {
     if (!isAvailableInRegion) return true;
     if (displayProduct?.isFallback || activeProduct?.isFallback) return true;
 
+    const isTestProduct = Boolean(
+      /test/i.test(displayProduct?.name || "") ||
+      /test/i.test(displayProduct?.slug || "") ||
+      /test/i.test(displayProduct?.sku || "") ||
+      /test/i.test(activeProduct?.name || "") ||
+      /test/i.test(activeProduct?.slug || "")
+    );
+
     const isHidden = (item) => {
       if (!item) return false;
       const v = String(item.visibility || "").toLowerCase().trim();
@@ -982,7 +990,12 @@ export default function ProductDetailPage() {
         item.is_visible === false
       );
     };
-    if (isHidden(displayProduct) || isHidden(activeProduct)) return true;
+
+    // If a non-test item is hidden AND has 0 or missing stock, mark as out of stock
+    if (!isTestProduct && (isHidden(displayProduct) || isHidden(activeProduct))) {
+      const sVal = Number(displayProduct?.stock ?? activeProduct?.stock ?? 0);
+      if (sVal <= 0) return true;
+    }
 
     if (displayProduct?.in_stock === false) return true;
     if (
@@ -1002,7 +1015,10 @@ export default function ProductDetailPage() {
       ) {
         return true;
       }
-      if (isHidden(selectedVariant)) return true;
+      if (!isTestProduct && isHidden(selectedVariant)) {
+        const vStock = Number(selectedVariant.stock ?? 0);
+        if (vStock <= 0) return true;
+      }
     }
 
     if (familyVariants && familyVariants.length > 0) {
@@ -1012,7 +1028,7 @@ export default function ProductDetailPage() {
             v.stock !== null &&
             Number(v.stock) <= 0) ||
           v.in_stock === false;
-        return vStockZero || isHidden(v);
+        return vStockZero || (!isTestProduct && isHidden(v) && vStockZero);
       });
       if (allVariantsOutOfStock) return true;
     } else {
@@ -1020,7 +1036,7 @@ export default function ProductDetailPage() {
         displayProduct?.stock !== undefined &&
         displayProduct?.stock !== null &&
         Number(displayProduct.stock) > 0;
-      if (!hasPositiveStock) return true;
+      if (!hasPositiveStock && !isTestProduct) return true;
     }
 
     return false;
