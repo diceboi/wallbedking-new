@@ -154,8 +154,8 @@ export async function POST(request) {
               por: ["PT"],
               pt: ["PT"],
               us: ["US"],
-              en: ["GB", "IM", "IE"],
-              uk: ["GB", "IM", "IE"],
+              en: ["GB"],
+              uk: ["GB"],
             }[String(locale).toLowerCase()] || ["GB"]
           ),
         },
