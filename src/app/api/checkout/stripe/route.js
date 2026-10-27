@@ -18,7 +18,10 @@ export async function POST(request) {
       );
     }
 
-    const referenceId = orderId || (cartId && cartId.startsWith("WBK-") ? cartId : (await generateOrderNumber()));
+    const referenceId =
+      orderId && String(orderId).startsWith("WBK-")
+        ? orderId
+        : await generateOrderNumber();
     const paymentConfig = getPaymentConfig(locale, currency);
     const targetCurrencyLower = paymentConfig.stripeCurrency;
     const clientEmail = (customerEmail || customer?.email || "").trim().toLowerCase();
@@ -99,6 +102,21 @@ export async function POST(request) {
     if (paymentConfig.stripeSecretKey) {
       const stripe = new Stripe(paymentConfig.stripeSecretKey);
 
+      let effectiveSuccessUrl = `${paymentConfig.domain}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(
+        referenceId
+      )}&cart_id=${encodeURIComponent(cartId || "")}`;
+      if (success_url) {
+        try {
+          const u = new URL(success_url);
+          u.searchParams.set("order_id", referenceId);
+          u.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+          if (cartId) u.searchParams.set("cart_id", cartId);
+          effectiveSuccessUrl = u.toString();
+        } catch {
+          // keep fallback
+        }
+      }
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer_email: clientEmail || undefined,
@@ -114,11 +132,7 @@ export async function POST(request) {
           quantity: item.quantity || 1,
         })),
         mode: "payment",
-        success_url:
-          success_url ||
-          `${paymentConfig.domain}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(
-            referenceId
-          )}`,
+        success_url: effectiveSuccessUrl,
         cancel_url: cancel_url || `${paymentConfig.domain}/${locale}/cart`,
         client_reference_id: referenceId,
         metadata: {
@@ -182,17 +196,20 @@ export async function POST(request) {
       },
     }));
 
-    // Ensure success_url and cancel_url sent to OnRender are relative paths
-    // so OnRender's internal URL builder doesn't glue its domain to an absolute URL (e.g. wallbedking.co.uk/http://localhost:3000)
-    let onrenderSuccessUrl = `/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(referenceId)}&cart_id=${encodeURIComponent(cartId || "")}`;
+    let onrenderSuccessUrl = `/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(
+      referenceId
+    )}&cart_id=${encodeURIComponent(cartId || "")}`;
     if (success_url) {
       try {
-        if (success_url.startsWith("http://") || success_url.startsWith("https://")) {
-          const u = new URL(success_url);
-          onrenderSuccessUrl = `${u.pathname}${u.search}`;
-        } else {
-          onrenderSuccessUrl = success_url.startsWith("/") ? success_url : `/${success_url}`;
-        }
+        const u = new URL(
+          success_url.startsWith("http")
+            ? success_url
+            : `https://wallbedking.com${success_url.startsWith("/") ? "" : "/"}${success_url}`
+        );
+        u.searchParams.set("order_id", referenceId);
+        u.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+        if (cartId) u.searchParams.set("cart_id", cartId);
+        onrenderSuccessUrl = `${u.pathname}${u.search}`;
       } catch {
         // keep default
       }

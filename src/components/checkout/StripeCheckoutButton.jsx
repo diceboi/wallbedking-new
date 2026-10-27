@@ -142,8 +142,9 @@ export function StripeCheckoutButton({
         });
       }
 
-      const orderRef = activeOrderId || customCartId;
-      const successUrl = `${window.location.origin}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(orderRef)}&cart_id=${encodeURIComponent(customCartId)}`;
+      const validOrderId = activeOrderId && String(activeOrderId).startsWith("WBK-") ? activeOrderId : null;
+      const orderParam = validOrderId ? `&order_id=${encodeURIComponent(validOrderId)}` : "";
+      const successUrl = `${window.location.origin}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}${orderParam}&cart_id=${encodeURIComponent(customCartId)}`;
       const cancelUrl = `${window.location.origin}/${locale}/cart`;
 
       const response = await fetch("/api/checkout/stripe", {
@@ -157,7 +158,7 @@ export function StripeCheckoutButton({
           success_url: successUrl,
           cancel_url: cancelUrl,
           cartId: customCartId,
-          orderId: activeOrderId,
+          orderId: validOrderId,
           locale,
           currency: currentCurrency,
           collect_phone: true,

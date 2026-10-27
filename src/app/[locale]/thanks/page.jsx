@@ -121,7 +121,14 @@ function ThanksContent() {
   // Derived effective customer and order values
   const effectiveEmail = confirmedOrder?.customer_email || emailParam;
   const effectiveName = confirmedOrder?.customer_name || fullNameParam;
-  const effectiveOrderId = confirmedOrder?.id || orderId || (tx.startsWith("cs_") ? `WBK-ST-${tx.slice(-8).toUpperCase()}` : (tx ? `WBK-PP-${tx.slice(-8).toUpperCase()}` : `WBK-${Math.floor(100000 + Math.random() * 900000)}`));
+  const effectiveOrderId =
+    confirmedOrder?.id ||
+    (orderId && orderId.startsWith("WBK-") ? orderId : null) ||
+    (tx && tx.startsWith("cs_")
+      ? `WBK-ST-${tx.slice(-8).toUpperCase()}`
+      : tx
+      ? `WBK-PP-${tx.slice(-8).toUpperCase()}`
+      : "Processing...");
   const effectiveAmount = confirmedOrder?.total_amount ? Number(confirmedOrder.total_amount) : (amt ? Number(amt) : null);
   const effectiveCurrency = confirmedOrder?.currency || (locale === "en" ? "GBP" : "EUR");
 

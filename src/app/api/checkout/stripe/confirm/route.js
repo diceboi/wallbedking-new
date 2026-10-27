@@ -93,7 +93,9 @@ export async function POST(request) {
                   country: s.customer_details.address.country || "",
                 }
               : {},
-            cart_id: s.metadata?.cart_id || s.client_reference_id || "",
+            cart_id: s.metadata?.cart_id || "",
+            order_id: s.metadata?.order_id || "",
+            client_reference_id: s.client_reference_id || "",
           };
         }
       } catch (directStripeErr) {
@@ -151,7 +153,19 @@ export async function POST(request) {
     } = sessionData;
 
     const effectiveCartId = cart_id || sessionCartId || "";
-    const effectiveOrderId = order_id || (sessionCartId && sessionCartId.startsWith("WBK-") ? sessionCartId : (await generateOrderNumber()));
+    // Ensure effectiveOrderId is ALWAYS a genuine WBK- sequential order number
+    let effectiveOrderId = null;
+    if (order_id && String(order_id).startsWith("WBK-")) {
+      effectiveOrderId = String(order_id).trim();
+    } else if (sessionData.order_id && String(sessionData.order_id).startsWith("WBK-")) {
+      effectiveOrderId = String(sessionData.order_id).trim();
+    } else if (sessionData.client_reference_id && String(sessionData.client_reference_id).startsWith("WBK-")) {
+      effectiveOrderId = String(sessionData.client_reference_id).trim();
+    } else if (sessionCartId && String(sessionCartId).startsWith("WBK-")) {
+      effectiveOrderId = String(sessionCartId).trim();
+    } else {
+      effectiveOrderId = await generateOrderNumber();
+    }
     const customerEmailClean = (customer_email || "").trim().toLowerCase();
 
     // 2. Check if order already exists in Supabase
