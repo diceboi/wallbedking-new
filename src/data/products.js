@@ -304,22 +304,36 @@ export const getProductSizeInfo = (item, locale = "en") => {
       cabSize = `${cabSize} Extension`;
     }
 
-    const wCm = item.width ? Math.round(item.width / 10) : 0;
-    const lCm = item.length ? Math.round(item.length / 10) : 0;
-    const dim = wCm && lCm ? ` (${wCm}x${lCm} cm)` : "";
-    const euLabel = `${cabSize}${dim}`;
-    const usLabel = factory?.usLabel || (factory?.usInches ? `${cabSize} (${factory.usInches})` : euLabel);
-    let slug = wCm && lCm ? `${wCm}x${lCm}` : (item.slug || String(item.id));
+    const wCm = item.width ? Math.round(Number(item.width) / 10) : 0;
+    const hCm = item.height ? Math.round(Number(item.height) / 10) : 0;
+    const dCm = item.length ? Math.round(Number(item.length) / 10) : 0;
+    const dim3 =
+      wCm && hCm && dCm
+        ? `W ${wCm} x H ${hCm} x D ${dCm}`
+        : wCm && dCm
+        ? `${wCm}x${dCm} cm`
+        : "";
+    const dim3WithCm = dim3 ? `${dim3} cm` : "";
+    const wIn = wCm ? Math.round(wCm / 2.54) : 0;
+    const hIn = hCm ? Math.round(hCm / 2.54) : 0;
+    const dIn = dCm ? Math.round(dCm / 2.54) : 0;
+    const dim3Us =
+      wIn && hIn && dIn
+        ? `W ${wIn}" x H ${hIn}" x D ${dIn}"`
+        : dim3WithCm;
+    const euLabel = cabSize ? `${cabSize} – ${dim3}` : dim3;
+    const usLabel = cabSize ? `${cabSize} – ${dim3Us}` : dim3Us;
+    let slug = wCm && dCm ? `${wCm}x${dCm}` : (item.slug || String(item.id));
     if (/side\s*unit/i.test(name)) {
       if (/door/i.test(name)) slug = `${slug}-door`;
       else if (/shelves/i.test(name)) slug = `${slug}-shelves`;
     }
     return {
-      size: isUS ? (factory?.nameUs || usLabel) : cabSize,
+      size: isUS ? (factory?.nameUs || usLabel) : (cabSize || dim3),
       sizeLabel: isUS ? usLabel : euLabel,
       sizeSlug: slug,
-      size_eu: wCm && lCm ? `${wCm}x${lCm} cm` : cabSize,
-      size_us: usLabel,
+      size_eu: dim3WithCm,
+      size_us: dim3Us,
       sizeLabel_eu: euLabel,
       sizeLabel_us: usLabel,
     };

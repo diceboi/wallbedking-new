@@ -554,10 +554,32 @@ export default function ProductDetailPage() {
       ) {
         continue;
       }
-      const rawLabel = v.sizeLabel || v.size || v.name || "Standard";
-      const label = isUS
+      let rawLabel = v.sizeLabel || v.size || v.name || "Standard";
+      let label = isUS
         ? v.size_us || formatSizeLabelI18n(rawLabel, "us", v)
         : v.size_eu || rawLabel;
+
+      if (v.parent_category === "cabinets" || activeProduct?.parent_category === "cabinets") {
+        const wCm = v.width ? Math.round(Number(v.width) / 10) : 0;
+        const hCm = v.height ? Math.round(Number(v.height) / 10) : 0;
+        const dCm = v.length ? Math.round(Number(v.length) / 10) : 0;
+        const dimStr = wCm && hCm && dCm ? `W ${wCm} x H ${hCm} x D ${dCm}` : "";
+
+        let prefix = "";
+        const n = v.name || "";
+        if (/small\s*double/i.test(n)) prefix = "Small Double";
+        else if (/super\s*king/i.test(n)) prefix = "Super King";
+        else if (/single/i.test(n)) prefix = "Single";
+        else if (/king/i.test(n)) prefix = "King";
+        else if (/double/i.test(n)) prefix = "Double";
+        else if (/door/i.test(n)) prefix = "Side Unit (Door)";
+        else if (/shelves/i.test(n)) prefix = "Side Unit (Shelves)";
+
+        if (dimStr) {
+          label = prefix ? `${prefix} – ${dimStr}` : dimStr;
+        }
+      }
+
       if (!seen.has(label)) {
         seen.add(label);
         result.push({
@@ -571,6 +593,34 @@ export default function ProductDetailPage() {
 
   const selectedSizeDisplay = useMemo(() => {
     if (selectedVariant) {
+      if (
+        selectedVariant.parent_category === "cabinets" ||
+        activeProduct?.parent_category === "cabinets"
+      ) {
+        const wCm = selectedVariant.width
+          ? Math.round(Number(selectedVariant.width) / 10)
+          : 0;
+        const hCm = selectedVariant.height
+          ? Math.round(Number(selectedVariant.height) / 10)
+          : 0;
+        const dCm = selectedVariant.length
+          ? Math.round(Number(selectedVariant.length) / 10)
+          : 0;
+        if (wCm && hCm && dCm) {
+          let prefix = "";
+          const n = selectedVariant.name || "";
+          if (/small\s*double/i.test(n)) prefix = "Small Double";
+          else if (/super\s*king/i.test(n)) prefix = "Super King";
+          else if (/single/i.test(n)) prefix = "Single";
+          else if (/king/i.test(n)) prefix = "King";
+          else if (/double/i.test(n)) prefix = "Double";
+          else if (/door/i.test(n)) prefix = "Side Unit (Door)";
+          else if (/shelves/i.test(n)) prefix = "Side Unit (Shelves)";
+
+          const dimStr = `W ${wCm} x H ${hCm} x D ${dCm}`;
+          return prefix ? `${prefix} – ${dimStr}` : dimStr;
+        }
+      }
       if (isUS) {
         return (
           selectedVariant.size_us ||
@@ -598,7 +648,7 @@ export default function ProductDetailPage() {
       availableSizes[0]?.label ||
       "Standard"
     );
-  }, [selectedVariant, isUS, locale, productSize, availableSizes]);
+  }, [selectedVariant, isUS, locale, productSize, availableSizes, activeProduct?.parent_category]);
 
   const availableColors = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
@@ -701,6 +751,12 @@ export default function ProductDetailPage() {
             targetVariant.name ||
             "Standard",
         );
+        if (targetVariant.sub_category) {
+          setProductStyle(targetVariant.sub_category);
+        }
+        if (targetVariant.orientation) {
+          setProductFormat(targetVariant.orientation);
+        }
       } else {
         setSelectedVariant(activeProduct);
         setProductSize(
@@ -779,6 +835,30 @@ export default function ProductDetailPage() {
     }
   }, [mounted, activeProduct, productSlug, categorySlug, locale, searchParams]);
 
+  // Canonical cabinet URL normalization:
+  // If the visitor opens a variant slug directly or the selected variant belongs to another flagship
+  useEffect(() => {
+    if (!mounted || !selectedVariant || categorySlug !== "cabinets") return;
+
+    const targetSlug = getFlagshipSlug(
+      "cabinets",
+      selectedVariant.sub_category || selectedVariant.type,
+      selectedVariant.orientation,
+    );
+    if (targetSlug && productSlug && productSlug !== targetSlug) {
+      const sizeSlug = selectedVariant.sizeSlug || "";
+      const color = (selectedVariant.color || "").toLowerCase();
+      const params = new URLSearchParams();
+      if (sizeSlug) params.set("size", sizeSlug);
+      if (color) params.set("color", color);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const canonicalPath = `/${locale || "en"}/products/cabinets/${targetSlug}${query}`;
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", canonicalPath);
+      }
+    }
+  }, [mounted, selectedVariant, productSlug, categorySlug, locale, getFlagshipSlug]);
+
   // Review auto-open trigger from post-purchase emails or direct rating links
   useEffect(() => {
     const isReview = searchParams?.get("review");
@@ -809,8 +889,41 @@ export default function ProductDetailPage() {
     if (newFormat !== undefined || newStyle !== undefined) {
       const targetSlug = getFlagshipSlug(categorySlug, sty, fmt);
       if (targetSlug && targetSlug !== productSlug) {
-        const currentSizeSlug = selectedVariant?.sizeSlug || "";
-        const query = currentSizeSlug ? `?size=${currentSizeSlug}` : "";
+        let currentSizeSlug = selectedVariant?.sizeSlug || "";
+        const currentColor = (selectedVariant?.color || activeProduct?.color || "").toLowerCase();
+
+        // Intelligent cabinet size conversion when switching style between Vertical and Horizontal
+        if (categorySlug === "cabinets") {
+          const currentName = selectedVariant?.name || "";
+          if (sty === "Horizontal") {
+            if (/king/i.test(currentName)) {
+              currentSizeSlug = "225x52";
+            } else {
+              currentSizeSlug = "215x52";
+            }
+          } else if (sty === "Vertical") {
+            if (/king/i.test(currentName)) {
+              currentSizeSlug = "175x52";
+            } else if (/small\s*double/i.test(currentName)) {
+              currentSizeSlug = "145x52";
+            } else if (/single/i.test(currentName)) {
+              currentSizeSlug = "115x52";
+            } else {
+              currentSizeSlug = "160x52";
+            }
+          } else if (sty === "Extensions") {
+            if (/king/i.test(currentName)) {
+              currentSizeSlug = "225x52";
+            } else {
+              currentSizeSlug = "215x52";
+            }
+          }
+        }
+
+        const params = new URLSearchParams();
+        if (currentSizeSlug) params.set("size", currentSizeSlug);
+        if (currentColor) params.set("color", currentColor);
+        const query = params.toString() ? `?${params.toString()}` : "";
         router.push(`/products/${categorySlug}/${targetSlug}${query}`);
         return;
       }
@@ -851,6 +964,8 @@ export default function ProductDetailPage() {
             nextVariant.name ||
             "Standard",
         );
+        if (nextVariant.sub_category) setProductStyle(nextVariant.sub_category);
+        if (nextVariant.orientation) setProductFormat(nextVariant.orientation);
       }
     }
 
@@ -862,19 +977,43 @@ export default function ProductDetailPage() {
           const matchSize =
             v.sizeLabel === newSizeLabel ||
             v.name === newSizeLabel ||
-            v.size === newSizeLabel;
+            v.size === newSizeLabel ||
+            (v.size_eu && newSizeLabel.includes(v.size_eu));
           const matchColor =
             !currentColor ||
             v.color?.toLowerCase() === currentColor.toLowerCase();
           return matchSize && matchColor;
         }) ||
         familyVariants.find(
-          (v) => v.sizeLabel === newSizeLabel || v.name === newSizeLabel,
+          (v) =>
+            v.sizeLabel === newSizeLabel ||
+            v.name === newSizeLabel ||
+            (v.size_eu && newSizeLabel.includes(v.size_eu)),
         ) ||
         familyVariants.find((v) => v.size === newSizeLabel);
       if (match) {
         setSelectedVariant(match);
         if (match.sizeLabel) setProductSize(match.sizeLabel);
+        if (match.sub_category) setProductStyle(match.sub_category);
+        if (match.orientation) setProductFormat(match.orientation);
+
+        if (categorySlug === "cabinets") {
+          const targetSlug = getFlagshipSlug(
+            categorySlug,
+            match.sub_category || match.type,
+            match.orientation,
+          );
+          if (targetSlug && targetSlug !== productSlug) {
+            const currentSizeSlug = match.sizeSlug || "";
+            const matchColor = (match.color || "").toLowerCase();
+            const params = new URLSearchParams();
+            if (currentSizeSlug) params.set("size", currentSizeSlug);
+            if (matchColor) params.set("color", matchColor);
+            const q = params.toString() ? `?${params.toString()}` : "";
+            router.push(`/products/${categorySlug}/${targetSlug}${q}`);
+            return;
+          }
+        }
 
         // Update URL shallowly without reloading page
         if (typeof window !== "undefined") {
@@ -911,6 +1050,8 @@ export default function ProductDetailPage() {
     if (match) {
       setSelectedVariant(match);
       if (match.sizeLabel) setProductSize(match.sizeLabel);
+      if (match.sub_category) setProductStyle(match.sub_category);
+      if (match.orientation) setProductFormat(match.orientation);
 
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
@@ -2322,13 +2463,42 @@ export default function ProductDetailPage() {
                             key={idx}
                             type="button"
                             onClick={() => {
+                              if (item.product) {
+                                setSelectedVariant(item.product);
+                                if (item.product.sub_category) {
+                                  setProductStyle(item.product.sub_category);
+                                }
+                                if (item.product.orientation) {
+                                  setProductFormat(item.product.orientation);
+                                }
+                                if (categorySlug === "cabinets") {
+                                  const targetSlug = getFlagshipSlug(
+                                    categorySlug,
+                                    item.product.sub_category || item.product.type,
+                                    item.product.orientation,
+                                  );
+                                  if (targetSlug && targetSlug !== productSlug) {
+                                    const currentSizeSlug = item.product.sizeSlug || "";
+                                    const currentColor = (
+                                      item.product.color ||
+                                      selectedVariant?.color ||
+                                      ""
+                                    ).toLowerCase();
+                                    const params = new URLSearchParams();
+                                    if (currentSizeSlug) params.set("size", currentSizeSlug);
+                                    if (currentColor) params.set("color", currentColor);
+                                    const q = params.toString() ? `?${params.toString()}` : "";
+                                    router.push(`/products/${categorySlug}/${targetSlug}${q}`);
+                                    setSizeOpen(false);
+                                    return;
+                                  }
+                                }
+                              }
                               handleOptionChange(
                                 undefined,
                                 undefined,
                                 item.label,
                               );
-                              if (item.product)
-                                setSelectedVariant(item.product);
                               setSizeOpen(false);
                             }}
                             className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
