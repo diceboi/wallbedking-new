@@ -239,7 +239,9 @@
     "grid_image": "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
     "display_order": 5,
     "is_visible": true,
-    "is_featured": true
+    "is_unlisted": true,
+    "visibility": "Unlisted",
+    "is_featured": false
   },
   {
     "id": "extras",

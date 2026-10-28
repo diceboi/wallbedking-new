@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS public.categories (
   subcategories TEXT[] DEFAULT '{}',
   image TEXT,
   display_order INT DEFAULT 0,
+  is_visible BOOLEAN DEFAULT true,
+  is_unlisted BOOLEAN DEFAULT false,
+  visibility VARCHAR(50) DEFAULT 'Visible',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

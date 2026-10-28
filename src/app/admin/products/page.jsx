@@ -12,6 +12,7 @@ import {
   IconRefresh,
   IconEye,
   IconEyeOff,
+  IconLink,
   IconAlertCircle,
   IconCheck,
   IconTag,
@@ -506,16 +507,24 @@ export default function AdminProductsPage() {
   };
 
   const handleToggleVisibility = async (product) => {
-    const newVis = product.visibility === "Hidden" ? "Visible" : "Hidden";
+    const isCurrentlyUnlisted = product.is_unlisted || product.visibility === "Unlisted";
+    const isCurrentlyHidden = product.visibility === "Hidden";
+
+    let newVis = "Unlisted";
+    if (isCurrentlyUnlisted) newVis = "Hidden";
+    else if (isCurrentlyHidden) newVis = "Visible";
+
+    const newIsUnlisted = newVis === "Unlisted";
+
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility: newVis }),
+        body: JSON.stringify({ visibility: newVis, is_unlisted: newIsUnlisted }),
       });
       const data = await res.json();
       if (data.success) {
-        handleSaveSuccess({ ...product, visibility: newVis });
+        handleSaveSuccess({ ...product, visibility: newVis, is_unlisted: newIsUnlisted });
       }
     } catch (err) {
       console.error(err);
@@ -1115,6 +1124,7 @@ export default function AdminProductsPage() {
               sortedProducts.map((p) => {
                 const isOnSale = p.sale_percent != null || p.sale_price_gbp != null;
                 const isHidden = p.visibility === "Hidden";
+                const isUnlisted = p.is_unlisted || p.visibility === "Unlisted";
                 const isSelected = selectedIds.includes(p.id);
                 const imgUrl = p.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp";
 
@@ -1126,6 +1136,8 @@ export default function AdminProductsPage() {
                         ? "bg-amber-50/40"
                         : isHidden
                         ? "opacity-60 bg-gray-50/50"
+                        : isUnlisted
+                        ? "bg-purple-50/20"
                         : ""
                     }`}
                   >
@@ -1356,11 +1368,25 @@ export default function AdminProductsPage() {
                         className={`p-1.5 rounded-full transition-colors cursor-pointer ${
                           isHidden
                             ? "text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/40"
+                            : isUnlisted
+                            ? "text-purple-700 hover:text-purple-900 hover:bg-purple-50"
                             : "text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50"
                         }`}
-                        title={isHidden ? "Hidden - click to publish" : "Visible - click to hide"}
+                        title={
+                          isHidden
+                            ? "Hidden: Click to set Visible"
+                            : isUnlisted
+                            ? "Unlisted (Direct Link Only): Click to hide"
+                            : "Visible: Click to set Unlisted (direct link only)"
+                        }
                       >
-                        {isHidden ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                        {isHidden ? (
+                          <IconEyeOff size={16} />
+                        ) : isUnlisted ? (
+                          <IconLink size={16} />
+                        ) : (
+                          <IconEye size={16} />
+                        )}
                       </button>
                     </td>
 

@@ -28,7 +28,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
   "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it",
   "installation_manual", "installation_video",
-  "width_us", "length_us", "size_us"
+  "width_us", "length_us", "size_us",
+  "is_unlisted"
 ]);
 
 const NUMERIC_COLUMNS = new Set([
@@ -83,6 +84,9 @@ export async function PATCH(request, { params }) {
     if (body.hoverImage && !supabasePayload.hover_image) {
       supabasePayload.hover_image = body.hoverImage;
     }
+    if (body.visibility !== undefined && body.is_unlisted === undefined) {
+      supabasePayload.is_unlisted = body.visibility === "Unlisted";
+    }
 
     let res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
       method: "PATCH",
@@ -96,6 +100,11 @@ export async function PATCH(request, { params }) {
     if (!res.ok) {
       const err = await res.text();
       let shouldRetry = false;
+      if (err.includes("is_unlisted") && supabasePayload.is_unlisted !== undefined) {
+        console.warn("[Admin PATCH] is_unlisted column not in Supabase yet. Retrying without it...");
+        delete supabasePayload.is_unlisted;
+        shouldRetry = true;
+      }
       if (err.includes("installation_manual") && supabasePayload.installation_manual !== undefined) {
         console.warn("[Admin PATCH] installation_manual column not in Supabase yet. Retrying without it...");
         delete supabasePayload.installation_manual;

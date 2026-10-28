@@ -25,7 +25,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
   "installation_manual", "installation_video",
-  "width_us", "length_us", "size_us"
+  "width_us", "length_us", "size_us",
+  "is_unlisted"
 ]);
 
 export async function POST(request) {
@@ -179,6 +180,10 @@ export async function POST(request) {
       if (!patchRes.ok) {
         const err = await patchRes.text();
         let retryNeeded = false;
+        if (err.includes("is_unlisted") && payload.is_unlisted !== undefined) {
+          delete payload.is_unlisted;
+          retryNeeded = true;
+        }
         if (err.includes("installation_video") && payload.installation_video !== undefined) {
           delete payload.installation_video;
           retryNeeded = true;

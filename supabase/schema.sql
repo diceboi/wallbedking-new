@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   -- Status & Information
   backorder BOOLEAN DEFAULT TRUE,
   visibility VARCHAR(50) DEFAULT 'Visible',
+  is_unlisted BOOLEAN DEFAULT FALSE,
   warranty TEXT,
   description TEXT,
   

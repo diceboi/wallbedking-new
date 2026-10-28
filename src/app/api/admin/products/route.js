@@ -25,7 +25,8 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
   "installation_manual", "installation_video",
-  "width_us", "length_us", "size_us"
+  "width_us", "length_us", "size_us",
+  "is_unlisted"
 ]);
 
 const NUMERIC_COLUMNS = new Set([
@@ -141,8 +142,11 @@ export async function POST(request) {
     if (body.hoverImage && !payload.hover_image) {
       payload.hover_image = body.hoverImage;
     }
+    if (body.visibility !== undefined && payload.is_unlisted === undefined) {
+      payload.is_unlisted = body.visibility === "Unlisted";
+    }
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+    let res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
       method: "POST",
       headers: {
         ...headers,
@@ -153,12 +157,33 @@ export async function POST(request) {
 
     if (!res.ok) {
       const errText = await res.text();
-      let errMsg = errText;
-      try {
-        const errObj = JSON.parse(errText);
-        errMsg = errObj.message || errObj.details || errText;
-      } catch (_) {}
-      return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
+      let shouldRetry = false;
+      if (errText.includes("is_unlisted") && payload.is_unlisted !== undefined) {
+        console.warn("[Admin Products POST] is_unlisted column not in Supabase yet. Retrying without it...");
+        delete payload.is_unlisted;
+        shouldRetry = true;
+      }
+
+      if (shouldRetry) {
+        res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          method: "POST",
+          headers: {
+            ...headers,
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!res.ok) {
+        const finalErrText = await res.text();
+        let errMsg = finalErrText;
+        try {
+          const errObj = JSON.parse(finalErrText);
+          errMsg = errObj.message || errObj.details || finalErrText;
+        } catch (_) {}
+        return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
+      }
     }
 
     const created = await res.json();

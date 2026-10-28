@@ -14,7 +14,6 @@ const FOOTER_LINKS = {
     { label: "Clearance",        href: "/products/beds?collection=traditional", id: "traditionalBeds" },
     { label: "Cabinets",         href: "/products/cabinets", id: "cabinets" },
     { label: "Mattresses",       href: "/products/mattresses", id: "mattresses" },
-    { label: "Smart Tables",     href: "/products/tables", id: "tables" },
     { label: "Configurator",     href: "/configurator", id: "configurator" },
   ],
   Support: [

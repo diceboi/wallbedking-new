@@ -203,7 +203,10 @@ export function BulkProductEditModal({
     if (enabledFields.sub_category) updates.sub_category = values.sub_category;
     if (enabledFields.type) updates.type = values.type;
     if (enabledFields.orientation) updates.orientation = values.orientation;
-    if (enabledFields.visibility) updates.visibility = values.visibility;
+    if (enabledFields.visibility) {
+      updates.visibility = values.visibility;
+      updates.is_unlisted = values.visibility === "Unlisted";
+    }
     if (enabledFields.backorder) updates.backorder = Boolean(values.backorder);
     if (enabledFields.warranty) updates.warranty = values.warranty;
     if (enabledFields.color) updates.color = values.color;
@@ -656,6 +659,7 @@ export function BulkProductEditModal({
                     className="w-full p-2 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none"
                   >
                     <option value="Visible">Visible (Published on Storefront)</option>
+                    <option value="Unlisted">Unlisted (Direct Link Only - Hidden from Navigation & Catalog)</option>
                     <option value="Hidden">Hidden (Draft / Unpublished)</option>
                   </select>
                 )}

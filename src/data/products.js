@@ -3,9 +3,8 @@ import catalog from './products-catalog.json';
 import bundlesCatalog from './bundles.json';
 import tablesCatalogData from './tables-catalog.json';
 
-const isDev = process.env.NODE_ENV === "development";
-export const TABLES_CATALOG_VARIANTS = isDev ? (tablesCatalogData?.variants || []) : [];
-export const TABLES_FLAGSHIP_LIST = isDev ? (tablesCatalogData?.flagships || []) : [];
+export const TABLES_CATALOG_VARIANTS = tablesCatalogData?.variants || [];
+export const TABLES_FLAGSHIP_LIST = tablesCatalogData?.flagships || [];
 
 export const RAW_CATALOG = [...catalog, ...TABLES_CATALOG_VARIANTS];
 
@@ -1316,13 +1315,9 @@ export const FLAGSHIP_CABINETS = [
 // Helper to determine if a product or variant is visible on storefront
 export const isProductVisible = (item) => {
   if (!item) return false;
-  // Tables are visible strictly in development (localhost) even if visibility='hidden'
-  if (item.parent_category === "tables") {
-    return isDev;
-  }
   const vis = String(item.visibility || "").trim().toLowerCase();
   if (vis === "hidden" || vis === "false" || item.visibility === false) return false;
-  if (item.is_visible === false) return false;
+  if (item.is_visible === false && !item.is_unlisted && vis !== "unlisted") return false;
   return true;
 };
 
@@ -1562,9 +1557,6 @@ export function getDynamicFlagshipCabinets(rawItems = RAW_CATALOG) {
 export const FLAGSHIP_TABLES = TABLES_FLAGSHIP_LIST;
 
 export function getDynamicFlagshipTables(rawItems = RAW_CATALOG) {
-  if (!isDev) {
-    return []; // STRICT: Never visible in production until enabled!
-  }
   return TABLES_FLAGSHIP_LIST.map((f) => {
     let matching = (rawItems || []).filter(
       (p) => p.parent_category === "tables" && p.parent_slug === f.slug
@@ -1841,12 +1833,10 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
   });
 
   const combinedItems = [...enrichedRawItems];
-  if (isDev) {
-    const existingSlugs = new Set(combinedItems.map((p) => p.slug));
-    for (const tv of (tablesCatalogData?.variants || [])) {
-      if (!existingSlugs.has(tv.slug)) {
-        combinedItems.push(tv);
-      }
+  const existingSlugs = new Set(combinedItems.map((p) => p.slug));
+  for (const tv of (tablesCatalogData?.variants || [])) {
+    if (!existingSlugs.has(tv.slug)) {
+      combinedItems.push(tv);
     }
   }
 
@@ -2267,7 +2257,7 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
         p.slug === currentProduct.slug
       );
     });
-    if (matching.length === 0 && isDev) {
+    if (matching.length === 0) {
       matching = (tablesCatalogData?.variants || []).filter(
         (v) => (parentSlug && v.parent_slug === parentSlug) || v.slug === currentProduct.slug
       );

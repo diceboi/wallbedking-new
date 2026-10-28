@@ -18,6 +18,7 @@ import {
   IconDatabase,
   IconEye,
   IconEyeOff,
+  IconLink,
   IconUpload,
   IconPhoto,
   IconArrowUp,
@@ -117,6 +118,8 @@ export default function AdminCategoriesPage() {
     image: "",
     display_order: 0,
     is_visible: true,
+    is_unlisted: false,
+    visibility: "Visible",
   });
 
   // Tag Edit / Create Modal State
@@ -228,6 +231,8 @@ export default function AdminCategoriesPage() {
       image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/CategoryImages/morphy-beds.webp",
       display_order: categories.length + 1,
       is_visible: true,
+      is_unlisted: false,
+      visibility: "Visible",
     });
     setCatModalOpen(true);
   };
@@ -236,6 +241,10 @@ export default function AdminCategoriesPage() {
     setEditingCategory(cat);
     setUploadFeedback(null);
     setActiveCatLangTab("en");
+    const isUnlisted = Boolean(cat.is_unlisted || cat.visibility === "Unlisted");
+    const isHidden = cat.is_visible === false || cat.visibility === "Hidden";
+    const visibilityVal = isUnlisted ? "Unlisted" : isHidden ? "Hidden" : "Visible";
+
     setCatForm({
       id: cat.id,
       name: cat.name || cat.title || "",
@@ -264,7 +273,9 @@ export default function AdminCategoriesPage() {
         : "",
       image: cat.image || "",
       display_order: Number(cat.display_order ?? 0),
-      is_visible: cat.is_visible !== false,
+      is_visible: !isHidden,
+      is_unlisted: isUnlisted,
+      visibility: visibilityVal,
     });
     setCatModalOpen(true);
   };
@@ -335,24 +346,55 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleToggleVisibility = async (cat) => {
-    const newVis = cat.is_visible === false ? true : false;
+  const handleToggleVisibility = async (cat, forcedVisibility = null) => {
+    const isCurrentlyUnlisted = Boolean(cat.is_unlisted || cat.visibility === "Unlisted");
+    const isCurrentlyHidden = cat.is_visible === false || cat.visibility === "Hidden";
+
+    let targetVis = forcedVisibility;
+    if (!targetVis) {
+      if (isCurrentlyUnlisted) targetVis = "Hidden";
+      else if (isCurrentlyHidden) targetVis = "Visible";
+      else targetVis = "Unlisted";
+    }
+
+    const newIsVisible = targetVis !== "Hidden";
+    const newIsUnlisted = targetVis === "Unlisted";
+
     try {
       const res = await fetch(`/api/admin/categories/${cat.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_visible: newVis }),
+        body: JSON.stringify({
+          is_visible: newIsVisible,
+          is_unlisted: newIsUnlisted,
+          visibility: targetVis,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         setCategories((prev) =>
-          prev.map((c) => (c.id === cat.id ? { ...c, is_visible: newVis } : c))
+          prev.map((c) =>
+            c.id === cat.id
+              ? {
+                  ...c,
+                  is_visible: newIsVisible,
+                  is_unlisted: newIsUnlisted,
+                  visibility: targetVis,
+                }
+              : c
+          )
         );
         setMessage({
           type: "success",
-          text: `Category "${cat.name || cat.title}" is now ${newVis ? "Visible" : "Hidden"}.`,
+          text: `Category "${cat.name || cat.title}" visibility set to "${targetVis}" (${
+            targetVis === "Unlisted"
+              ? "Accessible via direct link only"
+              : targetVis === "Visible"
+              ? "Published on storefront"
+              : "Hidden / Draft"
+          }).`,
         });
-        setTimeout(() => setMessage(null), 3000);
+        setTimeout(() => setMessage(null), 3500);
       } else {
         alert(data.error || "Failed to update category visibility.");
       }
@@ -442,7 +484,9 @@ export default function AdminCategoriesPage() {
           .map((s) => s.trim())
           .filter(Boolean),
         display_order: Number(catForm.display_order || 0),
-        is_visible: catForm.is_visible !== false,
+        is_visible: catForm.visibility !== "Hidden",
+        is_unlisted: catForm.visibility === "Unlisted",
+        visibility: catForm.visibility || (catForm.is_unlisted ? "Unlisted" : catForm.is_visible === false ? "Hidden" : "Visible"),
       };
 
       const res = await fetch(url, {
@@ -588,8 +632,13 @@ export default function AdminCategoriesPage() {
     return [...categories]
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
       .filter((cat) => {
-        if (categoryVisibilityFilter === "visible" && cat.is_visible === false) return false;
-        if (categoryVisibilityFilter === "hidden" && cat.is_visible !== false) return false;
+        const isCatUnlisted = Boolean(cat.is_unlisted || cat.visibility === "Unlisted");
+        const isCatHidden = cat.is_visible === false || cat.visibility === "Hidden";
+        const isCatVisible = !isCatUnlisted && !isCatHidden;
+
+        if (categoryVisibilityFilter === "visible" && !isCatVisible) return false;
+        if (categoryVisibilityFilter === "unlisted" && !isCatUnlisted) return false;
+        if (categoryVisibilityFilter === "hidden" && !isCatHidden) return false;
 
         if (categorySearch.trim()) {
           const q = categorySearch.toLowerCase().trim();
@@ -729,7 +778,39 @@ export default function AdminCategoriesPage() {
                 }`}
               >
                 <IconEye size={13} />
-                <span>Visible ({categories.filter((c) => c.is_visible !== false).length})</span>
+                <span>
+                  Visible (
+                  {
+                    categories.filter(
+                      (c) =>
+                        !c.is_unlisted &&
+                        c.visibility !== "Unlisted" &&
+                        c.is_visible !== false &&
+                        c.visibility !== "Hidden"
+                    ).length
+                  }
+                  )
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategoryVisibilityFilter("unlisted")}
+                className={`px-3 py-1 text-xs font-medium border cursor-pointer transition-colors flex items-center gap-1.5 ${
+                  categoryVisibilityFilter === "unlisted"
+                    ? "bg-purple-700 text-white border-purple-700"
+                    : "bg-[#FBF9F8] text-purple-800 border-wbk-lightgrey hover:border-purple-700"
+                }`}
+              >
+                <IconLink size={13} />
+                <span>
+                  Unlisted (
+                  {
+                    categories.filter(
+                      (c) => c.is_unlisted || c.visibility === "Unlisted"
+                    ).length
+                  }
+                  )
+                </span>
               </button>
               <button
                 type="button"
@@ -741,7 +822,15 @@ export default function AdminCategoriesPage() {
                 }`}
               >
                 <IconEyeOff size={13} />
-                <span>Hidden ({categories.filter((c) => c.is_visible === false).length})</span>
+                <span>
+                  Hidden (
+                  {
+                    categories.filter(
+                      (c) => c.is_visible === false || c.visibility === "Hidden"
+                    ).length
+                  }
+                  )
+                </span>
               </button>
             </div>
 
@@ -787,7 +876,9 @@ export default function AdminCategoriesPage() {
                 </thead>
                 <tbody className="divide-y divide-wbk-lightgrey/50">
                   {filteredCategories.map((cat, idx) => {
-                    const isVisible = cat.is_visible !== false;
+                    const isUnlisted = Boolean(cat.is_unlisted || cat.visibility === "Unlisted");
+                    const isHidden = cat.is_visible === false || cat.visibility === "Hidden";
+                    const isVisible = !isUnlisted && !isHidden;
                     const subcats = Array.isArray(cat.subcategories) ? cat.subcategories : [];
                     const href = cat.href || (cat.slug?.startsWith("/") ? cat.slug : `/products/${cat.slug || cat.id}`);
                     const imageSrc = cat.image || "/category-images/morphy-beds.webp";
@@ -796,7 +887,11 @@ export default function AdminCategoriesPage() {
                       <tr
                         key={cat.id || idx}
                         className={`hover:bg-[#FBF9F8] transition-colors group ${
-                          !isVisible ? "bg-neutral-50/60 opacity-75" : ""
+                          isHidden
+                            ? "bg-neutral-50/60 opacity-75"
+                            : isUnlisted
+                            ? "bg-purple-50/20"
+                            : ""
                         }`}
                       >
                         {/* Order & Reorder arrows */}
@@ -911,20 +1006,36 @@ export default function AdminCategoriesPage() {
                           </div>
                         </td>
 
-                        {/* Status (Visible / Hidden with 1-click toggle) */}
+                        {/* Status (Visible / Unlisted / Hidden with 1-click cycle) */}
                         <td className="py-3 px-3 text-center">
                           <button
                             type="button"
                             onClick={() => handleToggleVisibility(cat)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold border rounded-full transition-colors cursor-pointer select-none ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold border rounded-full transition-colors cursor-pointer select-none ${
                               isVisible
                                 ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                                : isUnlisted
+                                ? "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
                                 : "bg-neutral-100 text-neutral-600 border-neutral-300 hover:bg-neutral-200"
                             }`}
-                            title={`Click to ${isVisible ? "Hide" : "Show"} on storefront`}
+                            title={`Status: ${
+                              isVisible
+                                ? "Visible (Public). Click to set Unlisted (direct link only)"
+                                : isUnlisted
+                                ? "Unlisted (Direct Link Only). Click to set Hidden"
+                                : "Hidden (Draft). Click to set Visible"
+                            }`}
                           >
-                            {isVisible ? <IconEye size={12} /> : <IconEyeOff size={12} />}
-                            <span>{isVisible ? "Visible" : "Hidden"}</span>
+                            {isVisible ? (
+                              <IconEye size={12} />
+                            ) : isUnlisted ? (
+                              <IconLink size={12} />
+                            ) : (
+                              <IconEyeOff size={12} />
+                            )}
+                            <span>
+                              {isVisible ? "Visible" : isUnlisted ? "Unlisted" : "Hidden"}
+                            </span>
                           </button>
                         </td>
 
@@ -1279,41 +1390,97 @@ export default function AdminCategoriesPage() {
               </div>
 
               {/* Visibility Switch */}
-              <div className="bg-white p-3 border border-wbk-lightgrey/80 flex items-center justify-between">
+              <div className="bg-white p-4 border border-wbk-lightgrey/80 space-y-2">
                 <div>
                   <label className="block text-xs font-semibold text-wbk-black">
-                    Storefront Visibility
+                    Storefront Visibility & Discovery
                   </label>
                   <span className="text-[10px] text-wbk-brown">
-                    Hidden categories are excluded from homepage and archive grids.
+                    Control how customers find or access this category across the website.
                   </span>
                 </div>
-                <div className="flex items-center gap-2 w-48">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setCatForm((p) => ({ ...p, is_visible: true }))}
-                    className={`flex-1 py-1.5 px-3 text-xs font-medium border flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                      catForm.is_visible
-                        ? "bg-emerald-700 text-white border-emerald-700"
-                        : "bg-white text-neutral-600 border-wbk-lightgrey hover:border-emerald-700"
+                    onClick={() =>
+                      setCatForm((p) => ({
+                        ...p,
+                        visibility: "Visible",
+                        is_visible: true,
+                        is_unlisted: false,
+                      }))
+                    }
+                    className={`py-2 px-3 text-xs font-medium border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      catForm.visibility === "Visible" ||
+                      (!catForm.is_unlisted && catForm.is_visible !== false && catForm.visibility !== "Unlisted" && catForm.visibility !== "Hidden")
+                        ? "bg-emerald-700 text-white border-emerald-700 shadow-xs font-semibold"
+                        : "bg-[#FBF9F8] text-neutral-700 border-wbk-lightgrey hover:border-emerald-600"
                     }`}
                   >
-                    <IconEye size={13} />
-                    <span>Visible</span>
+                    <IconEye size={14} className="shrink-0" />
+                    <div className="text-left">
+                      <div className="font-semibold text-xs">Visible</div>
+                      <div className="text-[9px] opacity-80">Public everywhere</div>
+                    </div>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setCatForm((p) => ({ ...p, is_visible: false }))}
-                    className={`flex-1 py-1.5 px-3 text-xs font-medium border flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                      !catForm.is_visible
-                        ? "bg-neutral-800 text-white border-neutral-800"
-                        : "bg-white text-neutral-600 border-wbk-lightgrey hover:border-neutral-800"
+                    onClick={() =>
+                      setCatForm((p) => ({
+                        ...p,
+                        visibility: "Unlisted",
+                        is_visible: true,
+                        is_unlisted: true,
+                      }))
+                    }
+                    className={`py-2 px-3 text-xs font-medium border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      catForm.visibility === "Unlisted" || catForm.is_unlisted
+                        ? "bg-purple-700 text-white border-purple-700 shadow-xs font-semibold"
+                        : "bg-[#FBF9F8] text-purple-900 border-wbk-lightgrey hover:border-purple-600"
                     }`}
                   >
-                    <IconEyeOff size={13} />
-                    <span>Hidden</span>
+                    <IconLink size={14} className="shrink-0" />
+                    <div className="text-left">
+                      <div className="font-semibold text-xs">Unlisted</div>
+                      <div className="text-[9px] opacity-80">Direct link only</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCatForm((p) => ({
+                        ...p,
+                        visibility: "Hidden",
+                        is_visible: false,
+                        is_unlisted: false,
+                      }))
+                    }
+                    className={`py-2 px-3 text-xs font-medium border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      catForm.visibility === "Hidden" ||
+                      (!catForm.is_visible && catForm.visibility !== "Unlisted" && !catForm.is_unlisted)
+                        ? "bg-neutral-800 text-white border-neutral-800 shadow-xs font-semibold"
+                        : "bg-[#FBF9F8] text-neutral-600 border-wbk-lightgrey hover:border-neutral-700"
+                    }`}
+                  >
+                    <IconEyeOff size={14} className="shrink-0" />
+                    <div className="text-left">
+                      <div className="font-semibold text-xs">Hidden</div>
+                      <div className="text-[9px] opacity-80">Draft / Disabled</div>
+                    </div>
                   </button>
                 </div>
+                {(catForm.visibility === "Unlisted" || catForm.is_unlisted) && (
+                  <div className="text-[11px] text-purple-900 bg-purple-50 p-2.5 border border-purple-200 mt-2 space-y-1">
+                    <p className="font-medium">
+                      🔗 <strong>Unlisted (Direct Link Only) Mode:</strong>
+                    </p>
+                    <p className="text-[10px] text-purple-800 leading-relaxed">
+                      Hidden from main navigation bar, footer links, search suggestions, and the main /products catalog. Anyone with the direct URL can open the page, view all models and variations, and complete checkout.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Multilingual Storefront Content (Title & Description per Language) */}

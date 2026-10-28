@@ -756,6 +756,7 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
       const payload = {
         ...formData,
+        is_unlisted: formData.visibility === "Unlisted",
         width_us: widthUs,
         length_us: lengthUs,
         size_us: sizeUs,
@@ -1350,13 +1351,26 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                   Visibility Status
                 </label>
                 <select
-                  value={formData.visibility || "Visible"}
-                  onChange={(e) => handleChange("visibility", e.target.value)}
+                  value={formData.visibility || (formData.is_unlisted ? "Unlisted" : "Visible")}
+                  onChange={(e) => {
+                    const nextVis = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      visibility: nextVis,
+                      is_unlisted: nextVis === "Unlisted",
+                    }));
+                  }}
                   className="w-full p-2 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none"
                 >
-                  <option value="Visible">Visible (Published)</option>
-                  <option value="Hidden">Hidden (Draft)</option>
+                  <option value="Visible">Visible (Published on Storefront)</option>
+                  <option value="Unlisted">Unlisted (Direct Link Only)</option>
+                  <option value="Hidden">Hidden (Draft / Unpublished)</option>
                 </select>
+                {formData.visibility === "Unlisted" && (
+                  <p className="text-[10px] text-purple-700 mt-1">
+                    Hidden from navigation, search & catalog. Only accessible directly via URL.
+                  </p>
+                )}
               </div>
 
               {/* Product Tags Selection Section */}

@@ -64,6 +64,9 @@ export function SearchBar({ className = "", onSelect = null }) {
       const isHidden =
         item.visibility === "Hidden" ||
         item.visibility === "hidden" ||
+        item.visibility === "Unlisted" ||
+        item.visibility === "unlisted" ||
+        item.is_unlisted === true ||
         item.visibility === false ||
         item.is_visible === false;
       if (isHidden) return false;

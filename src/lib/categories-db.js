@@ -71,8 +71,10 @@ const normalizeCategory = (row, idx) => {
     gridImage,
     subcategories: Array.isArray(row.subcategories) ? row.subcategories : [],
     display_order: Number(row.display_order ?? idx + 1),
-    is_featured: row.is_featured !== false,
+    is_featured: row.is_featured !== false && !row.is_unlisted && row.visibility !== "Unlisted",
     is_visible: row.is_visible !== false,
+    is_unlisted: Boolean(row.is_unlisted || row.visibility === "Unlisted"),
+    visibility: row.visibility || (row.is_unlisted ? "Unlisted" : row.is_visible === false ? "Hidden" : "Visible"),
   };
 };
 
@@ -83,9 +85,11 @@ const normalizeCategory = (row, idx) => {
  */
 export const getStorefrontCategories = unstable_cache(
   async () => {
+    const isStorefrontVisible = (c) => c.is_visible !== false && !c.is_unlisted && c.visibility !== "Unlisted";
+
     if (!SUPABASE_URL || !SERVICE_KEY) {
       console.warn("[categories-db] Missing Supabase credentials in environment, using local fallback.");
-      return getLocalCategories().map(normalizeCategory).filter((c) => c.is_visible !== false);
+      return getLocalCategories().map(normalizeCategory).filter(isStorefrontVisible);
     }
 
     try {
@@ -103,24 +107,15 @@ export const getStorefrontCategories = unstable_cache(
           res.status,
           await res.text()
         );
-        return getLocalCategories().map(normalizeCategory).filter((c) => c.is_visible !== false);
+        return getLocalCategories().map(normalizeCategory).filter(isStorefrontVisible);
       }
 
       const rows = await res.json();
       if (!Array.isArray(rows) || rows.length === 0) {
-        return getLocalCategories().map(normalizeCategory).filter((c) => c.is_visible !== false);
+        return getLocalCategories().map(normalizeCategory).filter(isStorefrontVisible);
       }
 
-      let result = rows.map(normalizeCategory).filter((c) => c.is_visible !== false);
-      if (process.env.NODE_ENV === "development") {
-        const hasTables = result.some((c) => c.id === "tables" || c.slug === "tables");
-        if (!hasTables) {
-          const localTables = getLocalCategories().find((c) => c.id === "tables" || c.slug === "tables");
-          if (localTables) {
-            result.push(normalizeCategory(localTables, result.length));
-          }
-        }
-      }
+      let result = rows.map(normalizeCategory).filter(isStorefrontVisible);
       return result;
     } catch (err) {
       console.error("[categories-db] Exception fetching categories:", err.message);

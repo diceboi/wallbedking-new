@@ -99,7 +99,7 @@ export async function PATCH(request, { params }) {
     let sbSuccess = false;
     if (SUPABASE_URL && SERVICE_KEY) {
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${id}`, {
+        let res = await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${id}`, {
           method: "PATCH",
           headers: {
             ...headers,
@@ -107,6 +107,22 @@ export async function PATCH(request, { params }) {
           },
           body: JSON.stringify(updates),
         });
+        if (!res.ok) {
+          const errText = await res.text();
+          if (errText.includes("is_unlisted") || errText.includes("visibility")) {
+            const fallbackUpdates = { ...updates };
+            delete fallbackUpdates.is_unlisted;
+            delete fallbackUpdates.visibility;
+            res = await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${id}`, {
+              method: "PATCH",
+              headers: {
+                ...headers,
+                Prefer: "return=representation",
+              },
+              body: JSON.stringify(fallbackUpdates),
+            });
+          }
+        }
         if (res.ok) {
           sbSuccess = true;
           const rows = await res.json();

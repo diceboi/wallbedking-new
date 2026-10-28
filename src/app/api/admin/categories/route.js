@@ -140,6 +140,8 @@ export async function POST(request) {
       image: image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       display_order: Number(display_order || 0),
       is_visible: body.is_visible !== false,
+      is_unlisted: Boolean(body.is_unlisted || body.visibility === "Unlisted"),
+      visibility: body.visibility || (body.is_unlisted ? "Unlisted" : body.is_visible === false ? "Hidden" : "Visible"),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

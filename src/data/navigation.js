@@ -23,12 +23,7 @@ export const ALL_NAV_ITEMS = (
 const isDev = process.env.NODE_ENV === "development";
 
 export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS
-  .filter((item) => {
-    if (item.id === "tables") {
-      return isDev; // Visible ONLY on localhost!
-    }
-    return item.is_visible !== false;
-  })
+  .filter((item) => item.is_visible !== false)
   .sort((a, b) => (a.order || 0) - (b.order || 0));
 
 const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
