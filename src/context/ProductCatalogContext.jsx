@@ -13,7 +13,7 @@ import {
 
 const ProductCatalogContext = createContext(null);
 
-export function ProductCatalogProvider({ initialProducts, children }) {
+export function ProductCatalogProvider({ initialProducts, initialBundles, children }) {
   const catalogData = useMemo(() => {
     if (!initialProducts || !Array.isArray(initialProducts) || initialProducts.length === 0) {
       return {
@@ -23,8 +23,8 @@ export function ProductCatalogProvider({ initialProducts, children }) {
         allBedVariants: ALL_BED_VARIANTS,
       };
     }
-    return buildCatalog(initialProducts);
-  }, [initialProducts]);
+    return buildCatalog(initialProducts, initialBundles);
+  }, [initialProducts, initialBundles]);
 
   const value = useMemo(() => {
     return {

@@ -44,7 +44,12 @@ export const getStorefrontProducts = unstable_cache(
       if (!Array.isArray(rows)) return null;
 
       // Filter out hidden products so they NEVER enter the storefront
+      const isDev = process.env.NODE_ENV === "development";
       const visibleRows = rows.filter((p) => {
+        // Tables are strictly hidden in production until officially launched
+        if (p.parent_category === "tables") {
+          return isDev;
+        }
         const vis = String(p.visibility || "").trim().toLowerCase();
         return vis !== "hidden" && p.visibility !== false && p.is_visible !== false;
       });
@@ -71,12 +76,49 @@ export const getStorefrontProducts = unstable_cache(
 );
 
 /**
+ * Fetch all bundles directly from Supabase with Next.js data cache.
+ */
+export const getStorefrontBundles = unstable_cache(
+  async () => {
+    if (!SUPABASE_URL || !SERVICE_KEY) return null;
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/bundles?select=*,bundle_items(*)&order=sort_order.asc,id.asc`,
+        {
+          headers,
+          next: { tags: ["bundles", "products"] },
+        }
+      );
+      if (!res.ok) return null;
+      const rows = await res.json();
+      if (!Array.isArray(rows)) return null;
+
+      return rows.map((b) => ({
+        ...b,
+        items: (b.bundle_items || []).map((bi) => ({
+          product_id: bi.product_id,
+          quantity: bi.quantity || 1,
+          is_required: bi.is_required !== false,
+          sort_order: bi.sort_order || 0,
+        })),
+      }));
+    } catch (err) {
+      console.error("[products-db] Exception fetching bundles:", err.message);
+      return null;
+    }
+  },
+  ["storefront-bundles-catalog-v3"],
+  { tags: ["bundles", "products"], revalidate: 3600 }
+);
+
+/**
  * Revalidates the Next.js cache across the entire application immediately.
  * Call this in admin mutation routes (create, update, delete, bulk).
  */
 export function revalidateProductsCache() {
   try {
     revalidateTag("products");
+    revalidateTag("bundles");
     revalidatePath("/", "layout");
     revalidatePath("/[locale]/products", "page");
     revalidatePath("/[locale]/products/[category]", "page");
@@ -85,3 +127,4 @@ export function revalidateProductsCache() {
     console.warn("[products-db] Cache revalidation notice:", err.message);
   }
 }
+

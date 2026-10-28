@@ -22,12 +22,12 @@
     "exploreAll": "Alle Modelle entdecken",
     "from": "ab",
     "morphyBeds": "MORPHY™ Schrankbetten",
-    "traditionalBeds": "Klassische Schrankbetten",
+    "traditionalBeds": "Abverkauf",
     "allWallBeds": "Alle Schrankbetten",
     "allMorphyBeds": "Alle MORPHY™ Betten",
-    "allTraditionalBeds": "Alle klassischen Betten",
+    "allTraditionalBeds": "Alle Abverkauf-Betten",
     "allMorphyTagline": "Alle MORPHY™ Modelle entdecken",
-    "allTraditionalTagline": "Klassische Schrankbett-Modelle entdecken",
+    "allTraditionalTagline": "Klassische Schrankbett-Modelle im Ausverkauf – solange der Vorrat reicht",
     "trade": "Gewerbekunden",
     "caseStudies": "Fallbeispiele"
   },
@@ -212,7 +212,7 @@
   },
   "categories": {
     "morphyBeds": "MORPHY™ Schrankbetten",
-    "traditionalBeds": "Klassische Schrankbetten",
+    "traditionalBeds": "Abverkauf",
     "classicBeds": "Klassische Schrankbetten",
     "studioBeds": "Studio Schreibtischbetten",
     "sofas": "Frontsofas",
@@ -380,7 +380,8 @@
     "allRightsReserved": "Alle Rechte vorbehalten.",
     "privacy": "Datenschutzerklärung",
     "terms": "Allgemeine Geschäftsbedingungen",
-    "cookies": "Cookie-Einstellungen"
+    "cookies": "Cookie-Einstellungen",
+    "traditionalBeds": "Abverkauf"
   },
   "topbar": {
     "freeDelivery": "Kostenlose EU-Lieferung",

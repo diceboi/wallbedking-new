@@ -1,7 +1,14 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect, useContext, useMemo, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useMemo,
+  useCallback,
+} from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
@@ -29,7 +36,10 @@ import { resolveCategory } from "@/data/slugs";
 import { getAllTags, getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagIcon } from "@/components/ui/TagBadge";
 import { isProductAvailableInLocale } from "@/lib/products";
-import { getLocalizedCategoryTitle, getLocalizedCategoryDescription } from "@/lib/categories-utils";
+import {
+  getLocalizedCategoryTitle,
+  getLocalizedCategoryDescription,
+} from "@/lib/categories-utils";
 
 export default function CategoryArchivePage() {
   const params = useParams();
@@ -65,7 +75,8 @@ export default function CategoryArchivePage() {
     if (!prod) return false;
     if (prod.isMorphy === true || prod.isMorphy === "true") return true;
     if (prod.isMorphy === false || prod.isMorphy === "false") return false;
-    const str = `${prod.name || ""} ${prod.title || ""} ${prod.slug || ""} ${prod.badge || ""} ${prod.sub_category || ""} ${prod.type || ""}`.toLowerCase();
+    const str =
+      `${prod.name || ""} ${prod.title || ""} ${prod.slug || ""} ${prod.badge || ""} ${prod.sub_category || ""} ${prod.type || ""}`.toLowerCase();
     if (str.includes("traditional")) return false;
     if (str.includes("morphy")) return true;
     return false;
@@ -87,17 +98,24 @@ export default function CategoryArchivePage() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [selectedTag, setSelectedTag] = useState("All");
-  const [selectedCollection, setSelectedCollection] = useState(activeCollectionParam);
+  const [selectedCollection, setSelectedCollection] = useState(
+    activeCollectionParam,
+  );
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const formatTypeLabel = useCallback(
     (opt) => {
       if (opt === "All") return t("categories.all", "All");
-      if (opt.toLowerCase() === "classic") return t("categories.classicBeds", "Classic");
-      if (opt.toLowerCase() === "studio") return t("categories.studioBeds", "Studio");
-      if (opt.toLowerCase() === "integrated") return t("categories.integratedBeds", "Integrated");
-      if (opt.toLowerCase() === "lighting") return t("categories.lighting", "Lighting");
-      if (opt.toLowerCase() === "hardware") return t("categories.hardware", "Hardware");
+      if (opt.toLowerCase() === "classic")
+        return t("categories.classicBeds", "Classic");
+      if (opt.toLowerCase() === "studio")
+        return t("categories.studioBeds", "Studio");
+      if (opt.toLowerCase() === "integrated")
+        return t("categories.integratedBeds", "Integrated");
+      if (opt.toLowerCase() === "lighting")
+        return t("categories.lighting", "Lighting");
+      if (opt.toLowerCase() === "hardware")
+        return t("categories.hardware", "Hardware");
       return opt;
     },
     [t],
@@ -106,8 +124,10 @@ export default function CategoryArchivePage() {
   const formatOrientationLabel = useCallback(
     (opt) => {
       if (opt === "All") return t("categories.all", "All");
-      if (opt.toLowerCase() === "vertical") return t("product.vertical", "Vertical");
-      if (opt.toLowerCase() === "horizontal") return t("product.horizontal", "Horizontal");
+      if (opt.toLowerCase() === "vertical")
+        return t("product.vertical", "Vertical");
+      if (opt.toLowerCase() === "horizontal")
+        return t("product.horizontal", "Horizontal");
       return opt;
     },
     [t],
@@ -117,7 +137,8 @@ export default function CategoryArchivePage() {
     (opt) => {
       if (opt === "All") return t("categories.all", "All");
       if (opt === "Under £500") return `< ${formatPrice(500)}`;
-      if (opt === "£500 - £800") return `${formatPrice(500)} - ${formatPrice(800)}`;
+      if (opt === "£500 - £800")
+        return `${formatPrice(500)} - ${formatPrice(800)}`;
       if (opt === "Over £800") return `> ${formatPrice(800)}`;
       return opt;
     },
@@ -136,18 +157,19 @@ export default function CategoryArchivePage() {
   const distinctOrientations = useMemo(() => {
     const orients = Array.from(
       new Set(
-        collectionScopedProducts
-          .map((p) => p.orientation)
-          .filter(Boolean),
+        collectionScopedProducts.map((p) => p.orientation).filter(Boolean),
       ),
     );
     return ["All", ...orients];
   }, [collectionScopedProducts]);
 
   const distinctTypes = useMemo(() => {
-    const defined = currentCategory === "beds"
-      ? (selectedCollection === "traditional" ? ["Classic", "Studio"] : ["Classic", "Studio", "Integrated"])
-      : (catInfo?.subcategories || []);
+    const defined =
+      currentCategory === "beds"
+        ? selectedCollection === "traditional"
+          ? ["Classic", "Studio"]
+          : ["Classic", "Studio", "Integrated"]
+        : catInfo?.subcategories || [];
     const fromProducts = collectionScopedProducts
       .map((p) => p.sub_category || p.type)
       .filter(Boolean);
@@ -177,7 +199,8 @@ export default function CategoryArchivePage() {
         (t) =>
           t.toLowerCase() === typ.toLowerCase() ||
           t.toLowerCase() === cleanTyp ||
-          t.toLowerCase().replace(/[-_\s]/g, "") === typ.toLowerCase().replace(/[-_\s]/g, ""),
+          t.toLowerCase().replace(/[-_\s]/g, "") ===
+            typ.toLowerCase().replace(/[-_\s]/g, ""),
       );
       setSelectedType(match || typ);
     } else {
@@ -202,7 +225,12 @@ export default function CategoryArchivePage() {
     }
 
     setSelectedCollection(activeCollectionParam);
-  }, [searchParams, activeCollectionParam, distinctOrientations, distinctTypes]);
+  }, [
+    searchParams,
+    activeCollectionParam,
+    distinctOrientations,
+    distinctTypes,
+  ]);
 
   // Sync state changes to URL query parameters
   const updateUrlParams = useCallback(
@@ -231,7 +259,8 @@ export default function CategoryArchivePage() {
       } else {
         url.searchParams.delete("tag");
       }
-      const colVal = newCollection !== undefined ? newCollection : selectedCollection;
+      const colVal =
+        newCollection !== undefined ? newCollection : selectedCollection;
       if (currentCategory === "beds") {
         if (colVal === "traditional") {
           url.searchParams.set("collection", "traditional");
@@ -315,7 +344,6 @@ export default function CategoryArchivePage() {
     selectedPrice,
     selectedTag,
   ]);
-
 
   const { isMenuVisible, subMenu } = useContext(MenuContext);
   const [isSticky, setIsSticky] = useState(false);
@@ -418,28 +446,52 @@ export default function CategoryArchivePage() {
 
   const handleSelectType = (opt) => {
     setSelectedType(opt);
-    updateUrlParams(selectedOrientation, opt, selectedPrice, selectedTag, selectedCollection);
+    updateUrlParams(
+      selectedOrientation,
+      opt,
+      selectedPrice,
+      selectedTag,
+      selectedCollection,
+    );
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectOrientation = (opt) => {
     setSelectedOrientation(opt);
-    updateUrlParams(opt, selectedType, selectedPrice, selectedTag, selectedCollection);
+    updateUrlParams(
+      opt,
+      selectedType,
+      selectedPrice,
+      selectedTag,
+      selectedCollection,
+    );
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectPrice = (opt) => {
     setSelectedPrice(opt);
-    updateUrlParams(selectedOrientation, selectedType, opt, selectedTag, selectedCollection);
+    updateUrlParams(
+      selectedOrientation,
+      selectedType,
+      opt,
+      selectedTag,
+      selectedCollection,
+    );
     setActiveDropdown(null);
     scrollToProducts();
   };
 
   const handleSelectTag = (opt) => {
     setSelectedTag(opt);
-    updateUrlParams(selectedOrientation, selectedType, selectedPrice, opt, selectedCollection);
+    updateUrlParams(
+      selectedOrientation,
+      selectedType,
+      selectedPrice,
+      opt,
+      selectedCollection,
+    );
     setActiveDropdown(null);
     scrollToProducts();
   };
@@ -458,27 +510,69 @@ export default function CategoryArchivePage() {
     if (currentCategory === "beds") {
       if (selectedCollection === "traditional") {
         const found = allDbCategories.find((c) => c.id === "traditional-beds");
-        return getLocalizedCategoryTitle(found, locale) || t("nav.traditionalBeds", "Traditional Beds");
+        return (
+          getLocalizedCategoryTitle(found, locale) ||
+          t("nav.traditionalBeds", "Clearance")
+        );
       }
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
-      return getLocalizedCategoryTitle(found, locale) || t("nav.morphyBeds", "MORPHY™ Beds");
+      return (
+        getLocalizedCategoryTitle(found, locale) ||
+        t("nav.morphyBeds", "MORPHY™ Beds")
+      );
     }
-    const found = allDbCategories.find((c) => c.id === currentCategory || c.slug === currentCategory);
-    return getLocalizedCategoryTitle(found, locale) || t(`categories.${currentCategory}`, catInfo.label);
-  }, [currentCategory, selectedCollection, t, catInfo, allDbCategories, locale]);
+    const found = allDbCategories.find(
+      (c) => c.id === currentCategory || c.slug === currentCategory,
+    );
+    return (
+      getLocalizedCategoryTitle(found, locale) ||
+      t(`categories.${currentCategory}`, catInfo.label)
+    );
+  }, [
+    currentCategory,
+    selectedCollection,
+    t,
+    catInfo,
+    allDbCategories,
+    locale,
+  ]);
 
   const categoryDescription = useMemo(() => {
     if (currentCategory === "beds") {
       if (selectedCollection === "traditional") {
         const found = allDbCategories.find((c) => c.id === "traditional-beds");
-        return getLocalizedCategoryDescription(found, locale) || t("nav.allTraditionalTagline", "Time-tested Traditional wall beds with proven mechanism and solid engineering.");
+        return (
+          getLocalizedCategoryDescription(found, locale) ||
+          t(
+            "nav.allTraditionalTagline",
+            "Discounted classic wall bed models while stocks last at special clearance prices.",
+          )
+        );
       }
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
-      return getLocalizedCategoryDescription(found, locale) || t("nav.allMorphyTagline", "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.");
+      return (
+        getLocalizedCategoryDescription(found, locale) ||
+        t(
+          "nav.allMorphyTagline",
+          "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.",
+        )
+      );
     }
-    const found = allDbCategories.find((c) => c.id === currentCategory || c.slug === currentCategory);
-    return getLocalizedCategoryDescription(found, locale) || t(`categories.${currentCategory}Desc`, catInfo.description);
-  }, [currentCategory, selectedCollection, t, catInfo, allDbCategories, locale]);
+    const found = allDbCategories.find(
+      (c) => c.id === currentCategory || c.slug === currentCategory,
+    );
+    return (
+      getLocalizedCategoryDescription(found, locale) ||
+      t(`categories.${currentCategory}Desc`, catInfo.description)
+    );
+  }, [
+    currentCategory,
+    selectedCollection,
+    t,
+    catInfo,
+    allDbCategories,
+    locale,
+  ]);
 
   const otherCategoriesToDisplay = useMemo(() => {
     return allDbCategories.filter((cat) => {
@@ -494,20 +588,29 @@ export default function CategoryArchivePage() {
       const catProds = productsMap[catKey];
       if (locale && Array.isArray(catProds)) {
         if (catProds.length === 0) return false;
-        const hasAvailable = catProds.some((p) => isProductAvailableInLocale(p, locale));
+        const hasAvailable = catProds.some((p) =>
+          isProductAvailableInLocale(p, locale),
+        );
         if (!hasAvailable) return false;
       }
 
       if (currentCategory === "beds") {
         if (selectedCollection === "traditional") {
-          return cat.id !== "traditional-beds" && !cat.slug?.includes("traditional");
+          return (
+            cat.id !== "traditional-beds" && !cat.slug?.includes("traditional")
+          );
         }
         return cat.id !== "morphy-beds" && !cat.slug?.includes("morphy");
       }
       return cat.id !== currentCategory && cat.slug !== currentCategory;
     });
-  }, [allDbCategories, currentCategory, selectedCollection, allProducts, locale]);
-
+  }, [
+    allDbCategories,
+    currentCategory,
+    selectedCollection,
+    allProducts,
+    locale,
+  ]);
 
   if (!mounted) {
     return (
@@ -547,7 +650,9 @@ export default function CategoryArchivePage() {
             <span className="font-semibold text-wbk-black">
               {filteredProducts.length}
             </span>{" "}
-            {filteredProducts.length === 1 ? t("categories.item", "item") : t("categories.items", "items")}
+            {filteredProducts.length === 1
+              ? t("categories.item", "item")
+              : t("categories.items", "items")}
           </div>
         </div>
 
@@ -599,7 +704,9 @@ export default function CategoryArchivePage() {
                   title="Filters"
                 >
                   <IconFilter size={15} className="text-wbk-gold" />
-                  <span className="hidden sm:inline">{t("common.filters", "Filters")}</span>
+                  <span className="hidden sm:inline">
+                    {t("common.filters", "Filters")}
+                  </span>
                 </div>
               </SwiperSlide>
 
@@ -623,7 +730,7 @@ export default function CategoryArchivePage() {
                         {t("categories.collection", "Collection")}:{" "}
                         <strong className="font-semibold">
                           {selectedCollection === "traditional"
-                            ? t("nav.traditionalBeds", "Traditional")
+                            ? t("nav.traditionalBeds", "Clearance")
                             : "MORPHY™"}
                         </strong>
                       </span>
@@ -659,7 +766,7 @@ export default function CategoryArchivePage() {
                               : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                           }`}
                         >
-                          {t("nav.traditionalBeds", "Traditional")}
+                          {t("nav.traditionalBeds", "Clearance")}
                         </button>
                       </div>
                     )}
@@ -806,7 +913,9 @@ export default function CategoryArchivePage() {
                   >
                     <span>
                       {t("categories.filterPrice", "Price")}:{" "}
-                      <strong className="font-semibold">{formatPriceOption(selectedPrice)}</strong>
+                      <strong className="font-semibold">
+                        {formatPriceOption(selectedPrice)}
+                      </strong>
                     </span>
                     <IconChevronDown
                       size={14}
@@ -861,9 +970,15 @@ export default function CategoryArchivePage() {
                     >
                       <span className="flex items-center gap-1.5">
                         <TagIcon
-                          tagIdOrSlug={selectedTag !== "All" ? selectedTag : "tag"}
+                          tagIdOrSlug={
+                            selectedTag !== "All" ? selectedTag : "tag"
+                          }
                           size={13}
-                          className={selectedTag !== "All" ? "text-wbk-black" : "text-wbk-brown"}
+                          className={
+                            selectedTag !== "All"
+                              ? "text-wbk-black"
+                              : "text-wbk-brown"
+                          }
                         />
                         <span>
                           {t("common.tags", "Tag")}:{" "}
@@ -895,7 +1010,11 @@ export default function CategoryArchivePage() {
                               : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                           }`}
                         >
-                          <TagIcon tagIdOrSlug="tag" size={13} className="text-wbk-brown shrink-0" />
+                          <TagIcon
+                            tagIdOrSlug="tag"
+                            size={13}
+                            className="text-wbk-brown shrink-0"
+                          />
                           <span>{t("categories.all", "All Tags")}</span>
                         </button>
                         {availableTags.map((tag) => (
@@ -910,11 +1029,17 @@ export default function CategoryArchivePage() {
                             }`}
                           >
                             <span className="flex items-center gap-2">
-                              <TagIcon tagIdOrSlug={tag.id} size={13} className="text-wbk-black/75 shrink-0" />
+                              <TagIcon
+                                tagIdOrSlug={tag.id}
+                                size={13}
+                                className="text-wbk-black/75 shrink-0"
+                              />
                               <span>{getLocalizedTagName(tag.id, locale)}</span>
                             </span>
                             {selectedTag === tag.id && (
-                              <span className="text-wbk-black font-bold text-xs">✓</span>
+                              <span className="text-wbk-black font-bold text-xs">
+                                ✓
+                              </span>
                             )}
                           </button>
                         ))}
@@ -952,7 +1077,9 @@ export default function CategoryArchivePage() {
             {/* Right scroll indicator green button */}
             <div
               className={`absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
-                isFilterEnd ? "opacity-0 pointer-events-none scale-90" : "opacity-100 scale-100"
+                isFilterEnd
+                  ? "opacity-0 pointer-events-none scale-90"
+                  : "opacity-100 scale-100"
               }`}
             >
               <button
@@ -977,7 +1104,13 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedType("All");
-                    updateUrlParams(selectedOrientation, "All", selectedPrice, selectedTag, selectedCollection);
+                    updateUrlParams(
+                      selectedOrientation,
+                      "All",
+                      selectedPrice,
+                      selectedTag,
+                      selectedCollection,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
@@ -997,13 +1130,21 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedOrientation("All");
-                    updateUrlParams("All", selectedType, selectedPrice, selectedTag, selectedCollection);
+                    updateUrlParams(
+                      "All",
+                      selectedType,
+                      selectedPrice,
+                      selectedTag,
+                      selectedCollection,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove Orientation filter"
                 >
-                  <span className="font-medium text-white">{selectedOrientation}</span>
+                  <span className="font-medium text-white">
+                    {selectedOrientation}
+                  </span>
                   <IconX
                     size={11}
                     className="text-white/80 hover:text-white ml-0.5"
@@ -1017,13 +1158,21 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedPrice("All");
-                    updateUrlParams(selectedOrientation, selectedType, "All", selectedTag, selectedCollection);
+                    updateUrlParams(
+                      selectedOrientation,
+                      selectedType,
+                      "All",
+                      selectedTag,
+                      selectedCollection,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove Price filter"
                 >
-                  <span className="font-medium text-white">{selectedPrice}</span>
+                  <span className="font-medium text-white">
+                    {selectedPrice}
+                  </span>
                   <IconX
                     size={11}
                     className="text-white/80 hover:text-white ml-0.5"
@@ -1037,13 +1186,23 @@ export default function CategoryArchivePage() {
                   type="button"
                   onClick={() => {
                     setSelectedTag("All");
-                    updateUrlParams(selectedOrientation, selectedType, selectedPrice, "All", selectedCollection);
+                    updateUrlParams(
+                      selectedOrientation,
+                      selectedType,
+                      selectedPrice,
+                      "All",
+                      selectedCollection,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-wbk-black text-white text-[11px] font-poppins rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove Tag filter"
                 >
-                  <TagIcon tagIdOrSlug={selectedTag} size={11} className="text-white/80 shrink-0" />
+                  <TagIcon
+                    tagIdOrSlug={selectedTag}
+                    size={11}
+                    className="text-white/80 shrink-0"
+                  />
                   <span className="font-medium text-white">
                     {getLocalizedTagName(selectedTag, locale)}
                   </span>
@@ -1074,13 +1233,22 @@ export default function CategoryArchivePage() {
           >
             <p className="font-new-york text-2xl text-wbk-black">
               {rawCategoryProducts.length === 0
-                ? t("categories.notAvailableInRegion", "This category is currently not available in your region")
+                ? t(
+                    "categories.notAvailableInRegion",
+                    "This category is currently not available in your region",
+                  )
                 : t("categories.noProductsFound", "No products found")}
             </p>
             <p className="text-xs font-poppins text-wbk-brown">
               {rawCategoryProducts.length === 0
-                ? t("categories.exploreOtherCategories", "Please explore our other available categories.")
-                : t("categories.adjustFilters", "Try adjusting your filters to see more results.")}
+                ? t(
+                    "categories.exploreOtherCategories",
+                    "Please explore our other available categories.",
+                  )
+                : t(
+                    "categories.adjustFilters",
+                    "Try adjusting your filters to see more results.",
+                  )}
             </p>
             {rawCategoryProducts.length > 0 ? (
               <button
@@ -1102,7 +1270,7 @@ export default function CategoryArchivePage() {
         ) : (
           <div
             ref={productGridRef}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-24"
           >
             {filteredProducts.map((prod) => (
               <ProductCard key={prod.id || prod.slug} product={prod} />
@@ -1118,12 +1286,22 @@ export default function CategoryArchivePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherCategoriesToDisplay.map((otherCat) => {
-              const href = otherCat.href || (otherCat.slug?.startsWith("/") ? otherCat.slug : `/products/${otherCat.slug || otherCat.id}`);
+              const href =
+                otherCat.href ||
+                (otherCat.slug?.startsWith("/")
+                  ? otherCat.slug
+                  : `/products/${otherCat.slug || otherCat.id}`);
               const title =
                 getLocalizedCategoryTitle(otherCat, locale) ||
                 (otherCat.titleKey
-                  ? t(otherCat.titleKey, otherCat.title || otherCat.name || otherCat.label)
-                  : t(`categories.${otherCat.key || otherCat.slug}`, otherCat.title || otherCat.name || otherCat.label));
+                  ? t(
+                      otherCat.titleKey,
+                      otherCat.title || otherCat.name || otherCat.label,
+                    )
+                  : t(
+                      `categories.${otherCat.key || otherCat.slug}`,
+                      otherCat.title || otherCat.name || otherCat.label,
+                    ));
               const imageSrc = otherCat.grid_image || otherCat.image;
 
               return (
@@ -1147,7 +1325,6 @@ export default function CategoryArchivePage() {
             })}
           </div>
         </div>
-
       </Container>
     </div>
   );

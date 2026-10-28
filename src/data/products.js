@@ -1,8 +1,13 @@
 // Central Product & Category Catalog for WallBedKing
 import catalog from './products-catalog.json';
 import bundlesCatalog from './bundles.json';
+import tablesCatalogData from './tables-catalog.json';
 
-export const RAW_CATALOG = catalog;
+const isDev = process.env.NODE_ENV === "development";
+export const TABLES_CATALOG_VARIANTS = isDev ? (tablesCatalogData?.variants || []) : [];
+export const TABLES_FLAGSHIP_LIST = isDev ? (tablesCatalogData?.flagships || []) : [];
+
+export const RAW_CATALOG = [...catalog, ...TABLES_CATALOG_VARIANTS];
 
 export const SUPABASE_PRODUCT_IMAGES_BASE =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
@@ -72,12 +77,20 @@ export const CATEGORIES_INFO = {
     subcategories: ["Classic", "Studio", "Integrated"]
   },
   "traditional-beds": {
-    label: "Traditional Beds",
-    title: "Traditional Beds",
-    label_fr: "Lits Escamotables Traditionnels",
-    title_fr: "Lits Escamotables Traditionnels",
+    label: "Clearance",
+    title: "Clearance",
+    label_de: "Abverkauf",
+    title_de: "Abverkauf",
+    label_fr: "Déstockage",
+    title_fr: "Déstockage",
+    label_es: "Liquidación",
+    title_es: "Liquidación",
+    label_it: "Liquidazione",
+    title_it: "Liquidazione",
+    label_por: "Liquidação",
+    title_por: "Liquidação",
     slug: "beds?collection=traditional",
-    description: "Time-tested Traditional wall beds with proven mechanism and solid engineering.",
+    description: "High-quality foldaway clearance wall beds with proven mechanism and solid engineering at special clearance prices.",
     description_fr: "Lits escamotables traditionnels éprouvés avec mécanisme fiable et structure robuste.",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
@@ -95,15 +108,16 @@ export const CATEGORIES_INFO = {
     subcategories: ["Bed Front", "Free Standing"]
   },
   tables: {
-    label: "Tables & Desks",
-    title: "Smart & Transforming Tables",
+    label: "Smart Tables",
+    title: "Space Saving & Transforming Tables",
     label_fr: "Tables & Bureaux",
     title_fr: "Tables & Bureaux",
     slug: "tables",
-    description: "Multifunctional, height-adjustable, wall-mounted and transforming tables engineered for compact spaces.",
+    description: "Multifunctional expanding dining tables, lift-top coffee tables, wall desks and 5-in-1 modular stools.",
     description_fr: "Tables multifonctions, réglables en hauteur et extensibles conçues pour les espaces compacts.",
-    image: "/sofa1.webp",
-    subcategories: ["Transforming", "Wall-Mounted", "Extending", "Coffee & Side"]
+    image: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
+    hoverImage: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-tablee477d391-4f57-480d-bd52-10d39d901e6d.webp",
+    subcategories: ["Dining Tables", "Coffee & Lifting Tables", "Desks & Wall Tables", "Cube Stools", "Benches"]
   },
   mattresses: {
     label: "Mattresses",
@@ -167,7 +181,7 @@ export const OTHER_CATEGORIES_LIST = [
     id: "traditionalBeds",
     slug: "beds?collection=traditional",
     categoryKey: "traditional",
-    label: "Traditional Beds",
+    label: "Clearance",
     titleKey: "nav.traditionalBeds",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
   },
@@ -1302,6 +1316,10 @@ export const FLAGSHIP_CABINETS = [
 // Helper to determine if a product or variant is visible on storefront
 export const isProductVisible = (item) => {
   if (!item) return false;
+  // Tables are visible strictly in development (localhost) even if visibility='hidden'
+  if (item.parent_category === "tables") {
+    return isDev;
+  }
   const vis = String(item.visibility || "").trim().toLowerCase();
   if (vis === "hidden" || vis === "false" || item.visibility === false) return false;
   if (item.is_visible === false) return false;
@@ -1541,111 +1559,47 @@ export function getDynamicFlagshipCabinets(rawItems = RAW_CATALOG) {
   return getDynamicFlagships(FLAGSHIP_CABINETS, rawItems, "cabinets");
 }
 
-export const FLAGSHIP_TABLES = [
-  {
-    id: "flagship-coffee-dining-table",
-    rawId: "table-01",
-    title: "Transforming Coffee-to-Dining Table",
-    slug: "transforming-coffee-dining-table",
-    parent_category: "tables",
-    type: "Transforming",
-    categoryKey: "tables",
-    image: "/sofa1.webp",
-    hoverImage: "/sofa2.webp",
-    gallery: [
-      { src: "/sofa1.webp", alt: "Transforming Coffee-to-Dining Table - Compact Position" },
-      { src: "/sofa2.webp", alt: "Transforming Coffee-to-Dining Table - Dining Position" },
-    ],
-    price: "from £449",
-    price_gbp: 449,
-    price_euro: 519,
-    price_usd: 579,
-    numericPrice: 449,
-    size: "Adjustable 70x120 – 140x120 cm",
-    sizeLabel: "Adjustable 70x120 – 140x120 cm",
-    badge: "Space Saver",
-    description: "Effortless gas-lift mechanism converts from a stylish living room coffee table to a full 6-person dining table.",
-    link: "/products/tables/transforming-coffee-dining-table",
-  },
-  {
-    id: "flagship-wall-mounted-folding-table",
-    rawId: "table-02",
-    title: "Wall-Mounted Drop-Leaf Folding Table",
-    slug: "wall-mounted-folding-table",
-    parent_category: "tables",
-    type: "Wall-Mounted",
-    categoryKey: "tables",
-    image: "/sofa2.webp",
-    hoverImage: "/sofa1.webp",
-    gallery: [
-      { src: "/sofa2.webp", alt: "Wall-Mounted Drop-Leaf Table - Folded Position" },
-      { src: "/sofa1.webp", alt: "Wall-Mounted Drop-Leaf Table - Opened Position" },
-    ],
-    price: "from £299",
-    price_gbp: 299,
-    price_euro: 349,
-    price_usd: 389,
-    numericPrice: 299,
-    size: "80x60 cm folded to 10 cm",
-    sizeLabel: "80x60 cm folded to 10 cm",
-    badge: "Compact Living",
-    description: "Precision engineered wall-mounted folding drop-leaf desk and dining table with heavy-duty locking hinges.",
-    link: "/products/tables/wall-mounted-folding-table",
-  },
-  {
-    id: "flagship-extending-console-table",
-    rawId: "table-03",
-    title: "Extending Console-to-Dining Table",
-    slug: "extending-console-dining-table",
-    parent_category: "tables",
-    type: "Extending",
-    categoryKey: "tables",
-    image: "/sofa1.webp",
-    hoverImage: "/sofa2.webp",
-    gallery: [
-      { src: "/sofa1.webp", alt: "Extending Console Table - Console Position" },
-      { src: "/sofa2.webp", alt: "Extending Console Table - Extended Dining Position" },
-    ],
-    price: "from £599",
-    price_gbp: 599,
-    price_euro: 689,
-    price_usd: 769,
-    numericPrice: 599,
-    size: "45x90 to 200x90 cm",
-    sizeLabel: "45x90 to 200x90 cm",
-    badge: "Extends to 10 seats",
-    description: "Compact hallway console table that seamlessly telescopes into an expansive dining table seating up to 10 guests.",
-    link: "/products/tables/extending-console-dining-table",
-  },
-  {
-    id: "flagship-bed-front-side-table",
-    rawId: "table-04",
-    title: "Compact Bed-Front Side Table",
-    slug: "bed-front-side-table",
-    parent_category: "tables",
-    type: "Coffee & Side",
-    categoryKey: "tables",
-    image: "/sofa2.webp",
-    hoverImage: "/sofa1.webp",
-    gallery: [
-      { src: "/sofa2.webp", alt: "Compact Bed-Front Side Table" },
-      { src: "/sofa1.webp", alt: "Compact Bed-Front Side Table Detail" },
-    ],
-    price: "from £199",
-    price_gbp: 199,
-    price_euro: 229,
-    price_usd: 259,
-    numericPrice: 199,
-    size: "45x45x50 cm",
-    sizeLabel: "45x45x50 cm",
-    badge: "Bed Compatible",
-    description: "Minimalist mobile nesting side table designed to tuck smoothly beside or under wall bed front arrangements.",
-    link: "/products/tables/bed-front-side-table",
-  },
-];
+export const FLAGSHIP_TABLES = TABLES_FLAGSHIP_LIST;
 
 export function getDynamicFlagshipTables(rawItems = RAW_CATALOG) {
-  return getDynamicFlagships(FLAGSHIP_TABLES, rawItems, "tables");
+  if (!isDev) {
+    return []; // STRICT: Never visible in production until enabled!
+  }
+  return TABLES_FLAGSHIP_LIST.map((f) => {
+    let matching = (rawItems || []).filter(
+      (p) => p.parent_category === "tables" && p.parent_slug === f.slug
+    );
+    if (matching.length === 0) {
+      matching = (tablesCatalogData?.variants || []).filter(
+        (v) => v.parent_slug === f.slug
+      );
+    }
+    if (matching.length > 0) {
+      const prices = matching
+        .map((m) => Number(m.price_gbp) || 0)
+        .filter((p) => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : f.price_gbp;
+      const first = matching[0];
+      return {
+        ...first,
+        ...f,
+        price_gbp: minPrice,
+        numericPrice: minPrice,
+        price: `from £${Math.round(minPrice)}`,
+        material: f.material || first.material,
+        dimensions: f.dimensions || first.dimensions,
+        table_size: f.table_size || first.table_size,
+        height: f.height || first.height,
+        weight: f.weight || first.weight,
+        mechanism: f.mechanism || first.mechanism,
+        assembly: f.assembly || first.assembly,
+        shape: f.shape || first.shape,
+        application: f.application || first.application,
+        design_style: f.design_style || first.design_style,
+      };
+    }
+    return f;
+  });
 }
 
 // ── FLAGSHIP ACCESSORIES & EXTRAS (LIGHTING, HARDWARE) ──
@@ -1799,7 +1753,9 @@ export const formatBundleItem = (bundle, rawCatalog = RAW_CATALOG) => {
   };
 };
 
-export const DYNAMIC_FLAGSHIP_BUNDLES = (bundlesCatalog || []).map((b) => formatBundleItem(b, RAW_CATALOG));
+export const DYNAMIC_FLAGSHIP_BUNDLES = (bundlesCatalog || [])
+  .filter(isProductVisible)
+  .map((b) => formatBundleItem(b, RAW_CATALOG));
 
 export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_BEDS,
@@ -1836,8 +1792,65 @@ export const ALL_PRODUCTS = {
  * Builds all dynamic flagships and categorized product maps
  * dynamically from any array of raw catalog items (e.g. from Supabase).
  */
-export function buildCatalog(rawItems = RAW_CATALOG) {
-  const visibleItems = (rawItems || []).filter(isProductVisible);
+export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
+  // Map local tablesCatalogData to enrich items with parent_slug, material, dimensions, specifications
+  const tablesVariantMap = new Map();
+  (tablesCatalogData?.variants || []).forEach((v) => {
+    if (v.slug) tablesVariantMap.set(v.slug, v);
+    if (v.sku) tablesVariantMap.set(v.sku, v);
+    if (v.id) tablesVariantMap.set(String(v.id), v);
+  });
+
+  const enrichedRawItems = (rawItems || []).map((item) => {
+    if (item.parent_category === "tables") {
+      const localVariant =
+        tablesVariantMap.get(item.slug) ||
+        tablesVariantMap.get(item.sku) ||
+        tablesVariantMap.get(String(item.id));
+      if (localVariant) {
+        return {
+          ...localVariant,
+          ...item,
+          parent_slug: localVariant.parent_slug || item.parent_slug,
+          material: item.material || localVariant.material,
+          table_size: item.table_size || localVariant.table_size,
+          dimensions: item.dimensions || localVariant.dimensions,
+          height: item.height || localVariant.height,
+          weight: item.weight || localVariant.weight,
+          mechanism: item.mechanism || localVariant.mechanism,
+          assembly: item.assembly || localVariant.assembly,
+          shape: item.shape || localVariant.shape,
+          application: item.application || localVariant.application,
+          design_style: item.design_style || localVariant.design_style,
+          color: item.color || localVariant.color,
+          product_images:
+            item.product_images && item.product_images.length > 0
+              ? item.product_images
+              : localVariant.product_images,
+          image: item.image || localVariant.image,
+          hover_image: item.hover_image || localVariant.hover_image,
+          hoverImage: item.hoverImage || localVariant.hoverImage,
+          has_real_photos:
+            item.has_real_photos !== undefined
+              ? item.has_real_photos
+              : localVariant.has_real_photos,
+        };
+      }
+    }
+    return item;
+  });
+
+  const combinedItems = [...enrichedRawItems];
+  if (isDev) {
+    const existingSlugs = new Set(combinedItems.map((p) => p.slug));
+    for (const tv of (tablesCatalogData?.variants || [])) {
+      if (!existingSlugs.has(tv.slug)) {
+        combinedItems.push(tv);
+      }
+    }
+  }
+
+  const visibleItems = combinedItems.filter(isProductVisible);
 
   const dynamicFlagshipBeds = getDynamicFlagshipBeds(visibleItems);
   const dynamicFlagshipSofas = getDynamicFlagshipSofas(visibleItems);
@@ -1846,7 +1859,20 @@ export function buildCatalog(rawItems = RAW_CATALOG) {
   const dynamicFlagshipCabinets = getDynamicFlagshipCabinets(visibleItems);
   const dynamicFlagshipExtras = getDynamicFlagshipExtras(visibleItems);
 
-  const dynamicBundles = (bundlesCatalog || []).map((b) => formatBundleItem(b, visibleItems));
+  const bundleSource = Array.isArray(rawBundles) && rawBundles.length > 0
+    ? rawBundles
+    : (bundlesCatalog || []);
+
+  const dynamicBundles = bundleSource
+    .filter(isProductVisible)
+    .map((b) => formatBundleItem(b, visibleItems))
+    .filter((b) => {
+      // Ensure bundle is not missing required components
+      const hasMissingRequired = (b.items || []).some(
+        (it) => it.is_required && !it.product
+      );
+      return !hasMissingRequired;
+    });
 
   const allFlagships = [
     ...dynamicFlagshipBeds,
@@ -2053,14 +2079,23 @@ export const findProductBySlug = (
   const allCatalogList = rawCatalog || RAW_CATALOG;
 
   // 0. Check Bundles if category is bundles or slug matches a bundle
-  const bundleMatch = DYNAMIC_FLAGSHIP_BUNDLES.find(
-    (b) =>
-      b.slug === cleanSlug ||
-      String(b.rawId) === cleanSlug ||
-      `wbk-${b.rawId}` === cleanSlug ||
-      `bundle-${b.rawId}` === cleanSlug
-  );
-  if (bundleMatch) {
+  const bundleMatch =
+    (allFlagshipsList || []).find(
+      (b) =>
+        b.is_bundle &&
+        (b.slug === cleanSlug ||
+          String(b.rawId) === cleanSlug ||
+          `wbk-${b.rawId}` === cleanSlug ||
+          `bundle-${b.rawId}` === cleanSlug)
+    ) ||
+    DYNAMIC_FLAGSHIP_BUNDLES.find(
+      (b) =>
+        b.slug === cleanSlug ||
+        String(b.rawId) === cleanSlug ||
+        `wbk-${b.rawId}` === cleanSlug ||
+        `bundle-${b.rawId}` === cleanSlug
+    );
+  if (bundleMatch && isProductVisible(bundleMatch)) {
     return { ...bundleMatch };
   }
 
@@ -2220,6 +2255,25 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
     );
     matching.sort((a, b) => (a.price_gbp || 0) - (b.price_gbp || 0));
     return matching.map(formatCatalogItem);
+  }
+
+  if (parentCat === "tables") {
+    const parentSlug = currentProduct.parent_slug || currentProduct.slug;
+    let matching = catalog.filter((p) => {
+      if (!isProductVisible(p)) return false;
+      if (p.parent_category !== "tables") return false;
+      return (
+        (parentSlug && p.parent_slug === parentSlug) ||
+        p.slug === currentProduct.slug
+      );
+    });
+    if (matching.length === 0 && isDev) {
+      matching = (tablesCatalogData?.variants || []).filter(
+        (v) => (parentSlug && v.parent_slug === parentSlug) || v.slug === currentProduct.slug
+      );
+    }
+    matching.sort((a, b) => (Number(a.price_gbp) || 0) - (Number(b.price_gbp) || 0));
+    return matching.length > 0 ? matching.map(formatCatalogItem) : [formatCatalogItem(currentProduct)];
   }
 
   return catalog

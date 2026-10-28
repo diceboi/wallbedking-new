@@ -14,7 +14,7 @@
   },
   {
     "id": "traditionalBeds",
-    "title": "Traditional Beds",
+    "title": "Clearance",
     "type": "category",
     "category_id": "beds",
     "slug": "traditional-beds",
@@ -23,7 +23,7 @@
     "order_index": 2,
     "is_visible": true,
     "has_submenu": true,
-    "badge": ""
+    "badge": "%"
   },
   {
     "id": "cabinets",
@@ -52,12 +52,12 @@
     "badge": ""
   },
   {
-    "id": "beds",
-    "title": "Wall Beds",
+    "id": "tables",
+    "title": "Smart Tables",
     "type": "category",
-    "category_id": "beds",
-    "slug": "beds",
-    "href": "/products/beds",
+    "category_id": "tables",
+    "slug": "tables",
+    "href": "/products/tables",
     "order": 5,
     "order_index": 5,
     "is_visible": false,
@@ -78,12 +78,12 @@
     "badge": ""
   },
   {
-    "id": "tables",
-    "title": "Smart Tables",
+    "id": "extras",
+    "title": "Extras & Accessories",
     "type": "category",
-    "category_id": "tables",
-    "slug": "tables",
-    "href": "/products/tables",
+    "category_id": "extras",
+    "slug": "extras",
+    "href": "/products/extras",
     "order": 7,
     "order_index": 7,
     "is_visible": false,
@@ -91,12 +91,12 @@
     "badge": ""
   },
   {
-    "id": "extras",
-    "title": "Extras & Accessories",
+    "id": "beds",
+    "title": "Wall Beds",
     "type": "category",
-    "category_id": "extras",
-    "slug": "extras",
-    "href": "/products/extras",
+    "category_id": "beds",
+    "slug": "beds",
+    "href": "/products/beds",
     "order": 8,
     "order_index": 8,
     "is_visible": false,

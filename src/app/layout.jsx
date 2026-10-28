@@ -10,7 +10,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import { PasswordResetModal } from "@/components/auth/PasswordResetModal";
 import { CookieConsent } from "@/components/ui/CookieConsent";
-import { getStorefrontProducts } from "@/lib/products-db";
+import { getStorefrontProducts, getStorefrontBundles } from "@/lib/products-db";
 import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import { CategoriesProvider } from "@/context/CategoriesContext";
@@ -45,9 +45,10 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const [initialProducts, initialCategories] = await Promise.all([
+  const [initialProducts, initialCategories, initialBundles] = await Promise.all([
     getStorefrontProducts(),
     getStorefrontCategories(),
+    getStorefrontBundles(),
   ]);
 
   return (
@@ -57,7 +58,7 @@ export default async function RootLayout({ children }) {
         <AuthProvider>
           <LocaleProvider>
             <AnalyticsScripts />
-            <ProductCatalogProvider initialProducts={initialProducts}>
+            <ProductCatalogProvider initialProducts={initialProducts} initialBundles={initialBundles}>
               <CategoriesProvider initialCategories={initialCategories}>
                 <CartProvider>
                   <MenuContextProvider>

@@ -22,12 +22,12 @@
     "exploreAll": "Ver todos os modelos",
     "from": "a partir de",
     "morphyBeds": "Camas Rebatíveis MORPHY™",
-    "traditionalBeds": "Camas Tradicionais",
+    "traditionalBeds": "Liquidação",
     "allWallBeds": "Todas as Camas Rebatíveis",
     "allMorphyBeds": "Todas as Camas MORPHY™",
-    "allTraditionalBeds": "Todas as Camas Tradicionais",
+    "allTraditionalBeds": "Todas as Camas em Liquidação",
     "allMorphyTagline": "Descubra todos os modelos MORPHY™",
-    "allTraditionalTagline": "Descubra os modelos rebatíveis clássicos",
+    "allTraditionalTagline": "Modelos clássicos de camas rebatíveis em liquidação até ao fim do stock",
     "trade": "Clientes Comerciais",
     "caseStudies": "Estudos de caso"
   },
@@ -212,7 +212,7 @@
   },
   "categories": {
     "morphyBeds": "Camas Rebatíveis MORPHY™",
-    "traditionalBeds": "Camas Tradicionais",
+    "traditionalBeds": "Liquidação",
     "classicBeds": "Camas clássicas",
     "studioBeds": "Camas secretária Studio",
     "sofas": "Sofás frontais",
@@ -380,7 +380,8 @@
     "allRightsReserved": "Todos os direitos reservados.",
     "privacy": "Política de privacidade",
     "terms": "Termos e condições",
-    "cookies": "Preferências de cookies"
+    "cookies": "Preferências de cookies",
+    "traditionalBeds": "Liquidação"
   },
   "topbar": {
     "freeDelivery": "Envio grátis para Portugal",

@@ -242,7 +242,13 @@ export function MobileMenuDrawer() {
                           >
                             <span>{t(`nav.${item.id}`, item.title)}</span>
                             {item.badge && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-wbk-gold/20 text-wbk-black tracking-wider uppercase">
+                              <span
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded tracking-wider uppercase bg-wbk-gold/20 ${
+                                  item.badge === "%"
+                                    ? "text-red-600 font-extrabold"
+                                    : "text-wbk-black"
+                                }`}
+                              >
                                 {item.badge}
                               </span>
                             )}

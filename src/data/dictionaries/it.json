@@ -22,12 +22,12 @@
     "exploreAll": "Scopri tutti i modelli",
     "from": "da",
     "morphyBeds": "Letti a Scomparsa MORPHY™",
-    "traditionalBeds": "Letti Tradizionali",
+    "traditionalBeds": "Liquidazione",
     "allWallBeds": "Tutti i Letti a Scomparsa",
     "allMorphyBeds": "Tutti i Letti MORPHY™",
-    "allTraditionalBeds": "Tutti i Letti Tradizionali",
+    "allTraditionalBeds": "Tutti i Letti in Liquidazione",
     "allMorphyTagline": "Scopri tutti i modelli MORPHY™",
-    "allTraditionalTagline": "Scopri i modelli classici a scomparsa",
+    "allTraditionalTagline": "Modelli classici di letti a scomparsa in liquidazione fino a esaurimento scorte",
     "trade": "Clienti Business",
     "caseStudies": "Casi studio"
   },
@@ -212,7 +212,7 @@
   },
   "categories": {
     "morphyBeds": "Letti a Scomparsa MORPHY™",
-    "traditionalBeds": "Letti Tradizionali",
+    "traditionalBeds": "Liquidazione",
     "classicBeds": "Letti classici",
     "studioBeds": "Letti con scrivania Studio",
     "sofas": "Divani frontali",
@@ -380,7 +380,8 @@
     "allRightsReserved": "Tutti i diritti riservati.",
     "privacy": "Informativa sulla privacy",
     "terms": "Termini e condizioni",
-    "cookies": "Preferenze cookie"
+    "cookies": "Preferenze cookie",
+    "traditionalBeds": "Liquidazione"
   },
   "topbar": {
     "freeDelivery": "Spedizione gratuita in Italia",

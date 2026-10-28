@@ -40,6 +40,7 @@ import {
   getProductVariants,
   getFallbackProduct,
   GLOBAL_GALLERY_TEMPLATES,
+  isProductVisible,
 } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -83,6 +84,119 @@ const ConfiguratorCanvas = dynamic(
   },
 );
 
+// Helper to parse clean finish label, two-tone swatches, and styling for table finishes
+export function parseTableFinish(variant, index = 0, allVariants = []) {
+  if (!variant) {
+    return {
+      label: "Standard Finish",
+      topHex: "#D2B48C",
+      legHex: "#D2B48C",
+      isTwoTone: false,
+    };
+  }
+
+  let raw = variant.color || variant.name || "Standard";
+  if (raw.includes(" - ")) {
+    raw = raw.split(" - ").slice(1).join(" - ");
+  }
+  // Strip bracketed model codes like (B2448-1WM), (C3488- 2AM), etc.
+  raw = raw.replace(/\s*\([A-Z0-9\-\s\+]*\)/gi, "").trim();
+  raw = raw.replace(/\s*\([A-Z0-9\-\s\+]*$/gi, "").trim();
+  raw = raw.replace(/barble/gi, "Marble");
+  raw = raw.replace(/drak/gi, "Dark");
+  raw = raw.replace(/\s*\+\s*/g, " + ");
+
+  let label = raw
+    .split(" ")
+    .map((w) => {
+      if (w === "+") return "+";
+      if (!w) return "";
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(" ")
+    .trim();
+
+  // If duplicate labels exist in the variant list, append SKU or model code to disambiguate
+  const duplicates = (allVariants || []).filter(
+    (v) =>
+      (v.color || v.name || "").toLowerCase().replace(/[^a-z]/g, "") ===
+      (variant.color || variant.name || "").toLowerCase().replace(/[^a-z]/g, "")
+  );
+  if (duplicates.length > 1 && variant.sku) {
+    const skuCode = variant.sku.split("-")[0] || variant.sku;
+    label = `${label} (${skuCode})`;
+  }
+
+  const s = (variant.color || variant.name || "").toLowerCase();
+
+  let topHex = "#D2B48C"; // default wood
+  if (s.includes("walnut") && s.includes("dark")) topHex = "#3E2723";
+  else if (s.includes("walnut")) topHex = "#5C4033";
+  else if (
+    s.includes("white glossy") ||
+    s.includes("white top") ||
+    s.includes("white mdf") ||
+    s.includes("white glass")
+  )
+    topHex = "#FFFFFF";
+  else if (
+    s.includes("black marble") ||
+    s.includes("black barble") ||
+    s.includes("black glass") ||
+    s.includes("black glossy")
+  )
+    topHex = "#1A1A1A";
+  else if (s.includes("black")) topHex = "#1A1A1A";
+  else if (
+    s.includes("natural wood") ||
+    s.includes("oak") ||
+    s.includes("solid wood")
+  )
+    topHex = "#C19A6B";
+  else if (s.includes("dark grey") || s.includes("dark gray"))
+    topHex = "#4A4A4A";
+  else if (
+    s.includes("grey") ||
+    s.includes("gray") ||
+    s.includes("light grey")
+  )
+    topHex = "#8A8A8A";
+  else if (s.includes("blue")) topHex = "#1E3A8A";
+  else if (s.includes("khaki")) topHex = "#BDB76B";
+  else if (s.includes("silver") || s.includes("silvery")) topHex = "#C0C0C0";
+
+  let legHex = null;
+  if (
+    s.includes("silver leg") ||
+    s.includes("silvery paint") ||
+    s.includes("silver frame") ||
+    s.includes("silver")
+  )
+    legHex = "#C0C0C0";
+  else if (
+    s.includes("dark gray leg") ||
+    s.includes("dark gray frame") ||
+    s.includes("dark grey leg") ||
+    s.includes("dark grey frame") ||
+    s.includes("dark grey")
+  )
+    legHex = "#4A4A4A";
+  else if (s.includes("black leg") || s.includes("black frame"))
+    legHex = "#1A1A1A";
+  else if (s.includes("white leg") || s.includes("white frame"))
+    legHex = "#FFFFFF";
+  else if (s.includes("khaki frame")) legHex = "#BDB76B";
+
+  const isTwoTone = Boolean(legHex && legHex !== topHex);
+
+  return {
+    label: label || variant.sku || "Standard Finish",
+    topHex,
+    legHex: legHex || topHex,
+    isTwoTone,
+  };
+}
+
 export default function ProductDetailPage() {
   const { locale, t, localizedHref } = useLocale();
   const {
@@ -102,8 +216,16 @@ export default function ProductDetailPage() {
 
   // Imperial vs Metric measurement helpers
   const isUS = locale === "us";
-  const formatWeight = (kg) =>
-    !kg ? "" : isUS ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`;
+  const formatWeight = (kg) => {
+    if (!kg) return "";
+    if (typeof kg === "string") {
+      if (kg.toLowerCase().includes("kg") || kg.toLowerCase().includes("lbs")) return kg;
+      const num = parseFloat(kg);
+      if (isNaN(num)) return kg;
+      return isUS ? `${Math.round(num * 2.20462)} lbs` : `${num} kg`;
+    }
+    return isUS ? `${Math.round(kg * 2.20462)} lbs` : `${kg} kg`;
+  };
   const formatMm = (mm) => {
     if (!mm) return "";
     if (isUS) {
@@ -477,6 +599,9 @@ export default function ProductDetailPage() {
     activeProduct.parent_category === "beds" ||
     activeProduct.parent_category === "morphy-beds" ||
     activeProduct.parent_category === "traditional-beds";
+  const isTableProduct =
+    activeProduct.parent_category === "tables" ||
+    Boolean(activeProduct.is_space_saving_table);
 
   const availableFormats = useMemo(() => {
     if (isBedProduct) {
@@ -516,6 +641,9 @@ export default function ProductDetailPage() {
   ]);
 
   const availableSizes = useMemo(() => {
+    if (isTableProduct) {
+      return [];
+    }
     if (!familyVariants || familyVariants.length === 0) {
       const defaultLabel = isUS
         ? activeProduct.size_us ||
@@ -546,12 +674,7 @@ export default function ProductDetailPage() {
     const list = variantsList.length > 0 ? variantsList : familyVariants;
 
     for (const v of list) {
-      if (
-        v.visibility === "Hidden" ||
-        v.visibility === "hidden" ||
-        v.visibility === false ||
-        v.is_visible === false
-      ) {
+      if (!isProductVisible(v)) {
         continue;
       }
       let rawLabel = v.sizeLabel || v.size || v.name || "Standard";
@@ -589,7 +712,7 @@ export default function ProductDetailPage() {
       }
     }
     return result;
-  }, [familyVariants, activeProduct, selectedVariant?.color, isUS]);
+  }, [familyVariants, activeProduct, selectedVariant?.color, isUS, isTableProduct]);
 
   const selectedSizeDisplay = useMemo(() => {
     if (selectedVariant) {
@@ -654,16 +777,13 @@ export default function ProductDetailPage() {
     if (!familyVariants || familyVariants.length === 0) {
       return activeProduct?.color ? [activeProduct.color] : [];
     }
-    const visibleVariants = familyVariants.filter(
-      (v) =>
-        v.visibility !== "Hidden" &&
-        v.visibility !== "hidden" &&
-        v.visibility !== false &&
-        v.is_visible !== false,
-    );
+    const visibleVariants = familyVariants.filter(isProductVisible);
     const colors = Array.from(
       new Set(visibleVariants.map((v) => v.color).filter(Boolean)),
     );
+    if (isTableProduct) {
+      return colors;
+    }
     const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
     colors.sort((a, b) => {
       const ia = order.indexOf(a);
@@ -674,7 +794,7 @@ export default function ProductDetailPage() {
       return a.localeCompare(b);
     });
     return colors;
-  }, [familyVariants, activeProduct?.color]);
+  }, [familyVariants, activeProduct?.color, isTableProduct]);
 
   // Initialize/sync customizer states when route parameters or size change
   useEffect(() => {
@@ -736,11 +856,30 @@ export default function ProductDetailPage() {
           targetVariant = findMatchingVariant(familyVariants, activeSizeSlug);
         }
       }
+      if (isTableProduct) {
+        const vParam =
+          searchParams?.get("variant") ||
+          searchParams?.get("finish") ||
+          searchParams?.get("color") ||
+          searchParams?.get("sku");
+        if (vParam) {
+          const cleanP = vParam.toLowerCase();
+          const match = familyVariants.find(
+            (v) =>
+              v.slug?.toLowerCase() === cleanP ||
+              v.sku?.toLowerCase() === cleanP ||
+              (v.color || "").toLowerCase().includes(cleanP) ||
+              (v.name || "").toLowerCase().includes(cleanP)
+          );
+          if (match) targetVariant = match;
+        }
+      }
       if (!targetVariant && familyVariants.length > 0) {
-        targetVariant =
-          findMatchingVariant(familyVariants, "135x190") ||
-          findMatchingVariant(familyVariants, "160x200") ||
-          familyVariants[0];
+        targetVariant = isTableProduct
+          ? familyVariants[0]
+          : (findMatchingVariant(familyVariants, "135x190") ||
+             findMatchingVariant(familyVariants, "160x200") ||
+             familyVariants[0]);
       }
 
       if (targetVariant) {
@@ -1063,6 +1202,24 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleTableVariantSelect = (variant) => {
+    if (!variant) return;
+    setSelectedVariant(variant);
+    setSelectedImageIndex(0);
+    if (variant.table_size || variant.dimensions) {
+      setProductSize(variant.table_size || variant.dimensions);
+    }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (variant.slug) {
+        url.searchParams.set("variant", variant.slug);
+      } else if (variant.sku) {
+        url.searchParams.set("variant", variant.sku);
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
   const isAvailableInRegion = isProductAvailableInLocale(
@@ -1285,7 +1442,7 @@ export default function ProductDetailPage() {
     if (categorySlug === "beds") {
       return isMorphyBed
         ? t("nav.morphyBeds", "MORPHY™ Beds")
-        : t("nav.traditionalBeds", "Traditional Beds");
+        : t("nav.traditionalBeds", "Clearance");
     }
     return t(`categories.${categorySlug}`, categorySlug.replace("-", " "));
   }, [categorySlug, isMorphyBed, t]);
@@ -1821,21 +1978,30 @@ export default function ProductDetailPage() {
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
       rawId: displayProduct?.id || displayProduct?.rawId || null,
       slug: displayProduct?.slug || productSlug || "",
-      title: localizedProductName,
+      title: isTableProduct
+        ? `${activeProduct?.title || activeProduct?.name?.split(" - ")[0]} (${parseTableFinish(displayProduct, 0, familyVariants).label})`
+        : localizedProductName,
       stock: displayProduct?.stock ?? null,
       image:
         currentMainImage?.src ||
         displayProduct?.image ||
         "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       price: totalDecimal,
-      options: {
-        size: formatSizeLabel(productSize, locale) || "Standard",
-        orientation: productFormat,
-        type: productStyle,
-        sofaIncluded: Boolean(sofaIncluded),
-        sofaPrice: sofaPriceValue,
-      },
-      href: `/products/${categorySlug}/${productSlug}${productSize ? `?size=${encodeURIComponent(productSize)}` : ""}`,
+      options: isTableProduct
+        ? {
+            finish: parseTableFinish(displayProduct, 0, familyVariants).label,
+            material: displayProduct.material || activeProduct?.material || "Standard",
+            sku: displayProduct.sku,
+            dimensions: displayProduct.table_size || displayProduct.dimensions,
+          }
+        : {
+            size: formatSizeLabel(productSize, locale) || "Standard",
+            orientation: productFormat,
+            type: productStyle,
+            sofaIncluded: Boolean(sofaIncluded),
+            sofaPrice: sofaPriceValue,
+          },
+      href: `/products/${categorySlug}/${productSlug}${isTableProduct && displayProduct?.slug ? `?variant=${displayProduct.slug}` : productSize ? `?size=${encodeURIComponent(productSize)}` : ""}`,
     };
 
     addItem(itemToAdd, 1, true);
@@ -1847,6 +2013,21 @@ export default function ProductDetailPage() {
   const galleryImages =
     displayProduct.gallery && displayProduct.gallery.length > 0
       ? displayProduct.gallery
+      : isTableProduct
+      ? [
+          {
+            src: displayProduct.image,
+            alt: `${displayProduct.name || "Table"} Primary View`,
+          },
+          ...(displayProduct.hover_image || displayProduct.hoverImage
+            ? [
+                {
+                  src: displayProduct.hover_image || displayProduct.hoverImage,
+                  alt: `${displayProduct.name || "Table"} View 2`,
+                },
+              ]
+            : []),
+        ]
       : [
           {
             src: displayProduct.image,
@@ -2045,10 +2226,27 @@ export default function ProductDetailPage() {
             {/* Title */}
             <div className="space-y-1">
               <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black leading-tight tracking-tight">
-                {localizedProductName}
+                {isTableProduct
+                  ? (activeProduct?.title || activeProduct?.name?.split(" - ")[0] || displayProduct?.title || displayProduct?.name?.split(" - ")[0])
+                  : localizedProductName}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                <span>{selectedSizeDisplay}</span>
+                {isTableProduct ? (
+                  <>
+                    {(displayProduct?.table_size || displayProduct?.dimensions || activeProduct?.dimensions) && (
+                      <span className="font-medium text-wbk-black">
+                        {displayProduct?.table_size || displayProduct?.dimensions || activeProduct?.dimensions}
+                      </span>
+                    )}
+                    {displayProduct?.material && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                        {displayProduct.material}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span>{selectedSizeDisplay}</span>
+                )}
                 {displayProduct?.sku && (
                   <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                     SKU: {displayProduct.sku}
@@ -2157,10 +2355,27 @@ export default function ProductDetailPage() {
 
                 <div className="space-y-1">
                   <h1 className="font-new-york text-3xl xl:text-4xl text-wbk-black leading-tight tracking-tight">
-                    {localizedProductName}
+                    {isTableProduct
+                      ? (activeProduct?.title || activeProduct?.name?.split(" - ")[0] || displayProduct?.title || displayProduct?.name?.split(" - ")[0])
+                      : localizedProductName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                    <span>{selectedSizeDisplay}</span>
+                    {isTableProduct ? (
+                      <>
+                        {(displayProduct?.table_size || displayProduct?.dimensions || activeProduct?.dimensions) && (
+                          <span className="font-medium text-wbk-black">
+                            {displayProduct?.table_size || displayProduct?.dimensions || activeProduct?.dimensions}
+                          </span>
+                        )}
+                        {displayProduct?.material && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
+                            {displayProduct.material}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span>{selectedSizeDisplay}</span>
+                    )}
                     {displayProduct?.sku && (
                       <span className="inline-flex items-center px-1.5 py-0.5 font-mono text-[11px] bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60">
                         SKU: {displayProduct.sku}
@@ -2233,12 +2448,155 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Dropdowns or Bundle Breakdown */}
+              {/* Dropdowns, Bundle Breakdown, or Table Finish Selector */}
               {displayProduct?.is_bundle ? (
                 <BundleComponentsBreakdown
                   bundle={displayProduct}
                   selectedCurrency={locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR"}
                 />
+              ) : isTableProduct ? (
+                <div className="space-y-4" ref={dropdownsRef}>
+                  {/* Table Finish Selector Header */}
+                  <div className="flex items-center justify-between pb-1 border-b border-wbk-lightgrey/60">
+                    <label className="text-[11px] uppercase tracking-wider font-semibold text-wbk-black font-poppins flex items-center gap-2">
+                      <span>{t("product.selectFinish", "Select Finish & Material")}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAE8E4] text-wbk-black font-medium">
+                        {familyVariants.length} {familyVariants.length === 1 ? "Option" : "Options"}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Active Selection Summary Card */}
+                  <div className="p-3 rounded-xl bg-[#FAF8F5] border border-wbk-gold/40 shadow-xs flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      {(() => {
+                        const parsed = parseTableFinish(displayProduct, 0, familyVariants);
+                        return (
+                          <div className="relative shrink-0">
+                            {parsed.isTwoTone ? (
+                              <span
+                                className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                  parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                }`}
+                                style={{
+                                  background: `linear-gradient(135deg, ${parsed.topHex} 50%, ${parsed.legHex} 50%)`,
+                                }}
+                              />
+                            ) : (
+                              <span
+                                className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                  parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                }`}
+                                style={{ backgroundColor: parsed.topHex }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <div className="min-w-0">
+                        <div className="text-[10px] text-wbk-brown uppercase tracking-wider font-medium">
+                          {t("product.activeSelection", "Active Selection")}
+                        </div>
+                        <div className="font-semibold text-wbk-black truncate text-xs">
+                          {parseTableFinish(displayProduct, 0, familyVariants).label}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-wbk-gold shrink-0">
+                      {getProductPrice(displayProduct, locale).display}
+                    </span>
+                  </div>
+
+                  {/* Options Grid */}
+                  <div className="space-y-2">
+                    <div className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                      {familyVariants.length > 1
+                        ? t("product.availableVariations", "Available Variations:")
+                        : t("product.includedVariation", "Included Configuration:")}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+                      {familyVariants.map((variant, idx) => {
+                        const isSelected = selectedVariant?.id
+                          ? selectedVariant.id === variant.id
+                          : selectedVariant?.sku
+                            ? selectedVariant.sku === variant.sku
+                            : idx === 0;
+                        const parsed = parseTableFinish(variant, idx, familyVariants);
+                        const varPricing = getProductPrice(variant, locale);
+
+                        return (
+                          <button
+                            type="button"
+                            key={variant.id || variant.sku || idx}
+                            onClick={() => handleTableVariantSelect(variant)}
+                            className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 relative ${
+                              isSelected
+                                ? "border-wbk-gold bg-[#FAF8F5] ring-2 ring-wbk-gold/50 shadow-sm"
+                                : "border-wbk-lightgrey/80 bg-white hover:border-wbk-black/40 hover:bg-[#FAF9F7]"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2.5 min-w-0 w-full">
+                              {/* Color Swatch Circle */}
+                              <div className="relative shrink-0 mt-0.5">
+                                {parsed.isTwoTone ? (
+                                  <span
+                                    className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                      parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                    }`}
+                                    style={{
+                                      background: `linear-gradient(135deg, ${parsed.topHex} 50%, ${parsed.legHex} 50%)`,
+                                    }}
+                                  />
+                                ) : (
+                                  <span
+                                    className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                      parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                    }`}
+                                    style={{ backgroundColor: parsed.topHex }}
+                                  />
+                                )}
+                                {isSelected && (
+                                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-wbk-gold border border-white" />
+                                )}
+                              </div>
+
+                              {/* Title & Material Details */}
+                              <div className="min-w-0 flex-1">
+                                <div
+                                  className={`text-xs font-semibold leading-snug line-clamp-2 ${
+                                    isSelected ? "text-wbk-black" : "text-wbk-black/90"
+                                  }`}
+                                >
+                                  {parsed.label}
+                                </div>
+                                {variant.material && (
+                                  <div className="text-[10px] text-wbk-brown truncate mt-0.5">
+                                    {variant.material}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Bottom row: SKU & Price */}
+                            <div className="flex items-center justify-between pt-1 border-t border-black/5 text-[11px] w-full">
+                              <span className="font-mono text-[10px] text-wbk-brown/70 truncate">
+                                {variant.sku ? `SKU: ${variant.sku}` : ""}
+                              </span>
+                              <span
+                                className={`font-mono font-bold text-xs shrink-0 ${
+                                  isSelected ? "text-wbk-gold" : "text-wbk-black"
+                                }`}
+                              >
+                                {varPricing.display}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-3" ref={dropdownsRef}>
                 {/* Format / Orientation */}
@@ -2333,7 +2691,9 @@ export default function ProductDetailPage() {
                 {availableColors.length > 1 && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {t("product.colorLabel", "Finish / Colour:")}
+                      {isTableProduct
+                        ? t("product.tableVariantLabel", "Finish & Variation:")
+                        : t("product.colorLabel", "Finish / Colour:")}
                     </label>
                     <button
                       type="button"
@@ -2360,12 +2720,26 @@ export default function ProductDetailPage() {
                             Beige: "#D2AA7C",
                             Grey: "#A5988E",
                           };
-                          const hex = colorHexMap[currentColor] || "#BCA37F";
+                          const getTableColorHex = (str) => {
+                            const s = (str || "").toLowerCase();
+                            if (s.includes("walnut")) return "#5C4033";
+                            if (s.includes("black")) return "#1A1A1A";
+                            if (s.includes("white")) return "#FFFFFF";
+                            if (s.includes("oak") || s.includes("natural wood")) return "#D2B48C";
+                            if (s.includes("grey") || s.includes("gray")) return "#6E6E6E";
+                            if (s.includes("marble")) return "#E0E0E0";
+                            if (s.includes("khaki")) return "#C3B091";
+                            if (s.includes("silver")) return "#C0C0C0";
+                            if (s.includes("blue")) return "#2C4C7C";
+                            if (s.includes("brown")) return "#654321";
+                            return "#BCA37F";
+                          };
+                          const hex = colorHexMap[currentColor] || getTableColorHex(currentColor);
                           return (
                             <>
                               <span
                                 className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
-                                  currentColor === "White"
+                                  currentColor === "White" || hex === "#FFFFFF"
                                     ? "border-black/30"
                                     : "border-black/20"
                                 }`}
@@ -2382,7 +2756,7 @@ export default function ProductDetailPage() {
                       />
                     </button>
                     {colorOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
+                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1 max-h-60 overflow-y-auto">
                         {availableColors.map((colorName) => {
                           const currentColor =
                             selectedVariant?.color ||
@@ -2400,7 +2774,25 @@ export default function ProductDetailPage() {
                             Beige: "#D2AA7C",
                             Grey: "#A5988E",
                           };
-                          const hex = colorHexMap[colorName] || "#BCA37F";
+                          const getTableColorHex = (str) => {
+                            const s = (str || "").toLowerCase();
+                            if (s.includes("walnut")) return "#5C4033";
+                            if (s.includes("black")) return "#1A1A1A";
+                            if (s.includes("white")) return "#FFFFFF";
+                            if (s.includes("oak") || s.includes("natural wood")) return "#D2B48C";
+                            if (s.includes("grey") || s.includes("gray")) return "#6E6E6E";
+                            if (s.includes("marble")) return "#E0E0E0";
+                            if (s.includes("khaki")) return "#C3B091";
+                            if (s.includes("silver")) return "#C0C0C0";
+                            if (s.includes("blue")) return "#2C4C7C";
+                            if (s.includes("brown")) return "#654321";
+                            return "#BCA37F";
+                          };
+                          const hex = colorHexMap[colorName] || getTableColorHex(colorName);
+                          const matchingVar = familyVariants.find(
+                            (v) => (v.color || "").toLowerCase() === colorName.toLowerCase()
+                          );
+                          const varPrice = matchingVar?.price_gbp;
                           return (
                             <button
                               key={colorName}
@@ -2415,17 +2807,22 @@ export default function ProductDetailPage() {
                                   : "text-wbk-black"
                               }`}
                             >
-                              <div className="flex items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 min-w-0 pr-2">
                                 <span
                                   className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
-                                    colorName === "White"
+                                    colorName === "White" || hex === "#FFFFFF"
                                       ? "border-black/30"
                                       : "border-black/20"
                                   }`}
                                   style={{ backgroundColor: hex }}
                                 />
-                                <span>{colorName}</span>
+                                <span className="truncate">{colorName}</span>
                               </div>
+                              {varPrice && (
+                                <span className="text-xs text-wbk-brown font-mono shrink-0 pl-2">
+                                  £{Math.round(varPrice)}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -2435,7 +2832,7 @@ export default function ProductDetailPage() {
                 )}
 
                 {/* Size */}
-                {availableSizes.length > 0 && (
+                {availableSizes.length > 0 && !isTableProduct && (
                   <div className="relative">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                       {t("product.sizeLabel", "Size:")}
@@ -3682,7 +4079,8 @@ export default function ProductDetailPage() {
 
                       {/* Dimensions for Beds and Mattresses */}
                       {displayProduct.width &&
-                        displayProduct.parent_category !== "cabinets" && (
+                        displayProduct.parent_category !== "cabinets" &&
+                        displayProduct.parent_category !== "tables" && (
                           <tr className="border-b border-wbk-lightgrey/40">
                             <td className="py-2.5 font-medium">
                               {t(
@@ -3717,6 +4115,106 @@ export default function ProductDetailPage() {
                             </td>
                           </tr>
                         )}
+
+                      {/* Space-Saving Tables Specifications */}
+                      {displayProduct.parent_category === "tables" && (
+                        <>
+                          {(displayProduct.table_size || displayProduct.dimensions) && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.tableDimensions", "Dimensions / Size")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown max-w-[280px] break-words">
+                                {displayProduct.table_size || displayProduct.dimensions}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.height &&
+                            displayProduct.height !== displayProduct.table_size &&
+                            displayProduct.height !== displayProduct.dimensions && (
+                              <tr className="border-b border-wbk-lightgrey/40">
+                                <td className="py-2.5 font-medium">
+                                  {t("product.tableHeight", "Height / Adjustment")}
+                                </td>
+                                <td className="py-2.5 text-right text-wbk-brown max-w-[280px] break-words">
+                                  {displayProduct.height}
+                                </td>
+                              </tr>
+                            )}
+                          {displayProduct.material && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.material", "Material")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {displayProduct.material}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.shape && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.shape", "Shape & Function")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {displayProduct.shape}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.mechanism && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.mechanism", "Mechanism")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {displayProduct.mechanism}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.design_style && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.designStyle", "Design Style")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {displayProduct.design_style}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.assembly && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.assembly", "Assembly")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown">
+                                {displayProduct.assembly}
+                              </td>
+                            </tr>
+                          )}
+                          {displayProduct.carton_size &&
+                            !displayProduct.pack_1 &&
+                            !displayProduct.package_dimensions && (
+                              <tr className="border-b border-wbk-lightgrey/40">
+                                <td className="py-2.5 font-medium">
+                                  {t("product.packaging", "Packaging")}
+                                </td>
+                                <td className="py-2.5 text-right text-wbk-brown">
+                                  {displayProduct.carton_size}
+                                </td>
+                              </tr>
+                            )}
+                          {displayProduct.application && (
+                            <tr className="border-b border-wbk-lightgrey/40">
+                              <td className="py-2.5 font-medium">
+                                {t("product.application", "Suitable For")}
+                              </td>
+                              <td className="py-2.5 text-right text-wbk-brown max-w-[280px] break-words">
+                                {displayProduct.application}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      )}
 
                       {/* Bed Frame Specifications (only for beds) */}
                       {(displayProduct.parent_category === "beds" ||
@@ -3817,9 +4315,14 @@ export default function ProductDetailPage() {
                                   "product.lifetimeMechanism",
                                   "Lifetime mechanism warranty",
                                 )
-                              : locale === "fr"
-                                ? "1 an pour les défauts de fabrication"
-                                : "1 year for manufacturing defects")}
+                              : displayProduct.parent_category === "tables"
+                                ? t(
+                                    "product.tablesWarranty",
+                                    "2-Year Manufacturer Warranty",
+                                  )
+                                : locale === "fr"
+                                  ? "1 an pour les défauts de fabrication"
+                                  : "1 year for manufacturing defects")}
                         </td>
                       </tr>
                     </tbody>

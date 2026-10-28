@@ -10,8 +10,36 @@ import { TagBadge } from "@/components/ui/TagBadge";
 import { QuickAddModal } from "@/components/product/QuickAddModal";
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 import { getLocalizedProductName, getStorefrontProductUrl } from "@/lib/products";
+import tablesCatalogData from "@/data/tables-catalog.json";
 
 const DEFAULT_COLORS = ["#A5988E", "#D2AA7C", "#E4E0DE", "#090A0A"];
+
+function getTableSwatches(product) {
+  if (!product) return [];
+  const slug = product.slug;
+  const variants = (tablesCatalogData?.variants || []).filter(
+    (v) => v.parent_slug === slug || v.slug === slug
+  );
+  if (variants.length === 0) {
+    if (product.colors && Array.isArray(product.colors)) return product.colors;
+    return ["#D2B48C"];
+  }
+  const hexes = [];
+  variants.forEach((v) => {
+    const s = (v.color || v.name || "").toLowerCase();
+    let hex = "#D2B48C";
+    if (s.includes("walnut")) hex = "#5C4033";
+    else if (s.includes("white")) hex = "#FFFFFF";
+    else if (s.includes("black")) hex = "#1A1A1A";
+    else if (s.includes("natural wood") || s.includes("oak")) hex = "#C19A6B";
+    else if (s.includes("grey") || s.includes("gray")) hex = "#6E6E6E";
+    else if (s.includes("blue")) hex = "#1E3A8A";
+    else if (s.includes("silver")) hex = "#C0C0C0";
+    else if (s.includes("khaki")) hex = "#BDB76B";
+    if (!hexes.includes(hex)) hexes.push(hex);
+  });
+  return hexes.slice(0, 5);
+}
 
 export function ProductCard({ product, className = "" }) {
   const { locale, localizedHref, t } = useLocale();
@@ -20,6 +48,9 @@ export function ProductCard({ product, className = "" }) {
 
   if (!product) return null;
 
+  const isTable =
+    product.parent_category === "tables" ||
+    Boolean(product.is_space_saving_table);
   const title = getLocalizedProductName(product, locale);
   const orientation = product.orientation || "Vertical";
   const isUS = locale === "us";
@@ -41,7 +72,9 @@ export function ProductCard({ product, className = "" }) {
   // Standardize colors
   let colors = product.colors;
   if (!colors || !Array.isArray(colors) || colors.length === 0) {
-    if (product.color === "Beige") colors = ["#D2AA7C"];
+    if (isTable) {
+      colors = getTableSwatches(product);
+    } else if (product.color === "Beige") colors = ["#D2AA7C"];
     else if (product.color === "Grey") colors = ["#A5988E"];
     else if (product.color === "White") colors = ["#FFFFFF"];
     else if (product.color === "Black") colors = ["#090A0A"];
@@ -176,14 +209,38 @@ export function ProductCard({ product, className = "" }) {
             )}
             {orientation &&
               product.parent_category !== "mattresses" &&
-              product.parent_category !== "sofas" && (
+              product.parent_category !== "sofas" &&
+              !isTable && (
                 <div>
                   {t("product.orientation", "Orientation")}: {orientation}
                 </div>
               )}
-            <div>
-              {t("product.size", "Size")}: {size}
-            </div>
+            {isTable ? (
+              <div className="space-y-0.5">
+                {(product.table_size || product.dimensions) && (
+                  <div>
+                    <span className="text-wbk-brown">{t("product.dimensions", "Dimensions")}:</span>{" "}
+                    <span className="font-medium text-wbk-black">{product.table_size || product.dimensions}</span>
+                  </div>
+                )}
+                {product.material && (
+                  <div className="text-[11px] text-wbk-brown truncate">
+                    <span>{t("product.material", "Material")}:</span>{" "}
+                    <span className="text-wbk-black">{product.material}</span>
+                  </div>
+                )}
+                {product.variants_count && product.variants_count > 1 ? (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full bg-wbk-gold/15 text-wbk-gold font-semibold text-[10px] border border-wbk-gold/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
+                    {product.variants_count} Finishes Available
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div>
+                {t("product.size", "Size")}: {size}
+              </div>
+            )}
             {product.weight && (
               <div className="text-[11px] text-wbk-brown">
                 {t("product.weight", "Weight")}:{" "}

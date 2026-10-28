@@ -516,6 +516,119 @@ export function calculateSofaPrice(itemOrProduct, orientationStr = null, sizeStr
   return (widthCm && widthCm <= 120) ? 499 : 998;
 }
 
+export function parseTableFinish(variant, index = 0, allVariants = []) {
+  if (!variant) {
+    return {
+      label: "Standard Finish",
+      topHex: "#D2B48C",
+      legHex: "#D2B48C",
+      isTwoTone: false,
+    };
+  }
+
+  let raw = variant.color || variant.name || "Standard";
+  if (raw.includes(" - ")) {
+    raw = raw.split(" - ").slice(1).join(" - ");
+  }
+  // Strip bracketed model codes like (B2448-1WM), (C3488- 2AM), etc.
+  raw = raw.replace(/\s*\([A-Z0-9\-\s\+]*\)/gi, "").trim();
+  raw = raw.replace(/\s*\([A-Z0-9\-\s\+]*$/gi, "").trim();
+  raw = raw.replace(/barble/gi, "Marble");
+  raw = raw.replace(/drak/gi, "Dark");
+  raw = raw.replace(/\s*\+\s*/g, " + ");
+
+  let label = raw
+    .split(" ")
+    .map((w) => {
+      if (w === "+") return "+";
+      if (!w) return "";
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(" ")
+    .trim();
+
+  // If duplicate labels exist in the variant list, append SKU or model code to disambiguate
+  const duplicates = (allVariants || []).filter(
+    (v) =>
+      (v.color || v.name || "").toLowerCase().replace(/[^a-z]/g, "") ===
+      (variant.color || variant.name || "").toLowerCase().replace(/[^a-z]/g, "")
+  );
+  if (duplicates.length > 1 && variant.sku) {
+    const skuCode = variant.sku.split("-")[0] || variant.sku;
+    label = `${label} (${skuCode})`;
+  }
+
+  const s = (variant.color || variant.name || "").toLowerCase();
+
+  let topHex = "#D2B48C"; // default wood
+  if (s.includes("walnut") && s.includes("dark")) topHex = "#3E2723";
+  else if (s.includes("walnut")) topHex = "#5C4033";
+  else if (
+    s.includes("white glossy") ||
+    s.includes("white top") ||
+    s.includes("white mdf") ||
+    s.includes("white glass")
+  )
+    topHex = "#FFFFFF";
+  else if (
+    s.includes("black marble") ||
+    s.includes("black barble") ||
+    s.includes("black glass") ||
+    s.includes("black glossy")
+  )
+    topHex = "#1A1A1A";
+  else if (s.includes("black")) topHex = "#1A1A1A";
+  else if (
+    s.includes("natural wood") ||
+    s.includes("oak") ||
+    s.includes("solid wood")
+  )
+    topHex = "#C19A6B";
+  else if (s.includes("dark grey") || s.includes("dark gray"))
+    topHex = "#4A4A4A";
+  else if (
+    s.includes("grey") ||
+    s.includes("gray") ||
+    s.includes("light grey")
+  )
+    topHex = "#8A8A8A";
+  else if (s.includes("blue")) topHex = "#1E3A8A";
+  else if (s.includes("khaki")) topHex = "#BDB76B";
+  else if (s.includes("silver") || s.includes("silvery")) topHex = "#C0C0C0";
+
+  let legHex = null;
+  if (
+    s.includes("silver leg") ||
+    s.includes("silvery paint") ||
+    s.includes("silver frame") ||
+    s.includes("silver")
+  )
+    legHex = "#C0C0C0";
+  else if (
+    s.includes("dark gray leg") ||
+    s.includes("dark gray frame") ||
+    s.includes("dark grey leg") ||
+    s.includes("dark grey frame") ||
+    s.includes("dark grey")
+  )
+    legHex = "#4A4A4A";
+  else if (s.includes("black leg") || s.includes("black frame"))
+    legHex = "#1A1A1A";
+  else if (s.includes("white leg") || s.includes("white frame"))
+    legHex = "#FFFFFF";
+  else if (s.includes("khaki frame")) legHex = "#BDB76B";
+
+  const isTwoTone = Boolean(legHex && legHex !== topHex);
+
+  return {
+    label: label || variant.sku || "Standard Finish",
+    topHex,
+    legHex: legHex || topHex,
+    isTwoTone,
+  };
+}
+
 export { findProductBySlug, getProductVariants };
+
 
 

@@ -5,7 +5,7 @@ export const ALL_NAV_ITEMS = (
     ? navMenuData
     : [
         { id: "morphyBeds", title: "MORPHY™ Beds", slug: "morphy-beds", href: "/products/beds?collection=morphy", is_visible: true, order: 1, hasSubmenu: true, has_submenu: true, badge: "New Gen" },
-        { id: "traditionalBeds", title: "Traditional Beds", slug: "traditional-beds", href: "/products/beds?collection=traditional", is_visible: true, order: 2, hasSubmenu: true, has_submenu: true },
+        { id: "traditionalBeds", title: "Clearance", slug: "traditional-beds", href: "/products/beds?collection=traditional", is_visible: true, order: 2, hasSubmenu: true, has_submenu: true, badge: "%" },
         { id: "cabinets", title: "Cabinets", slug: "cabinets", href: "/products/cabinets", is_visible: true, order: 3, hasSubmenu: true, has_submenu: true },
         { id: "mattresses", title: "Mattresses", slug: "mattresses", href: "/products/mattresses", is_visible: true, order: 4, hasSubmenu: true, has_submenu: true },
       ]
@@ -20,8 +20,15 @@ export const ALL_NAV_ITEMS = (
   };
 });
 
+const isDev = process.env.NODE_ENV === "development";
+
 export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS
-  .filter((item) => item.is_visible !== false)
+  .filter((item) => {
+    if (item.id === "tables") {
+      return isDev; // Visible ONLY on localhost!
+    }
+    return item.is_visible !== false;
+  })
   .sort((a, b) => (a.order || 0) - (b.order || 0));
 
 const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
@@ -85,12 +92,12 @@ const morphySubmenu = {
 
 const traditionalSubmenu = {
   parent: {
-    title: "All Traditional Beds",
+    title: "All Clearance Beds",
     titleKey: "nav.allTraditionalBeds",
     image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_1.webp`,
     hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-TRADITIONAL_2.webp`,
     href: "/products/beds?collection=traditional",
-    tagline: "Explore classic wall bed models",
+    tagline: "Explore clearance wall bed models",
     taglineKey: "nav.allTraditionalTagline",
   },
   items: [
@@ -132,13 +139,15 @@ export const SUBMENU_DATA = {
   "traditional-beds": traditionalSubmenu,
   traditionalBeds: traditionalSubmenu,
   traditional: traditionalSubmenu,
+  clearance: traditionalSubmenu,
+  "clearance-beds": traditionalSubmenu,
   beds: {
     parent: {
       title: "All Wall Beds",
       image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
       href: "/products/beds",
-      tagline: "Explore complete MORPHY™ & Traditional collections",
+      tagline: "Explore complete MORPHY™ & Clearance collections",
     },
     sections: [
       {
@@ -151,9 +160,9 @@ export const SUBMENU_DATA = {
       },
       {
         id: "traditional",
-        title: "Traditional Beds",
+        title: "Clearance",
         titleKey: "nav.traditionalBeds",
-        badge: "Classic Line",
+        badge: "%",
         parent: traditionalSubmenu.parent,
         items: traditionalSubmenu.items,
       },
@@ -188,47 +197,48 @@ export const SUBMENU_DATA = {
   },
   tables: {
     parent: {
-      title: "All Smart Tables",
-      image: "/sofa1.webp",
+      title: "All Space Saving Tables",
+      image: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
+      hoverImage: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-tablee477d391-4f57-480d-bd52-10d39d901e6d.webp",
       href: "/products/tables",
-      tagline: "Space-saving folding & transforming designs",
+      tagline: "Multifunctional, expanding & folding space savers",
     },
     items: [
       {
-        title: "Transforming Coffee-to-Dining Table",
-        image: "/sofa1.webp",
-        href: "/products/tables/transforming-coffee-dining-table",
-        type: "Transforming",
-        badge: "Space Saver",
-        sizeRange: "70x120 – 140x120 cm",
-        price: "from £449",
+        title: "Dining Tables",
+        image: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
+        href: "/products/tables?type=Dining+Table",
+        type: "Dining Table",
+        badge: "Transforming",
+        sizeRange: "Expanding & Foldable",
+        price: "from £280",
       },
       {
-        title: "Wall-Mounted Drop-Leaf Folding Table",
-        image: "/sofa2.webp",
-        href: "/products/tables/wall-mounted-folding-table",
-        type: "Wall-Mounted",
-        badge: "Compact Living",
-        sizeRange: "80x60 cm folded to 10 cm",
+        title: "Coffee & Lifting Tables",
+        image: "/product-images/tables/a1492m-minimalist-lifting-coffee-table/minimalist-lifting-coffee-table320b8.webp",
+        href: "/products/tables?type=Coffee+Table",
+        type: "Coffee Table",
+        badge: "Height-Adjustable",
+        sizeRange: "Lift-Top Mechanisms",
         price: "from £299",
       },
       {
-        title: "Extending Console-to-Dining Table",
-        image: "/sofa1.webp",
-        href: "/products/tables/extending-console-dining-table",
-        type: "Extending",
-        badge: "Extends to 10 seats",
-        sizeRange: "45x90 – 200x90 cm",
-        price: "from £599",
+        title: "Console & Desk Tables",
+        image: "/product-images/tables/b2241-4m-classical-wooden-extendable-console-table/classical-wooden-extendable-console-table38431.webp",
+        href: "/products/tables?type=Desk",
+        type: "Desk",
+        badge: "Extends to 10 Seats",
+        sizeRange: "Console to Dining",
+        price: "from £440",
       },
       {
-        title: "Compact Bed-Front Side Table",
-        image: "/sofa2.webp",
-        href: "/products/tables/bed-front-side-table",
-        type: "Coffee & Side",
-        badge: "Bed Compatible",
-        sizeRange: "45x45x50 cm",
-        price: "from £199",
+        title: "Cube Stools & Benches",
+        image: "/product-images/tables/c3487-3m-multi-function-5-in-1-removable-stool/multi-function-5-in-1-removable-stool0f50c.webp",
+        href: "/products/tables?type=Cube+stool",
+        type: "Cube stool",
+        badge: "5 in 1 Modular",
+        sizeRange: "Nesting Seats",
+        price: "from £480",
       },
     ],
   },

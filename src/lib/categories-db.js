@@ -111,7 +111,17 @@ export const getStorefrontCategories = unstable_cache(
         return getLocalCategories().map(normalizeCategory).filter((c) => c.is_visible !== false);
       }
 
-      return rows.map(normalizeCategory).filter((c) => c.is_visible !== false);
+      let result = rows.map(normalizeCategory).filter((c) => c.is_visible !== false);
+      if (process.env.NODE_ENV === "development") {
+        const hasTables = result.some((c) => c.id === "tables" || c.slug === "tables");
+        if (!hasTables) {
+          const localTables = getLocalCategories().find((c) => c.id === "tables" || c.slug === "tables");
+          if (localTables) {
+            result.push(normalizeCategory(localTables, result.length));
+          }
+        }
+      }
+      return result;
     } catch (err) {
       console.error("[categories-db] Exception fetching categories:", err.message);
       return getLocalCategories().map(normalizeCategory);

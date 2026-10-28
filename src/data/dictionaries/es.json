@@ -22,12 +22,12 @@
     "exploreAll": "Ver todos los modelos",
     "from": "desde",
     "morphyBeds": "Camas Abatibles MORPHY™",
-    "traditionalBeds": "Camas Tradicionales",
+    "traditionalBeds": "Liquidación",
     "allWallBeds": "Todas las Camas Abatibles",
     "allMorphyBeds": "Todas las Camas MORPHY™",
-    "allTraditionalBeds": "Todas las Camas Tradicionales",
+    "allTraditionalBeds": "Todas las Camas en Liquidación",
     "allMorphyTagline": "Descubrir todos los modelos MORPHY™",
-    "allTraditionalTagline": "Descubrir los modelos clásicos abatibles",
+    "allTraditionalTagline": "Modelos clásicos de camas abatibles en liquidación hasta fin de existencias",
     "trade": "Clientes Profesionales",
     "caseStudies": "Casos de estudio"
   },
@@ -212,7 +212,7 @@
   },
   "categories": {
     "morphyBeds": "Camas Abatibles MORPHY™",
-    "traditionalBeds": "Camas Tradicionales",
+    "traditionalBeds": "Liquidación",
     "classicBeds": "Camas clásicas",
     "studioBeds": "Camas escritorio Studio",
     "sofas": "Sofás frontales",
@@ -380,7 +380,8 @@
     "allRightsReserved": "Todos los derechos reservados.",
     "privacy": "Política de privacidad",
     "terms": "Términos y condiciones",
-    "cookies": "Preferencias de cookies"
+    "cookies": "Preferencias de cookies",
+    "traditionalBeds": "Liquidación"
   },
   "topbar": {
     "freeDelivery": "Envío gratuito a España",

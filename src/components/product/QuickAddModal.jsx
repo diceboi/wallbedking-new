@@ -17,9 +17,9 @@ import {
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
-import { getProductVariants, formatCatalogItem } from "@/data/products";
+import { getProductVariants, formatCatalogItem, isProductVisible } from "@/data/products";
 import { getProductPrice, formatPrice, formatSizeLabel } from "@/lib/i18n";
-import { getLocalizedProductName } from "@/lib/products";
+import { getLocalizedProductName, parseTableFinish } from "@/lib/products";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 
 export function QuickAddModal({ isOpen, onClose, product }) {
@@ -44,20 +44,9 @@ export function QuickAddModal({ isOpen, onClose, product }) {
     if (!product) return [];
     const getVariants = catalogGetVariants || getProductVariants;
     const list = getVariants(product);
-    const visibleList = (list || []).filter(
-      (v) =>
-        v.visibility !== "Hidden" &&
-        v.visibility !== "hidden" &&
-        v.visibility !== false &&
-        v.is_visible !== false
-    );
+    const visibleList = (list || []).filter(isProductVisible);
     if (visibleList.length === 0) {
-      const isProductHidden =
-        product.visibility === "Hidden" ||
-        product.visibility === "hidden" ||
-        product.visibility === false ||
-        product.is_visible === false;
-      return isProductHidden ? [] : [formatCatalogItem(product)];
+      return isProductVisible(product) ? [formatCatalogItem(product)] : [];
     }
     return visibleList;
   }, [product, catalogGetVariants]);
@@ -76,6 +65,9 @@ export function QuickAddModal({ isOpen, onClose, product }) {
   const availableColors = useMemo(() => {
     if (!product || !variants || variants.length === 0) return [];
     const cols = Array.from(new Set(variants.map((v) => v.color).filter(Boolean)));
+    if (product.parent_category === "tables" || product.is_space_saving_table) {
+      return cols;
+    }
     const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
     cols.sort((a, b) => {
       const ia = order.indexOf(a);
@@ -150,6 +142,9 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
   // Active product to display details for
   const activeProduct = selectedVariant || product;
+  const isTable =
+    product.parent_category === "tables" ||
+    product.is_space_saving_table;
 
   // Sizes available for the active format / type & color
   const availableSizes = variants.filter((v) => {
@@ -271,6 +266,40 @@ export function QuickAddModal({ isOpen, onClose, product }) {
   const handleAddToCart = () => {
     if (isOutOfStock) return;
 
+    if (isTable) {
+      const parsed = parseTableFinish(activeProduct, 0, variants);
+      const cleanTitle = activeProduct.title || product.title || product.name?.split(" - ")[0] || "Smart Space-Saving Table";
+      const itemToAdd = {
+        id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${activeProduct.sku || activeProduct.color || ""}`,
+        productId: activeProduct.slug || activeProduct.rawId || activeProduct.id,
+        rawId: activeProduct.id || activeProduct.rawId || null,
+        slug: activeProduct.slug || product.slug || "",
+        title: `${cleanTitle} (${parsed.label})`,
+        image:
+          activeProduct.image ||
+          product.image ||
+          "/product-images/tables/placeholder.webp",
+        price: unitPrice,
+        options: {
+          finish: parsed.label,
+          material: activeProduct.material || "Wood / Metal",
+          dimensions: activeProduct.table_size || activeProduct.dimensions || "",
+          sku: activeProduct.sku || product.sku || "",
+        },
+        href: `/products/tables/${product.slug || activeProduct.slug}`,
+      };
+
+      addItem(itemToAdd, quantity, true);
+      setIsAdded(true);
+
+      setTimeout(() => {
+        setIsAdded(false);
+        onClose();
+        openCart();
+      }, 600);
+      return;
+    }
+
     const sizeStr = activeProduct.sizeLabel || activeProduct.size || "Standard";
     const itemToAdd = {
       id: `${activeProduct.slug || activeProduct.rawId || activeProduct.id}-${sizeStr}-${activeProduct.orientation || "Vertical"}-${activeProduct.type || "Classic"}-${activeProduct.color || selectedColor || ""}`,
@@ -327,10 +356,14 @@ export function QuickAddModal({ isOpen, onClose, product }) {
               <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown block">
                 {product.parent_category === "beds"
                   ? `${activeProduct.orientation || "Vertical"} Murphy Bed`
-                  : product.parent_category || "Wall Bed King"}
+                  : isTable
+                    ? t("nav.smartTables", "Smart Space-Saving Table")
+                    : product.parent_category || "Wall Bed King"}
               </span>
               <h3 className="font-new-york text-base sm:text-lg text-wbk-black font-semibold truncate max-w-[240px] sm:max-w-xs">
-                {getLocalizedProductName(product, locale)}
+                {isTable
+                  ? (activeProduct.title || product.title || product.name?.split(" - ")[0])
+                  : getLocalizedProductName(product, locale)}
               </h3>
             </div>
           </div>
@@ -376,7 +409,9 @@ export function QuickAddModal({ isOpen, onClose, product }) {
             </div>
 
             <div className="text-xs text-wbk-brown truncate">
-              {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
+              {isTable
+                ? (activeProduct.table_size || activeProduct.dimensions || activeProduct.material || "Space-Saving Table")
+                : formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
             </div>
 
             {/* In stock badge */}
@@ -401,151 +436,234 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
         {/* Options Body */}
         <div className="p-4 sm:p-6 space-y-5 max-h-[55vh] overflow-y-auto custom-scrollbar">
-          {/* Format selector (Vertical / Horizontal) for beds */}
-          {formats.length > 1 && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
-                <span>{t("product.orientation", "Orientation")}</span>
-                <span className="text-wbk-brown font-normal text-[11px]">
-                  {selectedFormat}
-                </span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {formats.map((fmt) => {
-                  const isSelected =
-                    (selectedFormat || "").toLowerCase() === fmt.toLowerCase();
-                  return (
-                    <button
-                      key={fmt}
-                      type="button"
-                      onClick={() => handleSelectFormat(fmt)}
-                      className={`py-2 px-3 text-xs font-medium rounded-lg border transition-all cursor-pointer text-center ${
-                        isSelected
-                          ? "bg-wbk-black text-white border-wbk-black shadow-xs font-semibold"
-                          : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
-                      }`}
-                    >
-                      {fmt}
-                    </button>
-                  );
-                })}
+          {isTable ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-1 border-b border-wbk-lightgrey/60">
+                <label className="text-[11px] uppercase tracking-wider font-semibold text-wbk-black font-poppins flex items-center gap-2">
+                  <span>{t("product.selectFinish", "Select Finish & Material")}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAE8E4] text-wbk-black font-medium">
+                    {variants.length} {variants.length === 1 ? "Option" : "Options"}
+                  </span>
+                </label>
               </div>
-            </div>
-          )}
 
-          {/* Finish / Colour Selector */}
-          {availableColors.length > 1 && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
-                <span>{t("product.finish", "Finish / Colour")}</span>
-                <span className="text-wbk-brown font-normal text-[11px]">
-                  {selectedColor || activeProduct?.color || availableColors[0]}
-                </span>
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                {availableColors.map((col) => {
-                  const currentColor =
-                    selectedColor || activeProduct?.color || availableColors[0];
-                  const isSelected =
-                    currentColor?.toLowerCase() === col.toLowerCase();
-                  const colorHexMap = {
-                    Oak: "#BCA37F",
-                    Beech: "#D8AC78",
-                    Pine: "#E8CE9B",
-                    White: "#FFFFFF",
-                    Black: "#090A0A",
-                    Beige: "#D2AA7C",
-                    Grey: "#A5988E",
-                  };
-                  const hex = colorHexMap[col] || "#BCA37F";
-                  return (
-                    <button
-                      key={col}
-                      type="button"
-                      onClick={() => handleSelectColor(col)}
-                      className={`flex items-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-full border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-wbk-black text-white border-wbk-black shadow-xs font-semibold ring-1 ring-wbk-black"
-                          : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
-                      }`}
-                    >
-                      <span
-                        className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
-                          col === "White" ? "border-black/30" : "border-black/20"
-                        }`}
-                        style={{ backgroundColor: hex }}
-                      />
-                      <span>{col}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Size Pills Selector */}
-          {availableSizes.length > 1 && (
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
-                <span>{t("product.size", "Size")}</span>
-                <span className="text-wbk-brown font-normal text-[11px]">
-                  {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
-                </span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableSizes.map((variant) => {
-                  const isSelected =
-                    String(variant.rawId || variant.id) ===
-                    String(activeProduct.rawId || activeProduct.id);
-                  const label = formatSizeLabel(
-                    variant.sizeLabel || variant.size || variant.name,
-                    locale,
-                    variant
-                  );
-                  const pPrice = getProductPrice(variant, locale);
-                  const isVariantOutOfStock =
-                    (variant.stock !== undefined &&
-                      variant.stock !== null &&
-                      Number(variant.stock) <= 0) ||
-                    variant.in_stock === false;
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
+                {variants.map((v, idx) => {
+                  const isSelected = selectedVariant?.id
+                    ? String(selectedVariant.id) === String(v.id)
+                    : selectedVariant?.sku
+                      ? selectedVariant.sku === v.sku
+                      : idx === 0;
+                  const parsed = parseTableFinish(v, idx, variants);
+                  const vPricing = getProductPrice(v, locale);
 
                   return (
                     <button
-                      key={variant.rawId || variant.id || variant.slug}
                       type="button"
-                      onClick={() => handleSelectSize(variant)}
-                      className={`p-2.5 text-left rounded-lg border transition-all cursor-pointer flex flex-col justify-between ${
+                      key={v.id || v.sku || idx}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 relative ${
                         isSelected
-                          ? "bg-wbk-black text-white border-wbk-black shadow-sm"
-                          : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
+                          ? "border-wbk-gold bg-[#FAF8F5] ring-2 ring-wbk-gold/50 shadow-sm"
+                          : "border-wbk-lightgrey/80 bg-white hover:border-wbk-black/40 hover:bg-[#FAF9F7]"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-1 w-full">
-                        <span className="text-xs font-medium leading-tight line-clamp-1">
-                          {label}
+                      <div className="flex items-start gap-2.5 min-w-0 w-full">
+                        <div className="relative shrink-0 mt-0.5">
+                          {parsed.isTwoTone ? (
+                            <span
+                              className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                              }`}
+                              style={{
+                                background: `linear-gradient(135deg, ${parsed.topHex} 50%, ${parsed.legHex} 50%)`,
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className={`w-5 h-5 rounded-full border block shadow-2xs ${
+                                parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                              }`}
+                              style={{ backgroundColor: parsed.topHex }}
+                            />
+                          )}
+                          {isSelected && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-wbk-gold border border-white" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-xs text-wbk-black line-clamp-2 leading-tight">
+                            {parsed.label}
+                          </div>
+                          {v.material && (
+                            <div className="text-[10px] text-wbk-brown mt-0.5 truncate">
+                              {v.material}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-wbk-lightgrey/40 text-[11px] font-mono">
+                        <span className="text-[10px] text-wbk-brown truncate">
+                          {v.sku ? v.sku.split("+")[0] : ""}
                         </span>
-                        {isVariantOutOfStock && (
+                        <span className={`font-bold ${isSelected ? "text-wbk-gold" : "text-wbk-black"}`}>
+                          {vPricing.display}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Format selector (Vertical / Horizontal) for beds */}
+              {formats.length > 1 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
+                    <span>{t("product.orientation", "Orientation")}</span>
+                    <span className="text-wbk-brown font-normal text-[11px]">
+                      {selectedFormat}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {formats.map((fmt) => {
+                      const isSelected =
+                        (selectedFormat || "").toLowerCase() === fmt.toLowerCase();
+                      return (
+                        <button
+                          key={fmt}
+                          type="button"
+                          onClick={() => handleSelectFormat(fmt)}
+                          className={`py-2 px-3 text-xs font-medium rounded-lg border transition-all cursor-pointer text-center ${
+                            isSelected
+                              ? "bg-wbk-black text-white border-wbk-black shadow-xs font-semibold"
+                              : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
+                          }`}
+                        >
+                          {fmt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Finish / Colour Selector */}
+              {availableColors.length > 1 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
+                    <span>{t("product.finish", "Finish / Colour")}</span>
+                    <span className="text-wbk-brown font-normal text-[11px]">
+                      {selectedColor || activeProduct?.color || availableColors[0]}
+                    </span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {availableColors.map((col) => {
+                      const currentColor =
+                        selectedColor || activeProduct?.color || availableColors[0];
+                      const isSelected =
+                        currentColor?.toLowerCase() === col.toLowerCase();
+                      const colorHexMap = {
+                        Oak: "#BCA37F",
+                        Beech: "#D8AC78",
+                        Pine: "#E8CE9B",
+                        White: "#FFFFFF",
+                        Black: "#090A0A",
+                        Beige: "#D2AA7C",
+                        Grey: "#A5988E",
+                      };
+                      const hex = colorHexMap[col] || "#BCA37F";
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => handleSelectColor(col)}
+                          className={`flex items-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-full border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-wbk-black text-white border-wbk-black shadow-xs font-semibold ring-1 ring-wbk-black"
+                              : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
+                          }`}
+                        >
                           <span
-                            className={`text-[9px] font-semibold tracking-tight shrink-0 ${
-                              isSelected ? "text-wbk-gold" : "text-wbk-gold"
+                            className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
+                              col === "White" ? "border-black/30" : "border-black/20"
+                            }`}
+                            style={{ backgroundColor: hex }}
+                          />
+                          <span>{col}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Size Pills Selector */}
+              {availableSizes.length > 1 && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-wbk-black flex items-center justify-between">
+                    <span>{t("product.size", "Size")}</span>
+                    <span className="text-wbk-brown font-normal text-[11px]">
+                      {formatSizeLabel(activeProduct.sizeLabel || activeProduct.size || "Standard", locale, activeProduct)}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableSizes.map((variant) => {
+                      const isSelected =
+                        String(variant.rawId || variant.id) ===
+                        String(activeProduct.rawId || activeProduct.id);
+                      const label = formatSizeLabel(
+                        variant.sizeLabel || variant.size || variant.name,
+                        locale,
+                        variant
+                      );
+                      const pPrice = getProductPrice(variant, locale);
+                      const isVariantOutOfStock =
+                        (variant.stock !== undefined &&
+                          variant.stock !== null &&
+                          Number(variant.stock) <= 0) ||
+                        variant.in_stock === false;
+
+                      return (
+                        <button
+                          key={variant.rawId || variant.id || variant.slug}
+                          type="button"
+                          onClick={() => handleSelectSize(variant)}
+                          className={`p-2.5 text-left rounded-lg border transition-all cursor-pointer flex flex-col justify-between ${
+                            isSelected
+                              ? "bg-wbk-black text-white border-wbk-black shadow-sm"
+                              : "bg-white text-wbk-black border-wbk-lightgrey/80 hover:border-wbk-black/60"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 w-full">
+                            <span className="text-xs font-medium leading-tight line-clamp-1">
+                              {label}
+                            </span>
+                            {isVariantOutOfStock && (
+                              <span
+                                className={`text-[9px] font-semibold tracking-tight shrink-0 ${
+                                  isSelected ? "text-wbk-gold" : "text-wbk-gold"
+                                }`}
+                              >
+                                {t("waitlist.outOfStockShort", "Out of stock")}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`text-[11px] font-semibold mt-1 ${
+                              isSelected ? "text-wbk-gold" : "text-wbk-brown"
                             }`}
                           >
-                            {t("waitlist.outOfStockShort", "Out of stock")}
+                            {pPrice.display}
                           </span>
-                        )}
-                      </div>
-                      <span
-                        className={`text-[11px] font-semibold mt-1 ${
-                          isSelected ? "text-wbk-gold" : "text-wbk-brown"
-                        }`}
-                      >
-                        {pPrice.display}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Quantity Selector & Trust Badges */}

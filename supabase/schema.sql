@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   -- Variants & Classification
   orientation VARCHAR(50),
   type VARCHAR(100),
-  color VARCHAR(50),
+  color VARCHAR(150),
   weight NUMERIC,
   stock INT DEFAULT 100,
   package_dimensions TEXT,

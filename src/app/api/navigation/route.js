@@ -25,6 +25,25 @@ export async function GET() {
         badge: row.badge || "",
       }));
 
+      // In development mode (localhost), ensure Smart Tables is available in navigation
+      const isDev = process.env.NODE_ENV === "development";
+      if (isDev && !items.some((it) => it.id === "tables" || it.slug === "tables")) {
+        items.push({
+          id: "tables",
+          title: "Smart Tables",
+          type: "category",
+          category_id: "tables",
+          slug: "tables",
+          href: "/products/tables",
+          order: 5,
+          is_visible: true,
+          hasSubmenu: true,
+          has_submenu: true,
+          badge: "New",
+        });
+        items.sort((a, b) => (a.order || 0) - (b.order || 0));
+      }
+
       return NextResponse.json(
         { success: true, items, fromSupabase: true },
         {

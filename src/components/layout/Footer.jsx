@@ -11,7 +11,7 @@ import { isProductAvailableInLocale } from "@/lib/products";
 const FOOTER_LINKS = {
   Products: [
     { label: "MORPHY™ Beds",     href: "/products/beds?collection=morphy", id: "morphyBeds" },
-    { label: "Traditional Beds", href: "/products/beds?collection=traditional", id: "traditionalBeds" },
+    { label: "Clearance",        href: "/products/beds?collection=traditional", id: "traditionalBeds" },
     { label: "Cabinets",         href: "/products/cabinets", id: "cabinets" },
     { label: "Mattresses",       href: "/products/mattresses", id: "mattresses" },
     { label: "Smart Tables",     href: "/products/tables", id: "tables" },

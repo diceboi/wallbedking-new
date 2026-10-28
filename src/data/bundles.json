@@ -42,8 +42,8 @@
     "meta_title": "Classic+ Single Vertical Wall Bed & Cabinet Package | WallBedKing",
     "meta_description": "Get the complete space-saving solution with our Classic+ Single Vertical Wall Bed and matching cabinet. Pre-paired set with 10% bundle savings.",
     "warranty": "5-year manufacturer warranty",
-    "visibility": "Visible",
-    "is_visible": true,
+    "visibility": "Hidden",
+    "is_visible": false,
     "available_locales": [
       "en",
       "us",
@@ -131,8 +131,8 @@
     "meta_title": "MORPHY™ Classic+ Double Bed & Cabinet Package | WallBedKing",
     "meta_description": "Upgrade your living space with our premium MORPHY™ Double Wall Bed and matching Beech Cabinet. Complete bundle with 10% savings.",
     "warranty": "5-year manufacturer warranty",
-    "visibility": "Visible",
-    "is_visible": true,
+    "visibility": "Hidden",
+    "is_visible": false,
     "available_locales": [
       "en",
       "us",
@@ -220,8 +220,8 @@
     "meta_title": "Classic+ Small Double Vertical Wall Bed & Cabinet Package | WallBedKing",
     "meta_description": "Transform your room with our 120cm Small Double Wall Bed and matching Pine Cabinet. Guaranteed fit and 10% discount.",
     "warranty": "5-year manufacturer warranty",
-    "visibility": "Visible",
-    "is_visible": true,
+    "visibility": "Hidden",
+    "is_visible": false,
     "available_locales": [
       "en",
       "us",

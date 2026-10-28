@@ -85,8 +85,16 @@ export async function GET() {
 
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            const formatted = data.map(formatCategory).filter((c) => c.is_visible !== false);
+            let formatted = data.map(formatCategory).filter((c) => c.is_visible !== false);
+            if (process.env.NODE_ENV === "development") {
+              const hasTables = formatted.some((c) => c.id === "tables" || c.slug === "tables");
+              if (!hasTables) {
+                const localTables = getLocalCategories().find((c) => c.id === "tables" || c.slug === "tables");
+                if (localTables) {
+                  formatted.push(formatCategory(localTables, formatted.length));
+                }
+              }
+            }
             return NextResponse.json(
               {
                 success: true,
@@ -100,7 +108,6 @@ export async function GET() {
               }
             );
           }
-        }
       } catch (sbErr) {
         console.warn("[Public Categories API] Supabase query note:", sbErr.message);
       }
