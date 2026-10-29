@@ -1491,21 +1491,23 @@ export default function ProductDetailPage() {
     const sz = getSofaImgSize();
     const st = getSofaImgStyle();
     const or = getSofaImgOrient();
+    const isGrey = locale === "en" || locale === "us";
+    const suffix = isGrey ? "-grey" : "";
     return [
       {
-        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-1.webp`,
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-1${suffix}.webp`,
         alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 1`,
       },
       {
-        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-2.webp`,
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-2${suffix}.webp`,
         alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 2`,
       },
       {
-        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-3.webp`,
+        src: `/images/morphy/sofa/sofa-bed-${sz}-${st}-${or}-3${suffix}.webp`,
         alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 3`,
       },
     ];
-  }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName]);
+  }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName, locale]);
 
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {
