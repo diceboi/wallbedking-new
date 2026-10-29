@@ -32,6 +32,16 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
   const [sdkError, setSdkError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Helper to safely verify if PayPal Buttons constructor is fully loaded and functional
+  const isPayPalButtonsReady = () => {
+    return (
+      typeof window !== "undefined" &&
+      typeof window.paypal !== "undefined" &&
+      window.paypal !== null &&
+      typeof window.paypal.Buttons === "function"
+    );
+  };
+
   // Keep references to latest cart and payment values inside PayPal callbacks
   const cartRef = useRef({ items, subtotal, discount, shipping, total, customCartId, deliveryOption, promoCode, selectedDeliveryDetails, locale, paypalCurrency, paymentConfig, customerDetails, onBeforeCheckout, user });
   useEffect(() => {
@@ -40,55 +50,113 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
 
   // Load PayPal SDK Script dynamically based on selected market / entity
   useEffect(() => {
+    let isMounted = true;
+    let pollTimer = null;
     setSdkReady(false);
     setSdkError("");
 
+    if (!paypalClientId) {
+      setSdkError("PayPal is currently not configured for this region.");
+      return;
+    }
+
     const targetScriptId = `wbk-paypal-sdk-${paypalClientId}-${paypalCurrency}`;
 
-    // If an existing PayPal script for another entity or currency exists, remove it first
+    // Clean up any obsolete PayPal scripts for different client IDs / currencies
     const existingScripts = document.querySelectorAll("script[id^='wbk-paypal-sdk']");
-    let hasMatchingScript = false;
+    let matchingScript = null;
 
     existingScripts.forEach((s) => {
       if (s.id === targetScriptId) {
-        hasMatchingScript = true;
+        matchingScript = s;
       } else {
         s.remove();
         if (typeof window !== "undefined") {
-          window.paypal = undefined;
+          try {
+            delete window.paypal;
+          } catch {
+            window.paypal = undefined;
+          }
         }
       }
     });
 
-    if (hasMatchingScript && window.paypal) {
-      setSdkReady(true);
-      return;
+    const verifyAndSetReady = () => {
+      let attempts = 0;
+      const maxAttempts = 40; // 40 * 75ms = 3000ms max
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => {
+        attempts++;
+        if (isPayPalButtonsReady()) {
+          clearInterval(pollTimer);
+          if (isMounted) {
+            console.log(`[PayPal SDK] Buttons ready for entity: ${paymentConfig.entity}, Currency: ${paypalCurrency}`);
+            setSdkReady(true);
+          }
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollTimer);
+          if (isMounted) {
+            console.warn("[PayPal SDK] Buttons component not available after load.");
+            setSdkError("PayPal Buttons failed to initialize. Please refresh or try Card / Bank Transfer.");
+          }
+        }
+      }, 75);
+    };
+
+    if (matchingScript) {
+      if (isPayPalButtonsReady()) {
+        setSdkReady(true);
+        return;
+      }
+      matchingScript.addEventListener("load", verifyAndSetReady, { once: true });
+      matchingScript.addEventListener("error", () => {
+        if (isMounted) setSdkError("Failed to load PayPal SDK.");
+      }, { once: true });
+      verifyAndSetReady();
+      return () => {
+        isMounted = false;
+        if (pollTimer) clearInterval(pollTimer);
+      };
     }
 
     const script = document.createElement("script");
     script.id = targetScriptId;
     script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=${paypalCurrency}&components=buttons&enable-funding=card&disable-funding=sofort`;
     script.async = true;
-    script.onload = () => {
-      console.log(`[PayPal SDK] Loaded successfully for entity: ${paymentConfig.entity}, Currency: ${paypalCurrency}`);
-      setSdkReady(true);
-    };
-    script.onerror = () => setSdkError("Failed to load PayPal SDK. Please refresh or try another payment method.");
+
+    script.addEventListener("load", verifyAndSetReady, { once: true });
+    script.addEventListener("error", () => {
+      if (isMounted) {
+        setSdkError("Failed to load PayPal SDK. Please refresh or try another payment method.");
+      }
+    }, { once: true });
+
     document.body.appendChild(script);
 
     return () => {
-      // Cleanup if unmounted while changing
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [paypalClientId, paypalCurrency, paymentConfig.entity]);
 
   // Render PayPal Buttons when SDK is ready
   useEffect(() => {
+    let isCancelled = false;
+
     const hasOutOfStock = items.some(
       (i) =>
         i.isOutOfStock ||
         (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
     );
-    if (!sdkReady || !containerRef.current || !window.paypal || disabled || items.length === 0 || hasOutOfStock) {
+
+    if (
+      !sdkReady ||
+      !containerRef.current ||
+      !isPayPalButtonsReady() ||
+      disabled ||
+      items.length === 0 ||
+      hasOutOfStock
+    ) {
       if (containerRef.current && hasOutOfStock) {
         containerRef.current.innerHTML = "";
       }
@@ -98,7 +166,11 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
     containerRef.current.innerHTML = "";
 
     try {
-      window.paypal
+      if (!isPayPalButtonsReady()) {
+        return;
+      }
+
+      const buttons = window.paypal
         .Buttons({
           style: {
             layout: "vertical",
@@ -421,11 +493,29 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
             console.error("PayPal button error:", err);
             setSdkError("PayPal encountered an unexpected error. Please try again.");
           },
-        })
-        .render(containerRef.current);
+        });
+
+      if (buttons && typeof buttons.isEligible === "function" && !buttons.isEligible()) {
+        console.warn("[PayPal] Buttons is not eligible for current configuration.");
+        setSdkError("PayPal is not eligible for this transaction. Please use Card or Bank Transfer.");
+        return;
+      }
+
+      buttons.render(containerRef.current).catch((renderErr) => {
+        if (!isCancelled) {
+          console.warn("[PayPal render notice]:", renderErr);
+        }
+      });
     } catch (e) {
-      console.error("PayPal render error:", e);
+      console.warn("PayPal initialization notice:", e);
+      if (!isCancelled) {
+        setSdkError("Unable to initialize PayPal buttons. Please try Card or Bank Transfer.");
+      }
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [sdkReady, disabled, items]);
 
   return (

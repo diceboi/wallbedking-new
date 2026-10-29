@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getPaymentConfig } from "@/lib/payments";
 import { generateOrderNumber } from "@/lib/orders";
+import { getAllowedCountryCodes } from "@/lib/countries";
 
 export const dynamic = "force-dynamic";
 
@@ -145,19 +146,7 @@ export async function POST(request) {
           enabled: true,
         },
         shipping_address_collection: {
-          allowed_countries: (
-            {
-              it: ["IT"],
-              de: ["DE"],
-              fr: ["FR"],
-              es: ["ES"],
-              por: ["PT"],
-              pt: ["PT"],
-              us: ["US"],
-              en: ["GB"],
-              uk: ["GB"],
-            }[String(locale).toLowerCase()] || ["GB"]
-          ),
+          allowed_countries: getAllowedCountryCodes(locale) || ["GB"],
         },
       });
 
