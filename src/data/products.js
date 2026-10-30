@@ -59,7 +59,7 @@ export const CATEGORIES_INFO = {
     slug: "beds",
     description: "Premium space-saving fold-away beds featuring our next-generation MORPHY™ series and Traditional mechanism collections.",
     description_fr: "Lits escamotables verticaux et horizontaux haut de gamme avec vérins à gaz et sommier à lattes intégré.",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     subcategories: ["Classic", "Studio", "Integrated"]
   },
@@ -71,7 +71,7 @@ export const CATEGORIES_INFO = {
     slug: "beds?collection=morphy",
     description: "Next-generation MORPHY™ foldaway wall beds engineered with precision German gas pistons and integrated comfort.",
     description_fr: "Lits escamotables MORPHY™ nouvelle génération dotés de pistons à gaz de précision et d'un confort intégré.",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     subcategories: ["Classic", "Studio", "Integrated"]
   },
@@ -174,7 +174,7 @@ export const OTHER_CATEGORIES_LIST = [
     categoryKey: "morphy",
     label: "MORPHY™ Beds",
     titleKey: "nav.morphyBeds",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
   },
   {
     id: "traditionalBeds",
@@ -411,7 +411,7 @@ export const formatCatalogItem = (item) => {
   const isMorphy = (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY");
 
   const fallbackImg = isMorphy
-    ? `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`
+    ? `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`
     : `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`;
   const fallbackHover = isMorphy
     ? `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`
@@ -503,7 +503,7 @@ export const FLAGSHIP_BEDS = [
       "The Classic Vertical MORPHY™ Bed is our next-generation fold-away mechanism engineered for everyday durability. Designed with high-performance counterbalanced gas pistons and an all-steel reinforced frame.",
     tagline: "Core mechanism, vertical fold",
     badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "CV", "Classic Vertical MORPHY™ Bed"),
@@ -542,7 +542,7 @@ export const FLAGSHIP_BEDS = [
       "Ideal for rooms with low ceilings, lofts, or narrow floor plans. Folds down along its long side to minimise ceiling height requirements with whisper-quiet MORPHY™ gas assistance.",
     tagline: "Low ceiling solution",
     badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "CH", "Classic Horizontal MORPHY™ Bed"),
@@ -581,7 +581,7 @@ export const FLAGSHIP_BEDS = [
       "Features front decorative panels, modern aesthetics, and smooth gas-assisted lifting. Perfect as a standalone statement wall bed with contemporary MORPHY™ styling.",
     tagline: "With decorative front panel",
     badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "SV", "Studio Vertical MORPHY™ Bed"),
@@ -620,7 +620,7 @@ export const FLAGSHIP_BEDS = [
       "Horizontal fold-down design fitted with front decorative panels for contemporary studio apartments and home offices.",
     tagline: "Horizontal studio design",
     badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "SH", "Studio Horizontal MORPHY™ Bed"),
@@ -659,7 +659,7 @@ export const FLAGSHIP_BEDS = [
       "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Precision gas piston counterbalanced mechanism.",
     tagline: "Cabinetry & wardrobe ready",
     badge: "MORPHY™ Integrated",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "IV", "Integrated Vertical MORPHY™ Bed"),
@@ -698,7 +698,7 @@ export const FLAGSHIP_BEDS = [
       "Side-folding mechanism engineered for low-profile horizontal cabinetry, bookshelf integration, and low-ceiling built-ins.",
     tagline: "Horizontal cabinetry integration",
     badge: "MORPHY™ Integrated",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
     gallery: getMorphyGallery2K("160x200", "IH", "Integrated Horizontal MORPHY™ Bed"),
@@ -1929,7 +1929,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
     price: "from £749",
     numericPrice: 749,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
     link: "/products/beds/integrated-vertical-wall-bed",
     categoryKey: "beds",
@@ -1945,7 +1945,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     colors: ["#090A0A"],
     price: "from £749",
     numericPrice: 749,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     link: "/products/beds/classic-vertical-wall-bed",
     categoryKey: "beds",
@@ -1961,7 +1961,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     colors: ["#090A0A"],
     price: "from £999",
     numericPrice: 999,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
     link: "/products/beds/studio-vertical-wall-bed",
     categoryKey: "beds",
@@ -1977,7 +1977,7 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     colors: ["#090A0A"],
     price: "from £749",
     numericPrice: 749,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1.webp`,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
     link: "/products/beds/classic-horizontal-wall-bed",
     categoryKey: "beds",

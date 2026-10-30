@@ -86,7 +86,7 @@ export function ProductCard({ product, className = "" }) {
   const link = localizedHref(rawLink);
 
   // Image resolution
-  const image =
+  let image =
     product.image ||
     "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp";
   const hoverImage =
@@ -114,7 +114,13 @@ export function ProductCard({ product, className = "" }) {
   const isMorphyItem =
     Boolean(product.isMorphy) ||
     (typeof image === "string" && image.includes("MORPHY")) ||
-    (typeof product.name === "string" && product.name.includes("MORPHY"));
+    (typeof product.name === "string" && product.name.includes("MORPHY")) ||
+    (typeof product.title === "string" && product.title.includes("MORPHY"));
+
+  if (isMorphyItem && typeof image === "string") {
+    image = image.replace(/MORPHY_1\.webp/, "MORPHY_5.webp");
+  }
+
   const isIntegrated =
     product.type === "Integrated" ||
     (typeof image === "string" &&

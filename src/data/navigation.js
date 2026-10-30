@@ -33,7 +33,7 @@ const morphySubmenu = {
   parent: {
     title: "All MORPHY™ Beds",
     titleKey: "nav.allMorphyBeds",
-    image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
+    image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
     href: "/products/beds?collection=morphy",
     tagline: "Explore all MORPHY™ models",
@@ -42,42 +42,42 @@ const morphySubmenu = {
   items: [
     {
       title: "Classic Vertical MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
       href: "/products/beds/classic-vertical-wall-bed",
       price: "from £749",
     },
     {
       title: "Classic Horizontal MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CH-MORPHY_1-m.webp`,
       href: "/products/beds/classic-horizontal-wall-bed",
       price: "from £749",
     },
     {
       title: "Studio Vertical MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SV-MORPHY_1-m.webp`,
       href: "/products/beds/studio-vertical-wall-bed",
       price: "from £999",
     },
     {
       title: "Studio Horizontal MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-SH-MORPHY_1-m.webp`,
       href: "/products/beds/studio-horizontal-wall-bed",
       price: "from £999",
     },
     {
       title: "Integrated Vertical MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IV-MORPHY_1-m.webp`,
       href: "/products/beds/integrated-vertical-wall-bed",
       price: "from £749",
     },
     {
       title: "Integrated Horizontal MORPHY™ Bed",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-IH-MORPHY_1-m.webp`,
       href: "/products/beds/integrated-horizontal-wall-bed",
       price: "from £749",
@@ -139,7 +139,7 @@ export const SUBMENU_DATA = {
   beds: {
     parent: {
       title: "All Wall Beds",
-      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1.webp`,
+      image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_5.webp`,
       hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
       href: "/products/beds",
       tagline: "Explore complete MORPHY™ & Clearance collections",

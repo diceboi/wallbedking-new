@@ -219,6 +219,15 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
         description_por: product.description_por ?? product.description_pt ?? product.description ?? "",
         description_it: product.description_it ?? product.description ?? "",
 
+        short_description: product.short_description ?? "",
+        short_description_en: product.short_description_en ?? product.short_description ?? "",
+        short_description_us: product.short_description_us ?? product.short_description_en ?? product.short_description ?? "",
+        short_description_de: product.short_description_de ?? "",
+        short_description_fr: product.short_description_fr ?? "",
+        short_description_es: product.short_description_es ?? "",
+        short_description_por: product.short_description_por ?? product.short_description_pt ?? "",
+        short_description_it: product.short_description_it ?? "",
+
         extended_description_en: product.extended_description_en ?? product.extended_description ?? "",
         extended_description_us: product.extended_description_us ?? product.extended_description_en ?? product.extended_description ?? "",
         extended_description_de: product.extended_description_de ?? "",
@@ -292,16 +301,32 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
 
   const handleCopyBaseDescToAll = () => {
     const baseDesc = formData?.description_en || formData?.description || "";
-    if (!baseDesc) return;
+    const baseShortDesc = formData?.short_description_en || formData?.short_description || "";
+    if (!baseDesc && !baseShortDesc) return;
     setFormData((prev) => ({
       ...prev,
-      description_en: baseDesc,
-      description_us: baseDesc,
-      description_de: baseDesc,
-      description_fr: baseDesc,
-      description_es: baseDesc,
-      description_por: baseDesc,
-      description_it: baseDesc,
+      ...(baseDesc
+        ? {
+            description_en: baseDesc,
+            description_us: baseDesc,
+            description_de: baseDesc,
+            description_fr: baseDesc,
+            description_es: baseDesc,
+            description_por: baseDesc,
+            description_it: baseDesc,
+          }
+        : {}),
+      ...(baseShortDesc
+        ? {
+            short_description_en: baseShortDesc,
+            short_description_us: baseShortDesc,
+            short_description_de: baseShortDesc,
+            short_description_fr: baseShortDesc,
+            short_description_es: baseShortDesc,
+            short_description_por: baseShortDesc,
+            short_description_it: baseShortDesc,
+          }
+        : {}),
     }));
   };
 
@@ -2231,6 +2256,39 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                     <span>{market.label}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* Short Description (Buy Box / Under Price Summary) */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-semibold text-wbk-brown uppercase tracking-wider">
+                    Short Description / Brief ({descLocaleTab.toUpperCase()})
+                  </label>
+                  <span className="text-[9px] text-wbk-brown/70">
+                    Shown under price on product page
+                  </span>
+                </div>
+                <textarea
+                  rows={2}
+                  value={
+                    formData[`short_description_${descLocaleTab}`] ??
+                    (descLocaleTab === "en" ? formData.short_description : "") ??
+                    ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleChange(`short_description_${descLocaleTab}`, val);
+                    if (descLocaleTab === "en") {
+                      handleChange("short_description", val);
+                      handleChange("short_description_en", val);
+                    }
+                    if (descLocaleTab === "por") {
+                      handleChange("short_description_pt", val);
+                    }
+                  }}
+                  placeholder={`Concise 1-2 sentence overview for ${descLocaleTab.toUpperCase()} market (e.g. A space-saving wall bed engineered for everyday comfort)...`}
+                  className="w-full p-2.5 text-xs bg-white border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black font-poppins leading-relaxed"
+                />
               </div>
 
               {/* Active Market Description Textarea */}

@@ -341,6 +341,28 @@ export function Header() {
               </AnimatePresence>
             </div>
 
+            {/* User Account - Always visible in small circle before cart */}
+            <button
+              type="button"
+              onClick={() => openUserDrawer()}
+              aria-label={user ? "Your account" : "Sign in"}
+              className="flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+            >
+              {user ? (
+                <div className="w-8 h-8 rounded-full bg-wbk-black text-wbk-white text-xs font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs hover:border-wbk-green transition-colors">
+                  {(
+                    user.user_metadata?.full_name?.[0] ||
+                    user.email?.[0] ||
+                    "U"
+                  ).toUpperCase()}
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full border border-wbk-lightgrey bg-white hover:border-wbk-green hover:bg-[#FBF9F8] flex items-center justify-center text-wbk-black hover:text-wbk-green transition-colors shadow-2xs">
+                  <IconUser size={16} strokeWidth={1.75} />
+                </div>
+              )}
+            </button>
+
             {/* Cart Button */}
             <button
               type="button"
@@ -353,26 +375,6 @@ export function Header() {
                 <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center bg-wbk-gold text-[9px] font-bold text-wbk-black rounded-full shadow-xs animate-in zoom-in-50 duration-200">
                   {totalItems}
                 </span>
-              )}
-            </button>
-
-            {/* User Account */}
-            <button
-              type="button"
-              onClick={() => openUserDrawer()}
-              aria-label={user ? "Your account" : "Sign in"}
-              className="p-1.5 text-wbk-black hover:text-wbk-green transition-colors hidden sm:flex items-center relative cursor-pointer"
-            >
-              {user ? (
-                <div className="w-7 h-7 rounded-full bg-wbk-black text-wbk-white text-[11px] font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs">
-                  {(
-                    user.user_metadata?.full_name?.[0] ||
-                    user.email?.[0] ||
-                    "U"
-                  ).toUpperCase()}
-                </div>
-              ) : (
-                <IconUser size={21} strokeWidth={1.5} />
               )}
             </button>
 

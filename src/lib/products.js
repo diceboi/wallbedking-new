@@ -252,9 +252,79 @@ export function getLocalizedProductDescription(product, locale = "en") {
 }
 
 /**
- * Resolves the localized extended product description (technical specs & details)
+ * Resolves the localized short description (brief overview for buy box / under price)
  * for a specific storefront locale / market.
+ * Priority rule:
+ * 1. Dedicated short_description columns in DB/product.
+ * 2. If not defined, fallback to concise excerpt/first paragraph of full description.
  */
+export function getLocalizedProductShortDescription(product, locale = "en") {
+  if (!product) return "";
+  const normLocale = (locale || "en").toLowerCase();
+  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+
+  // 1. Direct localized column
+  const directShortDesc =
+    check(product[`short_description_${normLocale}`]) ||
+    check(product.short_description);
+  if (directShortDesc) return directShortDesc;
+
+  // 2. Portuguese alias handling (por <-> pt)
+  if (normLocale === "por" || normLocale === "pt") {
+    const val =
+      check(product.short_description_por) ||
+      check(product.short_description_pt);
+    if (val) return val;
+  }
+
+  // 3. English aliases (en <-> uk)
+  if (normLocale === "en" || normLocale === "uk") {
+    const val =
+      check(product.short_description_en) ||
+      check(product.short_description_uk);
+    if (val) return val;
+  }
+
+  // 4. Fallback to catalog definition if product is from DB and columns are not yet filled
+  if (product.slug) {
+    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    if (catFallback && catFallback !== product) {
+      const fbShort =
+        check(catFallback[`short_description_${normLocale}`]) ||
+        check(catFallback.short_description);
+      if (fbShort) return fbShort;
+    }
+  }
+
+  // 5. Intelligent brief excerpt from full description if short_description is not yet provided:
+  const fullDesc = getLocalizedProductDescription(product, locale);
+  if (!fullDesc) return "";
+
+  const trimmed = fullDesc.trim();
+  // Take the first paragraph
+  const firstParagraph = trimmed.split(/\n\s*\n|\r\n\s*\r\n/)[0].trim();
+  // If first paragraph is already short and readable (under 260 chars), keep it intact
+  if (firstParagraph.length <= 260) {
+    return firstParagraph;
+  }
+
+  // Otherwise, extract the first 1-2 complete sentences that fit under ~250 characters
+  const sentences = firstParagraph.match(/[^.!?]+[.!?]+/g);
+  if (sentences && sentences.length > 0) {
+    let brief = "";
+    for (const sentence of sentences) {
+      if ((brief + sentence).length <= 250) {
+        brief += (brief ? " " : "") + sentence.trim();
+      } else {
+        break;
+      }
+    }
+    if (brief) return brief;
+  }
+
+  return firstParagraph.slice(0, 220).replace(/[,;:\s]+$/, "") + "...";
+}
+
 export function getLocalizedProductExtendedDescription(product, locale = "en") {
   if (!product) return "";
   const normLocale = (locale || "en").toLowerCase();

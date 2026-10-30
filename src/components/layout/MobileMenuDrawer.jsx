@@ -8,19 +8,13 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconX,
-  IconShoppingBag,
   IconUser,
-  IconPhone,
   IconTruck,
   IconShieldCheck,
   IconTools,
   IconWorld,
-  IconHelpCircle,
-  IconBriefcase,
-  IconFileText,
 } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
-import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
@@ -28,7 +22,6 @@ import { isProductAvailableInLocale } from "@/lib/products";
 import { getProductPrice } from "@/lib/i18n";
 import { FlagIcon } from "@/components/ui/FlagIcon";
 import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
-import { SearchBar } from "./SearchBar";
 
 const LANGUAGES = [
   { code: "en", label: "UK", flag: "🇬🇧" },
@@ -84,7 +77,6 @@ export function MobileMenuDrawer() {
     });
   }, [rawItems, allProducts, locale]);
 
-  const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
@@ -204,11 +196,6 @@ export function MobileMenuDrawer() {
               </div>
             </div>
 
-            {/* Quick Search */}
-            <div className="px-4 py-2.5 bg-white border-b border-wbk-lightgrey/80">
-              <SearchBar onSelect={closeMobileMenu} />
-            </div>
-
             {/* Scrollable Content */}
             <div className="relative flex-1 overflow-y-auto">
               <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -268,115 +255,49 @@ export function MobileMenuDrawer() {
                       );
                     })}
 
-                    {/* User & Cart shortcuts */}
-                    <div className="grid grid-cols-2 divide-x divide-wbk-lightgrey/70 bg-wbk-white">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          closeMobileMenu();
-                          openCart();
-                        }}
-                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green cursor-pointer"
-                      >
-                        <IconShoppingBag size={17} strokeWidth={1.5} />
-                        <span>{t("header.cart", "Cart")} ({totalItems})</span>
-                      </button>
+                    {/* User Account Button (Styled exactly like category rows) */}
+                    <div className="flex items-stretch justify-between bg-wbk-white hover:bg-[#FBF9F8] transition-colors border-t border-wbk-lightgrey/80">
                       <button
                         type="button"
                         onClick={() => {
                           closeMobileMenu();
                           openUserDrawer();
                         }}
-                        className="flex items-center justify-center gap-2 py-3 px-2 text-xs font-medium uppercase tracking-wider text-wbk-black hover:text-wbk-green cursor-pointer"
+                        className="flex-1 py-3.5 px-4 text-xs font-medium uppercase tracking-[0.14em] text-wbk-black hover:text-wbk-green transition-colors flex items-center justify-between cursor-pointer"
                       >
-                        {user ? (
-                          <div className="w-5 h-5 rounded-full bg-wbk-black text-white text-[10px] flex items-center justify-center font-semibold">
-                            {(user.user_metadata?.full_name?.[0] || user.email?.[0] || "U").toUpperCase()}
-                          </div>
-                        ) : (
-                          <IconUser size={17} strokeWidth={1.5} />
-                        )}
-                        <span className="truncate max-w-[100px]">
-                          {user ? (user.user_metadata?.full_name?.split(" ")[0] || t("header.account", "Account")) : t("header.account", "Account")}
-                        </span>
+                        <div className="flex items-center gap-2.5">
+                          <IconUser size={16} className="text-wbk-gold" />
+                          <span>
+                            {user
+                              ? (user.user_metadata?.full_name || user.email || t("header.account", "My Account"))
+                              : t("header.account", "My Account")}
+                          </span>
+                        </div>
+                        <IconChevronRight size={16} className="text-wbk-brown" />
                       </button>
                     </div>
 
-                    {/* Need Assistance? Link to FAQ & Support */}
-                    <div className="p-4 bg-wbk-white">
-                      <Link
-                        href={localizedHref("/support/faq")}
-                        onClick={closeMobileMenu}
-                        className="flex items-center gap-3 p-3 border border-wbk-lightgrey bg-[#FBF9F8] hover:border-wbk-gold transition-colors"
-                      >
-                        <div className="w-8 h-8 flex items-center justify-center bg-wbk-black text-white shrink-0">
-                          <IconHelpCircle size={15} />
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase font-semibold tracking-wider text-wbk-brown">
-                            {t("support.needHelp", "Need Assistance?")}
-                          </div>
-                          <div className="text-xs font-medium text-wbk-black">
-                            {t("topbar.faq", "FAQ & Customer Support")}
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-
-                    {/* Trade & Commercial B2B Links */}
-                    <div className="grid grid-cols-2 divide-x divide-wbk-lightgrey border-t border-b border-wbk-lightgrey/80 bg-[#FAF8F6]">
-                      <Link
-                        href={localizedHref("/trade")}
-                        onClick={closeMobileMenu}
-                        className="py-3 px-2 text-center text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <IconBriefcase size={14} className="text-wbk-gold shrink-0" strokeWidth={1.75} />
-                        <span className="truncate">{t("topbar.tradeFull", "Trade Customers")}</span>
-                      </Link>
-                      <Link
-                        href={localizedHref("/case-studies")}
-                        onClick={closeMobileMenu}
-                        className="py-3 px-2 text-center text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <IconFileText size={14} className="text-wbk-gold shrink-0" strokeWidth={1.75} />
-                        <span className="truncate">{t("topbar.caseStudies", "Case Studies")}</span>
-                      </Link>
-                    </div>
-
-                    {/* Secondary Information & Support Links */}
-                    <div className="px-4 py-3 bg-[#FBF9F8] flex items-center justify-around text-xs text-wbk-brown font-medium">
-                      <Link
-                        href={localizedHref("/support/delivery")}
-                        onClick={closeMobileMenu}
-                        className="hover:text-wbk-black transition-colors py-1 flex items-center gap-1"
-                      >
-                        <IconTruck size={14} className="text-wbk-gold" />
-                        <span>{t("topbar.delivery", "Delivery")}</span>
-                      </Link>
-                      <span className="text-wbk-lightgrey">|</span>
-                      <Link
-                        href={localizedHref("/reviews")}
-                        onClick={closeMobileMenu}
-                        className="hover:text-wbk-black transition-colors py-1"
-                      >
-                        {t("topbar.reviews", "Reviews")}
-                      </Link>
-                      <span className="text-wbk-lightgrey">|</span>
-                      <Link
-                        href={localizedHref("/about")}
-                        onClick={closeMobileMenu}
-                        className="hover:text-wbk-black transition-colors py-1"
-                      >
-                        {t("topbar.about", "About")}
-                      </Link>
-                      <span className="text-wbk-lightgrey">|</span>
-                      <Link
-                        href={localizedHref("/contact")}
-                        onClick={closeMobileMenu}
-                        className="hover:text-wbk-black transition-colors py-1"
-                      >
-                        {t("topbar.contact", "Contact")}
-                      </Link>
+                    {/* Secondary Information & Support Links (From Desktop Black Menu, category button style) */}
+                    <div className="flex flex-col divide-y divide-wbk-lightgrey/60 bg-[#FAF9F7] border-t-2 border-wbk-lightgrey/80">
+                      {[
+                        { id: "delivery", href: "/support/delivery", label: t("topbar.delivery", "Delivery & Shipping") },
+                        { id: "faq", href: "/support/faq", label: t("topbar.faq", "FAQ") },
+                        { id: "trade", href: "/trade", label: t("topbar.tradeFull", "Trade Customers") },
+                        { id: "caseStudies", href: "/case-studies", label: t("topbar.caseStudies", "Case Studies") },
+                        { id: "reviews", href: "/reviews", label: t("topbar.reviews", "Reviews") },
+                        { id: "about", href: "/about", label: t("topbar.about", "About Us") },
+                        { id: "contact", href: "/contact", label: t("topbar.contact", "Contact") },
+                      ].map((link) => (
+                        <Link
+                          key={link.id}
+                          href={localizedHref(link.href)}
+                          onClick={closeMobileMenu}
+                          className="flex items-center justify-between py-3.5 px-4 text-xs font-medium uppercase tracking-[0.13em] text-wbk-brown hover:text-wbk-black hover:bg-[#F0EDE8] transition-colors"
+                        >
+                          <span>{link.label}</span>
+                          <IconChevronRight size={14} className="text-wbk-brown/60" />
+                        </Link>
+                      ))}
                     </div>
 
                     {/* Brand Trust Assurances */}

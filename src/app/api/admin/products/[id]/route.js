@@ -26,6 +26,7 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "name_en", "name_us", "name_de", "name_fr", "name_es", "name_por", "name_pt", "name_it",
   "gtin_en", "gtin_us", "gtin_de", "gtin_fr", "gtin_es", "gtin_por", "gtin_pt", "gtin_it",
   "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
+  "short_description", "short_description_en", "short_description_us", "short_description_de", "short_description_fr", "short_description_es", "short_description_por", "short_description_pt", "short_description_it",
   "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it",
   "installation_manual", "installation_video",
   "width_us", "length_us", "size_us",

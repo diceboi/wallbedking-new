@@ -61,6 +61,7 @@ import {
   getLocalizedProductName,
   getLocalizedProductGtin,
   getLocalizedProductDescription,
+  getLocalizedProductShortDescription,
   getLocalizedProductExtendedDescription,
   parseYouTubeVideo,
   calculateSofaPrice,
@@ -1424,6 +1425,10 @@ export default function ProductDetailPage() {
     displayProduct,
     locale,
   );
+  const localizedShortDescription = getLocalizedProductShortDescription(
+    displayProduct,
+    locale,
+  );
   const localizedExtendedDescription = getLocalizedProductExtendedDescription(
     displayProduct,
     locale,
@@ -2049,6 +2054,58 @@ export default function ProductDetailPage() {
   const currentMainImage =
     galleryImages[selectedImageIndex] || galleryImages[0];
 
+  const handleSelectGalleryImage = useCallback(
+    (idx) => {
+      setSelectedImageIndex(idx);
+
+      // Scroll thumbnail into view in desktop gallery column
+      if (galleryContainerRef.current) {
+        const cards = galleryContainerRef.current.querySelectorAll(
+          "[data-gallery-card]",
+        );
+        if (cards && cards[idx]) {
+          cards[idx].scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+
+      // Sync mobile gallery swiper
+      if (mobileGallerySwiper && !mobileGallerySwiper.destroyed) {
+        mobileGallerySwiper.slideTo(idx);
+      }
+
+      setTimeout(() => {
+        updateScrollButtons();
+      }, 100);
+    },
+    [mobileGallerySwiper, updateScrollButtons],
+  );
+
+  const handlePrevMainImage = useCallback(
+    (e) => {
+      e?.stopPropagation?.();
+      if (!galleryImages || galleryImages.length === 0) return;
+      const newIdx =
+        selectedImageIndex === 0
+          ? galleryImages.length - 1
+          : selectedImageIndex - 1;
+      handleSelectGalleryImage(newIdx);
+    },
+    [galleryImages, selectedImageIndex, handleSelectGalleryImage],
+  );
+
+  const handleNextMainImage = useCallback(
+    (e) => {
+      e?.stopPropagation?.();
+      if (!galleryImages || galleryImages.length === 0) return;
+      const newIdx =
+        selectedImageIndex === galleryImages.length - 1
+          ? 0
+          : selectedImageIndex + 1;
+      handleSelectGalleryImage(newIdx);
+    },
+    [galleryImages, selectedImageIndex, handleSelectGalleryImage],
+  );
+
   const handlePrevImage = (e) => {
     e?.stopPropagation?.();
     const list = activeLightboxImages || galleryImages;
@@ -2282,7 +2339,7 @@ export default function ProductDetailPage() {
                 )}
               {!isAvailableInRegion ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
                     {t(
                       "product.notAvailableInRegion",
@@ -2291,33 +2348,26 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               ) : isOutOfStock ? (
-                isTraditionalBed ? (
-                  <div className="flex items-center gap-1.5 pt-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#B85A53] shrink-0" />
-                    <span className="text-xs font-semibold text-[#B85A53] tracking-tight">
-                      {t("waitlist.outOfStock", "Out of Stock")}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
-                      {t("waitlist.outOfStock", "Out of Stock")}
-                    </span>
+                <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-red-50 border border-red-300 text-red-700 text-xs font-bold shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-red-600 ring-2 ring-red-200" />
+                    {t("waitlist.outOfStock", "Out of Stock")}
+                  </span>
+                  {!isTraditionalBed && (
                     <button
                       type="button"
                       onClick={() => setIsWaitlistModalOpen(true)}
-                      className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      className="text-xs text-red-700 hover:text-black underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
                     >
-                      <IconBell size={13} className="text-wbk-gold" />
+                      <IconBell size={13} className="text-red-600" />
                       {t("waitlist.joinWaitlist", "Join Waitlist")}
                     </button>
-                  </div>
-                )
+                  )}
+                </div>
               ) : (
                 <div className="flex items-center gap-1.5 pt-1.5">
-                  <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
-                  <span className="text-xs font-semibold text-wbk-green tracking-tight">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-green-50 border border-green-300 text-green-700 text-xs font-bold shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-green-600 ring-2 ring-green-200 animate-pulse" />
                     {t("common.inStock", "In Stock • Fast Dispatch")}
                   </span>
                 </div>
@@ -2409,44 +2459,6 @@ export default function ProductDetailPage() {
                         ))}
                       </div>
                     )}
-                  {isOutOfStock ? (
-                    isTraditionalBed ? (
-                      <div className="flex items-center gap-1.5 pt-2">
-                        <span className="w-2 h-2 rounded-full bg-[#B85A53] shrink-0" />
-                        <span className="text-xs font-semibold text-[#B85A53] tracking-tight">
-                          {t("waitlist.outOfStock", "Out of Stock")}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap items-center gap-2 pt-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wbk-gold/15 border border-wbk-gold/50 text-wbk-gold text-xs font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
-                          {t(
-                            "waitlist.currentlyOutOfStock",
-                            "Currently Out of Stock",
-                          )}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsWaitlistModalOpen(true)}
-                          className="text-xs text-wbk-black hover:text-wbk-gold underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <IconBell size={13} className="text-wbk-gold" />
-                          {t(
-                            "waitlist.joinWaitlistBtn",
-                            "Join Waitlist / Notify Me",
-                          )}
-                        </button>
-                      </div>
-                    )
-                  ) : (
-                    <div className="flex items-center gap-1.5 pt-2">
-                      <span className="w-2 h-2 rounded-full bg-wbk-green shrink-0" />
-                      <span className="text-xs font-semibold text-wbk-green tracking-tight">
-                        {t("common.inStock", "In Stock • Fast Dispatch")}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -3062,6 +3074,46 @@ export default function ProductDetailPage() {
                 ref={desktopAddToCartRef}
                 className="hidden lg:block pt-3 pb-2 border-y border-wbk-lightgrey/50 space-y-3 font-poppins"
               >
+                {/* Stock Status Indicator - Positioned directly above Price with eye-catching basic green / red colors */}
+                {!isAvailableInRegion ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
+                    <span>
+                      {t(
+                        "product.notAvailableInRegion",
+                        "Not Available in Your Region",
+                      )}
+                    </span>
+                  </div>
+                ) : isOutOfStock ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-red-50 border border-red-300 text-red-700 text-xs font-bold shadow-2xs">
+                      <span className="w-2 h-2 rounded-full bg-red-600 ring-2 ring-red-200" />
+                      <span>{t("waitlist.outOfStock", "Out of Stock")}</span>
+                    </span>
+                    {!isTraditionalBed && (
+                      <button
+                        type="button"
+                        onClick={() => setIsWaitlistModalOpen(true)}
+                        className="text-xs text-red-700 hover:text-black underline font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <IconBell size={13} className="text-red-600" />
+                        <span>
+                          {t(
+                            "waitlist.joinWaitlistBtn",
+                            "Join Waitlist / Notify Me",
+                          )}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-green-50 border border-green-300 text-green-700 text-xs font-bold shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-green-600 ring-2 ring-green-200 animate-pulse" />
+                    <span>{t("common.inStock", "In Stock • Fast Dispatch")}</span>
+                  </div>
+                )}
+
                 {/* Total Price Display */}
                 <div className="flex items-baseline justify-between gap-2">
                   <div>
@@ -3190,10 +3242,12 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Spec description */}
+              {/* Spec description - Shortened brief under price */}
               <div className="pt-2">
                 <p className="text-[13px] text-wbk-black/90 leading-relaxed font-poppins">
-                  {localizedDescription ||
+                  {localizedShortDescription ||
+                    displayProduct?.short_description ||
+                    localizedDescription ||
                     displayProduct.description ||
                     "The Classic Wall Bed is a practical and durable space-saving solution for bedrooms, guest rooms and multifunctional spaces."}
                 </p>
@@ -3285,6 +3339,44 @@ export default function ProductDetailPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Main Image Navigation Arrows (Under Main Image) */}
+                  {galleryImages.length > 1 && (
+                    <div className="flex items-center justify-center gap-4 pt-3 pb-1 w-full select-none">
+                      <button
+                        type="button"
+                        onClick={handlePrevMainImage}
+                        aria-label="Previous product image"
+                        className="w-8 h-8 rounded-full bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey shadow-xs flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group"
+                      >
+                        <IconChevronLeft
+                          size={17}
+                          stroke={2.2}
+                          className="transition-transform group-hover:-translate-x-0.5"
+                        />
+                      </button>
+
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-white/90 border border-wbk-lightgrey/70 rounded-full shadow-2xs text-[11px] font-semibold text-wbk-brown font-poppins min-w-[64px] justify-center">
+                        <IconPhoto size={12} className="text-wbk-gold" />
+                        <span>
+                          {selectedImageIndex + 1} / {galleryImages.length}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleNextMainImage}
+                        aria-label="Next product image"
+                        className="w-8 h-8 rounded-full bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey shadow-xs flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group"
+                      >
+                        <IconChevronRight
+                          size={17}
+                          stroke={2.2}
+                          className="transition-transform group-hover:translate-x-0.5"
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3370,7 +3462,7 @@ export default function ProductDetailPage() {
                               if (has3D) {
                                 setLightboxIndex(idx);
                               } else {
-                                setSelectedImageIndex(idx);
+                                handleSelectGalleryImage(idx);
                               }
                             }}
                             className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 overflow-hidden bg-[#F4F2F0] border transition-all duration-200 cursor-pointer p-1 block ${
@@ -3504,7 +3596,7 @@ export default function ProductDetailPage() {
                                 if (has3D) {
                                   setLightboxIndex(idx);
                                 } else {
-                                  setSelectedImageIndex(idx);
+                                  handleSelectGalleryImage(idx);
                                 }
                               }}
                               className={`relative w-full h-full aspect-square rounded-none overflow-hidden bg-[#F4F2F0] border transition-all duration-200 group cursor-pointer focus:outline-none flex items-center justify-center p-1.5 ${
@@ -5269,8 +5361,9 @@ export default function ProductDetailPage() {
               {/* Right: Total Price & Add to Cart Button */}
               <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                 <div className="flex flex-col items-end font-poppins">
-                  <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
-                    {t("common.total", "Total")}
+                  <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-600" : "bg-green-600"}`} />
+                    <span>{t("common.total", "Total")}</span>
                   </span>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-wbk-black text-sm sm:text-xl md:text-2xl leading-none">
