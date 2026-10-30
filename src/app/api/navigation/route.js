@@ -25,9 +25,8 @@ export async function GET() {
         badge: row.badge || "",
       }));
 
-      // In development mode (localhost), ensure Smart Tables is available in navigation
-      const isDev = process.env.NODE_ENV === "development";
-      if (isDev && !items.some((it) => it.id === "tables" || it.slug === "tables")) {
+      // Ensure Smart Tables is available in navigation
+      if (!items.some((it) => it.id === "tables" || it.slug === "tables")) {
         items.push({
           id: "tables",
           title: "Smart Tables",
@@ -39,7 +38,7 @@ export async function GET() {
           is_visible: true,
           hasSubmenu: true,
           has_submenu: true,
-          badge: "New",
+          badge: "",
         });
         items.sort((a, b) => (a.order || 0) - (b.order || 0));
       }

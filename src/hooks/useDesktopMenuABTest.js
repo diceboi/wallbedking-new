@@ -43,7 +43,15 @@ export function useDesktopMenuABTest() {
       try {
         if (typeof posthog !== "undefined" && typeof posthog.getFeatureFlag === "function") {
           const flag = posthog.getFeatureFlag("desktop-menu-ab-test");
-          if (flag === "test") {
+          if (
+            flag === "test" ||
+            flag === "treatment" ||
+            flag === "variant-1" ||
+            flag === "variant_1" ||
+            flag === "variant" ||
+            flag === true ||
+            (typeof flag === "string" && flag !== "control" && flag !== "off" && flag !== "false")
+          ) {
             setVariant("test");
             return;
           }
