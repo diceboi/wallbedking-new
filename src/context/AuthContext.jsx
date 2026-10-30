@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import posthog from "posthog-js";
 import { supabase } from "@/lib/supabase";
 
 export const AuthContext = createContext({
@@ -151,6 +152,16 @@ export function AuthProvider({ children }) {
 
           if (currentUser) {
             fetchUserRole(currentUser, initialSession);
+            if (typeof window !== "undefined") {
+              try {
+                posthog.identify(currentUser.id, {
+                  email: currentUser.email,
+                  name: currentUser.user_metadata?.full_name,
+                });
+              } catch (e) {
+                console.warn("[PostHog] identify error:", e);
+              }
+            }
           } else {
             setRole(null);
             setRoleLoading(false);
@@ -176,6 +187,16 @@ export function AuthProvider({ children }) {
 
         if (currentUser) {
           fetchUserRole(currentUser, currentSession);
+          if (typeof window !== "undefined") {
+            try {
+              posthog.identify(currentUser.id, {
+                email: currentUser.email,
+                name: currentUser.user_metadata?.full_name,
+              });
+            } catch (e) {
+              console.warn("[PostHog] identify error:", e);
+            }
+          }
         } else {
           setRole(null);
           setRoleLoading(false);
@@ -253,6 +274,13 @@ export function AuthProvider({ children }) {
       await supabase.auth.signOut();
     } catch (err) {
       console.warn("[Auth] signOut error:", err);
+    }
+    if (typeof window !== "undefined") {
+      try {
+        posthog.reset();
+      } catch (e) {
+        console.warn("[PostHog] reset error:", e);
+      }
     }
     setUser(null);
     setSession(null);

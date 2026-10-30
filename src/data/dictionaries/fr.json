@@ -296,7 +296,13 @@
     "availableSizes": "Tailles disponibles",
     "sizeAvailableSizes": "Taille/ Tailles disponibles",
     "checkOutMorphy": "Découvrir MORPHY",
-    "availableInMorphy": "Disponible dans la collection Morphy"
+    "availableInMorphy": "Disponible dans la collection Morphy",
+    "options": "Options",
+    "finishesAvailable": "Finitions disponibles",
+    "design": "Design",
+    "spaceSavingTransforming": "Modulable gain de place",
+    "colors": "Couleurs",
+    "orientation": "Orientation"
   },
   "reviews": {
     "title": "Avis",

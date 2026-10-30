@@ -17,6 +17,7 @@ import {
   IconChevronDown,
   IconFilter,
   IconChevronRight,
+  IconArrowRight,
   IconX,
 } from "@tabler/icons-react";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -506,15 +507,17 @@ export default function CategoryArchivePage() {
     scrollToProducts();
   };
 
+  const isClearancePage = Boolean(
+    (currentCategory === "beds" && selectedCollection === "traditional") ||
+    currentCategory === "traditional-beds" ||
+    (rawCategory && String(rawCategory).toLowerCase().includes("traditional"))
+  );
+
   const categoryTitle = useMemo(() => {
+    if (isClearancePage) {
+      return "Essential Range – Clearance Sale";
+    }
     if (currentCategory === "beds") {
-      if (selectedCollection === "traditional") {
-        const found = allDbCategories.find((c) => c.id === "traditional-beds");
-        return (
-          getLocalizedCategoryTitle(found, locale) ||
-          t("nav.traditionalBeds", "Clearance")
-        );
-      }
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
       return (
         getLocalizedCategoryTitle(found, locale) ||
@@ -529,8 +532,8 @@ export default function CategoryArchivePage() {
       t(`categories.${currentCategory}`, catInfo.label)
     );
   }, [
+    isClearancePage,
     currentCategory,
-    selectedCollection,
     t,
     catInfo,
     allDbCategories,
@@ -538,17 +541,10 @@ export default function CategoryArchivePage() {
   ]);
 
   const categoryDescription = useMemo(() => {
+    if (isClearancePage) {
+      return "Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range.";
+    }
     if (currentCategory === "beds") {
-      if (selectedCollection === "traditional") {
-        const found = allDbCategories.find((c) => c.id === "traditional-beds");
-        return (
-          getLocalizedCategoryDescription(found, locale) ||
-          t(
-            "nav.allTraditionalTagline",
-            "Discounted classic wall bed models while stocks last at special clearance prices.",
-          )
-        );
-      }
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
       return (
         getLocalizedCategoryDescription(found, locale) ||
@@ -566,8 +562,8 @@ export default function CategoryArchivePage() {
       t(`categories.${currentCategory}Desc`, catInfo.description)
     );
   }, [
+    isClearancePage,
     currentCategory,
-    selectedCollection,
     t,
     catInfo,
     allDbCategories,
@@ -625,7 +621,7 @@ export default function CategoryArchivePage() {
       <Container size="xl">
         {/* Category Header */}
         <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
+          <div className="max-w-3xl">
             <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80 mb-2">
               <Link
                 href={localizedHref("/products")}
@@ -635,17 +631,53 @@ export default function CategoryArchivePage() {
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                {categoryTitle}
+                {isClearancePage ? "Clearance" : categoryTitle}
               </span>
             </nav>
-            <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
-              {categoryTitle}
-            </h1>
-            <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
-              {categoryDescription}
-            </p>
+
+            {isClearancePage ? (
+              <div>
+                <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black leading-tight tracking-tight">
+                  Essential Range – Clearance Sale
+                </h1>
+                <p className="mt-2 text-base sm:text-lg font-semibold text-wbk-black font-poppins">
+                  Brand New Wall Beds. Previous-Generation Design. Exceptional Value.
+                </p>
+                <p className="mt-2 text-sm text-wbk-brown font-poppins leading-relaxed">
+                  Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range.
+                </p>
+
+                {/* Limited Stock Notice Callout */}
+                <div className="mt-4 p-3.5 sm:p-4 bg-[#FAF7F2] border-l-4 border-wbk-green flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-wbk-black font-poppins leading-relaxed">
+                    <strong className="block text-xs uppercase tracking-wider font-bold text-wbk-black mb-0.5">
+                      Limited Stock – While Stocks Last
+                    </strong>
+                    <span>
+                      Essential models will not be restocked once sold out. If your preferred mattress size is unavailable, explore our MORPHY™ range for the latest-generation alternatives.
+                    </span>
+                  </div>
+                  <Link
+                    href={localizedHref("/products/beds?collection=morphy")}
+                    className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-wbk-black text-wbk-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-all duration-200 self-start sm:self-center cursor-pointer"
+                  >
+                    <span>Explore MORPHY™</span>
+                    <IconArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h1 className="font-new-york text-5xl md:text-6xl text-wbk-black capitalize leading-none tracking-tight">
+                  {categoryTitle}
+                </h1>
+                <p className="mt-3 text-sm text-wbk-brown font-poppins max-w-xl leading-relaxed">
+                  {categoryDescription}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="text-xs text-wbk-brown font-poppins">
+          <div className="text-xs text-wbk-brown font-poppins shrink-0">
             {t("categories.showing", "Showing")}{" "}
             <span className="font-semibold text-wbk-black">
               {filteredProducts.length}

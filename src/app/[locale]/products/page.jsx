@@ -379,15 +379,10 @@ function ProductsSearchContent() {
       );
     }
 
-    // 1b. Exclude unlisted categories/products (e.g. Smart Tables) unless explicitly requested via ?category=tables
-    if (selectedCategory !== "tables") {
-      list = list.filter(
-        (item) =>
-          !item.is_unlisted &&
-          item.visibility !== "Unlisted" &&
-          item.parent_category !== "tables"
-      );
-    }
+    // 1b. Exclude unlisted products
+    list = list.filter(
+      (item) => !item.is_unlisted && item.visibility !== "Unlisted"
+    );
 
     // 2. Category Filter
     if (selectedCategory !== "All") {
@@ -487,11 +482,9 @@ function ProductsSearchContent() {
     );
 
     return allOptions.filter(
-      (opt) =>
-        (opt.key === "All" || availableCategories.has(opt.key)) &&
-        (opt.key !== "tables" || selectedCategory === "tables")
+      (opt) => opt.key === "All" || availableCategories.has(opt.key)
     );
-  }, [t, searchableProducts, locale, selectedCategory]);
+  }, [t, searchableProducts, locale]);
 
   const orientationOptions = [
     { key: "All", label: t("categories.all", "All") },

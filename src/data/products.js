@@ -420,12 +420,31 @@ export const formatCatalogItem = (item) => {
   const itemImg = item.image || fallbackImg;
   const itemHov = item.hover_image || item.hoverImage || fallbackHover;
 
+  const parentCat = (item.parent_category || "beds").toLowerCase();
+  const isBed =
+    parentCat === "beds" ||
+    parentCat === "morphy-beds" ||
+    parentCat === "traditional-beds";
+
+  let defaultBedGallery = null;
+  if (isBed) {
+    const o = (item.orientation || "Vertical").toLowerCase().startsWith("h") ? "CH" : "CV";
+    const s = (item.type || item.sub_category || "Classic").toLowerCase();
+    const code = s.includes("int") ? (o === "CH" ? "IH" : "IV") : s.includes("stu") ? (o === "CH" ? "SH" : "SV") : o;
+    const sizeKey = "160x200";
+    defaultBedGallery = isMorphy
+      ? getMorphyGallery2K(sizeKey, code, item.name || "MORPHY™ Bed")
+      : getTraditionalGallery1K(sizeKey, code, item.name || "Traditional Wall Bed", s.includes("stu") ? 7 : 9);
+  }
+
   const gallery =
     item.product_images && item.product_images.length > 0
       ? item.product_images.map((src, i) => ({
           src,
           alt: i === 1 ? `${item.name} - With Mattress` : `${item.name} View ${i + 1}`,
         }))
+      : defaultBedGallery
+      ? defaultBedGallery
       : isIntegrated
       ? GLOBAL_GALLERY_TEMPLATES
       : [
@@ -434,7 +453,6 @@ export const formatCatalogItem = (item) => {
         ];
 
   const sizeInfo = getProductSizeInfo(item);
-  const parentCat = (item.parent_category || "beds").toLowerCase();
   const itemLink =
     item.link ||
     (parentCat === "beds" || parentCat === "morphy-beds" || parentCat === "traditional-beds"
@@ -484,29 +502,35 @@ export const formatCatalogItem = (item) => {
 
 // ── FLAGSHIP BED MODELS (MORPHY™ & TRADITIONAL) ──
 export const FLAGSHIP_BEDS = [
-  // ── MORPHY™ FLAGSHIP MODELS (1K CARDS, 2K GALLERIES) ──
+  // ── MORPHY™ CONSOLIDATED FLAGSHIP MODELS (1K CARDS, 2K GALLERIES) ──
   {
-    id: "flagship-classic-vertical",
-    rawId: "flagship-classic-vertical",
-    slug: "classic-vertical-wall-bed",
-    aliases: ["classic-vertical-morphy-bed"],
-    name: "Classic Vertical MORPHY™ Bed",
-    title: "Classic Vertical MORPHY™ Bed",
-    name_fr: "Lit Escamotable Classique Vertical MORPHY™",
-    title_fr: "Lit Escamotable Classique Vertical MORPHY™",
+    id: "flagship-classic-morphy",
+    rawId: "flagship-classic-morphy",
+    slug: "classic-morphy-bed",
+    aliases: [
+      "classic-vertical-wall-bed",
+      "classic-horizontal-wall-bed",
+      "classic-vertical-morphy-bed",
+      "classic-horizontal-morphy-bed",
+      "classic-wall-bed",
+    ],
+    name: "Classic MORPHY™ Bed",
+    title: "Classic MORPHY™ Bed",
+    name_fr: "Lit Escamotable Classique MORPHY™",
+    title_fr: "Lit Escamotable Classique MORPHY™",
     type: "Classic",
     sub_category: "Classic",
-    orientation: "Vertical",
+    orientation: "Vertical & Horizontal",
     parent_category: "beds",
     isMorphy: true,
     description:
-      "The Classic Vertical MORPHY™ Bed is our next-generation fold-away mechanism engineered for everyday durability. Designed with high-performance counterbalanced gas pistons and an all-steel reinforced frame.",
-    tagline: "Core mechanism, vertical fold",
+      "The Classic MORPHY™ Bed is our next-generation fold-away mechanism engineered for everyday durability. Designed with high-performance counterbalanced gas pistons and an all-steel reinforced frame. Available in both Vertical and Horizontal configurations.",
+    tagline: "Core mechanism, vertical & horizontal",
     badge: "MORPHY™",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "CV", "Classic Vertical MORPHY™ Bed"),
+    gallery: getMorphyGallery2K("160x200", "CV", "Classic MORPHY™ Bed"),
     price_gbp: 749,
     price_euro: 749,
     price_usd: 1099,
@@ -522,69 +546,35 @@ export const FLAGSHIP_BEDS = [
     has_3d: false,
     has3D: false,
     colors: ["#090A0A"],
-    link: "/products/beds/classic-vertical-wall-bed",
+    link: "/products/beds/classic-morphy-bed",
   },
   {
-    id: "flagship-classic-horizontal",
-    rawId: "flagship-classic-horizontal",
-    slug: "classic-horizontal-wall-bed",
-    aliases: ["classic-horizontal-morphy-bed"],
-    name: "Classic Horizontal MORPHY™ Bed",
-    title: "Classic Horizontal MORPHY™ Bed",
-    name_fr: "Lit Escamotable Classique Horizontal MORPHY™",
-    title_fr: "Lit Escamotable Classique Horizontal MORPHY™",
-    type: "Classic",
-    sub_category: "Classic",
-    orientation: "Horizontal",
-    parent_category: "beds",
-    isMorphy: true,
-    description:
-      "Ideal for rooms with low ceilings, lofts, or narrow floor plans. Folds down along its long side to minimise ceiling height requirements with whisper-quiet MORPHY™ gas assistance.",
-    tagline: "Low ceiling solution",
-    badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_5.webp`,
-    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "CH", "Classic Horizontal MORPHY™ Bed"),
-    price_gbp: 749,
-    price_euro: 749,
-    price_usd: 1099,
-    sale_percent: null,
-    sale_price_gbp: null,
-    sale_price_euro: null,
-    sale_price_usd: null,
-    price: "from £749",
-    numericPrice: 749,
-    size: "19 Sizes",
-    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
-    defaultSizeSlug: "160x200",
-    has_3d: false,
-    has3D: false,
-    colors: ["#090A0A"],
-    link: "/products/beds/classic-horizontal-wall-bed",
-  },
-  {
-    id: "flagship-studio-vertical",
-    rawId: "flagship-studio-vertical",
-    slug: "studio-vertical-wall-bed",
-    aliases: ["studio-vertical-morphy-bed"],
-    name: "Studio Vertical MORPHY™ Bed",
-    title: "Studio Vertical MORPHY™ Bed",
-    name_fr: "Lit Escamotable Studio Vertical Morphy",
-    title_fr: "Lit Escamotable Studio Vertical Morphy",
+    id: "flagship-studio-morphy",
+    rawId: "flagship-studio-morphy",
+    slug: "studio-morphy-bed",
+    aliases: [
+      "studio-vertical-wall-bed",
+      "studio-horizontal-wall-bed",
+      "studio-vertical-morphy-bed",
+      "studio-horizontal-morphy-bed",
+    ],
+    name: "Studio MORPHY™ Bed",
+    title: "Studio MORPHY™ Bed",
+    name_fr: "Lit Escamotable Studio MORPHY™",
+    title_fr: "Lit Escamotable Studio MORPHY™",
     type: "Studio",
     sub_category: "Studio",
-    orientation: "Vertical",
+    orientation: "Vertical & Horizontal",
     parent_category: "beds",
     isMorphy: true,
     description:
-      "Features front decorative panels, modern aesthetics, and smooth gas-assisted lifting. Perfect as a standalone statement wall bed with contemporary MORPHY™ styling.",
+      "Features front decorative panels, modern aesthetics, and smooth gas-assisted lifting. Perfect as a standalone statement wall bed with contemporary MORPHY™ styling in Vertical and Horizontal layouts.",
     tagline: "With decorative front panel",
     badge: "MORPHY™",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "SV", "Studio Vertical MORPHY™ Bed"),
+    gallery: getMorphyGallery2K("160x200", "SV", "Studio MORPHY™ Bed"),
     price_gbp: 999,
     price_euro: 999,
     price_usd: 1549,
@@ -600,69 +590,36 @@ export const FLAGSHIP_BEDS = [
     has_3d: false,
     has3D: false,
     colors: ["#090A0A"],
-    link: "/products/beds/studio-vertical-wall-bed",
+    link: "/products/beds/studio-morphy-bed",
   },
   {
-    id: "flagship-studio-horizontal",
-    rawId: "flagship-studio-horizontal",
-    slug: "studio-horizontal-wall-bed",
-    aliases: ["studio-horizontal-morphy-bed"],
-    name: "Studio Horizontal MORPHY™ Bed",
-    title: "Studio Horizontal MORPHY™ Bed",
-    name_fr: "Lit Escamotable Studio Horizontal MORPHY™",
-    title_fr: "Lit Escamotable Studio Horizontal MORPHY™",
-    type: "Studio",
-    sub_category: "Studio",
-    orientation: "Horizontal",
-    parent_category: "beds",
-    isMorphy: true,
-    description:
-      "Horizontal fold-down design fitted with front decorative panels for contemporary studio apartments and home offices.",
-    tagline: "Horizontal studio design",
-    badge: "MORPHY™",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_5.webp`,
-    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_1-m.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SH-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "SH", "Studio Horizontal MORPHY™ Bed"),
-    price_gbp: 999,
-    price_euro: 999,
-    price_usd: 1549,
-    sale_percent: null,
-    sale_price_gbp: null,
-    sale_price_euro: null,
-    sale_price_usd: null,
-    price: "from £999",
-    numericPrice: 999,
-    size: "19 Sizes",
-    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
-    defaultSizeSlug: "160x200",
-    has_3d: false,
-    has3D: false,
-    colors: ["#090A0A"],
-    link: "/products/beds/studio-horizontal-wall-bed",
-  },
-  {
-    id: "flagship-integrated-vertical",
-    rawId: "flagship-integrated-vertical",
-    slug: "integrated-vertical-wall-bed",
-    aliases: ["integrated-vertical-morphy-bed", "integrated-bed"],
-    name: "Integrated Vertical MORPHY™ Bed",
-    title: "Integrated Vertical MORPHY™ Bed",
-    name_fr: "Lit Escamotable Intégré Vertical MORPHY™",
-    title_fr: "Lit Escamotable Intégré Vertical MORPHY™",
+    id: "flagship-integrated-morphy",
+    rawId: "flagship-integrated-morphy",
+    slug: "integrated-morphy-bed",
+    aliases: [
+      "integrated-vertical-wall-bed",
+      "integrated-horizontal-wall-bed",
+      "integrated-vertical-morphy-bed",
+      "integrated-horizontal-morphy-bed",
+      "integrated-bed",
+    ],
+    name: "Integrated MORPHY™ Bed",
+    title: "Integrated MORPHY™ Bed",
+    name_fr: "Lit Escamotable Intégré MORPHY™",
+    title_fr: "Lit Escamotable Intégré MORPHY™",
     type: "Integrated",
     sub_category: "Integrated",
-    orientation: "Vertical",
+    orientation: "Vertical & Horizontal",
     parent_category: "beds",
     isMorphy: true,
     description:
-      "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Precision gas piston counterbalanced mechanism.",
+      "Engineered specifically to seamlessly fit inside custom cabinetry, bespoke wardrobes, and modular storage systems. Precision gas piston counterbalanced mechanism available in Vertical and Horizontal orientations.",
     tagline: "Cabinetry & wardrobe ready",
     badge: "MORPHY™ Integrated",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_5.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "IV", "Integrated Vertical MORPHY™ Bed"),
+    gallery: getMorphyGallery2K("160x200", "IV", "Integrated MORPHY™ Bed"),
     price_gbp: 749,
     price_euro: 749,
     price_usd: 1099,
@@ -678,71 +635,38 @@ export const FLAGSHIP_BEDS = [
     has_3d: false,
     has3D: false,
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
-    link: "/products/beds/integrated-vertical-wall-bed",
-  },
-  {
-    id: "flagship-integrated-horizontal",
-    rawId: "flagship-integrated-horizontal",
-    slug: "integrated-horizontal-wall-bed",
-    aliases: ["integrated-horizontal-morphy-bed"],
-    name: "Integrated Horizontal MORPHY™ Bed",
-    title: "Integrated Horizontal MORPHY™ Bed",
-    name_fr: "Lit Escamotable Intégré Horizontal MORPHY™",
-    title_fr: "Lit Escamotable Intégré Horizontal MORPHY™",
-    type: "Integrated",
-    sub_category: "Integrated",
-    orientation: "Horizontal",
-    parent_category: "beds",
-    isMorphy: true,
-    description:
-      "Side-folding mechanism engineered for low-profile horizontal cabinetry, bookshelf integration, and low-ceiling built-ins.",
-    tagline: "Horizontal cabinetry integration",
-    badge: "MORPHY™ Integrated",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_5.webp`,
-    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IH-MORPHY_1-m.webp`,
-    gallery: getMorphyGallery2K("160x200", "IH", "Integrated Horizontal MORPHY™ Bed"),
-    price_gbp: 749,
-    price_euro: 749,
-    price_usd: 1099,
-    sale_percent: null,
-    sale_price_gbp: null,
-    sale_price_euro: null,
-    sale_price_usd: null,
-    price: "from £749",
-    numericPrice: 749,
-    size: "19 Sizes",
-    sizeLabel: "19 Available Sizes (76x190 - 200x200 cm)",
-    defaultSizeSlug: "160x200",
-    has_3d: false,
-    has3D: false,
-    colors: ["#090A0A", "#A5988E", "#D2AA7C"],
-    link: "/products/beds/integrated-horizontal-wall-bed",
+    link: "/products/beds/integrated-morphy-bed",
   },
 
-  // ── TRADITIONAL WALL BED FLAGSHIP MODELS ──
+  // ── TRADITIONAL (CLEARANCE) CONSOLIDATED FLAGSHIP MODELS ──
   {
-    id: "flagship-traditional-classic-vertical",
-    rawId: "flagship-traditional-classic-vertical",
-    slug: "classic-vertical-traditional-bed",
-    aliases: ["classic-vertical-bed"],
-    name: "Classic Vertical Wall Bed",
-    title: "Classic Vertical Wall Bed (Traditional)",
-    name_fr: "Lit Escamotable Classique Vertical",
-    title_fr: "Lit Escamotable Classique Vertical",
+    id: "flagship-traditional-classic",
+    rawId: "flagship-traditional-classic",
+    slug: "classic-traditional-bed",
+    aliases: [
+      "classic-vertical-traditional-bed",
+      "classic-horizontal-traditional-bed",
+      "classic-vertical-bed",
+      "classic-horizontal-bed",
+      "classic-traditional-wall-bed",
+    ],
+    name: "Classic Wall Bed",
+    title: "Classic Wall Bed (Traditional)",
+    name_fr: "Lit Escamotable Classique",
+    title_fr: "Lit Escamotable Classique",
     type: "Classic",
     sub_category: "Classic",
-    orientation: "Vertical",
+    orientation: "Vertical & Horizontal",
     parent_category: "beds",
     isMorphy: false,
     description:
-      "The time-tested Traditional Classic Vertical Wall Bed. Proven counterbalanced gas pistons and solid construction for dependable everyday use.",
-    tagline: "Original mechanism, vertical fold",
+      "The time-tested Traditional Classic Wall Bed. Proven counterbalanced gas pistons and solid construction for dependable everyday use in Vertical and Horizontal spaces.",
+    tagline: "Original mechanism, clearance savings",
     badge: "Traditional",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_1.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-TRADITIONAL_2.webp`,
-    gallery: getTraditionalGallery1K("160x200", "CV", "Classic Vertical Wall Bed (Traditional)", 9),
+    gallery: getTraditionalGallery1K("160x200", "CV", "Classic Wall Bed (Traditional)", 9),
     price_gbp: 599,
     price_euro: 599,
     price_usd: 599,
@@ -758,69 +682,36 @@ export const FLAGSHIP_BEDS = [
     has_3d: false,
     has3D: false,
     colors: ["#090A0A"],
-    link: "/products/beds/classic-vertical-traditional-bed",
+    link: "/products/beds/classic-traditional-bed",
   },
   {
-    id: "flagship-traditional-classic-horizontal",
-    rawId: "flagship-traditional-classic-horizontal",
-    slug: "classic-horizontal-traditional-bed",
-    aliases: ["classic-horizontal-bed"],
-    name: "Classic Horizontal Wall Bed",
-    title: "Classic Horizontal Wall Bed (Traditional)",
-    name_fr: "Lit Escamotable Classique Horizontal",
-    title_fr: "Lit Escamotable Classique Horizontal",
-    type: "Classic",
-    sub_category: "Classic",
-    orientation: "Horizontal",
-    parent_category: "beds",
-    isMorphy: false,
-    description:
-      "Traditional side-folding fold-away wall bed mechanism designed for lower ceilings and compact rooms.",
-    tagline: "Original mechanism, horizontal fold",
-    badge: "Traditional",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_1.webp`,
-    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_2.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-TRADITIONAL_2.webp`,
-    gallery: getTraditionalGallery1K("160x200", "CH", "Classic Horizontal Wall Bed (Traditional)", 9),
-    price_gbp: 599,
-    price_euro: 599,
-    price_usd: 599,
-    sale_percent: null,
-    sale_price_gbp: 419,
-    sale_price_euro: 419,
-    sale_price_usd: 419,
-    price: "from £419",
-    numericPrice: 419,
-    size: "11 Sizes",
-    sizeLabel: "11 Available Sizes (76x190 - 180x200 cm)",
-    defaultSizeSlug: "135x190",
-    has_3d: false,
-    has3D: false,
-    colors: ["#090A0A"],
-    link: "/products/beds/classic-horizontal-traditional-bed",
-  },
-  {
-    id: "flagship-traditional-studio-vertical",
-    rawId: "flagship-traditional-studio-vertical",
-    slug: "studio-vertical-traditional-bed",
-    aliases: ["studio-vertical-bed"],
-    name: "Studio Vertical Wall Bed",
-    title: "Studio Vertical Wall Bed (Traditional)",
-    name_fr: "Lit Escamotable Studio Vertical",
-    title_fr: "Lit Escamotable Studio Vertical",
+    id: "flagship-traditional-studio",
+    rawId: "flagship-traditional-studio",
+    slug: "studio-traditional-bed",
+    aliases: [
+      "studio-vertical-traditional-bed",
+      "studio-horizontal-traditional-bed",
+      "studio-vertical-bed",
+      "studio-horizontal-bed",
+      "studio-traditional-wall-bed",
+    ],
+    name: "Studio Wall Bed",
+    title: "Studio Wall Bed (Traditional)",
+    name_fr: "Lit Escamotable Studio",
+    title_fr: "Lit Escamotable Studio",
     type: "Studio",
     sub_category: "Studio",
-    orientation: "Vertical",
+    orientation: "Vertical & Horizontal",
     parent_category: "beds",
     isMorphy: false,
     description:
-      "Traditional Studio series wall bed featuring standard front panels and proven lifting pistons.",
-    tagline: "Front panel vertical design",
+      "Traditional Studio series wall bed featuring standard front decorative panels and proven lifting pistons in Vertical and Horizontal formats.",
+    tagline: "Front panel clearance design",
     badge: "Traditional",
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_1.webp`,
     hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_2.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SV-TRADITIONAL_2.webp`,
-    gallery: getTraditionalGallery1K("150x200", "SV", "Studio Vertical Wall Bed (Traditional)", 7),
+    gallery: getTraditionalGallery1K("150x200", "SV", "Studio Wall Bed (Traditional)", 7),
     price_gbp: 999,
     price_euro: 999,
     price_usd: 999,
@@ -836,46 +727,7 @@ export const FLAGSHIP_BEDS = [
     has_3d: false,
     has3D: false,
     colors: ["#090A0A"],
-    link: "/products/beds/studio-vertical-traditional-bed",
-  },
-  {
-    id: "flagship-traditional-studio-horizontal",
-    rawId: "flagship-traditional-studio-horizontal",
-    slug: "studio-horizontal-traditional-bed",
-    aliases: ["studio-horizontal-bed"],
-    name: "Studio Horizontal Wall Bed",
-    title: "Studio Horizontal Wall Bed (Traditional)",
-    name_fr: "Lit Escamotable Studio Horizontal",
-    title_fr: "Lit Escamotable Studio Horizontal",
-    type: "Studio",
-    sub_category: "Studio",
-    orientation: "Horizontal",
-    parent_category: "beds",
-    isMorphy: false,
-    description:
-      "Traditional Studio series horizontal fold-away bed mechanism with front decorative panel.",
-    tagline: "Front panel horizontal design",
-    badge: "Traditional",
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_1.webp`,
-    hover_image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_2.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/150x200-SH-TRADITIONAL_2.webp`,
-    gallery: getTraditionalGallery1K("150x200", "SH", "Studio Horizontal Wall Bed (Traditional)", 7),
-    price_gbp: 999,
-    price_euro: 999,
-    price_usd: 999,
-    sale_percent: null,
-    sale_price_gbp: 699,
-    sale_price_euro: 699,
-    sale_price_usd: 699,
-    price: "from £699",
-    numericPrice: 699,
-    size: "11 Sizes",
-    sizeLabel: "11 Available Sizes (76x190 - 180x200 cm)",
-    defaultSizeSlug: "135x190",
-    has_3d: false,
-    has3D: false,
-    colors: ["#090A0A"],
-    link: "/products/beds/studio-horizontal-traditional-bed",
+    link: "/products/beds/studio-traditional-bed",
   },
 ];
 
@@ -996,7 +848,7 @@ export const FLAGSHIP_MATTRESSES = [
       "Warranty: 1 year for manufacturing defects",
     ],
     size: "Multiple Sizes",
-    sizeLabel: "Single to Super King",
+    sizeLabel: "Single to Super King (90x190 - 180x200 cm)",
     defaultSizeSlug: "double-comfort-mattress-135x190x20",
     available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
@@ -1047,7 +899,7 @@ export const FLAGSHIP_MATTRESSES = [
       "Warranty: 1 year for manufacturing defects",
     ],
     size: "Multiple Sizes",
-    sizeLabel: "Single to Super King",
+    sizeLabel: "Single to Super King (90x190 - 180x200 cm)",
     defaultSizeSlug: "double-luxury-mattress-135x190x25",
     available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
@@ -1098,7 +950,7 @@ export const FLAGSHIP_MATTRESSES = [
       "Warranty: 1 year for manufacturing defects",
     ],
     size: "Multiple Sizes",
-    sizeLabel: "Single to Super King",
+    sizeLabel: "Single to Super King (90x190 - 180x200 cm)",
     defaultSizeSlug: "double-supreme-mattress-135x190x25",
     available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
@@ -1153,7 +1005,7 @@ export const FLAGSHIP_CABINETS = [
     numericPrice: 479,
     size: "4 Sizes / 4 Finishes",
     sizeLabel: "Single to King in Oak, Beech, Pine & White",
-    defaultSizeSlug: "double-vertical-cabinet-oak-160x52x215",
+    defaultSizeSlug: "single-vertical-cabinet-oak-115x52x215",
     available_locales: ["en", "de", "fr", "es", "por", "it"],
     has_3d: false,
     has3D: false,
@@ -1350,7 +1202,6 @@ export function getDynamicFlagships(templates, rawItems, category) {
           const templateIsMorphy = Boolean(template.isMorphy);
           return (
             item.type?.toLowerCase() === template.type?.toLowerCase() &&
-            item.orientation?.toLowerCase() === template.orientation?.toLowerCase() &&
             itemIsMorphy === templateIsMorphy
           );
         }
@@ -1920,10 +1771,42 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
 // Representative popular product models for the overview / home sliders
 export const POPULAR_PRODUCTS_OVERVIEW = [
   {
-    id: "popular-integrated",
-    title: "Integrated Vertical MORPHY™ Bed",
-    title_fr: "Lit Escamotable Intégré Vertical MORPHY™",
-    name_fr: "Lit Escamotable Intégré Vertical MORPHY™",
+    id: "popular-classic-morphy",
+    title: "Classic MORPHY™ Bed",
+    title_fr: "Lit Escamotable Classique MORPHY™",
+    name_fr: "Lit Escamotable Classique MORPHY™",
+    orientation: "Vertical & Horizontal",
+    size: "76x190 to 200x200",
+    colors: ["#090A0A"],
+    price: "from £749",
+    numericPrice: 749,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
+    link: "/products/beds/classic-morphy-bed",
+    categoryKey: "beds",
+    has3D: false,
+  },
+  {
+    id: "popular-studio-morphy",
+    title: "Studio MORPHY™ Bed",
+    title_fr: "Lit Escamotable Studio MORPHY™",
+    name_fr: "Lit Escamotable Studio MORPHY™",
+    orientation: "Vertical & Horizontal",
+    size: "76x190 to 200x200",
+    colors: ["#090A0A"],
+    price: "from £999",
+    numericPrice: 999,
+    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_5.webp`,
+    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
+    link: "/products/beds/studio-morphy-bed",
+    categoryKey: "beds",
+    has3D: false,
+  },
+  {
+    id: "popular-integrated-morphy",
+    title: "Integrated MORPHY™ Bed",
+    title_fr: "Lit Escamotable Intégré MORPHY™",
+    name_fr: "Lit Escamotable Intégré MORPHY™",
     orientation: "Vertical & Horizontal",
     size: "76x190 to 200x200",
     colors: ["#090A0A", "#A5988E", "#D2AA7C"],
@@ -1931,57 +1814,9 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     numericPrice: 749,
     image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-IV-MORPHY_1-m.webp`,
-    link: "/products/beds/integrated-vertical-wall-bed",
+    link: "/products/beds/integrated-morphy-bed",
     categoryKey: "beds",
     has3D: true,
-  },
-  {
-    id: "popular-classic-vertical",
-    title: "Classic Vertical MORPHY™ Bed",
-    title_fr: "Lit Escamotable Classique Vertical MORPHY™",
-    name_fr: "Lit Escamotable Classique Vertical MORPHY™",
-    orientation: "Vertical",
-    size: "76x190 to 200x200",
-    colors: ["#090A0A"],
-    price: "from £749",
-    numericPrice: 749,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_5.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CV-MORPHY_1-m.webp`,
-    link: "/products/beds/classic-vertical-wall-bed",
-    categoryKey: "beds",
-    has3D: false,
-  },
-  {
-    id: "popular-studio-vertical",
-    title: "Studio Vertical MORPHY™ Bed",
-    title_fr: "Lit Escamotable Studio Vertical MORPHY™",
-    name_fr: "Lit Escamotable Studio Vertical MORPHY™",
-    orientation: "Vertical",
-    size: "76x190 to 200x200",
-    colors: ["#090A0A"],
-    price: "from £999",
-    numericPrice: 999,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_5.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-SV-MORPHY_1-m.webp`,
-    link: "/products/beds/studio-vertical-wall-bed",
-    categoryKey: "beds",
-    has3D: false,
-  },
-  {
-    id: "popular-classic-horizontal",
-    title: "Classic Horizontal MORPHY™ Bed",
-    title_fr: "Lit Escamotable Classique Horizontal MORPHY™",
-    name_fr: "Lit Escamotable Classique Horizontal MORPHY™",
-    orientation: "Horizontal",
-    size: "76x190 to 200x200",
-    colors: ["#090A0A"],
-    price: "from £749",
-    numericPrice: 749,
-    image: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_5.webp`,
-    hoverImage: `${SUPABASE_PRODUCT_IMAGES_BASE}/1K/160x200-CH-MORPHY_1-m.webp`,
-    link: "/products/beds/classic-horizontal-wall-bed",
-    categoryKey: "beds",
-    has3D: false,
   },
   {
     id: "popular-comfort-mattress",
@@ -1989,7 +1824,8 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     title_fr: "Matelas Confort",
     name_fr: "Matelas Confort",
     orientation: "Universal",
-    size: "Single to Super King",
+    size: "Single to Super King (90x190 - 180x200 cm)",
+    sizeLabel: "Single to Super King (90x190 - 180x200 cm)",
     colors: ["#FFFFFF"],
     price: "from £399",
     numericPrice: 399,
@@ -2006,7 +1842,8 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
     title_fr: "Matelas Luxe",
     name_fr: "Matelas Luxe",
     orientation: "Universal",
-    size: "Single to Super King",
+    size: "Single to Super King (90x190 - 180x200 cm)",
+    sizeLabel: "Single to Super King (90x190 - 180x200 cm)",
     colors: ["#FFFFFF"],
     price: "from £499",
     numericPrice: 499,
@@ -2038,19 +1875,15 @@ export const POPULAR_PRODUCTS_OVERVIEW = [
 // Helper to find flagship bed from a slug or variant
 export const getFlagshipBed = (type = "Classic", orientation = "Vertical", isMorphy = true) => {
   const normType = String(type).toLowerCase();
-  const normOrient = String(orientation).toLowerCase();
 
   return (
     FLAGSHIP_BEDS.find(
       (f) =>
         f.type.toLowerCase() === normType &&
-        f.orientation.toLowerCase() === normOrient &&
         Boolean(f.isMorphy) === Boolean(isMorphy)
     ) ||
     FLAGSHIP_BEDS.find(
-      (f) =>
-        f.type.toLowerCase() === normType &&
-        f.orientation.toLowerCase() === normOrient
+      (f) => f.type.toLowerCase() === normType
     ) ||
     FLAGSHIP_BEDS[0]
   );
@@ -2181,7 +2014,10 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
       ((currentProduct.name || "").includes("MORPHY") || (currentProduct.title || "").includes("MORPHY"))
     );
 
-    // Return all size variants for this specific flagship (type + orientation + isMorphy)
+    // Return all size variants for this specific flagship (type + isMorphy, both orientations if consolidated)
+    const currentOrient = (orientation || "").toLowerCase();
+    const isSingleOrient = currentOrient && !currentOrient.includes("&") && currentOrient !== "universal";
+
     const matching = catalog.filter((p) => {
       if (!isProductVisible(p)) return false;
       const pIsBed =
@@ -2190,7 +2026,7 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
         p.parent_category === "traditional-beds";
       if (!pIsBed) return false;
       if (p.type?.toLowerCase() !== type.toLowerCase()) return false;
-      if (p.orientation?.toLowerCase() !== orientation.toLowerCase()) return false;
+      if (isSingleOrient && p.orientation?.toLowerCase() !== currentOrient) return false;
       const itemIsMorphy = Boolean(
         (p.name || "").includes("MORPHY") || (p.category || "").includes("MORPHY")
       );
@@ -2236,13 +2072,24 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
   }
 
   if (parentCat === "cabinets") {
-    const matching = catalog.filter(
-      (p) =>
-        isProductVisible(p) &&
-        p.parent_category === "cabinets" &&
-        (p.sub_category?.toLowerCase() === subCategory.toLowerCase() ||
-         p.type?.toLowerCase() === type.toLowerCase())
-    );
+    const targetSub = (subCategory || "").toLowerCase();
+    const matching = catalog.filter((p) => {
+      if (!isProductVisible(p) || p.parent_category !== "cabinets") return false;
+      const pSub = (p.sub_category || "").toLowerCase();
+      if (targetSub.includes("side") || targetSub.includes("unit")) {
+        return pSub.includes("side") || pSub.includes("unit");
+      }
+      if (targetSub.includes("ext") || targetSub.includes("overhead")) {
+        return pSub.includes("ext") || pSub.includes("overhead");
+      }
+      if (targetSub === "horizontal" || currentProduct.orientation?.toLowerCase() === "horizontal") {
+        return pSub === "horizontal";
+      }
+      if (targetSub === "vertical" || currentProduct.orientation?.toLowerCase() === "vertical") {
+        return pSub === "vertical";
+      }
+      return pSub === targetSub;
+    });
     matching.sort((a, b) => (a.price_gbp || 0) - (b.price_gbp || 0));
     return matching.map(formatCatalogItem);
   }

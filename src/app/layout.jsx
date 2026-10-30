@@ -15,6 +15,7 @@ import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import { CategoriesProvider } from "@/context/CategoriesContext";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ZendeskChat } from "@/components/chat/ZendeskChat";
 import "./globals.css";
 
@@ -56,25 +57,27 @@ export default async function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col bg-wbk-white">
         <ScrollToTop />
         <AuthProvider>
-          <LocaleProvider>
-            <AnalyticsScripts />
-            <ProductCatalogProvider initialProducts={initialProducts} initialBundles={initialBundles}>
-              <CategoriesProvider initialCategories={initialCategories}>
-                <CartProvider>
-                  <MenuContextProvider>
-                    <Header />
-                    <main className="flex-1">{children}</main>
-                    <Footer />
-                    <CartDrawer />
-                    <UserDrawer />
-                    <PasswordResetModal />
-                    <CookieConsent />
-                    <ZendeskChat />
-                  </MenuContextProvider>
-                </CartProvider>
-              </CategoriesProvider>
-            </ProductCatalogProvider>
-          </LocaleProvider>
+          <PostHogProvider>
+            <LocaleProvider>
+              <AnalyticsScripts />
+              <ProductCatalogProvider initialProducts={initialProducts} initialBundles={initialBundles}>
+                <CategoriesProvider initialCategories={initialCategories}>
+                  <CartProvider>
+                    <MenuContextProvider>
+                      <Header />
+                      <main className="flex-1">{children}</main>
+                      <Footer />
+                      <CartDrawer />
+                      <UserDrawer />
+                      <PasswordResetModal />
+                      <CookieConsent />
+                      <ZendeskChat />
+                    </MenuContextProvider>
+                  </CartProvider>
+                </CategoriesProvider>
+              </ProductCatalogProvider>
+            </LocaleProvider>
+          </PostHogProvider>
         </AuthProvider>
       </body>
     </html>

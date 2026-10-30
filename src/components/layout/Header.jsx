@@ -15,6 +15,8 @@ import { ContactInfo } from "./ContactInfo";
 import { SearchBar } from "./SearchBar";
 import { MainMenu } from "./MainMenu";
 import { Submenu } from "./Submenu";
+import { SubmenuSplitTest } from "./SubmenuSplitTest";
+import { useDesktopMenuABTest } from "@/hooks/useDesktopMenuABTest";
 import { MobileToggle } from "./MobileToggle";
 import { MobileMenuDrawer } from "./MobileMenuDrawer";
 import { MenuContext } from "@/context/MenuContext";
@@ -37,6 +39,7 @@ const LANGUAGES = [
 export function Header() {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
+  const menuVariant = useDesktopMenuABTest();
 
   const [langOpen, setLangOpen] = useState(false);
   const { locale, market, switchLocale, localizedHref, t } = useLocale();
@@ -72,10 +75,7 @@ export function Header() {
         if (isMenuVisibleRef.current) {
           headerFullHeightRef.current = h;
         }
-        document.documentElement.style.setProperty(
-          "--header-height",
-          `${h}px`,
-        );
+        document.documentElement.style.setProperty("--header-height", `${h}px`);
       }
     }
   };
@@ -164,7 +164,10 @@ export function Header() {
           }
 
           // Ignore scroll events during body lock or synthetic layout shifts
-          if (typeof document !== "undefined" && document.body.style.overflow === "hidden") {
+          if (
+            typeof document !== "undefined" &&
+            document.body.style.overflow === "hidden"
+          ) {
             lastScrollY.current = currentScrollY;
             ticking = false;
             return;
@@ -283,7 +286,6 @@ export function Header() {
 
           {/* Right section: Language, Cart, Account, MobileToggle */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-
             {/* Language Selector Dropdown */}
             <div
               className="relative hidden sm:block"
@@ -349,7 +351,7 @@ export function Header() {
               className="flex items-center justify-center cursor-pointer transition-transform active:scale-95"
             >
               {user ? (
-                <div className="w-8 h-8 rounded-full bg-wbk-black text-wbk-white text-xs font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs hover:border-wbk-green transition-colors">
+                <div className="w-7 h-7 rounded-full bg-wbk-black text-wbk-white text-xs font-semibold flex items-center justify-center border border-wbk-gold shadow-2xs hover:border-wbk-green transition-colors">
                   {(
                     user.user_metadata?.full_name?.[0] ||
                     user.email?.[0] ||
@@ -357,8 +359,8 @@ export function Header() {
                   ).toUpperCase()}
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full border border-wbk-lightgrey bg-white hover:border-wbk-green hover:bg-[#FBF9F8] flex items-center justify-center text-wbk-black hover:text-wbk-green transition-colors shadow-2xs">
-                  <IconUser size={16} strokeWidth={1.75} />
+                <div className="w-7 h-7 rounded-full bg-white hover:border-wbk-green hover:bg-[#FBF9F8] flex items-center justify-center text-wbk-black hover:text-wbk-green transition-colors">
+                  <IconUser size={18} strokeWidth={1.75} />
                 </div>
               )}
             </button>
@@ -423,7 +425,7 @@ export function Header() {
           onMouseLeave={() => setSubMenu(null)}
         >
           <MainMenu />
-          <Submenu />
+          {menuVariant === "test" ? <SubmenuSplitTest /> : <Submenu />}
         </motion.div>
       </header>
 

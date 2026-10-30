@@ -385,15 +385,46 @@ export function formatSizeLabel(label, locale = "en", product = null) {
       frLabel = frLabel.replace(/Single\s+to\s+King\s+in\s+Oak,\s*Beech,\s*Pine\s*&\s*White/gi, "Simple à King en Chêne, Hêtre, Pin et Blanc");
       frLabel = frLabel.replace(/Double\s*&\s*King\s+in\s+Oak,\s*Beech,\s*Pine\s*&\s*White/gi, "Double et King en Chêne, Hêtre, Pin et Blanc");
       frLabel = frLabel.replace(/Door\s*\+\s*Hanger\s+or\s+Shelves\s+in\s+4\s+Finishes/gi, "Porte + Penderie ou Étagères en 4 Finitions");
+      frLabel = frLabel.replace(/Single\s+to\s+Super\s+King/gi, "Simple à Super King");
       frLabel = frLabel.replace(/Single\s+to\s+King/gi, "Simple à King");
       frLabel = frLabel.replace(/Double\s*&\s*King/gi, "Double et King");
       frLabel = frLabel.replace(/Modular\s+Sizes/gi, "Tailles modulaires");
       return frLabel;
     }
 
+    if (normLocale === "de") {
+      let deLabel = label;
+      deLabel = deLabel.replace(/(\d+)\s+Available\s+Sizes/gi, "$1 Verfügbare Größen");
+      deLabel = deLabel.replace(/Available\s+Sizes/gi, "Verfügbare Größen");
+      deLabel = deLabel.replace(/Single\s+to\s+Super\s+King/gi, "Einzelbett bis Super King");
+      deLabel = deLabel.replace(/Single\s+to\s+King/gi, "Einzelbett bis King");
+      return deLabel;
+    }
+
+    if (normLocale === "es") {
+      let esLabel = label;
+      esLabel = esLabel.replace(/(\d+)\s+Available\s+Sizes/gi, "$1 Tamaños disponibles");
+      esLabel = esLabel.replace(/Available\s+Sizes/gi, "Tamaños disponibles");
+      esLabel = esLabel.replace(/Single\s+to\s+Super\s+King/gi, "Individual a Super King");
+      esLabel = esLabel.replace(/Single\s+to\s+King/gi, "Individual a King");
+      return esLabel;
+    }
+
+    if (normLocale === "it") {
+      let itLabel = label;
+      itLabel = itLabel.replace(/(\d+)\s+Available\s+Sizes/gi, "$1 Misure disponibili");
+      itLabel = itLabel.replace(/Available\s+Sizes/gi, "Misure disponibili");
+      itLabel = itLabel.replace(/Single\s+to\s+Super\s+King/gi, "Singolo a Super King");
+      itLabel = itLabel.replace(/Single\s+to\s+King/gi, "Singolo a King");
+      return itLabel;
+    }
+
     if (normLocale !== "us") {
       return label;
     }
+
+    label = label.replace(/Single\s+to\s+Super\s+King/gi, "Twin to King");
+    label = label.replace(/Single\s+to\s+King/gi, "Twin to King");
 
     // Single 2D dimension in metric: '76x190 cm' or '120 x 200'
     const m2d = label.match(/(\d{2,3})\s*[xX×]\s*(\d{2,3})\s*(?:cm)?/i);

@@ -252,7 +252,14 @@
     "redirectCancelled": "Automatic redirect paused.",
     "redirectingIn": "Redirecting to catalog in",
     "checkOutMorphy": "Check out MORPHY",
-    "availableInMorphy": "Available in Morphy Collection"
+    "availableInMorphy": "Available in Morphy Collection",
+    "size": "Size",
+    "options": "Options",
+    "finishesAvailable": "Finishes Available",
+    "design": "Design",
+    "spaceSavingTransforming": "Space-Saving Transforming",
+    "colors": "Colors",
+    "orientation": "Orientation"
   },
   "reviews": {
     "title": "Reviews",

@@ -407,14 +407,14 @@ export function getStorefrontProductUrl(p, locale = null, options = {}) {
       const o = (p.orientation || "Vertical").toLowerCase();
       const style = (p.sub_category || p.type || "Classic").toLowerCase();
 
-      let flagshipSlug = "classic-vertical-wall-bed";
+      let flagshipSlug = "classic-morphy-bed";
       if (isMorphy) {
-        if (style.includes("integrated")) flagshipSlug = `integrated-${o}-wall-bed`;
-        else if (style.includes("studio")) flagshipSlug = `studio-${o}-wall-bed`;
-        else flagshipSlug = `classic-${o}-wall-bed`;
+        if (style.includes("integrated")) flagshipSlug = "integrated-morphy-bed";
+        else if (style.includes("studio")) flagshipSlug = "studio-morphy-bed";
+        else flagshipSlug = "classic-morphy-bed";
       } else {
-        if (style.includes("studio")) flagshipSlug = `studio-${o}-traditional-bed`;
-        else flagshipSlug = `classic-${o}-traditional-bed`;
+        if (style.includes("studio")) flagshipSlug = "studio-traditional-bed";
+        else flagshipSlug = "classic-traditional-bed";
       }
 
       const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);

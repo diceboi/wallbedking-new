@@ -250,7 +250,14 @@
     "redirectCancelled": "Redirección automática pausada.",
     "redirectingIn": "Redirigiendo al catálogo en",
     "checkOutMorphy": "Ver MORPHY",
-    "availableInMorphy": "Disponible en la colección Morphy"
+    "availableInMorphy": "Disponible en la colección Morphy",
+    "size": "Tamaño",
+    "options": "Opciones",
+    "finishesAvailable": "Acabados disponibles",
+    "design": "Diseño",
+    "spaceSavingTransforming": "Ahorro de espacio transformable",
+    "colors": "Colores",
+    "orientation": "Orientación"
   },
   "reviews": {
     "title": "Opiniones",

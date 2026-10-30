@@ -51,21 +51,34 @@ export function ProductCard({ product, className = "" }) {
   const isTable =
     product.parent_category === "tables" ||
     Boolean(product.is_space_saving_table);
+  const isMattress =
+    product.parent_category === "mattresses" ||
+    product.categoryKey === "mattresses" ||
+    (typeof product.slug === "string" && product.slug.includes("mattress"));
   const title = getLocalizedProductName(product, locale);
   const orientation = product.orientation || "Vertical";
   const isUS = locale === "us";
   const isMultiSize = Boolean(
-    product.sizeLabel && /Available|Modular|Sizes|[-–—]/i.test(product.sizeLabel)
+    product.sizeLabel && /Available|Modular|Sizes|[-–—]|to/i.test(product.sizeLabel)
   );
 
-  const rawSize = isMultiSize
-    ? product.sizeLabel
-    : (isUS ? (product.size_us || product.sizeLabel_us) : (product.size_eu || (product.width && product.length ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm` : null) || product.sizeLabel_eu)) ||
+  let rawSize;
+  if (isMattress) {
+    rawSize = product.sizeLabel || "Single to Super King (90x190 - 180x200 cm)";
+    if (!/[-–—\d]/i.test(rawSize)) {
+      rawSize = `${rawSize} (90x190 - 180x200 cm)`;
+    }
+  } else if (isMultiSize) {
+    rawSize = product.sizeLabel;
+  } else {
+    rawSize =
+      (isUS ? (product.size_us || product.sizeLabel_us) : (product.size_eu || (product.width && product.length ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm` : null) || product.sizeLabel_eu)) ||
       product.sizeLabel ||
       product.size ||
       (product.width && product.length
         ? `${Math.round(product.width / 10)}x${Math.round(product.length / 10)} cm`
         : "Standard");
+  }
 
   const size = formatSizeLabel(rawSize, locale);
 
@@ -208,56 +221,43 @@ export function ProductCard({ product, className = "" }) {
 
           {/* Specs */}
           <div className="text-xs text-wbk-black space-y-0.5 font-poppins">
-            {product.sku && (
-              <div className="text-[11px] text-wbk-brown font-mono font-medium tracking-tight">
-                SKU: {product.sku}
-              </div>
-            )}
+            {/* Orientation: Only for beds and cabinets (where vertical / horizontal is a core distinguishing feature) */}
             {orientation &&
-              product.parent_category !== "mattresses" &&
-              product.parent_category !== "sofas" &&
-              !isTable && (
+              orientation !== "Universal" &&
+              !isMattress &&
+              !isTable &&
+              product.parent_category !== "sofas" && (
                 <div>
-                  {t("product.orientation", "Orientation")}: {orientation}
+                  <span className="text-wbk-brown">{t("product.orientation", "Orientation")}:</span>{" "}
+                  <span className="font-medium text-wbk-black">{orientation}</span>
                 </div>
               )}
+
+            {/* Size / Finishes row */}
             {isTable ? (
-              <div className="space-y-0.5">
-                {(product.table_size || product.dimensions) && (
-                  <div>
-                    <span className="text-wbk-brown">{t("product.dimensions", "Dimensions")}:</span>{" "}
-                    <span className="font-medium text-wbk-black">{product.table_size || product.dimensions}</span>
-                  </div>
-                )}
-                {product.material && (
-                  <div className="text-[11px] text-wbk-brown truncate">
-                    <span>{t("product.material", "Material")}:</span>{" "}
-                    <span className="text-wbk-black">{product.material}</span>
-                  </div>
-                )}
-                {product.variants_count && product.variants_count > 1 ? (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full bg-wbk-gold/15 text-wbk-gold font-semibold text-[10px] border border-wbk-gold/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-wbk-gold animate-pulse" />
-                    {product.variants_count} Finishes Available
-                  </div>
-                ) : null}
+              <div>
+                <span className="text-wbk-brown">
+                  {product.variants_count && product.variants_count > 1
+                    ? t("product.options", "Options")
+                    : t("product.design", "Design")}:
+                </span>{" "}
+                <span className="font-medium text-wbk-black">
+                  {product.variants_count && product.variants_count > 1
+                    ? `${product.variants_count} ${t("product.finishesAvailable", "Finishes Available")}`
+                    : t("product.spaceSavingTransforming", "Space-Saving Transforming")}
+                </span>
               </div>
             ) : (
               <div>
-                {t("product.size", "Size")}: {size}
+                <span className="text-wbk-brown">{t("product.size", "Size")}:</span>{" "}
+                <span className="font-medium text-wbk-black">{size}</span>
               </div>
             )}
-            {product.weight && (
-              <div className="text-[11px] text-wbk-brown">
-                {t("product.weight", "Weight")}:{" "}
-                {locale === "us"
-                  ? `${Math.round(product.weight * 2.20462)} lbs`
-                  : `${product.weight} kg`}
-              </div>
-            )}
-            {colors && colors.length > 0 && (
+
+            {/* Colors Swatches (hide for mattresses which only have single white dot) */}
+            {colors && colors.length > 0 && !isMattress && (
               <div className="flex items-center gap-1.5 pt-1">
-                <span>{t("product.colors", "Colors")}:</span>
+                <span className="text-wbk-brown">{t("product.colors", "Colors")}:</span>
                 <div className="flex items-center">
                   {colors.map((color, cIdx) => (
                     <span

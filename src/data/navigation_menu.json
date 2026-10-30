@@ -60,7 +60,7 @@
     "href": "/products/tables",
     "order": 5,
     "order_index": 5,
-    "is_visible": false,
+    "is_visible": true,
     "has_submenu": true,
     "badge": ""
   },

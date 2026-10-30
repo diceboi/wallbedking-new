@@ -44,12 +44,7 @@ export const getStorefrontProducts = unstable_cache(
       if (!Array.isArray(rows)) return null;
 
       // Filter out hidden products so they NEVER enter the storefront
-      const isDev = process.env.NODE_ENV === "development";
       const visibleRows = rows.filter((p) => {
-        // Tables are strictly hidden in production until officially launched
-        if (p.parent_category === "tables") {
-          return isDev;
-        }
         const vis = String(p.visibility || "").trim().toLowerCase();
         return vis !== "hidden" && p.visibility !== false && p.is_visible !== false;
       });

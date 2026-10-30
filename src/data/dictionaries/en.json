@@ -331,7 +331,13 @@
     "availableSizes": "Available Sizes",
     "sizeAvailableSizes": "Size/ available sizes",
     "checkOutMorphy": "Check out MORPHY",
-    "availableInMorphy": "Available in Morphy Collection"
+    "availableInMorphy": "Available in Morphy Collection",
+    "options": "Options",
+    "finishesAvailable": "Finishes Available",
+    "design": "Design",
+    "spaceSavingTransforming": "Space-Saving Transforming",
+    "colors": "Colors",
+    "orientation": "Orientation"
   },
   "auth": {
     "recoveryBadge": "Password Recovery",
