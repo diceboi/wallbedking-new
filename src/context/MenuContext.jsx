@@ -48,9 +48,9 @@ export function MenuContextProvider({ children }) {
 
   const refreshNavItems = useCallback(async () => {
     try {
-      const res = await fetch("/api/navigation");
+      const res = await fetch("/api/navigation", { cache: "no-store" });
       const data = await res.json();
-      if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+      if (data.success && Array.isArray(data.items)) {
         setNavItems(data.items);
       }
     } catch (err) {

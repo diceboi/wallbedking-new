@@ -18,10 +18,13 @@ import { MenuContext } from "@/context/MenuContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
-import { isProductAvailableInLocale } from "@/lib/products";
 import { getProductPrice } from "@/lib/i18n";
 import { FlagIcon } from "@/components/ui/FlagIcon";
-import { MAIN_NAV_ITEMS, SUBMENU_DATA } from "@/data/navigation";
+import {
+  MAIN_NAV_ITEMS,
+  SUBMENU_DATA,
+  isNavItemAvailableInLocale,
+} from "@/data/navigation";
 
 const LANGUAGES = [
   { code: "en", label: "UK", flag: "🇬🇧" },
@@ -35,20 +38,23 @@ const LANGUAGES = [
 
 export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
-  const { locale, market, switchLocale, localizedHref, t, formatPrice } = useLocale();
-  const { allProducts, allFlagships } = useProductCatalog();
+  const { locale, market, switchLocale, localizedHref, t, formatPrice } =
+    useLocale();
+  const { allFlagships } = useProductCatalog();
   const rawItems = navItems || MAIN_NAV_ITEMS;
 
   const getSubmenuItemPrice = (item) => {
     if (!item) return null;
-    const cleanHref = item.href ? item.href.split("?")[0].replace(/\/+$/, "") : "";
+    const cleanHref = item.href
+      ? item.href.split("?")[0].replace(/\/+$/, "")
+      : "";
     const slug = cleanHref.split("/").pop();
     const flagship = allFlagships?.find(
       (f) =>
         f.slug === slug ||
         (Array.isArray(f.aliases) && f.aliases.includes(slug)) ||
         f.link === item.href ||
-        f.link?.split("?")[0].replace(/\/+$/, "") === cleanHref
+        f.link?.split("?")[0].replace(/\/+$/, "") === cleanHref,
     );
 
     if (flagship) {
@@ -65,17 +71,8 @@ export function MobileMenuDrawer() {
   };
 
   const items = useMemo(() => {
-    if (!locale || !allProducts) return rawItems;
-    return rawItems.filter((item) => {
-      const catKey = item.slug || item.category_id || item.id;
-      const catList = allProducts[catKey];
-      if (Array.isArray(catList)) {
-        if (catList.length === 0) return false;
-        return catList.some((p) => isProductAvailableInLocale(p, locale));
-      }
-      return true;
-    });
-  }, [rawItems, allProducts, locale]);
+    return rawItems.filter((item) => isNavItemAvailableInLocale(item, locale));
+  }, [rawItems, locale]);
 
   const { user, openUserDrawer } = useAuth();
 
@@ -112,7 +109,13 @@ export function MobileMenuDrawer() {
   };
 
   const activeCategoryData = activeCategorySlug
-    ? (SUBMENU_DATA[activeCategorySlug] || SUBMENU_DATA[items.find((it) => it.slug === activeCategorySlug || it.id === activeCategorySlug)?.category_id])
+    ? SUBMENU_DATA[activeCategorySlug] ||
+      SUBMENU_DATA[
+        items.find(
+          (it) =>
+            it.slug === activeCategorySlug || it.id === activeCategorySlug,
+        )?.category_id
+      ]
     : null;
 
   return (
@@ -213,7 +216,8 @@ export function MobileMenuDrawer() {
                   >
                     {/* Catalog Categories */}
                     {items.map((item) => {
-                      const submenuKey = item.slug || item.category_id || item.id;
+                      const submenuKey =
+                        item.slug || item.category_id || item.id;
                       const hasSub =
                         Boolean(item.hasSubmenu ?? item.has_submenu) &&
                         Boolean(SUBMENU_DATA[submenuKey]);
@@ -269,24 +273,57 @@ export function MobileMenuDrawer() {
                           <IconUser size={16} className="text-wbk-gold" />
                           <span>
                             {user
-                              ? (user.user_metadata?.full_name || user.email || t("header.account", "My Account"))
+                              ? user.user_metadata?.full_name ||
+                                user.email ||
+                                t("header.account", "My Account")
                               : t("header.account", "My Account")}
                           </span>
                         </div>
-                        <IconChevronRight size={16} className="text-wbk-brown" />
+                        <IconChevronRight
+                          size={16}
+                          className="text-wbk-brown"
+                        />
                       </button>
                     </div>
 
                     {/* Secondary Information & Support Links (From Desktop Black Menu, category button style) */}
                     <div className="flex flex-col divide-y divide-wbk-lightgrey/60 bg-[#FAF9F7] border-t-2 border-wbk-lightgrey/80">
                       {[
-                        { id: "delivery", href: "/support/delivery", label: t("topbar.delivery", "Delivery & Shipping") },
-                        { id: "faq", href: "/support/faq", label: t("topbar.faq", "FAQ") },
-                        { id: "trade", href: "/trade", label: t("topbar.tradeFull", "Trade Customers") },
-                        { id: "caseStudies", href: "/case-studies", label: t("topbar.caseStudies", "Case Studies") },
-                        { id: "reviews", href: "/reviews", label: t("topbar.reviews", "Reviews") },
-                        { id: "about", href: "/about", label: t("topbar.about", "About Us") },
-                        { id: "contact", href: "/contact", label: t("topbar.contact", "Contact") },
+                        {
+                          id: "delivery",
+                          href: "/support/delivery",
+                          label: t("topbar.delivery", "Delivery & Shipping"),
+                        },
+                        {
+                          id: "faq",
+                          href: "/support/faq",
+                          label: t("topbar.faq", "FAQ"),
+                        },
+                        {
+                          id: "trade",
+                          href: "/trade",
+                          label: t("topbar.tradeFull", "Trade Customers"),
+                        },
+                        {
+                          id: "caseStudies",
+                          href: "/case-studies",
+                          label: t("topbar.caseStudies", "Case Studies"),
+                        },
+                        {
+                          id: "reviews",
+                          href: "/reviews",
+                          label: t("topbar.reviews", "Reviews"),
+                        },
+                        {
+                          id: "about",
+                          href: "/about",
+                          label: t("topbar.about", "About Us"),
+                        },
+                        {
+                          id: "contact",
+                          href: "/contact",
+                          label: t("topbar.contact", "Contact"),
+                        },
                       ].map((link) => (
                         <Link
                           key={link.id}
@@ -295,7 +332,10 @@ export function MobileMenuDrawer() {
                           className="flex items-center justify-between py-3.5 px-4 text-xs font-medium uppercase tracking-[0.13em] text-wbk-brown hover:text-wbk-black hover:bg-[#F0EDE8] transition-colors"
                         >
                           <span>{link.label}</span>
-                          <IconChevronRight size={14} className="text-wbk-brown/60" />
+                          <IconChevronRight
+                            size={14}
+                            className="text-wbk-brown/60"
+                          />
                         </Link>
                       ))}
                     </div>
@@ -307,21 +347,39 @@ export function MobileMenuDrawer() {
                         onClick={closeMobileMenu}
                         className="flex items-center gap-2 hover:text-wbk-black transition-colors"
                       >
-                        <IconTruck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <IconTruck
+                          size={15}
+                          className="text-wbk-gold shrink-0"
+                          strokeWidth={1.5}
+                        />
                         <span className="text-wbk-black/80 font-medium">
-                          {t("topbar.freeDelivery", "Free UK Mainland Delivery")}
+                          {t(
+                            "topbar.freeDelivery",
+                            "Free UK Mainland Delivery",
+                          )}
                         </span>
                       </Link>
                       <div className="flex items-center gap-2">
-                        <IconShieldCheck size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <IconShieldCheck
+                          size={15}
+                          className="text-wbk-gold shrink-0"
+                          strokeWidth={1.5}
+                        />
                         <span className="text-wbk-black/80 font-medium">
                           {t("topbar.warranty", "Lifetime Mechanism Warranty")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <IconTools size={15} className="text-wbk-gold shrink-0" strokeWidth={1.5} />
+                        <IconTools
+                          size={15}
+                          className="text-wbk-gold shrink-0"
+                          strokeWidth={1.5}
+                        />
                         <span className="text-wbk-black/80 font-medium">
-                          {t("topbar.precision", "Precision Engineered Mechanisms")}
+                          {t(
+                            "topbar.precision",
+                            "Precision Engineered Mechanisms",
+                          )}
                         </span>
                       </div>
                     </div>
@@ -339,38 +397,57 @@ export function MobileMenuDrawer() {
                     className="flex flex-col divide-y divide-wbk-lightgrey/70"
                   >
                     {/* Category Title & View All (for categories without sections) */}
-                    {!activeCategoryData?.sections && activeCategoryData?.parent && (
-                      <Link
-                        href={localizedHref(activeCategoryData.parent.href)}
-                        onClick={closeMobileMenu}
-                        className="flex items-center gap-3 p-3 bg-[#F4F2F0] hover:bg-[#E4E0DE] transition-colors"
-                      >
-                        <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
-                          <Image
-                            src={activeCategoryData.parent.image}
-                            alt={activeCategoryData.parent.titleKey ? t(activeCategoryData.parent.titleKey, activeCategoryData.parent.title) : activeCategoryData.parent.title}
-                            width={42}
-                            height={42}
-                            className="object-contain"
+                    {!activeCategoryData?.sections &&
+                      activeCategoryData?.parent && (
+                        <Link
+                          href={localizedHref(activeCategoryData.parent.href)}
+                          onClick={closeMobileMenu}
+                          className="flex items-center gap-3 p-3 bg-[#F4F2F0] hover:bg-[#E4E0DE] transition-colors"
+                        >
+                          <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
+                            <Image
+                              src={activeCategoryData.parent.image}
+                              alt={
+                                activeCategoryData.parent.titleKey
+                                  ? t(
+                                      activeCategoryData.parent.titleKey,
+                                      activeCategoryData.parent.title,
+                                    )
+                                  : activeCategoryData.parent.title
+                              }
+                              width={42}
+                              height={42}
+                              className="object-contain"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] uppercase font-semibold tracking-wider text-wbk-gold block">
+                              {t("common.allModels", "All Models")}
+                            </span>
+                            <span className="text-xs font-semibold text-wbk-black truncate block">
+                              {activeCategoryData.parent.titleKey
+                                ? t(
+                                    activeCategoryData.parent.titleKey,
+                                    activeCategoryData.parent.title,
+                                  )
+                                : activeCategoryData.parent.title}
+                            </span>
+                          </div>
+                          <IconChevronRight
+                            size={16}
+                            className="text-wbk-brown"
                           />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] uppercase font-semibold tracking-wider text-wbk-gold block">
-                            {t("common.allModels", "All Models")}
-                          </span>
-                          <span className="text-xs font-semibold text-wbk-black truncate block">
-                            {activeCategoryData.parent.titleKey ? t(activeCategoryData.parent.titleKey, activeCategoryData.parent.title) : activeCategoryData.parent.title}
-                          </span>
-                        </div>
-                        <IconChevronRight size={16} className="text-wbk-brown" />
-                      </Link>
-                    )}
+                        </Link>
+                      )}
 
                     {/* Subcategories list or sections */}
                     {activeCategoryData?.sections ? (
                       <div className="flex flex-col divide-y divide-wbk-lightgrey/70">
                         {activeCategoryData.sections.map((section) => (
-                          <div key={section.id || section.title} className="flex flex-col">
+                          <div
+                            key={section.id || section.title}
+                            className="flex flex-col"
+                          >
                             <div className="px-3.5 py-2 bg-[#F4F2F0] flex items-center justify-between border-b border-wbk-lightgrey/50">
                               <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-wbk-black">
                                 {section.title}
@@ -392,7 +469,14 @@ export function MobileMenuDrawer() {
                                 <div className="w-11 h-11 shrink-0 bg-white border border-wbk-lightgrey/60 p-1 flex items-center justify-center">
                                   <Image
                                     src={section.parent.image}
-                                    alt={section.parent.titleKey ? t(section.parent.titleKey, section.parent.title) : section.parent.title}
+                                    alt={
+                                      section.parent.titleKey
+                                        ? t(
+                                            section.parent.titleKey,
+                                            section.parent.title,
+                                          )
+                                        : section.parent.title
+                                    }
                                     width={38}
                                     height={38}
                                     className="object-contain"
@@ -400,20 +484,34 @@ export function MobileMenuDrawer() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <span className="text-[9px] uppercase font-semibold tracking-wider text-wbk-gold block">
-                                    {t("nav.categoryOverview", "Category Overview")}
+                                    {t(
+                                      "nav.categoryOverview",
+                                      "Category Overview",
+                                    )}
                                   </span>
                                   <span className="text-xs font-semibold text-wbk-black group-hover:text-wbk-green transition-colors truncate block">
-                                    {section.parent.titleKey ? t(section.parent.titleKey, section.parent.title) : section.parent.title}
+                                    {section.parent.titleKey
+                                      ? t(
+                                          section.parent.titleKey,
+                                          section.parent.title,
+                                        )
+                                      : section.parent.title}
                                   </span>
                                 </div>
-                                <IconChevronRight size={14} className="text-wbk-brown group-hover:text-wbk-green" />
+                                <IconChevronRight
+                                  size={14}
+                                  className="text-wbk-brown group-hover:text-wbk-green"
+                                />
                               </Link>
                             )}
 
                             <div className="divide-y divide-wbk-lightgrey/50">
                               {section.items?.map((item, idx) => {
-                                const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
-                                const formattedPrice = getSubmenuItemPrice(item);
+                                const itemTitle = item.titleKey
+                                  ? t(item.titleKey, item.title)
+                                  : item.title;
+                                const formattedPrice =
+                                  getSubmenuItemPrice(item);
 
                                 return (
                                   <Link
@@ -454,7 +552,9 @@ export function MobileMenuDrawer() {
                       </div>
                     ) : (
                       activeCategoryData?.items?.map((item, idx) => {
-                        const itemTitle = item.titleKey ? t(item.titleKey, item.title) : item.title;
+                        const itemTitle = item.titleKey
+                          ? t(item.titleKey, item.title)
+                          : item.title;
                         const formattedPrice = getSubmenuItemPrice(item);
 
                         return (

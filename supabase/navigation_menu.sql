@@ -16,13 +16,19 @@ CREATE TABLE IF NOT EXISTS public.navigation_menu (
   is_visible BOOLEAN DEFAULT true,
   has_submenu BOOLEAN DEFAULT true,
   badge TEXT DEFAULT '',
+  available_locales TEXT[] DEFAULT '{en,us,de,fr,es,por,it}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure column exists if table was created earlier
+ALTER TABLE public.navigation_menu
+  ADD COLUMN IF NOT EXISTS available_locales TEXT[] DEFAULT '{en,us,de,fr,es,por,it}';
+
 -- 2. Indices
 CREATE INDEX IF NOT EXISTS idx_navigation_menu_order ON public.navigation_menu (order_index);
 CREATE INDEX IF NOT EXISTS idx_navigation_menu_visible ON public.navigation_menu (is_visible);
+CREATE INDEX IF NOT EXISTS idx_navigation_menu_available_locales ON public.navigation_menu USING GIN (available_locales);
 
 -- 3. Enable Row Level Security (RLS)
 ALTER TABLE public.navigation_menu ENABLE ROW LEVEL SECURITY;
@@ -43,18 +49,18 @@ DROP POLICY IF EXISTS "Authenticated users full access on navigation" ON public.
 CREATE POLICY "Authenticated users full access on navigation" ON public.navigation_menu
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- 5. Seed initial menu items
-INSERT INTO public.navigation_menu (id, title, type, category_id, slug, href, order_index, is_visible, has_submenu, badge)
+-- 5. Seed initial menu items with current regional visibility
+INSERT INTO public.navigation_menu (id, title, type, category_id, slug, href, order_index, is_visible, has_submenu, badge, available_locales)
 VALUES
-  ('morphyBeds', 'MORPHY™ Beds', 'category', 'beds', 'morphy-beds', '/products/beds?collection=morphy', 1, true, true, 'New Gen'),
-  ('traditionalBeds', 'Traditional Beds', 'category', 'beds', 'traditional-beds', '/products/beds?collection=traditional', 2, true, true, ''),
-  ('cabinets', 'Cabinets', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, ''),
-  ('mattresses', 'Mattresses', 'category', 'mattresses', 'mattresses', '/products/mattresses', 4, true, true, ''),
-  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 5, false, true, ''),
-  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 6, false, true, ''),
-  ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 7, false, true, ''),
-  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 8, false, true, ''),
-  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 9, false, true, '')
+  ('morphyBeds', 'MORPHY™ Beds', 'category', 'beds', 'morphy-beds', '/products/beds?collection=morphy', 1, true, true, 'New Gen', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('traditionalBeds', 'Clearance', 'category', 'beds', 'traditional-beds', '/products/beds?collection=traditional', 2, true, true, '%', ARRAY['en','de','fr','es','por','it']::TEXT[]),
+  ('cabinets', 'Cabinets', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
+  ('mattresses', 'Mattresses', 'category', 'mattresses', 'mattresses', '/products/mattresses', 4, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
+  ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 5, true, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 6, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 7, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 8, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 9, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[])
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   type = EXCLUDED.type,
@@ -65,4 +71,5 @@ ON CONFLICT (id) DO UPDATE SET
   is_visible = EXCLUDED.is_visible,
   has_submenu = EXCLUDED.has_submenu,
   badge = EXCLUDED.badge,
+  available_locales = EXCLUDED.available_locales,
   updated_at = NOW();

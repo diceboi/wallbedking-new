@@ -1,34 +1,149 @@
 import navMenuData from "./navigation_menu.json";
 
+export const NAV_LOCALES = [
+  { code: "en", label: "UK", name: "United Kingdom", currency: "GBP (£)" },
+  { code: "us", label: "US", name: "United States", currency: "USD ($)" },
+  { code: "de", label: "DE", name: "Germany", currency: "EUR (€)" },
+  { code: "fr", label: "FR", name: "France", currency: "EUR (€)" },
+  { code: "es", label: "ES", name: "Spain", currency: "EUR (€)" },
+  { code: "por", label: "POR", name: "Portugal", currency: "EUR (€)" },
+  { code: "it", label: "IT", name: "Italy", currency: "EUR (€)" },
+];
+
+export const ALL_NAV_LOCALE_CODES = NAV_LOCALES.map((l) => l.code);
+export const UK_EU_NAV_LOCALE_CODES = ["en", "de", "fr", "es", "por", "it"];
+
+const normalizeLocaleCode = (code) => {
+  const c = String(code || "")
+    .trim()
+    .toLowerCase();
+  if (c === "pt") return "por";
+  if (c === "uk" || c === "gb") return "en";
+  return c;
+};
+
+export function getDefaultNavLocales(item = null) {
+  const key = String(item?.slug || item?.id || "")
+    .trim()
+    .toLowerCase();
+  if (
+    key === "traditional-beds" ||
+    key === "traditionalbeds" ||
+    key === "cabinets" ||
+    key === "mattresses"
+  ) {
+    return [...UK_EU_NAV_LOCALE_CODES];
+  }
+  return [...ALL_NAV_LOCALE_CODES];
+}
+
+export function normalizeNavLocales(locales, item = null) {
+  if (Array.isArray(locales)) {
+    const set = new Set(
+      locales
+        .map(normalizeLocaleCode)
+        .filter((c) => ALL_NAV_LOCALE_CODES.includes(c)),
+    );
+    return ALL_NAV_LOCALE_CODES.filter((c) => set.has(c));
+  }
+  return getDefaultNavLocales(item);
+}
+
+export function isNavItemAvailableInLocale(item, locale) {
+  if (!item) return false;
+  if (item.is_visible === false) return false;
+  if (!locale) return true;
+  const normLoc = normalizeLocaleCode(locale);
+  const allowed = normalizeNavLocales(item.available_locales, item);
+  return allowed.includes(normLoc);
+}
+
 export const ALL_NAV_ITEMS = (
   Array.isArray(navMenuData) && navMenuData.length > 0
     ? navMenuData
     : [
-        { id: "morphyBeds", title: "MORPHY™ Beds", slug: "morphy-beds", href: "/products/beds?collection=morphy", is_visible: true, order: 1, hasSubmenu: true, has_submenu: true },
-        { id: "traditionalBeds", title: "Clearance", slug: "traditional-beds", href: "/products/beds?collection=traditional", is_visible: true, order: 2, hasSubmenu: true, has_submenu: true, badge: "%" },
-        { id: "cabinets", title: "Cabinets", slug: "cabinets", href: "/products/cabinets", is_visible: true, order: 3, hasSubmenu: true, has_submenu: true },
-        { id: "mattresses", title: "Mattresses", slug: "mattresses", href: "/products/mattresses", is_visible: true, order: 4, hasSubmenu: true, has_submenu: true },
-        { id: "tables", title: "Smart Tables", slug: "tables", href: "/products/tables", is_visible: true, order: 5, hasSubmenu: true, has_submenu: true },
+        {
+          id: "morphyBeds",
+          title: "MORPHY™ Beds",
+          slug: "morphy-beds",
+          href: "/products/beds?collection=morphy",
+          is_visible: true,
+          order: 1,
+          hasSubmenu: true,
+          has_submenu: true,
+          available_locales: ALL_NAV_LOCALE_CODES,
+        },
+        {
+          id: "traditionalBeds",
+          title: "Clearance",
+          slug: "traditional-beds",
+          href: "/products/beds?collection=traditional",
+          is_visible: true,
+          order: 2,
+          hasSubmenu: true,
+          has_submenu: true,
+          badge: "%",
+          available_locales: UK_EU_NAV_LOCALE_CODES,
+        },
+        {
+          id: "cabinets",
+          title: "Cabinets",
+          slug: "cabinets",
+          href: "/products/cabinets",
+          is_visible: true,
+          order: 3,
+          hasSubmenu: true,
+          has_submenu: true,
+          available_locales: UK_EU_NAV_LOCALE_CODES,
+        },
+        {
+          id: "mattresses",
+          title: "Mattresses",
+          slug: "mattresses",
+          href: "/products/mattresses",
+          is_visible: true,
+          order: 4,
+          hasSubmenu: true,
+          has_submenu: true,
+          available_locales: UK_EU_NAV_LOCALE_CODES,
+        },
+        {
+          id: "tables",
+          title: "Smart Tables",
+          slug: "tables",
+          href: "/products/tables",
+          is_visible: true,
+          order: 5,
+          hasSubmenu: true,
+          has_submenu: true,
+          available_locales: ALL_NAV_LOCALE_CODES,
+        },
       ]
 ).map((item) => {
-  const hasSub = item.hasSubmenu !== undefined ? Boolean(item.hasSubmenu) : Boolean(item.has_submenu);
+  const hasSub =
+    item.hasSubmenu !== undefined
+      ? Boolean(item.hasSubmenu)
+      : Boolean(item.has_submenu);
   const slug = item.slug || item.category_id || item.id;
   return {
     ...item,
     slug,
     hasSubmenu: hasSub,
     has_submenu: hasSub,
+    available_locales: normalizeNavLocales(item.available_locales, item),
   };
 });
 
 const isDev = process.env.NODE_ENV === "development";
 
-export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS
-  .filter((item) => item.is_visible !== false)
-  .sort((a, b) => (a.order || 0) - (b.order || 0));
+export const MAIN_NAV_ITEMS = ALL_NAV_ITEMS.filter(
+  (item) => item.is_visible !== false,
+).sort((a, b) => (a.order || 0) - (b.order || 0));
 
-const SUPABASE_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
-const SUPABASE_MATTRESSES_STORAGE_URL = "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
+const SUPABASE_STORAGE_URL =
+  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
+const SUPABASE_MATTRESSES_STORAGE_URL =
+  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
 
 const morphySubmenu = {
   parent: {
@@ -164,15 +279,18 @@ export const SUBMENU_DATA = {
   tables: {
     parent: {
       title: "All Space Saving Tables",
-      image: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
-      hoverImage: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-tablee477d391-4f57-480d-bd52-10d39d901e6d.webp",
+      image:
+        "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
+      hoverImage:
+        "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-tablee477d391-4f57-480d-bd52-10d39d901e6d.webp",
       href: "/products/tables",
       tagline: "Multifunctional, expanding & folding space savers",
     },
     items: [
       {
         title: "Dining Tables",
-        image: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
+        image:
+          "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
         href: "/products/tables?type=Dining+Table",
         type: "Dining Table",
         badge: "Transforming",
@@ -181,7 +299,8 @@ export const SUBMENU_DATA = {
       },
       {
         title: "Coffee & Lifting Tables",
-        image: "/product-images/tables/a1492m-minimalist-lifting-coffee-table/minimalist-lifting-coffee-table320b8.webp",
+        image:
+          "/product-images/tables/a1492m-minimalist-lifting-coffee-table/minimalist-lifting-coffee-table320b8.webp",
         href: "/products/tables?type=Coffee+Table",
         type: "Coffee Table",
         badge: "Height-Adjustable",
@@ -190,7 +309,8 @@ export const SUBMENU_DATA = {
       },
       {
         title: "Console & Desk Tables",
-        image: "/product-images/tables/b2241-4m-classical-wooden-extendable-console-table/classical-wooden-extendable-console-table38431.webp",
+        image:
+          "/product-images/tables/b2241-4m-classical-wooden-extendable-console-table/classical-wooden-extendable-console-table38431.webp",
         href: "/products/tables?type=Desk",
         type: "Desk",
         badge: "Extends to 10 Seats",
@@ -199,7 +319,8 @@ export const SUBMENU_DATA = {
       },
       {
         title: "Cube Stools & Benches",
-        image: "/product-images/tables/c3487-3m-multi-function-5-in-1-removable-stool/multi-function-5-in-1-removable-stool0f50c.webp",
+        image:
+          "/product-images/tables/c3487-3m-multi-function-5-in-1-removable-stool/multi-function-5-in-1-removable-stool0f50c.webp",
         href: "/products/tables?type=Cube+stool",
         type: "Cube stool",
         badge: "5 in 1 Modular",
@@ -249,40 +370,50 @@ export const SUBMENU_DATA = {
   cabinets: {
     parent: {
       title: "All Cabinets",
-      image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
-      hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
+      image:
+        "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
+      hoverImage:
+        "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
       href: "/products/cabinets",
       tagline: "Tailored modular cabinetry",
     },
     items: [
       {
         title: "Vertical Enclosure Cabinet",
-        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
-        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
+        image:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
+        hoverImage:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/vertical-wall-bed-cabinet",
         badge: "Vertical Beds",
         price: "from £449",
       },
       {
         title: "Horizontal Enclosure Cabinet",
-        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_1.webp",
-        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_2.webp",
+        image:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_1.webp",
+        hoverImage:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/160x200-KH-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/horizontal-wall-bed-cabinet",
         badge: "Horizontal Beds",
         price: "from £599",
       },
       {
         title: "Overhead Bridge Extension",
-        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_1.webp",
-        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_2.webp",
+        image:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_1.webp",
+        hoverImage:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140-160x200-KHEXT-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/overhead-storage-extension-cabinet",
         badge: "Top Bridge",
         price: "from £319",
       },
       {
         title: "Side Storage & Wardrobe Unit",
-        image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_1.webp",
-        hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_2.webp",
+        image:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_1.webp",
+        hoverImage:
+          "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/50x225-SIDEDHV-OAK-CABINET_ANGLE_2.webp",
         href: "/products/cabinets/side-storage-wardrobe-cabinet",
         badge: "Side Storage",
         price: "from £289",
@@ -346,7 +477,8 @@ export const SUBMENU_DATA = {
       {
         title: "Frequently Asked Questions",
         titleKey: "support.faqTitle",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
+        image:
+          "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp",
         href: "/support/faq",
         badge: "Answers & Tech specs",
         badgeKey: "support.faqBadge",

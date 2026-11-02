@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   IconLayoutNavbar,
   IconPlus,
@@ -12,7 +11,6 @@ import {
   IconEye,
   IconEyeOff,
   IconCheck,
-  IconRefresh,
   IconFolder,
   IconLink,
   IconAlertCircle,
@@ -20,8 +18,34 @@ import {
   IconExternalLink,
   IconLoader2,
   IconDatabase,
+  IconWorld,
+  IconCopy,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { FlagIcon } from "@/components/ui/FlagIcon";
+import {
+  NAV_LOCALES,
+  ALL_NAV_LOCALE_CODES,
+  UK_EU_NAV_LOCALE_CODES,
+  normalizeNavLocales,
+  isNavItemAvailableInLocale,
+} from "@/data/navigation";
+
+const MIGRATION_SQL_SNIPPET = `-- Run in Supabase SQL Editor (supabase/add_navigation_available_locales.sql)
+ALTER TABLE public.navigation_menu
+  ADD COLUMN IF NOT EXISTS available_locales TEXT[] DEFAULT '{en,us,de,fr,es,por,it}';
+
+CREATE INDEX IF NOT EXISTS idx_navigation_menu_available_locales
+  ON public.navigation_menu USING GIN (available_locales);
+
+UPDATE public.navigation_menu
+SET available_locales = ARRAY['en', 'us', 'de', 'fr', 'es', 'por', 'it']::TEXT[], updated_at = NOW()
+WHERE id IN ('morphyBeds', 'tables', 'sofas', 'extras', 'beds', 'support') OR available_locales IS NULL;
+
+UPDATE public.navigation_menu
+SET available_locales = ARRAY['en', 'de', 'fr', 'es', 'por', 'it']::TEXT[], updated_at = NOW()
+WHERE id IN ('traditionalBeds', 'cabinets', 'mattresses')
+   OR slug IN ('traditional-beds', 'cabinets', 'mattresses');`;
 
 export default function AdminNavigationPage() {
   const [items, setItems] = useState([]);
@@ -32,6 +56,8 @@ export default function AdminNavigationPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [fromSupabase, setFromSupabase] = useState(false);
   const [dbTableMissing, setDbTableMissing] = useState(false);
+  const [dbColumnMissing, setDbColumnMissing] = useState(false);
+  const [previewLocale, setPreviewLocale] = useState("en");
 
   // Modal State for Add / Edit
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,6 +72,7 @@ export default function AdminNavigationPage() {
     is_visible: true,
     has_submenu: true,
     badge: "",
+    available_locales: [...ALL_NAV_LOCALE_CODES],
   });
 
   const showToast = (msg) => {
@@ -56,13 +83,18 @@ export default function AdminNavigationPage() {
   const loadNavigation = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/navigation");
+      const res = await fetch("/api/admin/navigation", { cache: "no-store" });
       const data = await res.json();
       if (data.success) {
-        setItems(data.items || []);
+        const normalizedItems = (data.items || []).map((item) => ({
+          ...item,
+          available_locales: normalizeNavLocales(item.available_locales, item),
+        }));
+        setItems(normalizedItems);
         setCategories(data.categories || []);
         setFromSupabase(Boolean(data.fromSupabase));
         setDbTableMissing(Boolean(data.dbTableMissing));
+        setDbColumnMissing(Boolean(data.dbColumnMissing));
         setHasUnsavedChanges(false);
       }
     } catch (err) {
@@ -80,10 +112,11 @@ export default function AdminNavigationPage() {
   const handleSaveAll = async (itemsToSave = items) => {
     setSaving(true);
     try {
-      // Re-assign order numbers sequentially
+      // Re-assign order numbers sequentially and normalize locales
       const ordered = itemsToSave.map((item, index) => ({
         ...item,
         order: index + 1,
+        available_locales: normalizeNavLocales(item.available_locales, item),
       }));
 
       const res = await fetch("/api/admin/navigation", {
@@ -94,14 +127,20 @@ export default function AdminNavigationPage() {
 
       const data = await res.json();
       if (data.success) {
-        setItems(data.items || ordered);
+        const savedItems = (data.items || ordered).map((item) => ({
+          ...item,
+          available_locales: normalizeNavLocales(item.available_locales, item),
+        }));
+        setItems(savedItems);
         setFromSupabase(Boolean(data.fromSupabase));
         setDbTableMissing(Boolean(data.dbTableMissing));
+        setDbColumnMissing(Boolean(data.dbColumnMissing));
         setHasUnsavedChanges(false);
         showToast(
-          data.fromSupabase
-            ? "Navigation saved directly to Supabase database!"
-            : "Navigation saved locally (database table not migrated yet)"
+          data.message ||
+            (data.fromSupabase
+              ? "Navigation saved directly to Supabase database!"
+              : "Navigation saved locally (database table not migrated yet)")
         );
       } else {
         alert(data.error || "Failed to save navigation");
@@ -117,6 +156,29 @@ export default function AdminNavigationPage() {
   const handleToggleVisibility = (id) => {
     const updated = items.map((item) =>
       item.id === id ? { ...item, is_visible: !item.is_visible } : item
+    );
+    setItems(updated);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleToggleItemLocale = (id, localeCode) => {
+    const updated = items.map((item) => {
+      if (item.id !== id) return item;
+      const current = normalizeNavLocales(item.available_locales, item);
+      const next = current.includes(localeCode)
+        ? current.filter((c) => c !== localeCode)
+        : ALL_NAV_LOCALE_CODES.filter((c) => c === localeCode || current.includes(c));
+      return { ...item, available_locales: next };
+    });
+    setItems(updated);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSetItemLocalePreset = (id, presetCodes) => {
+    const updated = items.map((item) =>
+      item.id === id
+        ? { ...item, available_locales: normalizeNavLocales(presetCodes, item) }
+        : item
     );
     setItems(updated);
     setHasUnsavedChanges(true);
@@ -154,6 +216,7 @@ export default function AdminNavigationPage() {
       is_visible: true,
       has_submenu: true,
       badge: "",
+      available_locales: [...ALL_NAV_LOCALE_CODES],
     });
     setModalOpen(true);
   };
@@ -170,6 +233,7 @@ export default function AdminNavigationPage() {
       is_visible: item.is_visible !== false,
       has_submenu: Boolean(item.has_submenu),
       badge: item.badge || "",
+      available_locales: normalizeNavLocales(item.available_locales, item),
     });
     setModalOpen(true);
   };
@@ -186,6 +250,18 @@ export default function AdminNavigationPage() {
     }));
   };
 
+  const handleToggleFormLocale = (localeCode) => {
+    setFormState((prev) => {
+      const current = Array.isArray(prev.available_locales)
+        ? prev.available_locales
+        : [...ALL_NAV_LOCALE_CODES];
+      const next = current.includes(localeCode)
+        ? current.filter((c) => c !== localeCode)
+        : ALL_NAV_LOCALE_CODES.filter((c) => c === localeCode || current.includes(c));
+      return { ...prev, available_locales: next };
+    });
+  };
+
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!formState.title.trim()) {
@@ -193,16 +269,21 @@ export default function AdminNavigationPage() {
       return;
     }
 
+    const prepared = {
+      ...formState,
+      available_locales: normalizeNavLocales(formState.available_locales, formState),
+    };
+
     if (editingItem) {
       // Update existing item
       const updated = items.map((item) =>
-        item.id === editingItem.id ? { ...item, ...formState } : item
+        item.id === editingItem.id ? { ...item, ...prepared } : item
       );
       setItems(updated);
     } else {
       // Add new item to end
       const newItem = {
-        ...formState,
+        ...prepared,
         order: items.length + 1,
       };
       setItems([...items, newItem]);
@@ -223,6 +304,11 @@ export default function AdminNavigationPage() {
 
   const visibleItems = items.filter((i) => i.is_visible !== false);
   const hiddenItems = items.filter((i) => i.is_visible === false);
+  const previewVisibleItems = visibleItems.filter((item) =>
+    isNavItemAvailableInLocale(item, previewLocale)
+  );
+  const activePreviewLocaleMeta =
+    NAV_LOCALES.find((l) => l.code === previewLocale) || NAV_LOCALES[0];
 
   return (
     <div className="space-y-8 font-poppins pb-24">
@@ -239,7 +325,7 @@ export default function AdminNavigationPage() {
         badge="Storefront Navigation"
         title="Navigation & Menu Manager"
         count={items.length}
-        description="Organize the header navigation menu. Connect tabs to product categories or custom links, reorder tabs, toggle visibility, and control mega-menu behavior."
+        description="Organize the header navigation menu. Connect tabs to product categories or custom links, reorder tabs, toggle visibility, and manage which regional storefronts display each menu item."
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -268,51 +354,85 @@ export default function AdminNavigationPage() {
       />
 
       {/* Database Storage Status Banner */}
-      {fromSupabase ? (
-        <div className="bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center justify-between text-xs text-emerald-900">
-          <div className="flex items-center gap-2">
-            <IconDatabase size={16} className="text-emerald-600 shrink-0" />
-            <span className="font-semibold">Connected to Supabase Database:</span>
-            <span>
-              Menu items are stored in and served directly from{" "}
-              <code className="bg-emerald-100 px-1 py-0.5 rounded font-mono text-emerald-800">
-                public.navigation_menu
-              </code>
-              .
+      <div className="space-y-2.5">
+        {fromSupabase ? (
+          <div className="bg-emerald-50 border border-emerald-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-900">
+            <div className="flex items-center gap-2">
+              <IconDatabase size={16} className="text-emerald-600 shrink-0" />
+              <span className="font-semibold">Connected to Supabase Database:</span>
+              <span>
+                Menu items {!dbColumnMissing && "& regional visibility "}are stored in and served directly from{" "}
+                <code className="bg-emerald-100 px-1 py-0.5 rounded font-mono text-emerald-800">
+                  public.navigation_menu
+                </code>
+                .
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-medium text-[11px] self-start sm:self-center">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live DB Synced
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-medium text-[11px]">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live DB Synced
-          </span>
-        </div>
-      ) : dbTableMissing ? (
-        <div className="bg-amber-50 border border-amber-300 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
-          <div className="flex items-start gap-2.5">
-            <IconAlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-amber-900">Database Table Setup Ready</p>
-              <p className="text-amber-800 mt-0.5">
-                To store your navigation menu directly in Supabase, run the migration script in{" "}
-                <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-semibold">
-                  supabase/navigation_menu.sql
-                </code>{" "}
-                in your Supabase SQL Editor. Currently operating in fallback cache mode.
-              </p>
+        ) : dbTableMissing ? (
+          <div className="bg-amber-50 border border-amber-300 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
+            <div className="flex items-start gap-2.5">
+              <IconAlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-amber-900">Database Table Setup Ready</p>
+                <p className="text-amber-800 mt-0.5">
+                  To store your navigation menu directly in Supabase, run the migration script in{" "}
+                  <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-semibold">
+                    supabase/navigation_menu.sql
+                  </code>{" "}
+                  in your Supabase SQL Editor. Currently operating in fallback cache mode.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText("supabase/navigation_menu.sql");
+                showToast("Copied script path: supabase/navigation_menu.sql");
+              }}
+              className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer self-start sm:self-center"
+            >
+              Copy Script Path
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard?.writeText("supabase/navigation_menu.sql");
-              showToast("Copied script path: supabase/navigation_menu.sql");
-            }}
-            className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer self-start sm:self-center"
-          >
-            Copy Script Path
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+
+        {fromSupabase && dbColumnMissing && (
+          <div className="bg-amber-50 border border-amber-300 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
+            <div className="flex items-start gap-2.5">
+              <IconWorld size={18} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-amber-900">
+                  Add <code className="font-mono">available_locales</code> Column in Supabase
+                </p>
+                <p className="text-amber-800 mt-0.5">
+                  Run{" "}
+                  <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-semibold">
+                    supabase/add_navigation_available_locales.sql
+                  </code>{" "}
+                  in your Supabase SQL Editor so regional checkmarks are stored directly in{" "}
+                  <code className="font-mono">public.navigation_menu</code> (currently synced via local fallback until run).
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(MIGRATION_SQL_SNIPPET);
+                showToast("Copied SQL migration! Paste & run in Supabase SQL Editor.");
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer self-start sm:self-center"
+            >
+              <IconCopy size={13} />
+              <span>Copy SQL Migration</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -331,7 +451,7 @@ export default function AdminNavigationPage() {
             <IconEye size={18} className="text-emerald-600" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-emerald-700">{visibleItems.length}</div>
-          <span className="text-[11px] text-wbk-brown mt-1 block">Currently in header</span>
+          <span className="text-[11px] text-wbk-brown mt-1 block">Globally enabled tabs</span>
         </div>
 
         <div className="bg-white p-5 border border-wbk-lightgrey/60 shadow-2xs">
@@ -345,35 +465,65 @@ export default function AdminNavigationPage() {
 
         <div className="bg-white p-5 border border-wbk-lightgrey/60 shadow-2xs">
           <div className="flex items-center justify-between text-wbk-brown mb-2">
-            <span className="text-xs uppercase tracking-wider font-semibold">Category Links</span>
-            <IconFolder size={18} className="text-blue-600" />
+            <span className="text-xs uppercase tracking-wider font-semibold">Active Markets</span>
+            <IconWorld size={18} className="text-blue-600" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-wbk-black">
-            {items.filter((i) => i.type === "category" || i.category_id).length}
+            {NAV_LOCALES.length}
           </div>
-          <span className="text-[11px] text-wbk-brown mt-1 block">Linked to catalog categories</span>
+          <span className="text-[11px] text-wbk-brown mt-1 block">UK, US, DE, FR, ES, POR, IT</span>
         </div>
       </div>
 
-      {/* Live Storefront Menu Preview */}
-      <div className="bg-white border border-wbk-lightgrey/80 p-5 space-y-3 shadow-2xs">
-        <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-wider font-semibold text-wbk-black flex items-center gap-2">
-            <span>Live Header Menu Preview (Customer View)</span>
-          </span>
-          <span className="text-[11px] text-wbk-brown">
-            {visibleItems.length} active tabs displayed in order
-          </span>
+      {/* Live Storefront Menu Preview (Per Region) */}
+      <div className="bg-white border border-wbk-lightgrey/80 p-5 space-y-3.5 shadow-2xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs uppercase tracking-wider font-semibold text-wbk-black flex items-center gap-2">
+              <IconWorld size={15} className="text-wbk-gold" />
+              <span>Live Header Menu Preview (Customer View)</span>
+            </span>
+            <span className="text-[11px] text-wbk-brown">
+              — {previewVisibleItems.length} active tabs in{" "}
+              <strong className="text-wbk-black">{activePreviewLocaleMeta.name}</strong>
+            </span>
+          </div>
+
+          {/* Region Selector for Live Preview */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mr-1">
+              Preview Region:
+            </span>
+            {NAV_LOCALES.map((loc) => {
+              const isSelected = previewLocale === loc.code;
+              return (
+                <button
+                  key={loc.code}
+                  type="button"
+                  onClick={() => setPreviewLocale(loc.code)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-wbk-black text-white shadow-2xs"
+                      : "bg-[#FAF8F5] text-wbk-black border border-wbk-lightgrey hover:border-wbk-black"
+                  }`}
+                  title={`Preview header menu in ${loc.name}`}
+                >
+                  <FlagIcon country={loc.code} size={13} />
+                  <span>{loc.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="p-3 bg-[#FAF8F5] border border-wbk-lightgrey rounded-md">
           <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1">
-            {visibleItems.length === 0 ? (
+            {previewVisibleItems.length === 0 ? (
               <span className="text-xs text-amber-600 italic">
-                No items are currently visible. All tabs are hidden!
+                No menu tabs are enabled for {activePreviewLocaleMeta.name} ({activePreviewLocaleMeta.label}).
               </span>
             ) : (
-              visibleItems.map((item, idx) => (
+              previewVisibleItems.map((item) => (
                 <div
                   key={item.id}
                   className="px-3.5 py-1.5 bg-white border border-wbk-lightgrey/90 text-xs font-medium uppercase tracking-[0.1em] text-wbk-black shrink-0 flex items-center gap-2 shadow-2xs"
@@ -398,18 +548,18 @@ export default function AdminNavigationPage() {
 
       {/* Main Menu Items Management Table */}
       <div className="bg-white border border-wbk-lightgrey/80 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-wbk-lightgrey/60 flex items-center justify-between">
+        <div className="p-5 border-b border-wbk-lightgrey/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="font-poppins text-base font-semibold text-wbk-black">
               Header Navigation Items
             </h3>
             <p className="text-xs text-wbk-brown mt-0.5">
-              Use the arrows to reorder tabs. Click the eye icon to show or hide items on the live website.
+              Use the arrows to reorder tabs, toggle global visibility, or check/uncheck individual regions where each menu tab should appear.
             </p>
           </div>
           {hasUnsavedChanges && (
-            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 animate-pulse">
-              ● Unsaved changes in menu order / visibility
+            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 animate-pulse self-start sm:self-center">
+              ● Unsaved changes in menu / regional visibility
             </span>
           )}
         </div>
@@ -437,8 +587,8 @@ export default function AdminNavigationPage() {
                 <tr>
                   <th className="py-3 px-4 w-12 text-center">Order</th>
                   <th className="py-3 px-4">Menu Title</th>
-                  <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4">Destination Link</th>
+                  <th className="py-3 px-4 min-w-[330px]">Regions (Storefront Markets)</th>
                   <th className="py-3 px-4 text-center">Submenu</th>
                   <th className="py-3 px-4 text-center">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
@@ -451,6 +601,7 @@ export default function AdminNavigationPage() {
                   const linkedCategory = categories.find(
                     (c) => c.id === item.category_id || c.slug === item.slug
                   );
+                  const activeLocales = normalizeNavLocales(item.available_locales, item);
 
                   return (
                     <tr
@@ -486,9 +637,9 @@ export default function AdminNavigationPage() {
                         </div>
                       </td>
 
-                      {/* Title */}
+                      {/* Title & Type */}
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-wbk-black text-xs sm:text-sm">
                             {item.title}
                           </span>
@@ -498,26 +649,19 @@ export default function AdminNavigationPage() {
                             </span>
                           )}
                         </div>
-                        {isCategory && linkedCategory && (
-                          <span className="text-[10px] text-wbk-brown block mt-0.5">
-                            Category: {linkedCategory.name || linkedCategory.title}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Type Badge */}
-                      <td className="py-3.5 px-4">
-                        {isCategory ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-blue-50 text-blue-800 border border-blue-200">
-                            <IconFolder size={11} />
-                            <span>Category</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-purple-50 text-purple-800 border border-purple-200">
-                            <IconLink size={11} />
-                            <span>Custom Link</span>
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {isCategory ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-blue-50 text-blue-800 border border-blue-200">
+                              <IconFolder size={10} />
+                              <span>{linkedCategory ? linkedCategory.name || linkedCategory.title : "Category"}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-purple-50 text-purple-800 border border-purple-200">
+                              <IconLink size={10} />
+                              <span>Custom Link</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Target Link */}
@@ -533,11 +677,77 @@ export default function AdminNavigationPage() {
                         </a>
                       </td>
 
+                      {/* Regional Visibility Checkmarks */}
+                      <td className="py-3.5 px-4">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {NAV_LOCALES.map((loc) => {
+                              const checked = activeLocales.includes(loc.code);
+                              return (
+                                <button
+                                  key={loc.code}
+                                  type="button"
+                                  onClick={() => handleToggleItemLocale(item.id, loc.code)}
+                                  title={`${loc.name} (${loc.label}): ${
+                                    checked ? "Visible — click to hide" : "Hidden — click to show"
+                                  }`}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded border text-[10px] font-semibold transition-all cursor-pointer select-none ${
+                                    checked
+                                      ? "bg-emerald-50 border-emerald-400 text-emerald-950 shadow-2xs"
+                                      : "bg-gray-50 border-gray-200 text-gray-400 opacity-65 hover:opacity-100 hover:border-gray-300"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-3 h-3 rounded-[2px] flex items-center justify-center border ${
+                                      checked
+                                        ? "bg-emerald-600 border-emerald-600 text-white"
+                                        : "bg-white border-gray-300"
+                                    }`}
+                                  >
+                                    {checked && <IconCheck size={9} stroke={3} />}
+                                  </span>
+                                  <FlagIcon country={loc.code} size={12} />
+                                  <span>{loc.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[10px] text-wbk-brown">
+                            <span className="font-medium">
+                              {activeLocales.length}/{NAV_LOCALES.length} regions
+                            </span>
+                            <span className="text-wbk-lightgrey">|</span>
+                            <button
+                              type="button"
+                              onClick={() => handleSetItemLocalePreset(item.id, ALL_NAV_LOCALE_CODES)}
+                              className="hover:text-wbk-black underline cursor-pointer"
+                            >
+                              All
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSetItemLocalePreset(item.id, UK_EU_NAV_LOCALE_CODES)}
+                              className="hover:text-wbk-black underline cursor-pointer"
+                            >
+                              UK+EU
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSetItemLocalePreset(item.id, [])}
+                              className="hover:text-red-600 underline cursor-pointer"
+                            >
+                              None
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+
                       {/* Submenu Mega-Menu Indicator */}
                       <td className="py-3.5 px-4 text-center">
                         {item.has_submenu ? (
                           <span className="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[10px] font-semibold">
-                            Mega Menu Active
+                            Mega Menu
                           </span>
                         ) : (
                           <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px]">
@@ -556,7 +766,7 @@ export default function AdminNavigationPage() {
                               ? "bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200"
                               : "bg-gray-200 text-gray-700 border border-gray-300 hover:bg-gray-300"
                           }`}
-                          title={isVisible ? "Click to hide from store" : "Click to show on store"}
+                          title={isVisible ? "Click to hide globally" : "Click to enable globally"}
                         >
                           {isVisible ? (
                             <>
@@ -578,15 +788,15 @@ export default function AdminNavigationPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(item)}
-                            className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-gray-100 rounded transition-colors"
-                            title="Edit menu item details"
+                            className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                            title="Edit menu item details & regions"
                           >
                             <IconEdit size={15} />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteItem(item.id, item.title)}
-                            className="p-1.5 text-red-400 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                            className="p-1.5 text-red-400 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer"
                             title="Delete menu item"
                           >
                             <IconTrash size={15} />
@@ -605,8 +815,8 @@ export default function AdminNavigationPage() {
       {/* Edit / Add Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white max-w-lg w-full border border-wbk-lightgrey shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="bg-[#090A0A] text-white p-4 px-6 flex items-center justify-between">
+          <div className="bg-white max-w-lg w-full max-h-[92vh] flex flex-col border border-wbk-lightgrey shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="bg-[#090A0A] text-white p-4 px-6 flex items-center justify-between shrink-0">
               <div>
                 <span className="text-[10px] uppercase font-semibold text-wbk-gold tracking-widest block">
                   Storefront Navigation
@@ -618,13 +828,16 @@ export default function AdminNavigationPage() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="text-white/60 hover:text-white transition-colors"
+                className="text-white/60 hover:text-white transition-colors cursor-pointer"
               >
                 <IconX size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4 text-xs font-poppins">
+            <form
+              onSubmit={handleFormSubmit}
+              className="p-6 space-y-4 text-xs font-poppins overflow-y-auto"
+            >
               {/* Type Selection */}
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
@@ -750,8 +963,89 @@ export default function AdminNavigationPage() {
                 />
               </div>
 
+              {/* Regional Visibility Checkboxes */}
+              <div className="pt-3 border-t border-wbk-lightgrey/60 space-y-2.5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-wbk-black flex items-center gap-1.5">
+                    <IconWorld size={14} className="text-wbk-gold" />
+                    <span>Regional Visibility (Markets)</span>
+                    <span className="text-[10px] font-mono text-wbk-brown font-normal">
+                      ({(formState.available_locales || []).length}/{NAV_LOCALES.length})
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          available_locales: [...ALL_NAV_LOCALE_CODES],
+                        }))
+                      }
+                      className="text-wbk-brown hover:text-wbk-black underline cursor-pointer font-medium"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          available_locales: [...UK_EU_NAV_LOCALE_CODES],
+                        }))
+                      }
+                      className="text-wbk-brown hover:text-wbk-black underline cursor-pointer font-medium"
+                    >
+                      UK + EU
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          available_locales: [],
+                        }))
+                      }
+                      className="text-red-500 hover:text-red-700 underline cursor-pointer font-medium"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {NAV_LOCALES.map((loc) => {
+                    const checked = (formState.available_locales || []).includes(loc.code);
+                    return (
+                      <label
+                        key={loc.code}
+                        className={`flex items-center gap-2 p-2 rounded border cursor-pointer select-none transition-colors ${
+                          checked
+                            ? "bg-emerald-50/70 border-emerald-400 text-wbk-black font-medium"
+                            : "bg-gray-50/60 border-wbk-lightgrey text-wbk-brown hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleToggleFormLocale(loc.code)}
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <FlagIcon country={loc.code} size={14} />
+                        <div className="leading-tight min-w-0">
+                          <span className="text-[11px] font-semibold block">{loc.label}</span>
+                          <span className="text-[9px] text-wbk-brown truncate block">
+                            {loc.name}
+                          </span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Checkboxes: Submenu and Visibility */}
-              <div className="pt-2 border-t border-wbk-lightgrey/60 space-y-3">
+              <div className="pt-3 border-t border-wbk-lightgrey/60 space-y-3">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -782,13 +1076,13 @@ export default function AdminNavigationPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm"
+                  className="px-5 py-2 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
                 >
                   {editingItem ? "Update Item" : "Add Item"}
                 </button>

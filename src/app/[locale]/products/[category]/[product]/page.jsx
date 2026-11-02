@@ -1597,6 +1597,14 @@ export default function ProductDetailPage() {
 
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {
+    if (
+      isTableProduct ||
+      displayProduct?.parent_category === "tables" ||
+      displayProduct?.is_space_saving_table ||
+      categorySlug === "tables"
+    ) {
+      return [];
+    }
     if (displayProduct.features && displayProduct.features.length > 0) {
       return displayProduct.features;
     }
@@ -2049,7 +2057,7 @@ export default function ProductDetailPage() {
         "Automatic self-folding leg system for safety and ease",
       ),
     ];
-  }, [displayProduct, activeProduct, categorySlug, locale, t]);
+  }, [displayProduct, activeProduct, categorySlug, locale, t, isTableProduct]);
 
   // ── CART INTEGRATION ──
   const { addItem } = useCart();
@@ -3940,14 +3948,16 @@ export default function ProductDetailPage() {
                       {localizedExtendedDescription}
                     </p>
                   )}
-                  <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
-                    {productFeatures.map((feat, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold shrink-0" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {productFeatures.length > 0 && (
+                    <ul className="space-y-3 font-poppins text-xs text-wbk-brown">
+                      {productFeatures.map((feat, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-none bg-wbk-gold shrink-0" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <div className="bg-[#F4F2F0]/60 p-8 rounded-none border border-wbk-lightgrey/40">
                   <h4 className="font-poppins font-semibold text-xs uppercase tracking-wider text-wbk-black mb-6">

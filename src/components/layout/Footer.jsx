@@ -1,5 +1,6 @@
 "use client";
 
+import { useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -7,6 +8,8 @@ import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { isProductAvailableInLocale } from "@/lib/products";
+import { MenuContext } from "@/context/MenuContext";
+import { isNavItemAvailableInLocale } from "@/data/navigation";
 
 const FOOTER_LINKS = {
   Products: [
@@ -37,6 +40,7 @@ export function Footer() {
   const pathname = usePathname();
   const { localizedHref, t, locale } = useLocale();
   const { allProducts } = useProductCatalog();
+  const { navItems } = useContext(MenuContext);
   if (pathname === "/configurator" || pathname?.endsWith("/configurator") || pathname?.startsWith("/admin")) return null;
 
   return (
@@ -66,7 +70,13 @@ export function Footer() {
               <ul className="space-y-2.5">
                 {links
                   .filter((link) => {
-                    if (!link.id || !allProducts || !allProducts[link.id] || !locale) return true;
+                    if (!link.id || !locale) return true;
+                    if (title === "Products" && link.id !== "configurator" && Array.isArray(navItems)) {
+                      const navMatch = navItems.find((it) => it.id === link.id);
+                      if (!navMatch) return false;
+                      return isNavItemAvailableInLocale(navMatch, locale);
+                    }
+                    if (!allProducts || !allProducts[link.id]) return true;
                     const catProds = allProducts[link.id];
                     if (Array.isArray(catProds)) {
                       if (catProds.length === 0) return false;
