@@ -228,13 +228,14 @@ export function AuthProvider({ children }) {
     setIsUserDrawerOpen(false);
   }, []);
 
-  // Sign In with email and password
-  const signInWithPassword = useCallback(async (email, password) => {
+  // Sign In with email, password, and optional Cloudflare Turnstile captchaToken
+  const signInWithPassword = useCallback(async (email, password, captchaToken = "") => {
     if (!supabase) throw new Error("Supabase client is not available.");
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
     });
 
     if (error) throw error;
@@ -243,29 +244,33 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
-  // Sign Up with email, password, and full name metadata
-  const signUpWithPassword = useCallback(async (email, password, fullName = "") => {
-    if (!supabase) throw new Error("Supabase client is not available.");
+  // Sign Up with email, password, full name metadata, and optional Cloudflare Turnstile captchaToken
+  const signUpWithPassword = useCallback(
+    async (email, password, fullName = "", captchaToken = "") => {
+      if (!supabase) throw new Error("Supabase client is not available.");
 
-    const emailRedirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/account?verified=true`
-        : undefined;
+      const emailRedirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/account?verified=true`
+          : undefined;
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo,
-        data: {
-          full_name: fullName.trim(),
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo,
+          data: {
+            full_name: fullName.trim(),
+          },
+          ...(captchaToken ? { captchaToken } : {}),
         },
-      },
-    });
+      });
 
-    if (error) throw error;
-    return data;
-  }, []);
+      if (error) throw error;
+      return data;
+    },
+    []
+  );
 
   // Sign Out
   const signOut = useCallback(async () => {
@@ -288,8 +293,8 @@ export function AuthProvider({ children }) {
     setPasswordRecoveryError(null);
   }, []);
 
-  // Send password reset email
-  const resetPassword = useCallback(async (email) => {
+  // Send password reset email (with optional Cloudflare Turnstile captchaToken)
+  const resetPassword = useCallback(async (email, captchaToken = "") => {
     if (!supabase) throw new Error("Supabase client is not available.");
 
     let redirectUrl = undefined;
@@ -303,6 +308,7 @@ export function AuthProvider({ children }) {
       email.trim().toLowerCase(),
       {
         redirectTo: redirectUrl,
+        ...(captchaToken ? { captchaToken } : {}),
       }
     );
 

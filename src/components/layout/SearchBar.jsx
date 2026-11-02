@@ -15,7 +15,7 @@ import { formatSizeLabel } from "@/lib/i18n";
 const normalizeStr = (s) =>
   s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 
-export function SearchBar({ className = "", onSelect = null }) {
+export function SearchBar({ className = "", onSelect = null, compact = false }) {
   const router = useRouter();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const { rawCatalog } = useProductCatalog();
@@ -23,7 +23,7 @@ export function SearchBar({ className = "", onSelect = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
-  const { setIsSearchOpen } = useContext(MenuContext);
+  const { setIsSearchOpen, setSubMenu } = useContext(MenuContext);
 
   // Synchronize search open state with MenuContext to lock header during search
   useEffect(() => {
@@ -148,6 +148,8 @@ export function SearchBar({ className = "", onSelect = null }) {
       setIsOpen(false);
       onSelect?.();
       router.push(localizedHref(`/products?search=${encodeURIComponent(query.trim())}`));
+    } else {
+      inputRef.current?.focus();
     }
   };
 
@@ -163,19 +165,27 @@ export function SearchBar({ className = "", onSelect = null }) {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full font-poppins ${className}`}
+      className={`relative w-full ${compact ? "h-full" : ""} font-poppins ${className}`}
     >
       {/* Search Input Box */}
       <form
         onSubmit={handleSubmitSearch}
-        className="relative flex items-center w-full bg-white border border-wbk-lightgrey focus-within:border-wbk-black rounded-full shadow-xs hover:border-wbk-black/40 transition-colors p-1 sm:p-1.5"
+        onClick={(e) => {
+          if (compact && e.target === e.currentTarget) {
+            inputRef.current?.focus();
+          }
+        }}
+        className={
+          compact
+            ? "relative flex items-center w-full h-full bg-transparent hover:bg-[#FBF9F8]/60 focus-within:bg-[#FBF9F8] border-x border-wbk-lightgrey px-3.5 xl:px-4 gap-1.5 transition-colors cursor-text"
+            : "relative flex items-center w-full bg-white border border-wbk-lightgrey focus-within:border-wbk-black rounded-full shadow-xs hover:border-wbk-black/40 transition-colors p-1 sm:p-1.5"
+        }
       >
-        <div className="pl-3 sm:pl-3.5 pr-2 text-wbk-brown flex items-center justify-center shrink-0">
-          <IconSearch
-            size={17}
-            strokeWidth={1.8}
-          />
-        </div>
+        {!compact && (
+          <div className="pl-3 sm:pl-3.5 pr-2 text-wbk-brown flex items-center justify-center shrink-0">
+            <IconSearch size={17} strokeWidth={1.8} />
+          </div>
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -184,10 +194,15 @@ export function SearchBar({ className = "", onSelect = null }) {
             setQuery(e.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            setSubMenu?.(null);
+            setIsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={t("header.searchPlaceholder", "Search beds, sofas, mattresses...")}
-          className="w-full h-8 sm:h-8.5 text-xs sm:text-[13px] bg-transparent text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none min-w-0 font-normal"
+          className={`w-full bg-transparent text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none min-w-0 font-normal ${
+            compact ? "h-full text-xs pr-1" : "h-8 sm:h-8.5 text-xs sm:text-[13px]"
+          }`}
         />
         {query && (
           <button
@@ -196,18 +211,28 @@ export function SearchBar({ className = "", onSelect = null }) {
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="p-1 text-wbk-brown hover:text-wbk-black mr-1.5 cursor-pointer transition-colors shrink-0"
+            className="p-1 text-wbk-brown hover:text-wbk-black mr-0.5 cursor-pointer transition-colors shrink-0"
             aria-label="Clear search"
           >
-            <IconX size={15} />
+            <IconX size={14} />
           </button>
         )}
-        <button
-          type="submit"
-          className="px-4 sm:px-5 h-8 sm:h-8.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer shrink-0 shadow-2xs active:scale-[0.98]"
-        >
-          {t("search.title", "Search")}
-        </button>
+        {compact ? (
+          <button
+            type="submit"
+            aria-label={t("search.title", "Search")}
+            className="w-7 h-7 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs active:scale-[0.96]"
+          >
+            <IconSearch size={14} strokeWidth={2} />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="px-4 sm:px-5 h-8 sm:h-8.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer shrink-0 shadow-2xs active:scale-[0.98]"
+          >
+            {t("search.title", "Search")}
+          </button>
+        )}
       </form>
 
       {/* Instant Results Dropdown */}
@@ -218,7 +243,11 @@ export function SearchBar({ className = "", onSelect = null }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full mt-2 bg-wbk-white border border-wbk-lightgrey/90 shadow-2xl z-50 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto rounded-2xl overflow-hidden divide-y divide-wbk-lightgrey/60"
+            className={`absolute top-full ${compact ? "mt-1.5" : "mt-2"} bg-wbk-white border border-wbk-lightgrey/90 shadow-2xl z-50 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto rounded-2xl overflow-hidden divide-y divide-wbk-lightgrey/60 ${
+              compact
+                ? "left-0 right-0 md:left-auto md:right-0 md:w-[390px] xl:w-[430px]"
+                : "left-0 right-0"
+            }`}
           >
             {results.length > 0 ? (
               <div>

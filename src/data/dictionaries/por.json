@@ -29,15 +29,16 @@
     "allMorphyTagline": "Descubra todos os modelos MORPHY™",
     "allTraditionalTagline": "Modelos clássicos de camas rebatíveis em liquidação até ao fim do stock",
     "trade": "Clientes Comerciais",
-    "caseStudies": "Estudos de caso"
+    "caseStudies": "Estudos de caso",
+    "more": "Mais"
   },
   "header": {
     "searchPlaceholder": "Pesquisar camas rebatíveis, sofás, colchões...",
     "configuratorCta": "Configurador 3D",
     "cart": "Cesto",
     "account": "Minha Conta",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Aconselhamento Especializado",
     "openingHours": "Seg-Sex 9:00 - 20:00, Sáb 9:00 - 12:00",
     "specialistAdvice": "Aconselhamento Especializado",
@@ -522,7 +523,7 @@
     "formSubmit": "Enviar pedido comercial",
     "formSubmitting": "A enviar...",
     "formSuccess": "Obrigado! A nossa equipa entrará em contacto dentro de 24 horas úteis.",
-    "formError": "Erro ao enviar. Por favor contacte-nos através de support@wallbedking.com"
+    "formError": "Erro ao enviar. Por favor contacte-nos diretamente:"
   },
   "caseStudiesPage": {
     "heroBadge": "Projetos comerciais & resultados comprovados",
@@ -531,5 +532,13 @@
     "quoteBanner": "Otimização de espaço com engenharia de precisão",
     "startProjectCta": "Pronto para colaborar no seu próximo projeto?",
     "contactTrade": "Contactar equipa comercial"
+  },
+  "security": {
+    "showEmail": "Mostrar e-mail",
+    "showPhone": "Mostrar número",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "retry": "Tentar novamente",
+    "completeCaptcha": "Por favor, conclua a verificação de segurança."
   }
 }

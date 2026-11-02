@@ -10,7 +10,6 @@ import {
   IconUser,
   IconChevronDown,
 } from "@tabler/icons-react";
-import { TopMenu } from "./TopMenu";
 import { ContactInfo } from "./ContactInfo";
 import { SearchBar } from "./SearchBar";
 import { MainMenu } from "./MainMenu";
@@ -42,7 +41,7 @@ export function Header() {
   const menuVariant = useDesktopMenuABTest();
 
   const [langOpen, setLangOpen] = useState(false);
-  const { locale, market, switchLocale, localizedHref, t } = useLocale();
+  const { locale, market, switchLocale, localizedHref } = useLocale();
   const { totalItems, openCart } = useCart();
   const { user, openUserDrawer } = useAuth();
   const {
@@ -89,13 +88,14 @@ export function Header() {
     // Immediately update --header-height to target height so sticky elements animate in exact sync!
     if (typeof window !== "undefined") {
       const isMobile = window.innerWidth < 768;
-      const isDesktop = window.innerWidth >= 1280;
-      const delta = isMobile ? 52 : isDesktop ? 50 : 0;
+      const delta = isMobile ? 56 : 0;
       const full =
         headerFullHeightRef.current ||
         (headerRef.current
           ? Math.round(headerRef.current.getBoundingClientRect().height)
-          : 144);
+          : isMobile
+            ? 112
+            : 64);
       const targetHeight = visible ? full : Math.max(0, full - delta);
 
       document.documentElement.style.setProperty(
@@ -250,18 +250,12 @@ export function Header() {
         ref={headerRef}
         className="sticky top-0 z-50 w-full bg-wbk-white font-poppins"
         style={{ position: "sticky", top: 0 }}
+        onMouseLeave={() => setSubMenu(null)}
       >
-        {/* Top announcement & quick links bar */}
-        <TopMenu />
-
-        {/* Primary header bar */}
-        <div
-          className={`w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 lg:gap-8 relative z-30 bg-wbk-white transition-all duration-200 ${
-            !isMenuVisible ? "border-b border-wbk-lightgrey " : ""
-          }`}
-        >
-          {/* Left section: Logo + Contact Info */}
-          <div className="flex items-center gap-6 shrink-0">
+        {/* Single-row primary header bar */}
+        <div className="w-full mx-auto px-4 sm:px-6 xl:px-6 2xl:px-8 h-14 sm:h-16 xl:h-[64px] flex items-center justify-between gap-3 xl:gap-4 2xl:gap-6 relative z-30 bg-wbk-white border-b border-wbk-lightgrey">
+          {/* Left section: Logo + optional Contact Info */}
+          <div className="flex items-center gap-4 shrink-0">
             <Link
               href={localizedHref("/")}
               className="shrink-0 flex items-center"
@@ -273,23 +267,43 @@ export function Header() {
                 width={150}
                 height={34}
                 priority
-                className="h-7 sm:h-8 w-auto"
+                className="h-6 sm:h-7 w-auto"
               />
             </Link>
             <ContactInfo />
           </div>
 
-          {/* Center: Live instant product search (expands to fill available width) */}
-          <div className="hidden md:flex flex-1 items-center px-4 lg:px-8 min-w-0">
-            <SearchBar />
+          {/* Desktop Main Menu (between Logo and SearchBar) */}
+          <nav
+            aria-label="Main navigation"
+            className="hidden xl:flex items-stretch h-full shrink-0"
+            onMouseEnter={cancelCloseSubmenu}
+            onMouseLeave={() => scheduleCloseSubmenu(160)}
+          >
+            <MainMenu />
+          </nav>
+
+          {/* Tablet Full-Height Borderless SearchBar (md to < xl) */}
+          <div className="hidden md:flex xl:hidden flex-1 items-stretch h-full max-w-md mx-2 min-w-0">
+            <SearchBar compact />
           </div>
 
-          {/* Right section: Language, Cart, Account, MobileToggle */}
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          {/* Desktop Full-Height Borderless SearchBar (xl+) */}
+          <div className="hidden xl:flex flex-1 items-stretch justify-end h-full min-w-[150px]">
+            <div className="w-full max-w-[235px] 2xl:max-w-[300px] h-full">
+              <SearchBar compact />
+            </div>
+          </div>
+
+          {/* Right section: Language, Account, Cart, MobileToggle */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
             {/* Language Selector Dropdown */}
             <div
               className="relative hidden sm:block"
-              onMouseEnter={() => setLangOpen(true)}
+              onMouseEnter={() => {
+                setSubMenu(null);
+                setLangOpen(true);
+              }}
               onMouseLeave={() => setLangOpen(false)}
             >
               <button
@@ -387,7 +401,7 @@ export function Header() {
 
         {/* Mobile Search Row (< md screens) */}
         <motion.div
-          className="md:hidden px-4 border-t border-wbk-lightgrey/60 bg-wbk-white relative z-30"
+          className="md:hidden px-4 border-b border-wbk-lightgrey bg-wbk-white relative z-20"
           initial={false}
           animate={{
             height: isMenuVisible ? 56 : 0,
@@ -404,29 +418,14 @@ export function Header() {
           <SearchBar />
         </motion.div>
 
-        {/* Desktop Category Navigation & Animated Mega Submenu */}
-        <motion.div
+        {/* Desktop Mega Submenu (Anchored to bottom of single-row header; PostHog A/B test untouched) */}
+        <div
           className="hidden xl:block relative z-20 bg-wbk-white"
-          initial={false}
-          animate={{
-            height: isMenuVisible ? 50 : 0,
-            y: isMenuVisible ? 0 : -50,
-            opacity: isMenuVisible ? 1 : 0,
-          }}
-          transition={{
-            duration: 0.25,
-            ease: [0.25, 1, 0.5, 1],
-          }}
-          onAnimationComplete={updateHeaderHeight}
-          style={{
-            overflow: isMenuVisible ? "visible" : "hidden",
-          }}
           onMouseEnter={cancelCloseSubmenu}
           onMouseLeave={() => setSubMenu(null)}
         >
-          <MainMenu />
           {menuVariant === "test" ? <SubmenuSplitTest /> : <Submenu />}
-        </motion.div>
+        </div>
       </header>
 
       {/* Slide-out Mobile Menu Drawer */}

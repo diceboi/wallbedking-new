@@ -29,15 +29,16 @@
     "allMorphyTagline": "Alle MORPHY™ Modelle entdecken",
     "allTraditionalTagline": "Klassische Schrankbett-Modelle im Ausverkauf – solange der Vorrat reicht",
     "trade": "Gewerbekunden",
-    "caseStudies": "Fallbeispiele"
+    "caseStudies": "Fallbeispiele",
+    "more": "Mehr"
   },
   "header": {
     "searchPlaceholder": "Schrankbetten, Sofas, Matratzen suchen...",
     "configuratorCta": "3D-Konfigurator",
     "cart": "Warenkorb",
     "account": "Mein Konto",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Fachberatung",
     "openingHours": "Mo-Fr 9:00 - 20:00, Sa 9:00 - 12:00 Uhr",
     "specialistAdvice": "Fachberatung",
@@ -522,7 +523,7 @@
     "formSubmit": "B2B-Anfrage absenden",
     "formSubmitting": "Wird gesendet...",
     "formSuccess": "Vielen Dank! Unser Gewerbeteam wird sich innerhalb von 24 Stunden bei Ihnen melden.",
-    "formError": "Fehler beim Absenden. Bitte kontaktieren Sie uns direkt unter support@wallbedking.com"
+    "formError": "Fehler beim Absenden. Bitte kontaktieren Sie uns direkt:"
   },
   "caseStudiesPage": {
     "heroBadge": "Gewerbliche Projekte & Erfolge",
@@ -531,5 +532,13 @@
     "quoteBanner": "Raumgewinn durch Präzisionsmechanik",
     "startProjectCta": "Möchten Sie Ihr nächstes Projekt mit uns realisieren?",
     "contactTrade": "Gewerbeteam kontaktieren"
+  },
+  "security": {
+    "showEmail": "E-Mail anzeigen",
+    "showPhone": "Nummer anzeigen",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "retry": "Erneut versuchen",
+    "completeCaptcha": "Bitte bestätigen Sie die Sicherheitsprüfung."
   }
 }

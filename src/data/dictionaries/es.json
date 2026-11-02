@@ -29,15 +29,16 @@
     "allMorphyTagline": "Descubrir todos los modelos MORPHY™",
     "allTraditionalTagline": "Modelos clásicos de camas abatibles en liquidación hasta fin de existencias",
     "trade": "Clientes Profesionales",
-    "caseStudies": "Casos de estudio"
+    "caseStudies": "Casos de estudio",
+    "more": "Más"
   },
   "header": {
     "searchPlaceholder": "Buscar camas abatibles, sofás, colchones...",
     "configuratorCta": "Configurador 3D",
     "cart": "Cesta",
     "account": "Mi Cuenta",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Asesoramiento Especializado",
     "openingHours": "Lun-Vie 9:00 - 20:00, Sáb 9:00 - 12:00",
     "specialistAdvice": "Asesoramiento Especializado",
@@ -522,7 +523,7 @@
     "formSubmit": "Enviar consulta profesional",
     "formSubmitting": "Enviando...",
     "formSuccess": "¡Gracias! Nuestro equipo comercial responderá a su consulta en menos de 24 horas.",
-    "formError": "Error al enviar. Contáctenos directamente en support@wallbedking.com"
+    "formError": "Error al enviar. Contáctenos directamente:"
   },
   "caseStudiesPage": {
     "heroBadge": "Proyectos comerciales y resultados comprobados",
@@ -531,5 +532,13 @@
     "quoteBanner": "Espacios maximizados con ingeniería europea",
     "startProjectCta": "¿Preparado para iniciar su proyecto comercial?",
     "contactTrade": "Contactar con el equipo comercial"
+  },
+  "security": {
+    "showEmail": "Mostrar correo",
+    "showPhone": "Mostrar número",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "retry": "Reintentar",
+    "completeCaptcha": "Por favor, complete la verificación de seguridad."
   }
 }

@@ -13,6 +13,10 @@ import {
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import {
+  FormSecurityFields,
+  useFormSecurity,
+} from "@/components/ui/FormSecurityFields";
 
 export function WaitlistModal({
   isOpen,
@@ -29,10 +33,19 @@ export function WaitlistModal({
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState(null); // { type: 'success' | 'error', message: '' }
+  const security = useFormSecurity();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset form security timer whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      security.resetSecurity();
+      setStatusFeedback(null);
+    }
+  }, [isOpen]);
 
   // Pre-fill user details if logged in
   useEffect(() => {
@@ -49,14 +62,19 @@ export function WaitlistModal({
     if (!isOpen) return;
 
     const preventBackgroundScroll = (e) => {
-      if (e.target.closest("[data-modal-card]") || e.target.closest(".custom-scrollbar")) {
+      if (
+        e.target.closest("[data-modal-card]") ||
+        e.target.closest(".custom-scrollbar")
+      ) {
         return;
       }
       e.preventDefault();
     };
 
     window.addEventListener("wheel", preventBackgroundScroll, { passive: false });
-    window.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
+    window.addEventListener("touchmove", preventBackgroundScroll, {
+      passive: false,
+    });
 
     return () => {
       window.removeEventListener("wheel", preventBackgroundScroll);
@@ -66,16 +84,22 @@ export function WaitlistModal({
 
   if (!isOpen || !mounted || typeof document === "undefined") return null;
 
-  const productName = product?.title || product?.name || "Wall Bed King Murphy Bed";
+  const productName =
+    product?.title || product?.name || "Wall Bed King Murphy Bed";
   const productSlug = product?.slug || "";
   const productId = product?.id || selectedVariant?.id || null;
-  const productImage = product?.image || selectedVariant?.image || "/sofa1.webp";
-  const variantLabel = selectedVariant?.sizeLabel || productSize || selectedVariant?.name || "";
+  const productImage =
+    product?.image || selectedVariant?.image || "/sofa1.webp";
+  const variantLabel =
+    selectedVariant?.sizeLabel || productSize || selectedVariant?.name || "";
 
   // Translated strings via t() helper with fallback
   const txtOutOfStock = t("waitlist.outOfStock", "Out of Stock");
   const txtJoinWaitlist = t("waitlist.joinWaitlist", "Join the Waitlist");
-  const txtReplenishing = t("waitlist.replenishing", "Replenishment in progress");
+  const txtReplenishing = t(
+    "waitlist.replenishing",
+    "Replenishment in progress"
+  );
   const txtSize = t("waitlist.size", "Size");
   const txtDescription = t(
     "waitlist.description",
@@ -111,6 +135,17 @@ export function WaitlistModal({
       return;
     }
 
+    if (!security.isTurnstileReady) {
+      setStatusFeedback({
+        type: "error",
+        message: t(
+          "security.completeCaptcha",
+          "Please complete the security check below."
+        ),
+      });
+      return;
+    }
+
     setLoading(true);
     setStatusFeedback(null);
 
@@ -132,6 +167,7 @@ export function WaitlistModal({
             format: product?.format || "Vertical",
           },
           locale: locale || "en",
+          ...security.getSecurityPayload(),
         }),
       });
 
@@ -141,7 +177,9 @@ export function WaitlistModal({
           type: "success",
           message: data.message || txtSuccessMsg,
         });
+        security.resetSecurity();
       } else {
+        security.resetTurnstileOnly();
         setStatusFeedback({
           type: "error",
           message: data.error || "Unable to join waitlist. Please try again.",
@@ -149,6 +187,7 @@ export function WaitlistModal({
       }
     } catch (err) {
       console.error("[Waitlist Submit Error]", err);
+      security.resetTurnstileOnly();
       setStatusFeedback({
         type: "error",
         message: "Network error occurred. Please try again.",
@@ -223,7 +262,11 @@ export function WaitlistModal({
           {statusFeedback?.type === "success" ? (
             <div className="text-center py-4 space-y-3">
               <div className="w-12 h-12 rounded-full bg-wbk-gold/15 border border-wbk-gold/30 text-wbk-gold mx-auto flex items-center justify-center">
-                <IconCheck size={24} strokeWidth={2.5} className="text-wbk-gold" />
+                <IconCheck
+                  size={24}
+                  strokeWidth={2.5}
+                  className="text-wbk-gold"
+                />
               </div>
               <h4 className="text-sm font-semibold text-wbk-black">
                 {txtSuccessTitle}
@@ -242,7 +285,7 @@ export function WaitlistModal({
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 relative">
               <p className="text-xs text-wbk-brown leading-relaxed">
                 {txtDescription}
               </p>
@@ -288,9 +331,17 @@ export function WaitlistModal({
                 </div>
               )}
 
+              <FormSecurityFields
+                security={security}
+                action="waitlist_subscribe"
+              />
+
               {statusFeedback?.type === "error" && (
                 <div className="p-3 text-xs bg-red-50 border border-red-300 text-red-800 rounded-lg flex items-start gap-2">
-                  <IconAlertCircle size={15} className="text-red-600 shrink-0 mt-0.5" />
+                  <IconAlertCircle
+                    size={15}
+                    className="text-red-600 shrink-0 mt-0.5"
+                  />
                   <span>{statusFeedback.message}</span>
                 </div>
               )}
@@ -307,7 +358,10 @@ export function WaitlistModal({
                   </>
                 ) : (
                   <>
-                    <IconBell size={15} className="transition-transform group-hover:scale-110" />
+                    <IconBell
+                      size={15}
+                      className="transition-transform group-hover:scale-110"
+                    />
                     <span>{txtSubmitBtn}</span>
                   </>
                 )}

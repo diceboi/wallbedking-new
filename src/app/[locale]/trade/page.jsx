@@ -5,6 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
+import { ProtectedContact } from "@/components/ui/ProtectedContact";
+import {
+  FormSecurityFields,
+  useFormSecurity,
+} from "@/components/ui/FormSecurityFields";
 import {
   IconShieldCheck,
   IconCpu,
@@ -12,15 +17,11 @@ import {
   IconScale,
   IconTruck,
   IconFileCertificate,
-  IconBuildingSkyscraper,
-  IconBed,
-  IconTools,
   IconArrowRight,
   IconCheck,
   IconMail,
   IconPhoneCall,
   IconClock,
-  IconSparkles,
   IconFileText,
 } from "@tabler/icons-react";
 
@@ -141,7 +142,7 @@ const SECTORS = [
       "Lightweight, counterbalanced operation empowers residents of varying physical abilities to manage their space with dignity. Adaptable daytime rooms simplify daily routines and clinical care visits.",
     bullets: [
       "Finger-light operation counterbalanced by gas pistons",
-      "Hygienic, anti-microbial easy-clean steel surfaces",
+      "Hygic, anti-microbial easy-clean steel surfaces".replace("Hygic", "Hygienic"),
       "Flexible layouts for physiotherapy and daytime activities",
       "Lifetime mechanism warranty and priority customer support",
     ],
@@ -219,7 +220,7 @@ const SECTORS = [
 ];
 
 export default function TradePage() {
-  const { t, localizedHref, market } = useLocale();
+  const { t, localizedHref } = useLocale();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -233,6 +234,8 @@ export default function TradePage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
+  const [errorDetail, setErrorDetail] = useState("");
+  const security = useFormSecurity();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -241,6 +244,16 @@ export default function TradePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorDetail("");
+
+    if (!security.isTurnstileReady) {
+      setSubmitStatus("error");
+      setErrorDetail(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
+
     setSubmitting(true);
     setSubmitStatus(null);
 
@@ -254,10 +267,13 @@ export default function TradePage() {
           phone: formData.phone,
           subject: `Trade Inquiry: ${formData.company || formData.name} (${formData.sector}, ${formData.units})`,
           message: `Company: ${formData.company}\nSector: ${formData.sector}\nEstimated Units: ${formData.units}\nPhone: ${formData.phone}\n\nProject Requirements:\n${formData.message}`,
+          ...security.getSecurityPayload(),
         }),
       });
 
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && !data?.error) {
         setSubmitStatus("success");
         setFormData({
           name: "",
@@ -268,11 +284,15 @@ export default function TradePage() {
           units: "1-5 units",
           message: "",
         });
+        security.resetSecurity();
       } else {
+        security.resetTurnstileOnly();
+        setErrorDetail(data?.error || "");
         setSubmitStatus("error");
       }
     } catch (err) {
       console.error("Trade form submission error:", err);
+      security.resetTurnstileOnly();
       setSubmitStatus("error");
     } finally {
       setSubmitting(false);
@@ -554,13 +574,12 @@ export default function TradePage() {
                     <IconPhoneCall size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">Direct Commercial Line</p>
-                    <a
-                      href={`tel:${market.phoneRaw || "+441928583469"}`}
-                      className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
-                    >
-                      {market.phone || "01928 583 469"}
-                    </a>
+                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">
+                      Direct Commercial Line
+                    </p>
+                    <div className="mt-1">
+                      <ProtectedContact type="phone" />
+                    </div>
                   </div>
                 </div>
 
@@ -569,13 +588,12 @@ export default function TradePage() {
                     <IconMail size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">Trade Email Desk</p>
-                    <a
-                      href="mailto:support@wallbedking.com"
-                      className="text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
-                    >
-                      support@wallbedking.com
-                    </a>
+                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">
+                      Trade Email Desk
+                    </p>
+                    <div className="mt-1">
+                      <ProtectedContact type="email" />
+                    </div>
                   </div>
                 </div>
 
@@ -618,19 +636,29 @@ export default function TradePage() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => setSubmitStatus(null)}
+                      onClick={() => {
+                        setSubmitStatus(null);
+                        security.resetSecurity();
+                      }}
                       className="mt-4 px-6 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-colors"
                     >
                       Submit Another Inquiry
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form onSubmit={handleSubmit} className="space-y-5 relative">
                     {submitStatus === "error" && (
-                      <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-xs">
-                        {t(
-                          "tradePage.formError",
-                          "Failed to send inquiry. Please try again or email us directly at support@wallbedking.com"
+                      <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-xs leading-relaxed">
+                        {errorDetail ? (
+                          <span>{errorDetail}</span>
+                        ) : (
+                          <span>
+                            {t(
+                              "tradePage.formError",
+                              "Failed to send inquiry. Please try again or email us directly:"
+                            )}{" "}
+                            <ProtectedContact type="email" variant="inline" />
+                          </span>
                         )}
                       </div>
                     )}
@@ -716,7 +744,7 @@ export default function TradePage() {
                           <option value="Care Homes & Assisted Living">Care Homes & Assisted Living</option>
                           <option value="Fire Stations & Emergency Services">Fire Stations & Emergency Services</option>
                           <option value="Hospitals & Healthcare Facilities">Hospitals & Healthcare Facilities</option>
-                          <option value="Shepherd's Huts & Glamping Pods">Shepherd's Huts & Glamping Pods</option>
+                          <option value="Shepherd's Huts & Glamping Pods">Shepherd&apos;s Huts & Glamping Pods</option>
                           <option value="Tiny Homes & Modular Buildings">Tiny Homes & Modular Buildings</option>
                           <option value="Renovation & Conversion Specialists">Renovation & Conversion Specialists</option>
                           <option value="Architectural / Interior Design">Architectural / Interior Design</option>
@@ -757,6 +785,11 @@ export default function TradePage() {
                         placeholder="Please describe your project, preferred bed sizes or orientations, delivery timeline, or CAD file requests..."
                       />
                     </div>
+
+                    <FormSecurityFields
+                      security={security}
+                      action="trade_inquiry"
+                    />
 
                     <button
                       type="submit"

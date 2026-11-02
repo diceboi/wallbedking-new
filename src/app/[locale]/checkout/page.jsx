@@ -31,6 +31,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useAuth } from "@/context/AuthContext";
+import { TurnstileWidget, useFormSecurity } from "@/components/ui/FormSecurityFields";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 import { formatSizeLabel } from "@/lib/i18n";
@@ -175,6 +176,7 @@ export default function CheckoutPage() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const authSecurity = useFormSecurity();
 
   // Saved Addresses State
   const savedAddresses = useMemo(() => {
@@ -313,9 +315,15 @@ export default function CheckoutPage() {
       );
       return;
     }
+    if (!authSecurity.isTurnstileReady) {
+      setAuthError(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
     setAuthLoading(true);
     try {
-      await signInWithPassword(targetEmail, authPassword);
+      await signInWithPassword(targetEmail, authPassword, authSecurity.turnstileToken);
       setAuthSuccess(t("auth.loginSuccess", "Logged in successfully!"));
       setFormData((prev) => ({
         ...prev,
@@ -333,6 +341,7 @@ export default function CheckoutPage() {
           t("auth.invalidCredentials", "Invalid email or password."),
       );
     } finally {
+      authSecurity.resetTurnstileOnly();
       setAuthLoading(false);
     }
   };
@@ -354,12 +363,19 @@ export default function CheckoutPage() {
       );
       return;
     }
+    if (!authSecurity.isTurnstileReady) {
+      setAuthError(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
     setAuthLoading(true);
     try {
       const data = await signUpWithPassword(
         targetEmail,
         authPassword,
         authFullName,
+        authSecurity.turnstileToken,
       );
       setAuthSuccess(
         data?.user && !data.session
@@ -393,6 +409,7 @@ export default function CheckoutPage() {
           t("auth.signupFailed", "Could not create account. Please try again."),
       );
     } finally {
+      authSecurity.resetTurnstileOnly();
       setAuthLoading(false);
     }
   };
@@ -908,6 +925,7 @@ export default function CheckoutPage() {
                             setAuthTab("login");
                             setAuthError("");
                             setAuthSuccess("");
+                            authSecurity.resetTurnstileOnly();
                           }}
                           className={`text-xs font-semibold uppercase tracking-wider pb-1 px-1 transition-colors ${
                             authTab === "login"
@@ -924,6 +942,7 @@ export default function CheckoutPage() {
                             setAuthTab("register");
                             setAuthError("");
                             setAuthSuccess("");
+                            authSecurity.resetTurnstileOnly();
                           }}
                           className={`text-xs font-semibold uppercase tracking-wider pb-1 px-1 transition-colors ${
                             authTab === "register"
@@ -998,6 +1017,12 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                           </div>
+
+                          <TurnstileWidget
+                            turnstileRef={authSecurity.turnstileRef}
+                            onTokenChange={authSecurity.setTurnstileToken}
+                            action="checkout_login"
+                          />
 
                           <div className="flex items-center justify-between pt-1">
                             <span className="text-[11px] text-wbk-brown">
@@ -1082,6 +1107,12 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                           </div>
+
+                          <TurnstileWidget
+                            turnstileRef={authSecurity.turnstileRef}
+                            onTokenChange={authSecurity.setTurnstileToken}
+                            action="checkout_register"
+                          />
 
                           <div className="flex items-center justify-between pt-1">
                             <span className="text-[11px] text-wbk-brown">

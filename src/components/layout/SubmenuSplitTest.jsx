@@ -736,6 +736,26 @@ export function SubmenuSplitTest() {
           className="absolute left-0 right-0 top-full z-50 bg-wbk-white border-b border-wbk-lightgrey shadow-xl overflow-hidden before:absolute before:-top-4 before:left-0 before:right-0 before:h-4 before:content-['']"
         >
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            {activeData.layout === "vertical-links" ? (
+              <div className="w-full py-1 flex justify-start">
+                <div className="w-full max-w-[330px] xl:max-w-[360px] flex flex-col divide-y divide-wbk-lightgrey/60">
+                  {activeData.items?.map((link) => (
+                    <Link
+                      key={link.id || link.href}
+                      href={localizedHref(link.href)}
+                      onClick={() => setSubMenu(null)}
+                      className="group flex items-center justify-between py-2.5 px-2.5 text-xs font-medium uppercase tracking-[0.13em] text-wbk-black hover:text-wbk-green hover:bg-[#FAF8F5] transition-colors"
+                    >
+                      <span>{link.labelKey ? t(link.labelKey, link.label) : link.label}</span>
+                      <IconArrowRight
+                        size={14}
+                        className="text-wbk-brown/50 group-hover:text-wbk-green group-hover:translate-x-1 transition-all"
+                      />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
             <div className="w-full flex items-stretch gap-6 min-h-[390px] max-h-[440px]">
               {/* ── LEFT COLUMN: Product List & All Category Link ── */}
               <div className="w-[330px] xl:w-[360px] shrink-0 border-r border-wbk-lightgrey/70 pr-5 flex flex-col justify-between">
@@ -1007,6 +1027,7 @@ export function SubmenuSplitTest() {
                 )}
               </div>
             </div>
+            )}
           </div>
         </motion.div>
       )}

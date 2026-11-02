@@ -28,12 +28,12 @@ import {
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import { TurnstileWidget, useFormSecurity } from "@/components/ui/FormSecurityFields";
 
 export function UserDrawer() {
   const { t, localizedHref } = useLocale();
   const {
     user,
-    role,
     isAdmin,
     isUserDrawerOpen,
     closeUserDrawer,
@@ -54,6 +54,9 @@ export function UserDrawer() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // Cloudflare Turnstile state for Supabase Auth
+  const security = useFormSecurity();
 
   // Waitlist sub-view states
   const [subView, setSubView] = useState("main"); // "main" | "waitlist"
@@ -91,6 +94,7 @@ export function UserDrawer() {
   useEffect(() => {
     if (!isUserDrawerOpen) {
       setSubView("main");
+      security.resetTurnstileOnly();
     }
   }, [isUserDrawerOpen]);
 
@@ -133,10 +137,11 @@ export function UserDrawer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isUserDrawerOpen, closeUserDrawer]);
 
-  // Reset errors when switching tabs
+  // Reset errors & Turnstile token when switching tabs
   const handleTabChange = (tab) => {
     setErrorMsg("");
     setSuccessMsg("");
+    security.resetTurnstileOnly();
     setDrawerTab(tab);
   };
 
@@ -151,9 +156,16 @@ export function UserDrawer() {
       return;
     }
 
+    if (!security.isTurnstileReady) {
+      setErrorMsg(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signInWithPassword(email, password);
+      await signInWithPassword(email, password, security.turnstileToken);
       setSuccessMsg("Signed in successfully!");
       setTimeout(() => {
         setSuccessMsg("");
@@ -162,6 +174,7 @@ export function UserDrawer() {
       console.error("[UserDrawer] Login error:", err);
       setErrorMsg(err.message || "Invalid email or password.");
     } finally {
+      security.resetTurnstileOnly();
       setIsLoading(false);
     }
   };
@@ -180,10 +193,21 @@ export function UserDrawer() {
       setErrorMsg("Password must be at least 6 characters.");
       return;
     }
+    if (!security.isTurnstileReady) {
+      setErrorMsg(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const data = await signUpWithPassword(email, password, fullName);
+      const data = await signUpWithPassword(
+        email,
+        password,
+        fullName,
+        security.turnstileToken
+      );
       if (data?.user && !data.session) {
         // Confirmation email required
         setSuccessMsg("Account created! Please check your email inbox to verify your account.");
@@ -194,6 +218,7 @@ export function UserDrawer() {
       console.error("[UserDrawer] Signup error:", err);
       setErrorMsg(err.message || "Could not create account. Please try again.");
     } finally {
+      security.resetTurnstileOnly();
       setIsLoading(false);
     }
   };
@@ -208,38 +233,66 @@ export function UserDrawer() {
       setErrorMsg("Please enter your email address.");
       return;
     }
+    if (!security.isTurnstileReady) {
+      setErrorMsg(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await resetPassword(email);
+      await resetPassword(email, security.turnstileToken);
       setSuccessMsg("Password reset link has been sent to your email.");
     } catch (err) {
       console.error("[UserDrawer] Reset error:", err);
       setErrorMsg(err.message || "Could not send reset email. Please check the address.");
     } finally {
+      security.resetTurnstileOnly();
       setIsLoading(false);
     }
   };
 
-  // Quick Demo Login helper (convenience for evaluation)
+  // Quick Demo Login helper
   const handleDemoSignIn = async () => {
-    setEmail("customer@wallbedking.com");
+    const demoEmail = ["customer", "wallbedking.com"].join("@");
+    setEmail(demoEmail);
     setPassword("WallBedKing2026!");
     setErrorMsg("");
+
+    if (!security.isTurnstileReady) {
+      setSuccessMsg(
+        "Demo credentials filled — complete the security check and click Sign In."
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signInWithPassword("customer@wallbedking.com", "WallBedKing2026!");
+      await signInWithPassword(
+        demoEmail,
+        "WallBedKing2026!",
+        security.turnstileToken
+      );
       setSuccessMsg("Signed in as Demo User!");
     } catch (err) {
-      // If user doesn't exist, try creating it automatically
-      try {
-        await signUpWithPassword("customer@wallbedking.com", "WallBedKing2026!", "James Harrington");
-        await signInWithPassword("customer@wallbedking.com", "WallBedKing2026!");
-        setSuccessMsg("Demo account ready & signed in!");
-      } catch (signupErr) {
-        setErrorMsg(signupErr.message || "Demo login failed.");
+      if (!security.isTurnstileEnabled) {
+        try {
+          await signUpWithPassword(
+            demoEmail,
+            "WallBedKing2026!",
+            "James Harrington"
+          );
+          await signInWithPassword(demoEmail, "WallBedKing2026!");
+          setSuccessMsg("Demo account ready & signed in!");
+        } catch (signupErr) {
+          setErrorMsg(signupErr.message || "Demo login failed.");
+        }
+      } else {
+        setErrorMsg(err.message || "Demo login failed.");
       }
     } finally {
+      security.resetTurnstileOnly();
       setIsLoading(false);
     }
   };
@@ -460,230 +513,228 @@ export function UserDrawer() {
                     </div>
                   </div>
                 ) : (
-                /* ── Main View: Authenticated User ── */
-                <div className="space-y-6">
-                  {/* Password Recovery Banner if recovery session active */}
-                  {isPasswordRecovery && (
-                    <div className="p-3.5 bg-wbk-gold/15 border border-wbk-gold/40 text-wbk-black flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <IconKey size={18} className="text-wbk-gold shrink-0" />
-                        <div className="text-[11px] leading-tight font-medium">
-                          Password recovery session active.
+                  /* ── Main View: Authenticated User ── */
+                  <div className="space-y-6">
+                    {/* Password Recovery Banner if recovery session active */}
+                    {isPasswordRecovery && (
+                      <div className="p-3.5 bg-wbk-gold/15 border border-wbk-gold/40 text-wbk-black flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <IconKey size={18} className="text-wbk-gold shrink-0" />
+                          <div className="text-[11px] leading-tight font-medium">
+                            Password recovery session active.
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeUserDrawer();
+                            setIsPasswordRecovery(true);
+                          }}
+                          className="px-3 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full transition-colors shrink-0 cursor-pointer"
+                        >
+                          Set Password
+                        </button>
+                      </div>
+                    )}
+
+                    {/* User Profile Card */}
+                    <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/80 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-wbk-black text-wbk-white font-new-york text-lg flex items-center justify-center shrink-0 shadow-xs">
+                        {userInitial}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-wbk-black truncate flex items-center gap-2">
+                          <span className="truncate">{userDisplayName}</span>
+                          {isAdmin && (
+                            <span className="px-2 py-0.5 rounded-full bg-wbk-black text-wbk-gold border border-wbk-gold/40 text-[9px] font-bold uppercase tracking-wider font-mono shrink-0">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-wbk-brown truncate">
+                          {user.email}
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-medium mt-1">
+                          <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAdmin ? "bg-wbk-gold" : "bg-wbk-green"}`} />
+                          <span className={isAdmin ? "text-wbk-black font-semibold" : "text-wbk-green"}>
+                            {isAdmin ? "Administrator Privileges" : "Verified Account"}
+                          </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          closeUserDrawer();
-                          setIsPasswordRecovery(true);
-                        }}
-                        className="px-3 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full transition-colors shrink-0 cursor-pointer"
-                      >
-                        Set Password
-                      </button>
                     </div>
-                  )}
 
-                  {/* User Profile Card */}
-                  <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey/80 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-wbk-black text-wbk-white font-new-york text-lg flex items-center justify-center shrink-0 shadow-xs">
-                      {userInitial}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-wbk-black truncate flex items-center gap-2">
-                        <span className="truncate">{userDisplayName}</span>
-                        {isAdmin && (
-                          <span className="px-2 py-0.5 rounded-full bg-wbk-black text-wbk-gold border border-wbk-gold/40 text-[9px] font-bold uppercase tracking-wider font-mono shrink-0">
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-wbk-brown truncate">
-                        {user.email}
-                      </div>
-                      <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-medium mt-1">
-                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAdmin ? "bg-wbk-gold" : "bg-wbk-green"}`} />
-                        <span className={isAdmin ? "text-wbk-black font-semibold" : "text-wbk-green"}>
-                          {isAdmin ? "Administrator Privileges" : "Verified Account"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    {/* Navigation Links */}
+                    <div className="divide-y divide-wbk-lightgrey/60 border border-wbk-lightgrey/80 bg-wbk-white">
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={closeUserDrawer}
+                          className="flex items-center justify-between p-3.5 bg-[#090A0A] text-white hover:bg-wbk-gold hover:text-wbk-black transition-all group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-none bg-white/10 text-wbk-gold group-hover:bg-wbk-black group-hover:text-white flex items-center justify-center transition-colors">
+                              <IconShieldLock size={17} strokeWidth={1.5} />
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                                <span>Admin Console</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              </div>
+                              <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
+                                Catalog, orders, pricing & feeds
+                              </div>
+                            </div>
+                          </div>
+                          <IconArrowRight size={15} className="text-wbk-gold group-hover:text-wbk-black group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                      )}
 
-                  {/* Navigation Links */}
-                  <div className="divide-y divide-wbk-lightgrey/60 border border-wbk-lightgrey/80 bg-wbk-white">
-                    {/* Dedicated Admin Console item if user has admin privileges */}
-                    {isAdmin && (
                       <Link
-                        href="/admin"
+                        href={localizedHref("/account?tab=orders")}
                         onClick={closeUserDrawer}
-                        className="flex items-center justify-between p-3.5 bg-[#090A0A] text-white hover:bg-wbk-gold hover:text-wbk-black transition-all group"
+                        className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-none bg-white/10 text-wbk-gold group-hover:bg-wbk-black group-hover:text-white flex items-center justify-center transition-colors">
-                            <IconShieldLock size={17} strokeWidth={1.5} />
+                          <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                            <IconPackage size={17} strokeWidth={1.5} />
                           </div>
                           <div>
-                            <div className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                              <span>Admin Console</span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <div className="text-xs font-semibold text-wbk-black">
+                              {t("auth.myOrders", "My Orders & Tracking")}
                             </div>
-                            <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
-                              Catalog, orders, pricing & feeds
+                            <div className="text-[10px] text-wbk-brown">
+                              Track packages and view order history
                             </div>
                           </div>
                         </div>
-                        <IconArrowRight size={15} className="text-wbk-gold group-hover:text-wbk-black group-hover:translate-x-0.5 transition-all" />
+                        <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
                       </Link>
-                    )}
 
-                    <Link
-                      href={localizedHref("/account?tab=orders")}
-                      onClick={closeUserDrawer}
-                      className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
-                          <IconPackage size={17} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-wbk-black">
-                            {t("auth.myOrders", "My Orders & Tracking")}
+                      <button
+                        type="button"
+                        onClick={() => setSubView("waitlist")}
+                        className="w-full flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
+                            <IconBell size={17} strokeWidth={1.5} />
                           </div>
-                          <div className="text-[10px] text-wbk-brown">
-                            Track packages and view order history
+                          <div>
+                            <div className="text-xs font-semibold text-wbk-black flex items-center gap-2">
+                              <span>{t("waitlist.myWaitlist", "My Waitlist & Alerts")}</span>
+                              {waitlistItems.length > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-wbk-gold/20 text-wbk-black border border-wbk-gold/40 text-[10px] font-bold font-mono">
+                                  {waitlistItems.length}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-wbk-brown">
+                              {t("waitlist.myWaitlistSub", "Stock alerts and saved notifications")}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
+                        <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                      </button>
 
-                    {/* Waitlist Navigation Button */}
+                      <Link
+                        href={localizedHref("/configurator")}
+                        onClick={closeUserDrawer}
+                        className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                            <IconCube size={17} strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-wbk-black">
+                              {t("auth.savedConfigs", "3D Bed Configurator")}
+                            </div>
+                            <div className="text-[10px] text-wbk-brown">
+                              Customise mechanisms and finishes
+                            </div>
+                          </div>
+                        </div>
+                        <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+
+                      <Link
+                        href={localizedHref("/account?tab=addresses")}
+                        onClick={closeUserDrawer}
+                        className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                            <IconMapPin size={17} strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-wbk-black">
+                              {t("auth.deliveryAddresses", "Delivery Addresses")}
+                            </div>
+                            <div className="text-[10px] text-wbk-brown">
+                              Manage default shipping addresses
+                            </div>
+                          </div>
+                        </div>
+                        <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+
+                      <Link
+                        href={localizedHref("/account?tab=profile")}
+                        onClick={closeUserDrawer}
+                        className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
+                            <IconSettings size={17} strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-wbk-black">
+                              {t("auth.accountSettings", "Account & Security")}
+                            </div>
+                            <div className="text-[10px] text-wbk-brown">
+                              Update details and password
+                            </div>
+                          </div>
+                        </div>
+                        <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+                    </div>
+
+                    {/* Primary Full Account & Admin Actions */}
+                    <div className="space-y-2.5">
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={closeUserDrawer}
+                          className="flex items-center justify-center gap-2 w-full py-3 text-center bg-[#090A0A] hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] transition-all rounded-full shadow-md cursor-pointer"
+                        >
+                          <IconShieldLock size={16} className="text-wbk-gold" />
+                          <span>Open Admin Dashboard</span>
+                        </Link>
+                      )}
+
+                      <Link
+                        href={localizedHref("/account")}
+                        onClick={closeUserDrawer}
+                        className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
+                      >
+                        {t("auth.customerAccount", "View Account Dashboard")}
+                      </Link>
+                    </div>
+
+                    {/* Sign Out Button */}
                     <button
                       type="button"
-                      onClick={() => setSubView("waitlist")}
-                      className="w-full flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group cursor-pointer text-left"
+                      onClick={async () => {
+                        await signOut();
+                        closeUserDrawer();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black hover:border-wbk-black transition-colors rounded-full cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-gold group-hover:text-wbk-black transition-colors">
-                          <IconBell size={17} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-wbk-black flex items-center gap-2">
-                            <span>{t("waitlist.myWaitlist", "My Waitlist & Alerts")}</span>
-                            {waitlistItems.length > 0 && (
-                              <span className="px-1.5 py-0.2 rounded-full bg-wbk-gold/20 text-wbk-black border border-wbk-gold/40 text-[10px] font-bold font-mono">
-                                {waitlistItems.length}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-wbk-brown">
-                            {t("waitlist.myWaitlistSub", "Stock alerts and saved notifications")}
-                          </div>
-                        </div>
-                      </div>
-                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
+                      <IconLogout size={15} />
+                      <span>{t("auth.signOut", "Sign Out")}</span>
                     </button>
-
-                    <Link
-                      href={localizedHref("/configurator")}
-                      onClick={closeUserDrawer}
-                      className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
-                          <IconCube size={17} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-wbk-black">
-                            {t("auth.savedConfigs", "3D Bed Configurator")}
-                          </div>
-                          <div className="text-[10px] text-wbk-brown">
-                            Customise mechanisms and finishes
-                          </div>
-                        </div>
-                      </div>
-                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-
-                    <Link
-                      href={localizedHref("/account?tab=addresses")}
-                      onClick={closeUserDrawer}
-                      className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
-                          <IconMapPin size={17} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-wbk-black">
-                            {t("auth.deliveryAddresses", "Delivery Addresses")}
-                          </div>
-                          <div className="text-[10px] text-wbk-brown">
-                            Manage default shipping addresses
-                          </div>
-                        </div>
-                      </div>
-                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-
-                    <Link
-                      href={localizedHref("/account?tab=profile")}
-                      onClick={closeUserDrawer}
-                      className="flex items-center justify-between p-3.5 hover:bg-[#FBF9F8] transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center group-hover:bg-wbk-black group-hover:text-white transition-colors">
-                          <IconSettings size={17} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-wbk-black">
-                            {t("auth.accountSettings", "Account & Security")}
-                          </div>
-                          <div className="text-[10px] text-wbk-brown">
-                            Update details and password
-                          </div>
-                        </div>
-                      </div>
-                      <IconArrowRight size={15} className="text-wbk-brown group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
                   </div>
-
-                  {/* Primary Full Account & Admin Actions */}
-                  <div className="space-y-2.5">
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        onClick={closeUserDrawer}
-                        className="flex items-center justify-center gap-2 w-full py-3 text-center bg-[#090A0A] hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] transition-all rounded-full shadow-md cursor-pointer"
-                      >
-                        <IconShieldLock size={16} className="text-wbk-gold" />
-                        <span>Open Admin Dashboard</span>
-                      </Link>
-                    )}
-
-                    <Link
-                      href={localizedHref("/account")}
-                      onClick={closeUserDrawer}
-                      className="block w-full py-3 text-center bg-wbk-black text-white text-xs font-medium uppercase tracking-[0.14em] hover:bg-wbk-green transition-colors rounded-full shadow-sm cursor-pointer"
-                    >
-                      {t("auth.customerAccount", "View Account Dashboard")}
-                    </Link>
-                  </div>
-
-                  {/* Sign Out Button */}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await signOut();
-                      closeUserDrawer();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-wbk-lightgrey text-xs font-medium uppercase tracking-wider text-wbk-brown hover:text-wbk-black hover:border-wbk-black transition-colors rounded-full cursor-pointer"
-                  >
-                    <IconLogout size={15} />
-                    <span>{t("auth.signOut", "Sign Out")}</span>
-                  </button>
-                </div>
                 )
               ) : (
                 /* ── Guest / Authentication State ── */
@@ -782,6 +833,13 @@ export function UserDrawer() {
                         </div>
                       </div>
 
+                      <TurnstileWidget
+                        turnstileRef={security.turnstileRef}
+                        onTokenChange={security.setTurnstileToken}
+                        action="auth_login"
+                        className="pt-1"
+                      />
+
                       <button
                         type="submit"
                         disabled={isLoading}
@@ -874,6 +932,13 @@ export function UserDrawer() {
                         </div>
                       </div>
 
+                      <TurnstileWidget
+                        turnstileRef={security.turnstileRef}
+                        onTokenChange={security.setTurnstileToken}
+                        action="auth_register"
+                        className="pt-1"
+                      />
+
                       <button
                         type="submit"
                         disabled={isLoading}
@@ -954,6 +1019,13 @@ export function UserDrawer() {
                               />
                             </div>
                           </div>
+
+                          <TurnstileWidget
+                            turnstileRef={security.turnstileRef}
+                            onTokenChange={security.setTurnstileToken}
+                            action="auth_forgot_password"
+                            className="pt-1"
+                          />
 
                           <button
                             type="submit"

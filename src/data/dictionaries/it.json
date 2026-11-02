@@ -29,15 +29,16 @@
     "allMorphyTagline": "Scopri tutti i modelli MORPHY™",
     "allTraditionalTagline": "Modelli classici di letti a scomparsa in liquidazione fino a esaurimento scorte",
     "trade": "Clienti Business",
-    "caseStudies": "Casi studio"
+    "caseStudies": "Casi studio",
+    "more": "Altro"
   },
   "header": {
     "searchPlaceholder": "Cerca letti a scomparsa, divani, materassi...",
     "configuratorCta": "Configuratore 3D",
     "cart": "Carrello",
     "account": "Il Mio Account",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Consulenza Specializzata",
     "openingHours": "Lun-Ven 9:00 - 20:00, Sab 9:00 - 12:00",
     "specialistAdvice": "Consulenza Specializzata",
@@ -522,7 +523,7 @@
     "formSubmit": "Invia richiesta commerciale",
     "formSubmitting": "Invio in corso...",
     "formSuccess": "Grazie! Il nostro team vi contatterà entro 24 ore lavorative.",
-    "formError": "Errore durante l'invio. Scriveteci direttamente a support@wallbedking.com"
+    "formError": "Errore durante l'invio. Scriveteci direttamente:"
   },
   "caseStudiesPage": {
     "heroBadge": "Progetti professionali & casi di successo",
@@ -531,5 +532,13 @@
     "quoteBanner": "Massimizzare gli spazi con ingegneria di precisione",
     "startProjectCta": "Pronti a collaborare al vostro prossimo progetto?",
     "contactTrade": "Contatta il team commerciale"
+  },
+  "security": {
+    "showEmail": "Mostra email",
+    "showPhone": "Mostra numero",
+    "copy": "Copia",
+    "copied": "Copiato",
+    "retry": "Riprova",
+    "completeCaptcha": "Completa la verifica di sicurezza qui sotto."
   }
 }

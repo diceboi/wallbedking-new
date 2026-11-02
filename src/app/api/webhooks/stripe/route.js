@@ -1,131 +1,161 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import {
+  getConfiguredStripeClients,
+  normalizeStripeSession,
+  retrieveStripeCheckoutSession,
+  fulfillPaidStripeSession,
+} from "@/lib/stripe-fulfillment";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
-  const stripeSecretKey =
-    process.env.STRIPE_SECRET_KEY ||
-    process.env.STRIPE_SECRET_KEY_UK ||
-    process.env.STRIPE_SECRET_KEY_EU;
-  const webhookSecrets = [
-    process.env.STRIPE_WEBHOOK_SECRET,
-    process.env.STRIPE_WEBHOOK_SECRET_UK,
-  ].filter(Boolean);
-
-  if (!stripeSecretKey) {
+  const stripeClients = getConfiguredStripeClients("en");
+  if (stripeClients.length === 0) {
     return NextResponse.json(
       { error: "Stripe is not configured on this server." },
       { status: 500 }
     );
   }
 
-  const stripe = new Stripe(stripeSecretKey);
-  const sig = request.headers.get("stripe-signature");
+  const webhookSecrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_WEBHOOK_SECRET_UK,
+    process.env.STRIPE_WEBHOOK_SECRET_EU,
+    process.env.STRIPE_WEBHOOK_SECRET_INTL,
+  ]
+    .map((s) => (s || "").trim())
+    .filter(Boolean);
 
-  let event;
-  try {
-    const rawBody = await request.text();
-    if (webhookSecrets.length > 0 && sig) {
-      let verified = false;
-      let lastErr = null;
-      for (const secret of webhookSecrets) {
-        try {
-          event = stripe.webhooks.constructEvent(rawBody, sig, secret);
-          verified = true;
-          break;
-        } catch (e) {
-          lastErr = e;
-        }
+  const sig = request.headers.get("stripe-signature");
+  const rawBody = await request.text();
+
+  let event = null;
+  let signatureVerified = false;
+
+  // 1. Primary gate: Cryptographic HMAC signature verification with webhook signing secret(s)
+  if (webhookSecrets.length > 0 && sig) {
+    const verifierStripe = stripeClients[0].stripe || new Stripe(stripeClients[0].secretKey);
+    let lastErr = null;
+
+    for (const secret of webhookSecrets) {
+      try {
+        event = verifierStripe.webhooks.constructEvent(rawBody, sig, secret);
+        signatureVerified = true;
+        break;
+      } catch (e) {
+        lastErr = e;
       }
-      if (!verified) {
-        throw lastErr || new Error("Failed to verify Stripe signature with available secrets");
-      }
-    } else {
-      // In development without webhook secret, parse payload safely
-      event = JSON.parse(rawBody);
     }
-  } catch (err) {
-    console.error("[Stripe Webhook] Verification failure:", err.message);
-    return NextResponse.json(
-      { error: `Webhook signature verification failed: ${err.message}` },
-      { status: 400 }
-    );
+
+    if (!signatureVerified) {
+      console.warn(
+        `[Stripe Webhook] Signature mismatch across ${webhookSecrets.length} configured secret(s): ${lastErr?.message || "unknown"} — falling back to direct Stripe API verification.`
+      );
+    }
   }
 
-  // Handle successful checkout
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const orderId = session.metadata?.order_id || session.client_reference_id;
-    const customerEmail = session.customer_details?.email;
-    const paymentIntentId = session.payment_intent;
+  // 2. Zero-trust fallback if webhook secret is not yet set in deployment environment:
+  // NEVER trust unverified JSON directly — parse only the session ID and re-fetch directly from Stripe API!
+  if (!event) {
+    try {
+      const parsed = JSON.parse(rawBody);
+      if (!parsed || typeof parsed !== "object" || !parsed.type) {
+        return NextResponse.json({ received: true, ignored: true });
+      }
+      event = parsed;
+    } catch (parseErr) {
+      return NextResponse.json(
+        { error: `Invalid webhook payload: ${parseErr.message}` },
+        { status: 400 }
+      );
+    }
+  }
 
-    console.log(`[Stripe Webhook] Payment confirmed for Order ${orderId}`);
+  const eventType = event.type;
+  const rawSession = event?.data?.object;
 
-    if (supabaseAdmin && orderId) {
+  if (
+    eventType === "checkout.session.completed" ||
+    eventType === "checkout.session.async_payment_succeeded"
+  ) {
+    const sessionId = rawSession?.id || "";
+    const orderId =
+      rawSession?.metadata?.order_id || rawSession?.client_reference_id || "";
+    const preferredLocale = rawSession?.metadata?.locale || "en";
+
+    // If HMAC signature was verified, we can normalize directly (or enrich from Stripe);
+    // if HMAC secret wasn't configured yet, we MUST retrieve directly from Stripe API over TLS!
+    let verifiedSessionData = null;
+    if (signatureVerified && rawSession?.id && rawSession?.payment_status === "paid") {
+      verifiedSessionData = normalizeStripeSession(
+        rawSession,
+        rawSession?.metadata?.company_entity || null
+      );
+    } else {
+      verifiedSessionData = await retrieveStripeCheckoutSession({
+        sessionId,
+        orderId,
+        preferredLocale,
+      });
+    }
+
+    if (!verifiedSessionData) {
+      console.error(
+        `[Stripe Webhook] Rejected unverified session ${sessionId} (Order: ${orderId || "N/A"})`
+      );
+      return NextResponse.json(
+        { error: "Session could not be verified with Stripe." },
+        { status: 400 }
+      );
+    }
+
+    const fulfillment = await fulfillPaidStripeSession({
+      sessionData: verifiedSessionData,
+      fallbackOrderId: orderId,
+      fallbackCartId: rawSession?.metadata?.cart_id || "",
+      fallbackLocale: preferredLocale,
+      source: `webhook:${eventType}`,
+    });
+
+    console.log(
+      `[Stripe Webhook] Processed ${eventType} for Order ${fulfillment.order?.id || orderId}: paid=${fulfillment.success}, newlyPaid=${Boolean(fulfillment.newlyPaid)}`
+    );
+
+    return NextResponse.json({
+      received: true,
+      orderId: fulfillment.order?.id || orderId,
+      paid: fulfillment.success,
+      newlyPaid: Boolean(fulfillment.newlyPaid),
+    });
+  }
+
+  if (eventType === "checkout.session.async_payment_failed") {
+    const orderId =
+      rawSession?.metadata?.order_id || rawSession?.client_reference_id || "";
+    console.warn(`[Stripe Webhook] Async payment failed for Order ${orderId || "N/A"}`);
+
+    if (signatureVerified && supabaseAdmin && orderId) {
       try {
-        // 1. Fetch current order
-        const { data: order } = await supabaseAdmin
+        const { data: ord } = await supabaseAdmin
           .from("orders")
-          .select("*")
+          .select("id, payment_status, admin_notes")
           .eq("id", orderId)
           .maybeSingle();
 
-        // 2. Mark order as paid
-        const updateData = {
-          status: "paid",
-          payment_status: "paid",
-          payment_id: session.id || paymentIntentId || null,
-          updated_at: new Date().toISOString(),
-        };
-        if (session.currency) updateData.currency = session.currency.toUpperCase();
-        if (session.metadata?.company_entity || session.metadata?.locale) {
-          updateData.admin_notes = `[Entity: ${session.metadata?.company_entity || "N/A"}] [Locale: ${session.metadata?.locale || "en"}]`;
+        if (ord && ord.payment_status !== "paid") {
+          await supabaseAdmin
+            .from("orders")
+            .update({
+              payment_status: "failed",
+              admin_notes: `${ord.admin_notes || ""} [Stripe Async Payment Failed]`.trim(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orderId);
         }
-
-        const { error: updateError } = await supabaseAdmin
-          .from("orders")
-          .update(updateData)
-          .eq("id", orderId);
-
-        if (updateError) {
-          console.error("[Stripe Webhook] Failed to update order status:", updateError.message);
-        }
-
-        // 3. Decrement stock for items if order found
-        if (order && Array.isArray(order.items)) {
-          for (const it of order.items) {
-            const rawId = it.rawId || it.id;
-            const qty = Number(it.quantity) || 1;
-            if (rawId) {
-              try {
-                // Fetch product stock
-                const { data: p } = await supabaseAdmin
-                  .from("products")
-                  .select("id, stock")
-                  .eq("id", parseInt(rawId, 10))
-                  .maybeSingle();
-
-                if (p && p.stock != null) {
-                  const newStock = Math.max(0, p.stock - qty);
-                  await supabaseAdmin
-                    .from("products")
-                    .update({ stock: newStock })
-                    .eq("id", p.id);
-                }
-              } catch (stockErr) {
-                console.warn("[Stripe Webhook] Stock decrement notice:", stockErr.message);
-              }
-            }
-          }
-
-          // 4. Trigger modular order confirmation email (logs or sends)
-          await sendOrderConfirmationEmail(order);
-        }
-      } catch (dbErr) {
-        console.error("[Stripe Webhook] Database processing error:", dbErr);
+      } catch (err) {
+        console.warn("[Stripe Webhook] Failed payment status update notice:", err.message);
       }
     }
   }

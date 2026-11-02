@@ -44,15 +44,16 @@
     "exploreAll": "Explore all models",
     "from": "from",
     "trade": "Trade Customers",
-    "caseStudies": "Case Studies"
+    "caseStudies": "Case Studies",
+    "more": "More"
   },
   "header": {
     "searchPlaceholder": "Search wall beds, sofas, mattresses...",
     "configuratorCta": "3D Configurator",
     "cart": "Cart",
     "account": "My Account",
-    "phone": "01928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "01928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Free Call",
     "openingHours": "Mon-Fri 9:00 - 20:00, Sat 9:00 - 12:00",
     "specialistAdvice": "Specialist Advice",
@@ -721,7 +722,7 @@
     "sec3ConditionLabel": "Condition:",
     "sec3Condition": "Items should be returned in good, saleable condition. Missing or opened packaging is not a problem.",
     "sec3ArrangeLabel": "Arranging a Return:",
-    "sec3Arrange": "Please contact our support team at support@wallbedking.com prior to dispatching any return.",
+    "sec3Arrange": "Please contact our support team at {{EMAIL}} prior to dispatching any return.",
     "sec4Title": "4. Lifetime Mechanism Warranty",
     "sec4P1": "Wall Bed King provides an unprecedented Lifetime Warranty on all bed frame mechanisms, including the heavy-gauge steel chassis, pivot brackets, and gas piston struts against material or manufacturing defects.",
     "sec4P2": "This warranty does not cover normal wear and tear of wood finishes, damage caused by improper installation, exceeding structural load capacities, or unauthorized alterations to the frame.",
@@ -756,7 +757,7 @@
     "sec4P2": "We retain customer order records only for as long as necessary to satisfy accounting, legal, and warranty obligations under our Lifetime Mechanism Warranty.",
     "sec5Title": "5. Your Legal Rights",
     "sec5P1": "Under UK and EU data protection regulations, you have the right to request access to the personal data we hold about you, request corrections, or request erasure of your data where no overriding legal or warranty obligation applies.",
-    "sec5P2": "To exercise any of these rights, please email our Data Privacy Officer at support@wallbedking.com."
+    "sec5P2": "To exercise any of these rights, please email our Data Privacy Officer at {{EMAIL}}."
   },
   "search": {
     "title": "Search",
@@ -803,7 +804,7 @@
     "formSubmit": "Send Trade Inquiry",
     "formSubmitting": "Submitting...",
     "formSuccess": "Thank you! Our commercial team will review your project and get back to you within 24 hours.",
-    "formError": "Failed to send inquiry. Please try again or email us directly at trade@wallbedking.com"
+    "formError": "Failed to send inquiry. Please try again or email us directly:"
   },
   "caseStudiesPage": {
     "heroBadge": "Commercial Projects & Proven Results",
@@ -812,5 +813,13 @@
     "quoteBanner": "Transforming Spaces with Precision Engineering",
     "startProjectCta": "Ready to discuss your commercial project?",
     "contactTrade": "Contact Trade Team"
+  },
+  "security": {
+    "showEmail": "Show email",
+    "showPhone": "Show number",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "completeCaptcha": "Please complete the security check below."
   }
 }

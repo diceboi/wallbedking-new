@@ -4,13 +4,24 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getPaymentConfig } from "@/lib/payments";
 import { generateOrderNumber } from "@/lib/orders";
 import { getAllowedCountryCodes } from "@/lib/countries";
+import { buildStripeSuccessUrl } from "@/lib/stripe-fulfillment";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { line_items, cartId, orderId, success_url, cancel_url, locale = "en", currency = null, customer, customerEmail } = body;
+    const {
+      line_items,
+      cartId,
+      orderId,
+      success_url,
+      cancel_url,
+      locale = "en",
+      currency = null,
+      customer,
+      customerEmail,
+    } = body;
 
     if (!line_items || !Array.isArray(line_items) || line_items.length === 0) {
       return NextResponse.json(
@@ -27,7 +38,9 @@ export async function POST(request) {
     const targetCurrencyLower = paymentConfig.stripeCurrency;
     const clientEmail = (customerEmail || customer?.email || "").trim().toLowerCase();
 
-    console.log(`[Stripe Checkout] Initiating session for entity: ${paymentConfig.entity} (${paymentConfig.companyName}), Currency: ${targetCurrencyLower.toUpperCase()}, Locale: ${locale}, Direct Stripe: ${Boolean(paymentConfig.stripeSecretKey)}`);
+    console.log(
+      `[Stripe Checkout] Initiating session for entity: ${paymentConfig.entity} (${paymentConfig.companyName}), Currency: ${targetCurrencyLower.toUpperCase()}, Locale: ${locale}, Direct Stripe: ${Boolean(paymentConfig.stripeSecretKey)}`
+    );
 
     // Server-side authoritative price validation against Supabase database
     let authoritativeLineItems = line_items;
@@ -54,16 +67,22 @@ export async function POST(request) {
         }
 
         if (valCalc?.items && valCalc.items.length > 0) {
-          const discountMultiplier = valCalc.subtotal > 0 ? Math.max(0, (valCalc.subtotal - valCalc.discountAmount) / valCalc.subtotal) : 1;
+          const discountMultiplier =
+            valCalc.subtotal > 0
+              ? Math.max(0, (valCalc.subtotal - valCalc.discountAmount) / valCalc.subtotal)
+              : 1;
           const recomputed = valCalc.items.map((it) => {
-            const discountedPrice = Math.round(it.price * discountMultiplier * 100) / 100;
+            const discountedPrice =
+              Math.round(it.price * discountMultiplier * 100) / 100;
             const unitAmountPence = Math.round(discountedPrice * 100);
             const optionsDesc = [
               it.options?.size,
               it.options?.orientation,
               it.options?.type,
               it.options?.sofaIncluded ? "Morphy Sofa Included" : null,
-            ].filter(Boolean).join(" | ");
+            ]
+              .filter(Boolean)
+              .join(" | ");
 
             return {
               price_data: {
@@ -106,13 +125,13 @@ export async function POST(request) {
       let effectiveSuccessUrl = `${paymentConfig.domain}/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(
         referenceId
       )}&cart_id=${encodeURIComponent(cartId || "")}`;
+
       if (success_url) {
         try {
-          const u = new URL(success_url);
-          u.searchParams.set("order_id", referenceId);
-          u.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
-          if (cartId) u.searchParams.set("cart_id", cartId);
-          effectiveSuccessUrl = u.toString();
+          effectiveSuccessUrl = buildStripeSuccessUrl(success_url, {
+            orderId: referenceId,
+            cartId: cartId || "",
+          });
         } catch {
           // keep fallback
         }
@@ -150,18 +169,22 @@ export async function POST(request) {
         },
       });
 
-      // Optionally attach payment_id to pending order if orderId exists
+      // Attach Stripe session ID (`payment_id`) to the pre-created order in Supabase
       if (orderId && supabaseAdmin) {
         try {
-          await supabaseAdmin
+          const { error: linkErr } = await supabaseAdmin
             .from("orders")
             .update({
               payment_id: session.id,
               payment_method: "stripe",
-              company_entity: paymentConfig.entity,
               currency: paymentConfig.currency,
+              updated_at: new Date().toISOString(),
             })
             .eq("id", orderId);
+
+          if (linkErr) {
+            console.warn("[Stripe Session] Order payment_id link warning:", linkErr.message);
+          }
         } catch (e) {
           console.warn("[Stripe Session] Order payment_id link notice:", e.message);
         }
@@ -174,9 +197,7 @@ export async function POST(request) {
       });
     }
 
-    // 2. Route to the dedicated Wall Bed King OnRender Stripe microservice for this company
-    // UK: https://stripe-uk.onrender.com/create-checkout-session
-    // International: https://stripe-05m9.onrender.com/create-checkout-session
+    // 2. Fallback: Route to the dedicated Wall Bed King OnRender Stripe microservice for this company
     const formattedLineItems = authoritativeLineItems.map((item) => ({
       ...item,
       price_data: {
@@ -188,17 +209,25 @@ export async function POST(request) {
     let onrenderSuccessUrl = `/${locale}/thanks?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(
       referenceId
     )}&cart_id=${encodeURIComponent(cartId || "")}`;
+
     if (success_url) {
       try {
-        const u = new URL(
+        const fullUrl = buildStripeSuccessUrl(
           success_url.startsWith("http")
             ? success_url
-            : `https://wallbedking.com${success_url.startsWith("/") ? "" : "/"}${success_url}`
+            : `https://www.wallbedking.com${success_url.startsWith("/") ? "" : "/"}${success_url}`,
+          {
+            orderId: referenceId,
+            cartId: cartId || "",
+          }
         );
-        u.searchParams.set("order_id", referenceId);
-        u.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
-        if (cartId) u.searchParams.set("cart_id", cartId);
-        onrenderSuccessUrl = `${u.pathname}${u.search}`;
+        const parsed = new URL(
+          fullUrl.replace("{CHECKOUT_SESSION_ID}", "__STRIPE_SESSION_TOKEN__")
+        );
+        onrenderSuccessUrl = `${parsed.pathname}${parsed.search}`.replace(
+          "__STRIPE_SESSION_TOKEN__",
+          "{CHECKOUT_SESSION_ID}"
+        );
       } catch {
         // keep default
       }
@@ -239,20 +268,24 @@ export async function POST(request) {
     if (!response.ok || data.error) {
       console.error(`[Stripe Microservice Error] [${paymentConfig.entity}]:`, data);
       return NextResponse.json(
-        { error: data.error || `Payment gateway responded with status ${response.status}` },
+        {
+          error:
+            data.error ||
+            `Payment gateway responded with status ${response.status}`,
+        },
         { status: response.status || 500 }
       );
     }
 
-    // Update order with entity tag if pending
     if (orderId && supabaseAdmin) {
       try {
         await supabaseAdmin
           .from("orders")
           .update({
+            payment_id: data.id || undefined,
             payment_method: "stripe",
-            company_entity: paymentConfig.entity,
             currency: paymentConfig.currency,
+            updated_at: new Date().toISOString(),
           })
           .eq("id", orderId);
       } catch (e) {
@@ -267,7 +300,10 @@ export async function POST(request) {
   } catch (error) {
     console.error("Internal Stripe route error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error connecting to payment gateway" },
+      {
+        error:
+          error.message || "Internal server error connecting to payment gateway",
+      },
       { status: 500 }
     );
   }

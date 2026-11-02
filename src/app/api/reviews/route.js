@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApprovedReviews, submitReview } from "@/lib/reviews";
+import { verifyFormProtection } from "@/lib/turnstile";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,31 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
+
+    const protection = await verifyFormProtection({
+      request,
+      body,
+      formType: "review",
+      maxRequests: 4,
+      windowMs: 15 * 60 * 1000,
+      minFillMs: 1800,
+    });
+
+    if (protection.silentDrop) {
+      return NextResponse.json({
+        success: true,
+        message:
+          "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it.",
+      });
+    }
+
+    if (!protection.ok) {
+      return NextResponse.json(
+        { success: false, error: protection.error || "Security verification failed." },
+        { status: protection.status || 400 }
+      );
+    }
+
     const {
       productSlug,
       productName,

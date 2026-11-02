@@ -29,15 +29,16 @@
     "allMorphyTagline": "Découvrir tous les modèles MORPHY™",
     "allTraditionalTagline": "Modèles classiques de lits escamotables en déstockage – jusqu'à épuisement des stocks",
     "trade": "Professionnels",
-    "caseStudies": "Études de cas"
+    "caseStudies": "Études de cas",
+    "more": "Plus"
   },
   "header": {
     "searchPlaceholder": "Rechercher lits escamotables, canapés, matelas...",
     "configuratorCta": "Configurateur 3D",
     "cart": "Panier",
     "account": "Mon Compte",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Conseil Spécialisé",
     "openingHours": "Lun-Ven 9h00 - 20h00, Sam 9h00 - 12h00",
     "specialistAdvice": "Conseil Spécialisé",
@@ -663,7 +664,7 @@
     "sec3ConditionLabel": "État :",
     "sec3Condition": "Les articles doivent être retournés en bon état, vendables. L'absence ou l'ouverture de l'emballage n'est pas un problème.",
     "sec3ArrangeLabel": "Organisation d'un retour :",
-    "sec3Arrange": "Veuillez contacter notre équipe de support à support@wallbedking.com avant d'expédier tout retour.",
+    "sec3Arrange": "Veuillez contacter notre équipe de support à {{EMAIL}} avant d'expédier tout retour.",
     "sec4Title": "4. Garantie à vie des mécanismes",
     "sec4P1": "Wall Bed King offre une garantie à vie sans précédent sur tous les mécanismes de cadre de lit, y compris le châssis en acier de forte épaisseur, les supports pivotants et les vérins à gaz, contre les défauts de matériau ou de fabrication.",
     "sec4P2": "Cette garantie ne couvre pas l'usure normale des finitions en bois, les dommages causés par une installation incorrecte, le dépassement des capacités de charge structurelle, ou les modifications non autorisées du cadre.",
@@ -698,7 +699,7 @@
     "sec4P2": "Nous conservons les dossiers de commande des clients uniquement aussi longtemps que nécessaire pour satisfaire aux obligations comptables, légales et de garantie dans le cadre de notre Garantie Mécanisme à Vie.",
     "sec5Title": "5. Vos droits légaux",
     "sec5P1": "Conformément aux réglementations britanniques et européennes sur la protection des données, vous avez le droit de demander l'accès aux données personnelles que nous détenons à votre sujet, de demander des corrections ou de demander l'effacement de vos données lorsque aucune obligation légale ou de garantie prévalente ne s'applique.",
-    "sec5P2": "Pour exercer l'un de ces droits, veuillez envoyer un courriel à notre Responsable de la Protection des Données à l'adresse support@wallbedking.com."
+    "sec5P2": "Pour exercer l'un de ces droits, veuillez envoyer un courriel à notre Responsable de la Protection des Données à l'adresse {{EMAIL}}."
   },
   "configurator": {
     "underDevelopment": "En cours de développement",
@@ -762,7 +763,7 @@
     "formSubmit": "Envoyer la demande pro",
     "formSubmitting": "Envoi en cours...",
     "formSuccess": "Merci ! Notre équipe dédiée vous contactera sous 24 heures ouvrées.",
-    "formError": "Échec de l'envoi. Veuillez nous contacter directement à support@wallbedking.com"
+    "formError": "Échec de l'envoi. Veuillez nous contacter directement :"
   },
   "caseStudiesPage": {
     "heroBadge": "Projets professionnels & retours d'expérience",
@@ -771,5 +772,13 @@
     "quoteBanner": "Optimisation des espaces par l'ingénierie de précision",
     "startProjectCta": "Prêt à collaborer sur votre prochain projet ?",
     "contactTrade": "Contacter l'équipe pro"
+  },
+  "security": {
+    "showEmail": "Afficher l'e-mail",
+    "showPhone": "Afficher le numéro",
+    "copy": "Copier",
+    "copied": "Copié",
+    "retry": "Réessayer",
+    "completeCaptcha": "Veuillez compléter la vérification de sécurité."
   }
 }

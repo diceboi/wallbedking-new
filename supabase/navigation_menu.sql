@@ -57,10 +57,11 @@ VALUES
   ('cabinets', 'Cabinets', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
   ('mattresses', 'Mattresses', 'category', 'mattresses', 'mattresses', '/products/mattresses', 4, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
   ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 5, true, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
-  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 6, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
-  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 7, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
-  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 8, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
-  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 9, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[])
+  ('more', 'More', 'custom', NULL, 'more', '/support/delivery', 6, true, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 7, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 8, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('beds', 'Wall Beds', 'category', 'beds', 'beds', '/products/beds', 9, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('support', 'Support & Guides', 'custom', NULL, 'support', '/support/faq', 10, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[])
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   type = EXCLUDED.type,

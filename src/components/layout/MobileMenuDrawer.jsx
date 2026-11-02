@@ -74,6 +74,7 @@ export function MobileMenuDrawer() {
     return rawItems.filter((item) => isNavItemAvailableInLocale(item, locale));
   }, [rawItems, locale]);
 
+  const showMoreLinks = !rawItems.some((it) => it.id === "more" || it.slug === "more") || items.some((it) => it.id === "more" || it.slug === "more");
   const { user, openUserDrawer } = useAuth();
 
   // Navigation depth: 0 = Top menu, 1 = Category details
@@ -215,7 +216,7 @@ export function MobileMenuDrawer() {
                     className="flex flex-col divide-y divide-wbk-lightgrey/70"
                   >
                     {/* Catalog Categories */}
-                    {items.map((item) => {
+                    {items.filter((item) => item.id !== "more" && item.slug !== "more").map((item) => {
                       const submenuKey =
                         item.slug || item.category_id || item.id;
                       const hasSub =
@@ -287,7 +288,7 @@ export function MobileMenuDrawer() {
                     </div>
 
                     {/* Secondary Information & Support Links (From Desktop Black Menu, category button style) */}
-                    <div className="flex flex-col divide-y divide-wbk-lightgrey/60 bg-[#FAF9F7] border-t-2 border-wbk-lightgrey/80">
+                    {showMoreLinks && <div className="flex flex-col divide-y divide-wbk-lightgrey/60 bg-[#FAF9F7] border-t-2 border-wbk-lightgrey/80">
                       {[
                         {
                           id: "delivery",
@@ -338,7 +339,7 @@ export function MobileMenuDrawer() {
                           />
                         </Link>
                       ))}
-                    </div>
+                    </div>}
 
                     {/* Brand Trust Assurances */}
                     <div className="p-4 bg-[#F4F2F0] border-t border-wbk-lightgrey/70 space-y-2.5 text-[11px] text-wbk-brown">

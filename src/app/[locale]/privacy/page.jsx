@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
+import { renderProtectedTokens } from "@/components/ui/ProtectedContact";
 
 export default function PrivacyPolicyPage() {
   const { t, localizedHref } = useLocale();
@@ -105,7 +106,12 @@ export default function PrivacyPolicyPage() {
               )}
             </p>
             <p>
-              {t("privacy.sec5P2", "To exercise any of these rights, please email our Data Privacy Officer at support@wallbedking.com.")}
+              {renderProtectedTokens(
+                t(
+                  "privacy.sec5P2",
+                  "To exercise any of these rights, please email our Data Privacy Officer at {{EMAIL}}."
+                )
+              )}
             </p>
           </section>
         </div>

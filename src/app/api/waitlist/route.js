@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { verifyFormProtection } from "@/lib/turnstile";
 import fs from "fs";
 import path from "path";
 
@@ -39,7 +40,7 @@ function saveFallbackWaitlist(items) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = searchParams.get("userId") || searchParams.get("user_id");
     const email = searchParams.get("email")?.trim().toLowerCase();
 
     if (!userId && !email) {
@@ -141,6 +142,30 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
+
+    const protection = await verifyFormProtection({
+      request,
+      body,
+      formType: "waitlist",
+      maxRequests: 8,
+      windowMs: 10 * 60 * 1000,
+      minFillMs: 700,
+    });
+
+    if (protection.silentDrop) {
+      return NextResponse.json({
+        success: true,
+        message: "You have been added to the waitlist. We'll notify you as soon as stock arrives!",
+      });
+    }
+
+    if (!protection.ok) {
+      return NextResponse.json(
+        { success: false, error: protection.error || "Security verification failed." },
+        { status: protection.status || 400 }
+      );
+    }
+
     const {
       userId = null,
       customerEmail,

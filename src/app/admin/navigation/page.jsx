@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_navigation_menu_available_locales
 
 UPDATE public.navigation_menu
 SET available_locales = ARRAY['en', 'us', 'de', 'fr', 'es', 'por', 'it']::TEXT[], updated_at = NOW()
-WHERE id IN ('morphyBeds', 'tables', 'sofas', 'extras', 'beds', 'support') OR available_locales IS NULL;
+WHERE id IN ('morphyBeds', 'tables', 'more', 'sofas', 'extras', 'beds', 'support') OR available_locales IS NULL;
 
 UPDATE public.navigation_menu
 SET available_locales = ARRAY['en', 'de', 'fr', 'es', 'por', 'it']::TEXT[], updated_at = NOW()
@@ -1054,7 +1054,7 @@ export default function AdminNavigationPage() {
                     className="h-4 w-4 rounded border-gray-300 text-wbk-gold focus:ring-wbk-gold"
                   />
                   <span className="text-xs font-medium text-wbk-black">
-                    Enable Mega-Menu Submenu Dropdown (for categories with photo catalogs)
+                    Enable Submenu / Dropdown Menu (Mega-Menu for categories, or secondary links dropdown for &ldquo;More&rdquo;)
                   </span>
                 </label>
 

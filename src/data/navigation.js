@@ -118,6 +118,18 @@ export const ALL_NAV_ITEMS = (
           has_submenu: true,
           available_locales: ALL_NAV_LOCALE_CODES,
         },
+        {
+          id: "more",
+          title: "More",
+          type: "custom",
+          slug: "more",
+          href: "/support/delivery",
+          is_visible: true,
+          order: 6,
+          hasSubmenu: true,
+          has_submenu: true,
+          available_locales: ALL_NAV_LOCALE_CODES,
+        },
       ]
 ).map((item) => {
   const hasSub =
@@ -133,6 +145,16 @@ export const ALL_NAV_ITEMS = (
     available_locales: normalizeNavLocales(item.available_locales, item),
   };
 });
+
+export const MORE_MENU_LINKS = [
+  { id: "delivery", href: "/support/delivery", label: "Delivery & Shipping", labelKey: "topbar.delivery" },
+  { id: "faq", href: "/support/faq", label: "FAQ", labelKey: "topbar.faq" },
+  { id: "trade", href: "/trade", label: "Trade Customers", labelKey: "topbar.tradeFull" },
+  { id: "caseStudies", href: "/case-studies", label: "Case Studies", labelKey: "topbar.caseStudies" },
+  { id: "reviews", href: "/reviews", label: "Reviews", labelKey: "topbar.reviews" },
+  { id: "about", href: "/about", label: "About Us", labelKey: "topbar.about" },
+  { id: "contact", href: "/contact", label: "Contact", labelKey: "topbar.contact" },
+];
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -492,5 +514,9 @@ export const SUBMENU_DATA = {
         badgeKey: "support.deliveryBadge",
       },
     ],
+  },
+  more: {
+    layout: "vertical-links",
+    items: MORE_MENU_LINKS,
   },
 };

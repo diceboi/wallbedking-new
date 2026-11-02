@@ -1306,11 +1306,10 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
       emailSubject = `✓ [Wall Bed King] ${i18n.badge} - ${order.id}`;
     }
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: emailSubject,
       html: htmlContent,
     });
@@ -1320,7 +1319,12 @@ export async function sendOrderConfirmationEmail(order, locale = null, isUpdate 
       await sendAdminOrderAlert(order).catch((err) => console.error("Admin order email alert failed:", err));
     }
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Email Service Resend Error]", res.error);
+      return { success: false, error: res.error.message || "Failed to send order confirmation email." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Email Service Error]", error);
     return { success: false, error: error.message };
@@ -1349,16 +1353,20 @@ export async function sendAdminOrderAlert(order) {
       ? `🏦 BANK TRANSFER REQUEST: ${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`
       : `🚨 NEW ORDER RECEIVED: ${order.id} (${adminSymbol}${Number(order.total_amount || 0).toFixed(2)}) - ${order.customer_name || "Customer"}`;
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [recipient],
       replyTo: order.customer_email || SUPPORT_EMAIL,
-      reply_to: order.customer_email || SUPPORT_EMAIL,
       subject,
       html: getAdminOrderAlertHtml(order),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Admin Email Error]", error);
     return { success: false, error: error.message };
@@ -1390,16 +1398,20 @@ export async function sendShippingNotificationEmail(order, trackingNumber, carri
     const upd = UPDATE_NOTICE_I18N[effectiveLocale] || UPDATE_NOTICE_I18N.en;
     const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: getShippingNotificationHtml(order, trackingNumber, carrier, isUpdate),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Email Service Error]", error);
     return { success: false, error: error.message };
@@ -1417,16 +1429,20 @@ export async function sendContactFormEmail({ name, email, phone, subject, messag
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [SUPPORT_EMAIL],
       replyTo: email,
-      reply_to: email,
       subject: `📩 Contact Form Submission: ${subject} from ${name}`,
       html: getContactFormHtml({ name, email, phone, subject, message }),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Contact Email Error]", error);
     return { success: false, error: error.message };
@@ -1453,16 +1469,20 @@ export async function sendReviewRequestEmail(order, product = null) {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: `How is your Wall Bed King Murphy bed? (Order ${order.id})`,
       html: getReviewRequestHtml(order, product),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Review Request Email Error]", error);
     return { success: false, error: error.message };
@@ -1480,16 +1500,20 @@ export async function sendAdminNewReviewAlert(review) {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [ADMIN_EMAIL],
       replyTo: review.author_email || SUPPORT_EMAIL,
-      reply_to: review.author_email || SUPPORT_EMAIL,
       subject: `⭐ NEW REVIEW SUBMITTED: ${review.author_name} for ${review.product_name || review.product_slug} (${review.rating} Stars)`,
       html: getAdminNewReviewAlertHtml(review),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Admin Review Alert Error]", error);
     return { success: false, error: error.message };
@@ -1674,16 +1698,20 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [waitlistItem.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: t.subject(pName),
       html: getRestockNotificationHtml(waitlistItem, product, loc),
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Restock Email Error]", error);
     return { success: false, error: error.message };
@@ -2143,16 +2171,20 @@ export async function sendProductionNotificationEmail(order, locale = null, isUp
     const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
     const htmlContent = getProductionNotificationHtml(order, effectiveLocale, isUpdate);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: htmlContent,
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Production Email Error]", error);
     return { success: false, error: error.message };
@@ -2186,16 +2218,20 @@ export async function sendDeliveryNotificationEmail(order, locale = null, isUpda
     const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
     const htmlContent = getDeliveryNotificationHtml(order, effectiveLocale, isUpdate);
 
-    const data = await resend.emails.send({
+    const res = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [order.customer_email],
       replyTo: SUPPORT_EMAIL,
-      reply_to: SUPPORT_EMAIL,
       subject: `${subjectPrefix}${i18n.subject(order.id)}`,
       html: htmlContent,
     });
 
-    return { success: true, data };
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
+    }
+
+    return { success: true, data: res?.data || res };
   } catch (error) {
     console.error("[Delivery Email Error]", error);
     return { success: false, error: error.message };

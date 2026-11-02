@@ -4,8 +4,10 @@ import { useContext, useRef, useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import Link from "next/link";
+import { IconChevronLeft, IconChevronRight, IconArrowRight } from "@tabler/icons-react";
 import { MenuContext } from "@/context/MenuContext";
+import { useLocale } from "@/context/LocaleContext";
 import { SUBMENU_DATA, MAIN_NAV_ITEMS } from "@/data/navigation";
 import { SubmenuItem } from "./SubmenuItem";
 
@@ -171,6 +173,7 @@ function SubmenuSectionRow({ section, onSelect }) {
 export function Submenu() {
   const { subMenu, setSubMenu, cancelCloseSubmenu, scheduleCloseSubmenu, navItems } =
     useContext(MenuContext);
+  const { localizedHref, t } = useLocale();
   const items = navItems || MAIN_NAV_ITEMS;
 
   const activeData = subMenu
@@ -266,8 +269,25 @@ export function Submenu() {
                   className="w-full flex justify-start"
                 >
                   <div className="w-full">
-                    {/* Content: Multi-row sections OR single-row slider with parent */}
-                    {hasSections ? (
+                    {/* Content: Vertical secondary links ("More"), multi-row sections, OR single-row slider */}
+                    {activeData.layout === "vertical-links" ? (
+                      <div className="w-full max-w-[330px] xl:max-w-[360px] flex flex-col divide-y divide-wbk-lightgrey/60">
+                        {activeData.items?.map((link) => (
+                          <Link
+                            key={link.id || link.href}
+                            href={localizedHref(link.href)}
+                            onClick={() => setSubMenu(null)}
+                            className="group flex items-center justify-between py-2.5 px-2.5 text-xs font-medium uppercase tracking-[0.13em] text-wbk-black hover:text-wbk-green hover:bg-[#FAF8F5] transition-colors"
+                          >
+                            <span>{link.labelKey ? t(link.labelKey, link.label) : link.label}</span>
+                            <IconArrowRight
+                              size={14}
+                              className="text-wbk-brown/50 group-hover:text-wbk-green group-hover:translate-x-1 transition-all"
+                            />
+                          </Link>
+                        ))}
+                      </div>
+                    ) : hasSections ? (
                       <div className="w-full flex flex-col gap-4">
                         {activeData.sections.map((section) => (
                           <SubmenuSectionRow

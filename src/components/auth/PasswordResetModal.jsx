@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import { TurnstileWidget, useFormSecurity } from "@/components/ui/FormSecurityFields";
 
 export function PasswordResetModal() {
   const {
@@ -43,6 +44,7 @@ export function PasswordResetModal() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState("");
+  const resendSecurity = useFormSecurity();
 
   useEffect(() => {
     setMounted(true);
@@ -137,15 +139,23 @@ export function PasswordResetModal() {
       return;
     }
 
+    if (!resendSecurity.isTurnstileReady) {
+      setResendError(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
+
     setResendLoading(true);
     try {
-      await resetPassword(resendEmail.trim());
+      await resetPassword(resendEmail.trim(), resendSecurity.turnstileToken);
       setResendSuccess(true);
       cleanUrl();
     } catch (err) {
       console.error("[PasswordResetModal] Resend error:", err);
       setResendError(err.message || "Could not send reset email. Please try again.");
     } finally {
+      resendSecurity.resetTurnstileOnly();
       setResendLoading(false);
     }
   };
@@ -289,6 +299,12 @@ export function PasswordResetModal() {
                       />
                     </div>
                   </div>
+
+                  <TurnstileWidget
+                    turnstileRef={resendSecurity.turnstileRef}
+                    onTokenChange={resendSecurity.setTurnstileToken}
+                    action="auth_reset_resend"
+                  />
 
                   <button
                     type="submit"

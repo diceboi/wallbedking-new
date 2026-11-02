@@ -14,11 +14,14 @@ import {
   IconTools,
   IconShieldCheck,
   IconSparkles,
-  IconPhoneCall,
   IconMail,
 } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 import { getFaqs } from "@/data/faqs";
+import {
+  ProtectedContact,
+  renderProtectedTokens,
+} from "@/components/ui/ProtectedContact";
 
 const FAQ_CATEGORIES = [
   { id: "all", label: "All Questions", labelKey: "support.faqCatAll", icon: IconHelpCircle },
@@ -170,21 +173,15 @@ export default function FAQPage() {
                     "Our wall bed specialists are available to assist with room measurements and specifications."
                   )}
                 </p>
-                <div className="mt-4 flex flex-col gap-2">
+                <div className="mt-4 flex flex-col gap-2.5">
                   <Link
                     href={localizedHref("/contact")}
                     className="inline-flex items-center gap-2 text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors"
                   >
-                    <IconMail size={14} className="text-wbk-gold" />
+                    <IconMail size={14} className="text-wbk-gold shrink-0" />
                     <span>{t("nav.contact", "Contact Specialists")}</span>
                   </Link>
-                  <a
-                    href="mailto:support@wallbedking.com"
-                    className="inline-flex items-center gap-2 text-xs font-medium text-wbk-black hover:text-wbk-green transition-colors"
-                  >
-                    <IconMail size={14} className="text-wbk-gold" />
-                    <span>support@wallbedking.com</span>
-                  </a>
+                  <ProtectedContact type="email" showIcon />
                 </div>
               </div>
             </div>
@@ -260,7 +257,7 @@ export default function FAQPage() {
                             transition={{ duration: 0.22, ease: "easeInOut" }}
                           >
                             <div className="px-5 sm:px-6 pb-5 pt-1 text-xs sm:text-sm font-poppins text-wbk-brown leading-relaxed border-t border-wbk-lightgrey/40 whitespace-pre-line">
-                              {faq.answer}
+                              {renderProtectedTokens(faq.answer)}
                             </div>
                           </motion.div>
                         )}

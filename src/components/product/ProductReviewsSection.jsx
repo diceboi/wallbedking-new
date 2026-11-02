@@ -5,9 +5,11 @@ import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "@/context/LocaleContext";
 import {
-  IconStar,
+  FormSecurityFields,
+  useFormSecurity,
+} from "@/components/ui/FormSecurityFields";
+import {
   IconShieldCheck,
-  IconPhoto,
   IconPlus,
   IconX,
   IconCheck,
@@ -27,10 +29,13 @@ export function ProductReviewsSection({
   const { t, locale } = useLocale();
   const searchParams = useSearchParams();
   const urlReview = searchParams?.get("review");
-  const urlRating = searchParams?.get("rating") ? parseInt(searchParams.get("rating"), 10) : null;
+  const urlRating = searchParams?.get("rating")
+    ? parseInt(searchParams.get("rating"), 10)
+    : null;
   const urlName = searchParams?.get("name") || "";
   const urlEmail = searchParams?.get("email") || "";
-  const shouldAutoOpen = initialOpen || urlReview === "true" || urlReview === "open" || Boolean(urlRating);
+  const shouldAutoOpen =
+    initialOpen || urlReview === "true" || urlReview === "open" || Boolean(urlRating);
 
   const [mounted, setMounted] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -49,10 +54,18 @@ export function ProductReviewsSection({
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [formFeedback, setFormFeedback] = useState(null);
+  const security = useFormSecurity();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset security timer & Turnstile whenever review modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      security.resetSecurity();
+    }
+  }, [isModalOpen]);
 
   // Lock body scroll when modal or photo viewer is active
   useEffect(() => {
@@ -72,7 +85,15 @@ export function ProductReviewsSection({
       if (urlName || initialCustomerName) setAuthorName(urlName || initialCustomerName);
       if (urlEmail || initialCustomerEmail) setAuthorEmail(urlEmail || initialCustomerEmail);
     }
-  }, [shouldAutoOpen, urlRating, initialRating, urlName, initialCustomerName, urlEmail, initialCustomerEmail]);
+  }, [
+    shouldAutoOpen,
+    urlRating,
+    initialRating,
+    urlName,
+    initialCustomerName,
+    urlEmail,
+    initialCustomerEmail,
+  ]);
 
   useEffect(() => {
     fetchReviews();
@@ -130,7 +151,21 @@ export function ProductReviewsSection({
     if (!authorName.trim() || !content.trim()) {
       setFormFeedback({
         type: "error",
-        message: t("reviews.errorRequired", "Please provide your name and review details."),
+        message: t(
+          "reviews.errorRequired",
+          "Please provide your name and review details."
+        ),
+      });
+      return;
+    }
+
+    if (!security.isTurnstileReady) {
+      setFormFeedback({
+        type: "error",
+        message: t(
+          "security.completeCaptcha",
+          "Please complete the security check below."
+        ),
       });
       return;
     }
@@ -151,6 +186,7 @@ export function ProductReviewsSection({
           title: title.trim(),
           content: content.trim(),
           photos,
+          ...security.getSecurityPayload(),
         }),
       });
 
@@ -175,8 +211,10 @@ export function ProductReviewsSection({
         setTitle("");
         setContent("");
         setPhotos([]);
+        security.resetSecurity();
       }, 2500);
     } catch (err) {
+      security.resetTurnstileOnly();
       setFormFeedback({ type: "error", message: err.message });
     } finally {
       setSubmitting(false);
@@ -211,14 +249,15 @@ export function ProductReviewsSection({
             <span className="font-semibold text-sm text-wbk-black">
               {locale === "en" || locale === "us"
                 ? String(stats.avgRating || "5.0")
-                : String(stats.avgRating || "5").replace(".", ",")} {t("reviews.outOfFive", "out of 5")}
+                : String(stats.avgRating || "5").replace(".", ",")}{" "}
+              {t("reviews.outOfFive", "out of 5")}
             </span>
           </div>
           <p className="text-xs text-wbk-brown">
-            {t("reviews.basedOnReviews", "Based on {count} verified customer reviews and installations.").replace(
-              "{count}",
-              stats.totalCount || reviews.length
-            )}
+            {t(
+              "reviews.basedOnReviews",
+              "Based on {count} verified customer reviews and installations."
+            ).replace("{count}", stats.totalCount || reviews.length)}
           </p>
         </div>
 
@@ -244,7 +283,10 @@ export function ProductReviewsSection({
             {t("reviews.beFirst", "Be the first to review this bed!")}
           </p>
           <p className="text-xs text-wbk-brown">
-            {t("reviews.beFirstDesc", "Share your experience with installation, space-saving benefits, and daily comfort.")}
+            {t(
+              "reviews.beFirstDesc",
+              "Share your experience with installation, space-saving benefits, and daily comfort."
+            )}
           </p>
         </div>
       ) : (
@@ -257,15 +299,19 @@ export function ProductReviewsSection({
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-1.5 text-wbk-gold text-xs font-semibold tracking-wider">
-                    {"★".repeat(rev.rating || 5)}{"☆".repeat(5 - (rev.rating || 5))}
+                    {"★".repeat(rev.rating || 5)}
+                    {"☆".repeat(5 - (rev.rating || 5))}
                   </div>
 
                   <span className="text-[10px] text-wbk-brown uppercase">
-                    {new Date(rev.created_at || Date.now()).toLocaleDateString(dateLocale, {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {new Date(rev.created_at || Date.now()).toLocaleDateString(
+                      dateLocale,
+                      {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )}
                   </span>
                 </div>
 
@@ -276,14 +322,17 @@ export function ProductReviewsSection({
                 )}
 
                 <p className="text-xs leading-relaxed text-wbk-black/90 italic">
-                  "{rev.content}"
+                  &ldquo;{rev.content}&rdquo;
                 </p>
 
                 {/* Customer Photo Thumbnails */}
                 {Array.isArray(rev.photos) && rev.photos.length > 0 && (
                   <div className="pt-2">
                     <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block mb-1.5">
-                      {t("reviews.customerPhotos", "Customer Photos ({count}):").replace("{count}", rev.photos.length)}
+                      {t(
+                        "reviews.customerPhotos",
+                        "Customer Photos ({count}):"
+                      ).replace("{count}", rev.photos.length)}
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {rev.photos.map((photoUrl, pIdx) => (
@@ -321,232 +370,292 @@ export function ProductReviewsSection({
         </div>
       )}
 
-      {/* Write a Review Modal (Portaled to document.body to avoid parent transform/stacking traps) */}
-      {mounted && isModalOpen && typeof document !== "undefined" && createPortal(
-        <div
-          className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] overflow-y-auto overscroll-contain transition-all"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div className="min-h-full flex items-center justify-center p-3 sm:p-6 py-10 sm:py-16">
+      {/* Write a Review Modal */}
+      {mounted &&
+        isModalOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] overflow-y-auto overscroll-contain transition-all"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <div className="min-h-full flex items-center justify-center p-3 sm:p-6 py-10 sm:py-16">
+              <div
+                className="bg-white max-w-lg w-full rounded-2xl border border-wbk-lightgrey/80 shadow-2xl relative my-auto max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Pinned Modal Header */}
+                <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-wbk-lightgrey/60 shrink-0 bg-white">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-gold block">
+                      {t("reviews.modalFeedbackBadge", "Feedback")}
+                    </span>
+                    <h3 className="font-new-york text-xl text-wbk-black">
+                      {t("reviews.modalTitle", "Write a Product Review")}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
+                    aria-label="Close modal"
+                  >
+                    <IconX size={20} />
+                  </button>
+                </div>
+
+                {/* Scrollable Modal Form Body */}
+                <div className="overflow-y-auto p-5 sm:p-6 pt-4 space-y-4 text-xs flex-1">
+                  <form
+                    onSubmit={handleSubmitReview}
+                    className="space-y-4 text-xs relative"
+                  >
+                    {/* Star Rating Picker */}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
+                        {t("reviews.overallRating", "Your Overall Rating *")}
+                      </label>
+                      <div className="flex items-center gap-1 text-2xl">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            onClick={() => setRating(star)}
+                            className="text-wbk-gold transition-transform hover:scale-110 cursor-pointer focus:outline-none"
+                          >
+                            {(hoverRating || rating) >= star ? "★" : "☆"}
+                          </button>
+                        ))}
+                        <span className="ml-3 text-xs font-semibold text-wbk-black">
+                          {t("reviews.ofFiveStars", "{rating} of 5 Stars").replace(
+                            "{rating}",
+                            rating
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Author Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                          {t("reviews.yourName", "Your Name *")}
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder={t(
+                            "reviews.namePlaceholder",
+                            "e.g. Sarah Jenkins"
+                          )}
+                          value={authorName}
+                          onChange={(e) => setAuthorName(e.target.value)}
+                          className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                          {t(
+                            "reviews.yourEmail",
+                            "Your Email (not shown publicly)"
+                          )}
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="sarah@example.com"
+                          value={authorEmail}
+                          onChange={(e) => setAuthorEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Review Title */}
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        {t("reviews.headline", "Headline / Summary (Optional)")}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={t(
+                          "reviews.headlinePlaceholder",
+                          "e.g. Smooth mechanism, huge space saver!"
+                        )}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
+                      />
+                    </div>
+
+                    {/* Review Content */}
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
+                        {t("reviews.yourReview", "Your Review *")}
+                      </label>
+                      <textarea
+                        rows={4}
+                        required
+                        placeholder={t(
+                          "reviews.reviewPlaceholder",
+                          "Tell us about the installation, build quality, and how the wall bed has improved your room..."
+                        )}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Photo Upload with Previews */}
+                    <div>
+                      <label className="block text-[11px] font-medium text-wbk-black mb-1.5">
+                        {t(
+                          "reviews.attachPhotos",
+                          "Attach Setup Photos (Optional - Max 4)"
+                        )}
+                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {photos.map((p, idx) => (
+                          <div
+                            key={idx}
+                            className="relative w-16 h-16 border border-wbk-lightgrey/80 rounded-lg overflow-hidden shadow-xs"
+                          >
+                            <img
+                              src={p}
+                              alt="Upload preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(idx)}
+                              className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5 hover:bg-black cursor-pointer transition-colors"
+                            >
+                              <IconX size={12} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {photos.length < 4 && (
+                          <label className="w-16 h-16 border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-lg flex flex-col items-center justify-center text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors bg-[#FBF9F8] hover:bg-white">
+                            <IconUpload size={16} />
+                            <span className="text-[9px] mt-1 font-medium">
+                              {t("reviews.add", "Add")}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handlePhotoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    <FormSecurityFields
+                      security={security}
+                      action="product_review"
+                    />
+
+                    {/* Feedback Alert */}
+                    {formFeedback && (
+                      <div
+                        className={`p-3 text-xs border rounded-lg flex items-start gap-2 ${
+                          formFeedback.type === "success"
+                            ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                            : "bg-red-50 border-red-300 text-red-800"
+                        }`}
+                      >
+                        {formFeedback.type === "success" ? (
+                          <IconCheck
+                            size={16}
+                            className="shrink-0 mt-0.5 text-emerald-600"
+                          />
+                        ) : (
+                          <IconAlertCircle
+                            size={16}
+                            className="shrink-0 mt-0.5 text-red-600"
+                          />
+                        )}
+                        <span>{formFeedback.message}</span>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        {submitting ? (
+                          <>
+                            <IconLoader2 size={16} className="animate-spin" />
+                            <span>
+                              {t(
+                                "reviews.submittingReview",
+                                "Submitting for Review..."
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <span>
+                            {t(
+                              "reviews.submitReview",
+                              "Submit Review for Approval"
+                            )}
+                          </span>
+                        )}
+                      </button>
+                      <p className="text-[10px] text-wbk-brown text-center mt-2">
+                        {t(
+                          "reviews.verificationNote",
+                          "All reviews are verified by our team before publishing to protect against spam."
+                        )}
+                      </p>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Lightbox / Full-size photo viewer */}
+      {mounted &&
+        selectedPhoto &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] flex items-center justify-center p-4"
+            onClick={() => setSelectedPhoto(null)}
+          >
             <div
-              className="bg-white max-w-lg w-full rounded-2xl border border-wbk-lightgrey/80 shadow-2xl relative my-auto max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              className="bg-white p-3 sm:p-4 max-w-2xl w-full relative shadow-2xl rounded-2xl border border-wbk-lightgrey/80 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Pinned Modal Header */}
-              <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-wbk-lightgrey/60 shrink-0 bg-white">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-gold block">
-                    {t("reviews.modalFeedbackBadge", "Feedback")}
-                  </span>
-                  <h3 className="font-new-york text-xl text-wbk-black">
-                    {t("reviews.modalTitle", "Write a Product Review")}
-                  </h3>
-                </div>
+              <div className="flex justify-end pb-2">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
-                  aria-label="Close modal"
+                  onClick={() => setSelectedPhoto(null)}
+                  className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
+                  aria-label="Close preview"
                 >
                   <IconX size={20} />
                 </button>
               </div>
-
-              {/* Scrollable Modal Form Body */}
-              <div className="overflow-y-auto p-5 sm:p-6 pt-4 space-y-4 text-xs flex-1">
-                <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
-                  {/* Star Rating Picker */}
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black mb-1.5">
-                      {t("reviews.overallRating", "Your Overall Rating *")}
-                    </label>
-                    <div className="flex items-center gap-1 text-2xl">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onMouseEnter={() => setHoverRating(star)}
-                          onMouseLeave={() => setHoverRating(0)}
-                          onClick={() => setRating(star)}
-                          className="text-wbk-gold transition-transform hover:scale-110 cursor-pointer focus:outline-none"
-                        >
-                          {(hoverRating || rating) >= star ? "★" : "☆"}
-                        </button>
-                      ))}
-                      <span className="ml-3 text-xs font-semibold text-wbk-black">
-                        {t("reviews.ofFiveStars", "{rating} of 5 Stars").replace("{rating}", rating)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Author Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                        {t("reviews.yourName", "Your Name *")}
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder={t("reviews.namePlaceholder", "e.g. Sarah Jenkins")}
-                        value={authorName}
-                        onChange={(e) => setAuthorName(e.target.value)}
-                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                        {t("reviews.yourEmail", "Your Email (not shown publicly)")}
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="sarah@example.com"
-                        value={authorEmail}
-                        onChange={(e) => setAuthorEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Review Title */}
-                  <div>
-                    <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                      {t("reviews.headline", "Headline / Summary (Optional)")}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={t("reviews.headlinePlaceholder", "e.g. Smooth mechanism, huge space saver!")}
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  {/* Review Content */}
-                  <div>
-                    <label className="block text-[11px] font-medium text-wbk-black mb-1">
-                      {t("reviews.yourReview", "Your Review *")}
-                    </label>
-                    <textarea
-                      rows={4}
-                      required
-                      placeholder={t("reviews.reviewPlaceholder", "Tell us about the installation, build quality, and how the wall bed has improved your room...")}
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="w-full px-3 py-2 border border-wbk-lightgrey/80 rounded-lg bg-[#FBF9F8] text-wbk-black focus:outline-none focus:border-wbk-black focus:bg-white transition-colors leading-relaxed"
-                    />
-                  </div>
-
-                  {/* Photo Upload with Previews */}
-                  <div>
-                    <label className="block text-[11px] font-medium text-wbk-black mb-1.5">
-                      {t("reviews.attachPhotos", "Attach Setup Photos (Optional - Max 4)")}
-                    </label>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {photos.map((p, idx) => (
-                        <div key={idx} className="relative w-16 h-16 border border-wbk-lightgrey/80 rounded-lg overflow-hidden shadow-xs">
-                          <img src={p} alt="Upload preview" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePhoto(idx)}
-                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5 hover:bg-black cursor-pointer transition-colors"
-                          >
-                            <IconX size={12} />
-                          </button>
-                        </div>
-                      ))}
-
-                      {photos.length < 4 && (
-                        <label className="w-16 h-16 border-2 border-dashed border-wbk-lightgrey hover:border-wbk-gold rounded-lg flex flex-col items-center justify-center text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors bg-[#FBF9F8] hover:bg-white">
-                          <IconUpload size={16} />
-                          <span className="text-[9px] mt-1 font-medium">{t("reviews.add", "Add")}</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handlePhotoUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Feedback Alert */}
-                  {formFeedback && (
-                    <div
-                      className={`p-3 text-xs border rounded-lg flex items-start gap-2 ${
-                        formFeedback.type === "success"
-                          ? "bg-emerald-50 border-emerald-300 text-emerald-800"
-                          : "bg-red-50 border-red-300 text-red-800"
-                      }`}
-                    >
-                      {formFeedback.type === "success" ? (
-                        <IconCheck size={16} className="shrink-0 mt-0.5 text-emerald-600" />
-                      ) : (
-                        <IconAlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
-                      )}
-                      <span>{formFeedback.message}</span>
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                    >
-                      {submitting ? (
-                        <>
-                          <IconLoader2 size={16} className="animate-spin" />
-                          <span>{t("reviews.submittingReview", "Submitting for Review...")}</span>
-                        </>
-                      ) : (
-                        <span>{t("reviews.submitReview", "Submit Review for Approval")}</span>
-                      )}
-                    </button>
-                    <p className="text-[10px] text-wbk-brown text-center mt-2">
-                      {t("reviews.verificationNote", "All reviews are verified by our team before publishing to protect against spam.")}
-                    </p>
-                  </div>
-                </form>
-              </div>
+              <img
+                src={selectedPhoto}
+                alt="Full size customer photo"
+                className="max-h-[75vh] w-auto mx-auto object-contain rounded-lg"
+              />
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Lightbox / Full-size photo viewer (Portaled to document.body) */}
-      {mounted && selectedPhoto && typeof document !== "undefined" && createPortal(
-        <div
-          className="fixed inset-0 z-[99999] bg-wbk-black/35 backdrop-blur-[3px] flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div
-            className="bg-white p-3 sm:p-4 max-w-2xl w-full relative shadow-2xl rounded-2xl border border-wbk-lightgrey/80 animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-end pb-2">
-              <button
-                type="button"
-                onClick={() => setSelectedPhoto(null)}
-                className="p-1.5 text-wbk-brown hover:text-wbk-black hover:bg-black/5 rounded-full transition-colors cursor-pointer"
-                aria-label="Close preview"
-              >
-                <IconX size={20} />
-              </button>
-            </div>
-            <img
-              src={selectedPhoto}
-              alt="Full size customer photo"
-              className="max-h-[75vh] w-auto mx-auto object-contain rounded-lg"
-            />
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -25,7 +25,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "Can I contact your customer support team or order over the telephone?",
       answer:
-        "Yes! Our dedicated customer support specialists can answer technical questions, advise on room dimensions, or take your order by phone during opening hours:\n\n• Telephone Support: 01928 583 469 (International: +44 1928 583 469)\n\nOpening Hours: Monday to Friday: 9:00 – 20:00 (GMT), Saturday: 9:00 – 12:00 (GMT). You can also email us anytime at support@wallbedking.com.",
+        "Yes! Our dedicated customer support specialists can answer technical questions, advise on room dimensions, or take your order by phone during opening hours:\n\n• Telephone Support: {{PROTECTED_PHONE}}\n\nOpening Hours: Monday to Friday: 9:00 – 20:00 (GMT), Saturday: 9:00 – 12:00 (GMT). You can also email us anytime at {{PROTECTED_EMAIL}}.",
     },
     {
       id: "pay-4",
@@ -158,7 +158,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "Posso contactar o apoio ao cliente ou encomendar por telefone?",
       answer:
-        "Sim! A nossa equipa de apoio ao cliente está disponível para esclarecer dúvidas, dar aconselhamento técnico e registar a sua encomenda por telefone no horário de funcionamento:\n\n• Linha direta de apoio: +44 1928 583 469 (Reino Unido: 01928 583 469)\n\nHorário de atendimento: Segunda a sexta-feira das 9:00 às 20:00, sábado das 9:00 às 12:00 (GMT). Em alternativa, pode contactar-nos a qualquer momento por email para support@wallbedking.com.",
+        "Sim! A nossa equipa de apoio ao cliente está disponível para esclarecer dúvidas, dar aconselhamento técnico e registar a sua encomenda por telefone no horário de funcionamento:\n\n• Linha direta de apoio: {{PROTECTED_PHONE}}\n\nHorário de atendimento: Segunda a sexta-feira das 9:00 às 20:00, sábado das 9:00 às 12:00 (GMT). Em alternativa, pode contactar-nos a qualquer momento por email para {{PROTECTED_EMAIL}}.",
     },
     {
       id: "pay-4",
@@ -291,7 +291,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "Kann ich den Kundenservice telefonisch erreichen oder telefonisch bestellen?",
       answer:
-        "Ja! Wenn Sie nicht online bestellen möchten oder technische Fragen haben, berät Sie unser Kundenservice-Team gerne während der Geschäftszeiten per Telefon:\n\n• Telefon-Kundenservice: +44 1928 583 469 (aus dem UK: 01928 583 469)\n\nGeschäftszeiten: Montag bis Freitag von 9:00 bis 20:00 Uhr, Samstag von 9:00 bis 12:00 Uhr (GMT). Alternativ erreichen Sie uns jederzeit per E-Mail unter support@wallbedking.com oder über unser Kontaktformular.",
+        "Ja! Wenn Sie nicht online bestellen möchten oder technische Fragen haben, berät Sie unser Kundenservice-Team gerne während der Geschäftszeiten per Telefon:\n\n• Telefon-Kundenservice: {{PROTECTED_PHONE}}\n\nGeschäftszeiten: Montag bis Freitag von 9:00 bis 20:00 Uhr, Samstag von 9:00 bis 12:00 Uhr (GMT). Alternativ erreichen Sie uns jederzeit per E-Mail unter {{PROTECTED_EMAIL}} oder über unser Kontaktformular.",
     },
     {
       id: "pay-4",
@@ -424,7 +424,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "Puis-je joindre le service client ou commander par téléphone ?",
       answer:
-        "Oui ! Si vous préférez ne pas commander en ligne ou si vous avez des questions techniques, nos conseillers spécialisés sont à votre écoute par téléphone aux horaires d'ouverture :\n\n• Ligne directe : +44 1928 583 469 (Royaume-Uni: 01928 583 469)\n\nHoraires : Du lundi au vendredi de 9h à 20h, le samedi de 9h à 12h (GMT). Vous pouvez également nous écrire à tout moment par email à support@wallbedking.com.",
+        "Oui ! Si vous préférez ne pas commander en ligne ou si vous avez des questions techniques, nos conseillers spécialisés sont à votre écoute par téléphone aux horaires d'ouverture :\n\n• Ligne directe : {{PROTECTED_PHONE}}\n\nHoraires : Du lundi au vendredi de 9h à 20h, le samedi de 9h à 12h (GMT). Vous pouvez également nous écrire à tout moment par email à {{PROTECTED_EMAIL}}.",
     },
     {
       id: "pay-4",
@@ -557,7 +557,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "¿Puedo contactar con atención al cliente o realizar un pedido por teléfono?",
       answer:
-        "¡Sí! Si prefiere no tramitar su pedido por la web o necesita asesoramiento sobre medidas y montaje, nuestro equipo especializado le atenderá con mucho gusto por teléfono:\n\n• Línea telefónica directa: +44 1928 583 469 (Reino Unido: 01928 583 469)\n\nHorario de atención: De lunes a viernes de 9:00 a 20:00, sábados de 9:00 a 12:00 (GMT). También puede escribirnos en cualquier momento a support@wallbedking.com.",
+        "¡Sí! Si prefiere no tramitar su pedido por la web o necesita asesoramiento sobre medidas y montaje, nuestro equipo especializado le atenderá con mucho gusto por teléfono:\n\n• Línea telefónica directa: {{PROTECTED_PHONE}}\n\nHorario de atención: De lunes a viernes de 9:00 a 20:00, sábados de 9:00 a 12:00 (GMT). También puede escribirnos en cualquier momento a {{PROTECTED_EMAIL}}.",
     },
     {
       id: "pay-4",
@@ -690,7 +690,7 @@ const FAQS_BY_LOCALE = {
       category: "payments",
       question: "Posso contattare l'assistenza clienti o ordinare telefonicamente?",
       answer:
-        "Sì! Se preferisci ordinare al telefono o desideri una consulenza tecnica su misure e montaggio, i nostri specialisti sono a tua completa disposizione:\n\n• Linea telefonica diretta: +44 1928 583 469 (Regno Unito: 01928 583 469)\n\nOrari di apertura: Dal lunedì al venerdì dalle 9:00 alle 20:00, sabato dalle 9:00 alle 12:00 (GMT). In alternativa puoi scriverci in qualunque momento a support@wallbedking.com.",
+        "Sì! Se preferisci ordinare al telefono o desideri una consulenza tecnica su misure e montaggio, i nostri specialisti sono a tua completa disposizione:\n\n• Linea telefonica diretta: {{PROTECTED_PHONE}}\n\nOrari di apertura: Dal lunedì al venerdì dalle 9:00 alle 20:00, sabato dalle 9:00 alle 12:00 (GMT). In alternativa puoi scriverci in qualunque momento a {{PROTECTED_EMAIL}}.",
     },
     {
       id: "pay-4",

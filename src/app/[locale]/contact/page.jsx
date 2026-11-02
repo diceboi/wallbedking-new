@@ -7,7 +7,6 @@ import {
   IconPhoneCall,
   IconMail,
   IconClock,
-  IconMapPin,
   IconCheck,
   IconSend,
   IconBuildingWarehouse,
@@ -16,9 +15,14 @@ import {
 } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
 import { openZendeskChat } from "@/components/chat/ZendeskChat";
+import { ProtectedContact } from "@/components/ui/ProtectedContact";
+import {
+  FormSecurityFields,
+  useFormSecurity,
+} from "@/components/ui/FormSecurityFields";
 
 export default function ContactPage() {
-  const { t, localizedHref, market } = useLocale();
+  const { t, localizedHref } = useLocale();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,19 +32,30 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [errorMsg, setErrorMsg] = useState("");
+  const security = useFormSecurity();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMsg("");
+
+    if (!security.isTurnstileReady) {
+      setErrorMsg(
+        t("security.completeCaptcha", "Please complete the security check below.")
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          ...security.getSecurityPayload(),
+        }),
       });
 
       const data = await res.json();
@@ -49,9 +64,14 @@ export default function ContactPage() {
       }
 
       setSubmitted(true);
+      security.resetSecurity();
     } catch (err) {
       console.error(err);
-      setErrorMsg("An error occurred while sending your message. Please try again or call us directly.");
+      security.resetTurnstileOnly();
+      setErrorMsg(
+        err.message ||
+          "An error occurred while sending your message. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -78,7 +98,10 @@ export default function ContactPage() {
               {t("contact.title", "Get in touch with our specialists")}
             </h1>
             <p className="mt-4 text-sm sm:text-base text-wbk-brown leading-relaxed font-light">
-              {t("contact.subtitle", "Have a question about room dimensions, installation requirements, or order delivery? Our UK-based wall bed engineering team is on hand 6 days a week to advise you.")}
+              {t(
+                "contact.subtitle",
+                "Have a question about room dimensions, installation requirements, or order delivery? Our UK-based wall bed engineering team is on hand 6 days a week to advise you."
+              )}
             </p>
           </div>
         </Container>
@@ -104,10 +127,17 @@ export default function ContactPage() {
                       {t("contact.telSupport", "Telephone Support")}
                     </p>
                     <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
-                      {t("contact.telDesc", "Available Mon–Fri 9–20, Sat 9–12. Direct phone lines can be found under the telephone question in our")}{" "}
-                      <Link href={localizedHref("/support/faq")} className="text-wbk-black font-semibold underline hover:text-wbk-green">
+                      {t(
+                        "contact.telDesc",
+                        "Available Mon–Fri 9–20, Sat 9–12. Direct phone lines can be found under the telephone question in our"
+                      )}{" "}
+                      <Link
+                        href={localizedHref("/support/faq")}
+                        className="text-wbk-black font-semibold underline hover:text-wbk-green"
+                      >
                         FAQ
-                      </Link>.
+                      </Link>
+                      .
                     </p>
                   </div>
                 </div>
@@ -119,7 +149,7 @@ export default function ContactPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase font-semibold tracking-wider text-wbk-black font-semibold">
+                      <p className="text-xs uppercase font-semibold tracking-wider text-wbk-black">
                         {t("contact.liveChat", "Online Live Chat")}
                       </p>
                       <span className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 border border-emerald-200">
@@ -128,7 +158,10 @@ export default function ContactPage() {
                       </span>
                     </div>
                     <p className="text-xs text-wbk-brown mt-1 leading-relaxed">
-                      {t("contact.liveChatDesc", "Chat directly with our product engineers and customer support specialists in real time.")}
+                      {t(
+                        "contact.liveChatDesc",
+                        "Chat directly with our product engineers and customer support specialists in real time."
+                      )}
                     </p>
                     <button
                       type="button"
@@ -140,7 +173,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                {/* Email */}
+                {/* Email (1-Click Bot-Protected) */}
                 <div className="p-5 rounded-none border border-wbk-lightgrey bg-white flex items-start gap-4 shadow-2xs">
                   <div className="w-10 h-10 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center shrink-0">
                     <IconMail size={20} className="text-wbk-gold" />
@@ -149,14 +182,14 @@ export default function ContactPage() {
                     <p className="text-xs uppercase font-semibold tracking-wider text-wbk-brown">
                       {t("contact.emailInquiries", "Email Inquiries")}
                     </p>
-                    <a
-                      href="mailto:support@wallbedking.com"
-                      className="mt-1 block text-sm font-semibold text-wbk-black hover:text-wbk-green transition-colors"
-                    >
-                      support@wallbedking.com
-                    </a>
-                    <p className="text-[11px] text-wbk-brown mt-0.5">
-                      {t("contact.emailDesc", "Average response time: within 4–12 business hours")}
+                    <div className="mt-1.5">
+                      <ProtectedContact type="email" />
+                    </div>
+                    <p className="text-[11px] text-wbk-brown mt-1">
+                      {t(
+                        "contact.emailDesc",
+                        "Average response time: within 4–12 business hours"
+                      )}
                     </p>
                   </div>
                 </div>
@@ -194,7 +227,10 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-poppins font-semibold text-sm text-wbk-black">
-                    {t("contact.showroomCardTitle", "Showroom & Warehouse (Appointment Only)")}
+                    {t(
+                      "contact.showroomCardTitle",
+                      "Showroom & Warehouse (Appointment Only)"
+                    )}
                   </h3>
                   <p className="text-xs text-wbk-brown">Harlow, Essex, CM20 2HU</p>
                 </div>
@@ -209,7 +245,12 @@ export default function ContactPage() {
 
               <div className="pt-2 flex items-center gap-2 text-xs font-semibold text-wbk-black">
                 <IconCalendarEvent size={16} className="text-wbk-gold" />
-                <span>{t("contact.appointmentReq", "Appointments required for all visits and collections")}</span>
+                <span>
+                  {t(
+                    "contact.appointmentReq",
+                    "Appointments required for all visits and collections"
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -221,7 +262,10 @@ export default function ContactPage() {
                 {t("contact.sendMessageTitle", "Send Us a Message")}
               </h2>
               <p className="text-xs sm:text-sm text-wbk-brown mb-8">
-                {t("contact.sendMessageDesc", "Fill out the form below and our team will get back to you promptly with answers and technical guidance.")}
+                {t(
+                  "contact.sendMessageDesc",
+                  "Fill out the form below and our team will get back to you promptly with answers and technical guidance."
+                )}
               </p>
 
               {submitted ? (
@@ -230,7 +274,10 @@ export default function ContactPage() {
                     <IconCheck size={24} />
                   </div>
                   <h3 className="font-new-york text-2xl text-wbk-black">
-                    {t("contact.success", "Thank you! Your message has been sent successfully.")}
+                    {t(
+                      "contact.success",
+                      "Thank you! Your message has been sent successfully."
+                    )}
                   </h3>
                   <p className="mt-2 text-xs sm:text-sm text-wbk-brown max-w-md mx-auto">
                     Your inquiry has been received. One of our specialists will review your message and reply to{" "}
@@ -240,7 +287,14 @@ export default function ContactPage() {
                     type="button"
                     onClick={() => {
                       setSubmitted(false);
-                      setFormData({ name: "", email: "", phone: "", subject: "general", message: "" });
+                      setFormData({
+                        name: "",
+                        email: "",
+                        phone: "",
+                        subject: "general",
+                        message: "",
+                      });
+                      security.resetSecurity();
                     }}
                     className="mt-6 px-6 py-2.5 bg-wbk-black text-white text-xs font-medium rounded-full hover:bg-wbk-green transition-colors cursor-pointer"
                   >
@@ -248,7 +302,7 @@ export default function ContactPage() {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-5 relative">
                   {errorMsg && (
                     <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-none">
                       {errorMsg}
@@ -263,7 +317,9 @@ export default function ContactPage() {
                         type="text"
                         required
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                         placeholder="e.g. Eleanor Vance"
                         className="w-full h-11 px-4 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                       />
@@ -276,7 +332,9 @@ export default function ContactPage() {
                         type="email"
                         required
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
                         placeholder="e.g. eleanor@example.co.uk"
                         className="w-full h-11 px-4 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                       />
@@ -291,7 +349,9 @@ export default function ContactPage() {
                       <input
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
                         placeholder="e.g. 07700 900077"
                         className="w-full h-11 px-4 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                       />
@@ -302,13 +362,24 @@ export default function ContactPage() {
                       </label>
                       <select
                         value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, subject: e.target.value })
+                        }
                         className="w-full h-11 px-3 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                       >
-                        <option value="general">{t("contact.generalInquiry", "General Inquiry")}</option>
+                        <option value="general">
+                          {t("contact.generalInquiry", "General Inquiry")}
+                        </option>
                         <option value="showroom">Showroom Visit Appointment</option>
-                        <option value="order">{t("contact.orderStatus", "Order Tracking & Delivery Status")}</option>
-                        <option value="assembly">{t("contact.technicalSupport", "Installation & Technical Assembly")}</option>
+                        <option value="order">
+                          {t("contact.orderStatus", "Order Tracking & Delivery Status")}
+                        </option>
+                        <option value="assembly">
+                          {t(
+                            "contact.technicalSupport",
+                            "Installation & Technical Assembly"
+                          )}
+                        </option>
                         <option value="trade">Trade / Commercial Partnership</option>
                       </select>
                     </div>
@@ -322,11 +393,18 @@ export default function ContactPage() {
                       required
                       rows={5}
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
                       placeholder="Please let us know how we can help, including room dimensions, ceiling height, or bed models you're considering..."
                       className="w-full p-4 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                     />
                   </div>
+
+                  <FormSecurityFields
+                    security={security}
+                    action="contact_inquiry"
+                  />
 
                   <button
                     type="submit"
@@ -334,7 +412,11 @@ export default function ContactPage() {
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <IconSend size={15} />
-                    <span>{loading ? t("contact.sending", "Sending...") : t("contact.send", "Submit Inquiry")}</span>
+                    <span>
+                      {loading
+                        ? t("contact.sending", "Sending...")
+                        : t("contact.send", "Submit Inquiry")}
+                    </span>
                   </button>
                 </form>
               )}

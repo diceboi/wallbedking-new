@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
+import { renderProtectedTokens } from "@/components/ui/ProtectedContact";
 
 export default function TermsPage() {
   const { t, localizedHref } = useLocale();
@@ -99,7 +100,12 @@ export default function TermsPage() {
             </p>
             <p>
               • <strong>{t("terms.sec3ArrangeLabel", "Arranging a Return:")}</strong>{" "}
-              {t("terms.sec3Arrange", "Please contact our support team at support@wallbedking.com prior to dispatching any return.")}
+              {renderProtectedTokens(
+                t(
+                  "terms.sec3Arrange",
+                  "Please contact our support team at {{EMAIL}} prior to dispatching any return."
+                )
+              )}
             </p>
           </section>
 

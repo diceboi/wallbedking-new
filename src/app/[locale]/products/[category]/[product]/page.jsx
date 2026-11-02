@@ -122,7 +122,9 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
   const duplicates = (allVariants || []).filter(
     (v) =>
       (v.color || v.name || "").toLowerCase().replace(/[^a-z]/g, "") ===
-      (variant.color || variant.name || "").toLowerCase().replace(/[^a-z]/g, "")
+      (variant.color || variant.name || "")
+        .toLowerCase()
+        .replace(/[^a-z]/g, ""),
   );
   if (duplicates.length > 1 && variant.sku) {
     const skuCode = variant.sku.split("-")[0] || variant.sku;
@@ -157,11 +159,7 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
     topHex = "#C19A6B";
   else if (s.includes("dark grey") || s.includes("dark gray"))
     topHex = "#4A4A4A";
-  else if (
-    s.includes("grey") ||
-    s.includes("gray") ||
-    s.includes("light grey")
-  )
+  else if (s.includes("grey") || s.includes("gray") || s.includes("light grey"))
     topHex = "#8A8A8A";
   else if (s.includes("blue")) topHex = "#1E3A8A";
   else if (s.includes("khaki")) topHex = "#BDB76B";
@@ -221,7 +219,8 @@ export default function ProductDetailPage() {
   const formatWeight = (kg) => {
     if (!kg) return "";
     if (typeof kg === "string") {
-      if (kg.toLowerCase().includes("kg") || kg.toLowerCase().includes("lbs")) return kg;
+      if (kg.toLowerCase().includes("kg") || kg.toLowerCase().includes("lbs"))
+        return kg;
       const num = parseFloat(kg);
       if (isNaN(num)) return kg;
       return isUS ? `${Math.round(num * 2.20462)} lbs` : `${num} kg`;
@@ -500,12 +499,9 @@ export default function ProductDetailPage() {
         return "side-storage-wardrobe-cabinet";
       if (s.includes("ext") || s.includes("overhead") || s.includes("bridge"))
         return "overhead-storage-extension-cabinet";
-      if (s.includes("horiz"))
-        return "horizontal-wall-bed-cabinet";
-      if (s.includes("vert"))
-        return "vertical-wall-bed-cabinet";
-      if (o === "horizontal")
-        return "horizontal-wall-bed-cabinet";
+      if (s.includes("horiz")) return "horizontal-wall-bed-cabinet";
+      if (s.includes("vert")) return "vertical-wall-bed-cabinet";
+      if (o === "horizontal") return "horizontal-wall-bed-cabinet";
       return "vertical-wall-bed-cabinet";
     }
 
@@ -598,8 +594,13 @@ export default function ProductDetailPage() {
   const familyVariants = useMemo(() => {
     const getVariants = catalogGetVariants || getProductVariants;
     const variants = getVariants(activeProduct);
-    let filtered = !locale ? variants : variants.filter((v) => isProductAvailableInLocale(v, locale));
-    if (activeProduct?.parent_category === "tables" || activeProduct?.is_space_saving_table) {
+    let filtered = !locale
+      ? variants
+      : variants.filter((v) => isProductAvailableInLocale(v, locale));
+    if (
+      activeProduct?.parent_category === "tables" ||
+      activeProduct?.is_space_saving_table
+    ) {
       const hasChildVariants = filtered.some((v) => v.parent_slug);
       if (hasChildVariants) {
         filtered = filtered.filter((v) => v.parent_slug || v.color);
@@ -684,10 +685,14 @@ export default function ProductDetailPage() {
     let variantsList = familyVariants;
     if (isBedProduct) {
       variantsList = familyVariants.filter(
-        (v) => (v.orientation || "Vertical").toLowerCase() === (productFormat || "Vertical").toLowerCase()
+        (v) =>
+          (v.orientation || "Vertical").toLowerCase() ===
+          (productFormat || "Vertical").toLowerCase(),
       );
     } else if (activeProduct.parent_category === "cabinets" && targetColor) {
-      variantsList = familyVariants.filter((v) => !v.color || v.color === targetColor);
+      variantsList = familyVariants.filter(
+        (v) => !v.color || v.color === targetColor,
+      );
     }
 
     const list = variantsList.length > 0 ? variantsList : familyVariants;
@@ -701,11 +706,15 @@ export default function ProductDetailPage() {
         ? v.size_us || formatSizeLabelI18n(rawLabel, "us", v)
         : v.size_eu || rawLabel;
 
-      if (v.parent_category === "cabinets" || activeProduct?.parent_category === "cabinets") {
+      if (
+        v.parent_category === "cabinets" ||
+        activeProduct?.parent_category === "cabinets"
+      ) {
         const wCm = v.width ? Math.round(Number(v.width) / 10) : 0;
         const hCm = v.height ? Math.round(Number(v.height) / 10) : 0;
         const dCm = v.length ? Math.round(Number(v.length) / 10) : 0;
-        const dimStr = wCm && hCm && dCm ? `W ${wCm} x H ${hCm} x D ${dCm}` : "";
+        const dimStr =
+          wCm && hCm && dCm ? `W ${wCm} x H ${hCm} x D ${dCm}` : "";
 
         let prefix = "";
         const n = v.name || "";
@@ -731,7 +740,15 @@ export default function ProductDetailPage() {
       }
     }
     return result;
-  }, [familyVariants, activeProduct, selectedVariant?.color, isUS, isTableProduct, isBedProduct, productFormat]);
+  }, [
+    familyVariants,
+    activeProduct,
+    selectedVariant?.color,
+    isUS,
+    isTableProduct,
+    isBedProduct,
+    productFormat,
+  ]);
 
   const selectedSizeDisplay = useMemo(() => {
     if (selectedVariant) {
@@ -790,7 +807,14 @@ export default function ProductDetailPage() {
       availableSizes[0]?.label ||
       "Standard"
     );
-  }, [selectedVariant, isUS, locale, productSize, availableSizes, activeProduct?.parent_category]);
+  }, [
+    selectedVariant,
+    isUS,
+    locale,
+    productSize,
+    availableSizes,
+    activeProduct?.parent_category,
+  ]);
 
   const availableColors = useMemo(() => {
     if (!familyVariants || familyVariants.length === 0) {
@@ -825,11 +849,21 @@ export default function ProductDetailPage() {
       const formatQuery = searchParams?.get("format");
       let activeOrient = activeProduct.orientation || "Vertical";
       let initialFormat = "Vertical";
-      if (formatQuery && (formatQuery.toLowerCase() === "horizontal" || formatQuery.toLowerCase() === "vertical")) {
-        initialFormat = formatQuery.toLowerCase() === "horizontal" ? "Horizontal" : "Vertical";
+      if (
+        formatQuery &&
+        (formatQuery.toLowerCase() === "horizontal" ||
+          formatQuery.toLowerCase() === "vertical")
+      ) {
+        initialFormat =
+          formatQuery.toLowerCase() === "horizontal"
+            ? "Horizontal"
+            : "Vertical";
       } else if (activeOrient === "Horizontal" || activeOrient === "Vertical") {
         initialFormat = activeOrient;
-      } else if (productFormat === "Horizontal" || productFormat === "Vertical") {
+      } else if (
+        productFormat === "Horizontal" ||
+        productFormat === "Vertical"
+      ) {
         initialFormat = productFormat;
       }
 
@@ -841,10 +875,13 @@ export default function ProductDetailPage() {
       // Bed variants scoped by format
       const bedFormatVariants = isBedProduct
         ? familyVariants.filter(
-            (v) => (v.orientation || "Vertical").toLowerCase() === initialFormat.toLowerCase()
+            (v) =>
+              (v.orientation || "Vertical").toLowerCase() ===
+              initialFormat.toLowerCase(),
           )
         : familyVariants;
-      const searchPool = bedFormatVariants.length > 0 ? bedFormatVariants : familyVariants;
+      const searchPool =
+        bedFormatVariants.length > 0 ? bedFormatVariants : familyVariants;
 
       // Find matching size variant from searchPool
       let targetVariant = null;
@@ -906,7 +943,7 @@ export default function ProductDetailPage() {
               v.slug?.toLowerCase() === cleanP ||
               v.sku?.toLowerCase() === cleanP ||
               (v.color || "").toLowerCase().includes(cleanP) ||
-              (v.name || "").toLowerCase().includes(cleanP)
+              (v.name || "").toLowerCase().includes(cleanP),
           );
           if (match) targetVariant = match;
         }
@@ -914,9 +951,9 @@ export default function ProductDetailPage() {
       if (!targetVariant && searchPool.length > 0) {
         targetVariant = isTableProduct
           ? searchPool[0]
-          : (findMatchingVariant(searchPool, "135x190") ||
-             findMatchingVariant(searchPool, "160x200") ||
-             searchPool[0]);
+          : findMatchingVariant(searchPool, "135x190") ||
+            findMatchingVariant(searchPool, "160x200") ||
+            searchPool[0];
       }
 
       if (targetVariant) {
@@ -982,13 +1019,11 @@ export default function ProductDetailPage() {
 
     let canonicalSlug = "classic-morphy-bed";
     if (isMorphy) {
-      if (style.includes("integrated"))
-        canonicalSlug = "integrated-morphy-bed";
+      if (style.includes("integrated")) canonicalSlug = "integrated-morphy-bed";
       else if (style.includes("studio")) canonicalSlug = "studio-morphy-bed";
       else canonicalSlug = "classic-morphy-bed";
     } else {
-      if (style.includes("studio"))
-        canonicalSlug = "studio-traditional-bed";
+      if (style.includes("studio")) canonicalSlug = "studio-traditional-bed";
       else canonicalSlug = "classic-traditional-bed";
     }
 
@@ -1007,7 +1042,11 @@ export default function ProductDetailPage() {
           : activeProduct.sizeSlug || searchParams?.get("size") || "";
       const params = new URLSearchParams();
       if (sizeSlug) params.set("size", sizeSlug);
-      if (o === "horizontal" || productSlug.includes("horizontal") || searchParams?.get("format") === "horizontal") {
+      if (
+        o === "horizontal" ||
+        productSlug.includes("horizontal") ||
+        searchParams?.get("format") === "horizontal"
+      ) {
         params.set("format", "horizontal");
       }
       const query = params.toString() ? `?${params.toString()}` : "";
@@ -1040,7 +1079,14 @@ export default function ProductDetailPage() {
         window.history.replaceState(null, "", canonicalPath);
       }
     }
-  }, [mounted, selectedVariant, productSlug, categorySlug, locale, getFlagshipSlug]);
+  }, [
+    mounted,
+    selectedVariant,
+    productSlug,
+    categorySlug,
+    locale,
+    getFlagshipSlug,
+  ]);
 
   // Review auto-open trigger from post-purchase emails or direct rating links
   useEffect(() => {
@@ -1077,7 +1123,8 @@ export default function ProductDetailPage() {
             const currentSize = selectedVariant?.sizeSlug || "";
             const params = new URLSearchParams();
             if (currentSize) params.set("size", currentSize);
-            if (fmt && fmt.toLowerCase() === "horizontal") params.set("format", "horizontal");
+            if (fmt && fmt.toLowerCase() === "horizontal")
+              params.set("format", "horizontal");
             const q = params.toString() ? `?${params.toString()}` : "";
             router.push(`/products/${categorySlug}/${targetSlug}${q}`);
             return;
@@ -1086,12 +1133,16 @@ export default function ProductDetailPage() {
         if (newFormat !== undefined) {
           setProductFormat(newFormat);
           const matchingFormatVariants = familyVariants.filter(
-            (v) => (v.orientation || "Vertical").toLowerCase() === newFormat.toLowerCase()
+            (v) =>
+              (v.orientation || "Vertical").toLowerCase() ===
+              newFormat.toLowerCase(),
           );
           if (matchingFormatVariants.length > 0) {
             const sameSize = matchingFormatVariants.find(
-              (v) => (v.sizeSlug && v.sizeSlug === selectedVariant?.sizeSlug) ||
-                     (v.width === selectedVariant?.width && v.length === selectedVariant?.length)
+              (v) =>
+                (v.sizeSlug && v.sizeSlug === selectedVariant?.sizeSlug) ||
+                (v.width === selectedVariant?.width &&
+                  v.length === selectedVariant?.length),
             );
             const next = sameSize || matchingFormatVariants[0];
             setSelectedVariant(next);
@@ -1110,7 +1161,11 @@ export default function ProductDetailPage() {
       const targetSlug = getFlagshipSlug(categorySlug, sty, fmt);
       if (targetSlug && targetSlug !== productSlug) {
         let currentSizeSlug = selectedVariant?.sizeSlug || "";
-        const currentColor = (selectedVariant?.color || activeProduct?.color || "").toLowerCase();
+        const currentColor = (
+          selectedVariant?.color ||
+          activeProduct?.color ||
+          ""
+        ).toLowerCase();
 
         // Cabinet size selection when switching style between Vertical and Horizontal
         if (categorySlug === "cabinets") {
@@ -1353,12 +1408,14 @@ export default function ProductDetailPage() {
       /test/i.test(displayProduct?.slug || "") ||
       /test/i.test(displayProduct?.sku || "") ||
       /test/i.test(activeProduct?.name || "") ||
-      /test/i.test(activeProduct?.slug || "")
+      /test/i.test(activeProduct?.slug || ""),
     );
 
     const isHidden = (item) => {
       if (!item) return false;
-      const v = String(item.visibility || "").toLowerCase().trim();
+      const v = String(item.visibility || "")
+        .toLowerCase()
+        .trim();
       return (
         v === "hidden" ||
         v === "false" ||
@@ -1368,7 +1425,10 @@ export default function ProductDetailPage() {
     };
 
     // If a non-test item is hidden AND has 0 or missing stock, mark as out of stock
-    if (!isTestProduct && (isHidden(displayProduct) || isHidden(activeProduct))) {
+    if (
+      !isTestProduct &&
+      (isHidden(displayProduct) || isHidden(activeProduct))
+    ) {
       const sVal = Number(displayProduct?.stock ?? activeProduct?.stock ?? 0);
       if (sVal <= 0) return true;
     }
@@ -1400,9 +1460,7 @@ export default function ProductDetailPage() {
     if (familyVariants && familyVariants.length > 0) {
       const allVariantsOutOfStock = familyVariants.every((v) => {
         const vStockZero =
-          (v.stock !== undefined &&
-            v.stock !== null &&
-            Number(v.stock) <= 0) ||
+          (v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0) ||
           v.in_stock === false;
         return vStockZero || (!isTestProduct && isHidden(v) && vStockZero);
       });
@@ -1452,7 +1510,7 @@ export default function ProductDetailPage() {
       categorySlug === "traditional-beds" ||
       displayProduct?.parent_category === "traditional-beds" ||
       activeProduct?.parent_category === "traditional-beds" ||
-      (productSlug || "").includes("traditional")
+      (productSlug || "").includes("traditional"),
     );
 
   const morphyCounterpartSlug = useMemo(() => {
@@ -1468,7 +1526,12 @@ export default function ProductDetailPage() {
     if (MORPHY_TRADITIONAL_MAP[productSlug]) {
       return MORPHY_TRADITIONAL_MAP[productSlug];
     }
-    const isStudio = (displayProduct?.name || activeProduct?.name || productSlug || "")
+    const isStudio = (
+      displayProduct?.name ||
+      activeProduct?.name ||
+      productSlug ||
+      ""
+    )
       .toLowerCase()
       .includes("studio");
     return isStudio ? "studio-morphy-bed" : "classic-morphy-bed";
@@ -1494,7 +1557,7 @@ export default function ProductDetailPage() {
   const sofaPriceValue = calculateSofaPrice(
     displayProduct,
     productFormat,
-    productSize
+    productSize,
   );
   const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
   const currentPrice = productPricing.raw;
@@ -1593,7 +1656,13 @@ export default function ProductDetailPage() {
         alt: `${localizedProductName || "Morphy Bed"} with Sofa - View 3`,
       },
     ];
-  }, [getSofaImgSize, getSofaImgStyle, getSofaImgOrient, localizedProductName, locale]);
+  }, [
+    getSofaImgSize,
+    getSofaImgStyle,
+    getSofaImgOrient,
+    localizedProductName,
+    locale,
+  ]);
 
   // Dynamic product features / specs bullets based on active product category & model
   const productFeatures = useMemo(() => {
@@ -2086,7 +2155,8 @@ export default function ProductDetailPage() {
       options: isTableProduct
         ? {
             finish: parseTableFinish(displayProduct, 0, familyVariants).label,
-            material: displayProduct.material || activeProduct?.material || "Standard",
+            material:
+              displayProduct.material || activeProduct?.material || "Standard",
             sku: displayProduct.sku,
             dimensions: displayProduct.table_size || displayProduct.dimensions,
           }
@@ -2110,35 +2180,36 @@ export default function ProductDetailPage() {
     displayProduct.gallery && displayProduct.gallery.length > 0
       ? displayProduct.gallery
       : isTableProduct
-      ? [
-          {
-            src: displayProduct.image,
-            alt: `${displayProduct.name || "Table"} Primary View`,
-          },
-          ...(displayProduct.hover_image || displayProduct.hoverImage
-            ? [
-                {
-                  src: displayProduct.hover_image || displayProduct.hoverImage,
-                  alt: `${displayProduct.name || "Table"} View 2`,
-                },
-              ]
-            : []),
-        ]
-      : [
-          {
-            src: displayProduct.image,
-            alt: `${localizedProductName} Primary View`,
-          },
-          {
-            src: displayProduct.hover_image || displayProduct.hoverImage,
-            alt: `${localizedProductName} Open View`,
-          },
-          ...GLOBAL_GALLERY_TEMPLATES.filter(
-            (img) =>
-              img.src !== displayProduct.image &&
-              img.src !== displayProduct.hover_image,
-          ),
-        ];
+        ? [
+            {
+              src: displayProduct.image,
+              alt: `${displayProduct.name || "Table"} Primary View`,
+            },
+            ...(displayProduct.hover_image || displayProduct.hoverImage
+              ? [
+                  {
+                    src:
+                      displayProduct.hover_image || displayProduct.hoverImage,
+                    alt: `${displayProduct.name || "Table"} View 2`,
+                  },
+                ]
+              : []),
+          ]
+        : [
+            {
+              src: displayProduct.image,
+              alt: `${localizedProductName} Primary View`,
+            },
+            {
+              src: displayProduct.hover_image || displayProduct.hoverImage,
+              alt: `${localizedProductName} Open View`,
+            },
+            ...GLOBAL_GALLERY_TEMPLATES.filter(
+              (img) =>
+                img.src !== displayProduct.image &&
+                img.src !== displayProduct.hover_image,
+            ),
+          ];
 
   const currentMainImage =
     galleryImages[selectedImageIndex] || galleryImages[0];
@@ -2375,13 +2446,21 @@ export default function ProductDetailPage() {
             <div className="space-y-1">
               <h1 className="font-new-york text-2xl sm:text-3xl text-wbk-black leading-tight tracking-tight">
                 {isTableProduct
-                  ? (activeProduct?.title || activeProduct?.name?.split(" - ")[0] || displayProduct?.title || displayProduct?.name?.split(" - ")[0])
+                  ? activeProduct?.title ||
+                    activeProduct?.name?.split(" - ")[0] ||
+                    displayProduct?.title ||
+                    displayProduct?.name?.split(" - ")[0]
                   : localizedProductName}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                {(displayProduct?.sku || activeProduct?.sku || familyVariants?.find((v) => v.sku)?.sku) && (
+                {(displayProduct?.sku ||
+                  activeProduct?.sku ||
+                  familyVariants?.find((v) => v.sku)?.sku) && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full font-mono text-xs bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60 shadow-2xs">
-                    SKU: {displayProduct?.sku || activeProduct?.sku || familyVariants?.find((v) => v.sku)?.sku}
+                    SKU:{" "}
+                    {displayProduct?.sku ||
+                      activeProduct?.sku ||
+                      familyVariants?.find((v) => v.sku)?.sku}
                   </span>
                 )}
               </div>
@@ -2471,13 +2550,21 @@ export default function ProductDetailPage() {
                 <div className="space-y-1">
                   <h1 className="font-new-york text-3xl xl:text-4xl text-wbk-black leading-tight tracking-tight">
                     {isTableProduct
-                      ? (activeProduct?.title || activeProduct?.name?.split(" - ")[0] || displayProduct?.title || displayProduct?.name?.split(" - ")[0])
+                      ? activeProduct?.title ||
+                        activeProduct?.name?.split(" - ")[0] ||
+                        displayProduct?.title ||
+                        displayProduct?.name?.split(" - ")[0]
                       : localizedProductName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-poppins text-wbk-brown">
-                    {(displayProduct?.sku || activeProduct?.sku || familyVariants?.find((v) => v.sku)?.sku) && (
+                    {(displayProduct?.sku ||
+                      activeProduct?.sku ||
+                      familyVariants?.find((v) => v.sku)?.sku) && (
                       <span className="inline-flex items-center px-3 py-1 rounded-full font-mono text-xs bg-[#F4F2F0] text-wbk-black border border-wbk-lightgrey/60 shadow-2xs">
-                        SKU: {displayProduct?.sku || activeProduct?.sku || familyVariants?.find((v) => v.sku)?.sku}
+                        SKU:{" "}
+                        {displayProduct?.sku ||
+                          activeProduct?.sku ||
+                          familyVariants?.find((v) => v.sku)?.sku}
                       </span>
                     )}
                   </div>
@@ -2503,7 +2590,9 @@ export default function ProductDetailPage() {
               {displayProduct?.is_bundle ? (
                 <BundleComponentsBreakdown
                   bundle={displayProduct}
-                  selectedCurrency={locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR"}
+                  selectedCurrency={
+                    locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR"
+                  }
                 />
               ) : isTableProduct ? (
                 <div className="space-y-3" ref={dropdownsRef}>
@@ -2513,8 +2602,15 @@ export default function ProductDetailPage() {
                         {t("product.finishLabel", "Finish:")}
                       </label>
                       {(() => {
-                        const activeParsed = parseTableFinish(displayProduct, 0, familyVariants);
-                        const activePricing = getProductPrice(displayProduct, locale);
+                        const activeParsed = parseTableFinish(
+                          displayProduct,
+                          0,
+                          familyVariants,
+                        );
+                        const activePricing = getProductPrice(
+                          displayProduct,
+                          locale,
+                        );
 
                         return (
                           <>
@@ -2530,14 +2626,18 @@ export default function ProductDetailPage() {
                                 }
                               }}
                               className={`w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 ${
-                                familyVariants.length > 1 ? "cursor-pointer" : "cursor-default"
+                                familyVariants.length > 1
+                                  ? "cursor-pointer"
+                                  : "cursor-default"
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0 pr-2">
                                 {activeParsed.isTwoTone ? (
                                   <span
                                     className={`w-4 h-4 rounded-full border shrink-0 block shadow-2xs ${
-                                      activeParsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                      activeParsed.topHex === "#FFFFFF"
+                                        ? "border-black/30"
+                                        : "border-black/15"
                                     }`}
                                     style={{
                                       background: `linear-gradient(135deg, ${activeParsed.topHex} 50%, ${activeParsed.legHex} 50%)`,
@@ -2546,9 +2646,13 @@ export default function ProductDetailPage() {
                                 ) : (
                                   <span
                                     className={`w-4 h-4 rounded-full border shrink-0 block shadow-2xs ${
-                                      activeParsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                      activeParsed.topHex === "#FFFFFF"
+                                        ? "border-black/30"
+                                        : "border-black/15"
                                     }`}
-                                    style={{ backgroundColor: activeParsed.topHex }}
+                                    style={{
+                                      backgroundColor: activeParsed.topHex,
+                                    }}
                                   />
                                 )}
                                 <span className="truncate text-wbk-black font-medium">
@@ -2578,8 +2682,15 @@ export default function ProductDetailPage() {
                                     : selectedVariant?.sku
                                       ? selectedVariant.sku === variant.sku
                                       : idx === 0;
-                                  const parsed = parseTableFinish(variant, idx, familyVariants);
-                                  const varPricing = getProductPrice(variant, locale);
+                                  const parsed = parseTableFinish(
+                                    variant,
+                                    idx,
+                                    familyVariants,
+                                  );
+                                  const varPricing = getProductPrice(
+                                    variant,
+                                    locale,
+                                  );
 
                                   return (
                                     <button
@@ -2599,7 +2710,9 @@ export default function ProductDetailPage() {
                                         {parsed.isTwoTone ? (
                                           <span
                                             className={`w-4 h-4 rounded-full border shrink-0 block shadow-2xs ${
-                                              parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                              parsed.topHex === "#FFFFFF"
+                                                ? "border-black/30"
+                                                : "border-black/15"
                                             }`}
                                             style={{
                                               background: `linear-gradient(135deg, ${parsed.topHex} 50%, ${parsed.legHex} 50%)`,
@@ -2608,12 +2721,18 @@ export default function ProductDetailPage() {
                                         ) : (
                                           <span
                                             className={`w-4 h-4 rounded-full border shrink-0 block shadow-2xs ${
-                                              parsed.topHex === "#FFFFFF" ? "border-black/30" : "border-black/15"
+                                              parsed.topHex === "#FFFFFF"
+                                                ? "border-black/30"
+                                                : "border-black/15"
                                             }`}
-                                            style={{ backgroundColor: parsed.topHex }}
+                                            style={{
+                                              backgroundColor: parsed.topHex,
+                                            }}
                                           />
                                         )}
-                                        <span className="truncate">{parsed.label}</span>
+                                        <span className="truncate">
+                                          {parsed.label}
+                                        </span>
                                       </div>
                                       <span className="font-mono text-xs font-bold text-wbk-brown shrink-0 pl-2">
                                         {varPricing.display}
@@ -2631,464 +2750,497 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3" ref={dropdownsRef}>
-                {/* Format / Orientation */}
-                {availableFormats.length > 0 && (
-                  <div className="relative">
-                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {t("product.formatLabel", "Format:")}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormatOpen(!formatOpen);
-                        setStyleOpen(false);
-                        setSizeOpen(false);
-                        setColorOpen(false);
-                        setTableFinishOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
-                    >
-                      <span>{productFormat}</span>
-                      <IconChevronDown size={14} className="text-wbk-brown" />
-                    </button>
-                    {formatOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none  z-50 overflow-hidden text-xs py-1">
-                        {availableFormats.map((item) => (
-                          <button
-                            key={item}
-                            type="button"
-                            onClick={() => {
-                              handleOptionChange(item, undefined, undefined);
-                              setFormatOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
-                              productFormat === item
-                                ? "text-wbk-gold font-semibold"
-                                : "text-wbk-black"
-                            }`}
-                          >
-                            {item}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Style / Type */}
-                {availableStyles.length > 0 && (
-                  <div className="relative">
-                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {activeProduct?.parent_category === "cabinets"
-                        ? t("product.cabinetType", "Cabinet Type:")
-                        : t("product.styleLabel", "Style:")}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStyleOpen(!styleOpen);
-                        setFormatOpen(false);
-                        setSizeOpen(false);
-                        setColorOpen(false);
-                        setTableFinishOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
-                    >
-                      <span>{productStyle}</span>
-                      <IconChevronDown size={14} className="text-wbk-brown" />
-                    </button>
-                    {styleOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
-                        {availableStyles.map((item) => (
-                          <button
-                            key={item}
-                            type="button"
-                            onClick={() => {
-                              handleOptionChange(undefined, item, undefined);
-                              setStyleOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
-                              productStyle === item
-                                ? "text-wbk-gold font-semibold"
-                                : "text-wbk-black"
-                            }`}
-                          >
-                            {item}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Color / Finish Selector */}
-                {availableColors.length > 1 && (
-                  <div className="relative">
-                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {isTableProduct
-                        ? t("product.tableVariantLabel", "Finish & Variation:")
-                        : t("product.colorLabel", "Finish / Colour:")}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setColorOpen(!colorOpen);
-                        setFormatOpen(false);
-                        setStyleOpen(false);
-                        setSizeOpen(false);
-                        setTableFinishOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        {(() => {
-                          const currentColor =
-                            selectedVariant?.color ||
-                            activeProduct?.color ||
-                            availableColors[0];
-                          const colorHexMap = {
-                            Oak: "#BCA37F",
-                            Beech: "#D8AC78",
-                            Pine: "#E8CE9B",
-                            White: "#FFFFFF",
-                            Black: "#090A0A",
-                            Beige: "#D2AA7C",
-                            Grey: "#A5988E",
-                          };
-                          const getTableColorHex = (str) => {
-                            const s = (str || "").toLowerCase();
-                            if (s.includes("walnut")) return "#5C4033";
-                            if (s.includes("black")) return "#1A1A1A";
-                            if (s.includes("white")) return "#FFFFFF";
-                            if (s.includes("oak") || s.includes("natural wood")) return "#D2B48C";
-                            if (s.includes("grey") || s.includes("gray")) return "#6E6E6E";
-                            if (s.includes("marble")) return "#E0E0E0";
-                            if (s.includes("khaki")) return "#C3B091";
-                            if (s.includes("silver")) return "#C0C0C0";
-                            if (s.includes("blue")) return "#2C4C7C";
-                            if (s.includes("brown")) return "#654321";
-                            return "#BCA37F";
-                          };
-                          const hex = colorHexMap[currentColor] || getTableColorHex(currentColor);
-                          return (
-                            <>
-                              <span
-                                className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
-                                  currentColor === "White" || hex === "#FFFFFF"
-                                    ? "border-black/30"
-                                    : "border-black/20"
-                                }`}
-                                style={{ backgroundColor: hex }}
-                              />
-                              <span className="truncate">{currentColor}</span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      <IconChevronDown
-                        size={14}
-                        className="text-wbk-brown shrink-0 ml-1"
-                      />
-                    </button>
-                    {colorOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1 max-h-60 overflow-y-auto">
-                        {availableColors.map((colorName) => {
-                          const currentColor =
-                            selectedVariant?.color ||
-                            activeProduct?.color ||
-                            availableColors[0];
-                          const isSelected =
-                            currentColor?.toLowerCase() ===
-                            colorName.toLowerCase();
-                          const colorHexMap = {
-                            Oak: "#BCA37F",
-                            Beech: "#D8AC78",
-                            Pine: "#E8CE9B",
-                            White: "#FFFFFF",
-                            Black: "#090A0A",
-                            Beige: "#D2AA7C",
-                            Grey: "#A5988E",
-                          };
-                          const getTableColorHex = (str) => {
-                            const s = (str || "").toLowerCase();
-                            if (s.includes("walnut")) return "#5C4033";
-                            if (s.includes("black")) return "#1A1A1A";
-                            if (s.includes("white")) return "#FFFFFF";
-                            if (s.includes("oak") || s.includes("natural wood")) return "#D2B48C";
-                            if (s.includes("grey") || s.includes("gray")) return "#6E6E6E";
-                            if (s.includes("marble")) return "#E0E0E0";
-                            if (s.includes("khaki")) return "#C3B091";
-                            if (s.includes("silver")) return "#C0C0C0";
-                            if (s.includes("blue")) return "#2C4C7C";
-                            if (s.includes("brown")) return "#654321";
-                            return "#BCA37F";
-                          };
-                          const hex = colorHexMap[colorName] || getTableColorHex(colorName);
-                          const matchingVar = familyVariants.find(
-                            (v) => (v.color || "").toLowerCase() === colorName.toLowerCase()
-                          );
-                          const varPrice = matchingVar?.price_gbp;
-                          return (
+                  {/* Format / Orientation */}
+                  {availableFormats.length > 0 && (
+                    <div className="relative">
+                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
+                        {t("product.formatLabel", "Format:")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormatOpen(!formatOpen);
+                          setStyleOpen(false);
+                          setSizeOpen(false);
+                          setColorOpen(false);
+                          setTableFinishOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
+                      >
+                        <span>{productFormat}</span>
+                        <IconChevronDown size={14} className="text-wbk-brown" />
+                      </button>
+                      {formatOpen && (
+                        <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none  z-50 overflow-hidden text-xs py-1">
+                          {availableFormats.map((item) => (
                             <button
-                              key={colorName}
+                              key={item}
                               type="button"
                               onClick={() => {
-                                handleColorChange(colorName);
-                                setColorOpen(false);
+                                handleOptionChange(item, undefined, undefined);
+                                setFormatOpen(false);
                               }}
-                              className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between cursor-pointer ${
-                                isSelected
-                                  ? "text-wbk-gold font-semibold bg-[#F4F2F0]/60"
+                              className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
+                                productFormat === item
+                                  ? "text-wbk-gold font-semibold"
                                   : "text-wbk-black"
                               }`}
                             >
-                              <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Style / Type */}
+                  {availableStyles.length > 0 && (
+                    <div className="relative">
+                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
+                        {activeProduct?.parent_category === "cabinets"
+                          ? t("product.cabinetType", "Cabinet Type:")
+                          : t("product.styleLabel", "Style:")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStyleOpen(!styleOpen);
+                          setFormatOpen(false);
+                          setSizeOpen(false);
+                          setColorOpen(false);
+                          setTableFinishOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
+                      >
+                        <span>{productStyle}</span>
+                        <IconChevronDown size={14} className="text-wbk-brown" />
+                      </button>
+                      {styleOpen && (
+                        <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1">
+                          {availableStyles.map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => {
+                                handleOptionChange(undefined, item, undefined);
+                                setStyleOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors cursor-pointer ${
+                                productStyle === item
+                                  ? "text-wbk-gold font-semibold"
+                                  : "text-wbk-black"
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Color / Finish Selector */}
+                  {availableColors.length > 1 && (
+                    <div className="relative">
+                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
+                        {isTableProduct
+                          ? t(
+                              "product.tableVariantLabel",
+                              "Finish & Variation:",
+                            )
+                          : t("product.colorLabel", "Finish / Colour:")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setColorOpen(!colorOpen);
+                          setFormatOpen(false);
+                          setStyleOpen(false);
+                          setSizeOpen(false);
+                          setTableFinishOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          {(() => {
+                            const currentColor =
+                              selectedVariant?.color ||
+                              activeProduct?.color ||
+                              availableColors[0];
+                            const colorHexMap = {
+                              Oak: "#BCA37F",
+                              Beech: "#D8AC78",
+                              Pine: "#E8CE9B",
+                              White: "#FFFFFF",
+                              Black: "#090A0A",
+                              Beige: "#D2AA7C",
+                              Grey: "#A5988E",
+                            };
+                            const getTableColorHex = (str) => {
+                              const s = (str || "").toLowerCase();
+                              if (s.includes("walnut")) return "#5C4033";
+                              if (s.includes("black")) return "#1A1A1A";
+                              if (s.includes("white")) return "#FFFFFF";
+                              if (
+                                s.includes("oak") ||
+                                s.includes("natural wood")
+                              )
+                                return "#D2B48C";
+                              if (s.includes("grey") || s.includes("gray"))
+                                return "#6E6E6E";
+                              if (s.includes("marble")) return "#E0E0E0";
+                              if (s.includes("khaki")) return "#C3B091";
+                              if (s.includes("silver")) return "#C0C0C0";
+                              if (s.includes("blue")) return "#2C4C7C";
+                              if (s.includes("brown")) return "#654321";
+                              return "#BCA37F";
+                            };
+                            const hex =
+                              colorHexMap[currentColor] ||
+                              getTableColorHex(currentColor);
+                            return (
+                              <>
                                 <span
                                   className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
-                                    colorName === "White" || hex === "#FFFFFF"
+                                    currentColor === "White" ||
+                                    hex === "#FFFFFF"
                                       ? "border-black/30"
                                       : "border-black/20"
                                   }`}
                                   style={{ backgroundColor: hex }}
                                 />
-                                <span className="truncate">{colorName}</span>
-                              </div>
-                              {varPrice && (
-                                <span className="text-xs text-wbk-brown font-mono shrink-0 pl-2">
-                                  £{Math.round(varPrice)}
+                                <span className="truncate">{currentColor}</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        <IconChevronDown
+                          size={14}
+                          className="text-wbk-brown shrink-0 ml-1"
+                        />
+                      </button>
+                      {colorOpen && (
+                        <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-hidden text-xs py-1 max-h-60 overflow-y-auto">
+                          {availableColors.map((colorName) => {
+                            const currentColor =
+                              selectedVariant?.color ||
+                              activeProduct?.color ||
+                              availableColors[0];
+                            const isSelected =
+                              currentColor?.toLowerCase() ===
+                              colorName.toLowerCase();
+                            const colorHexMap = {
+                              Oak: "#BCA37F",
+                              Beech: "#D8AC78",
+                              Pine: "#E8CE9B",
+                              White: "#FFFFFF",
+                              Black: "#090A0A",
+                              Beige: "#D2AA7C",
+                              Grey: "#A5988E",
+                            };
+                            const getTableColorHex = (str) => {
+                              const s = (str || "").toLowerCase();
+                              if (s.includes("walnut")) return "#5C4033";
+                              if (s.includes("black")) return "#1A1A1A";
+                              if (s.includes("white")) return "#FFFFFF";
+                              if (
+                                s.includes("oak") ||
+                                s.includes("natural wood")
+                              )
+                                return "#D2B48C";
+                              if (s.includes("grey") || s.includes("gray"))
+                                return "#6E6E6E";
+                              if (s.includes("marble")) return "#E0E0E0";
+                              if (s.includes("khaki")) return "#C3B091";
+                              if (s.includes("silver")) return "#C0C0C0";
+                              if (s.includes("blue")) return "#2C4C7C";
+                              if (s.includes("brown")) return "#654321";
+                              return "#BCA37F";
+                            };
+                            const hex =
+                              colorHexMap[colorName] ||
+                              getTableColorHex(colorName);
+                            const matchingVar = familyVariants.find(
+                              (v) =>
+                                (v.color || "").toLowerCase() ===
+                                colorName.toLowerCase(),
+                            );
+                            const varPrice = matchingVar?.price_gbp;
+                            return (
+                              <button
+                                key={colorName}
+                                type="button"
+                                onClick={() => {
+                                  handleColorChange(colorName);
+                                  setColorOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 hover:bg-wbk-lightgrey/30 font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                                  isSelected
+                                    ? "text-wbk-gold font-semibold bg-[#F4F2F0]/60"
+                                    : "text-wbk-black"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                  <span
+                                    className={`w-3.5 h-3.5 rounded-full border shrink-0 ${
+                                      colorName === "White" || hex === "#FFFFFF"
+                                        ? "border-black/30"
+                                        : "border-black/20"
+                                    }`}
+                                    style={{ backgroundColor: hex }}
+                                  />
+                                  <span className="truncate">{colorName}</span>
+                                </div>
+                                {varPrice && (
+                                  <span className="text-xs text-wbk-brown font-mono shrink-0 pl-2">
+                                    £{Math.round(varPrice)}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Size */}
+                  {availableSizes.length > 0 && !isTableProduct && (
+                    <div className="relative">
+                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
+                        {t("product.sizeLabel", "Size:")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSizeOpen(!sizeOpen);
+                          setFormatOpen(false);
+                          setStyleOpen(false);
+                          setColorOpen(false);
+                          setTableFinishOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
+                      >
+                        <span className="truncate">{selectedSizeDisplay}</span>
+                        <IconChevronDown
+                          size={14}
+                          className="text-wbk-brown shrink-0 ml-1"
+                        />
+                      </button>
+                      {sizeOpen && (
+                        <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-y-auto max-h-56 text-xs py-1">
+                          {availableSizes.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                if (item.product) {
+                                  setSelectedVariant(item.product);
+                                  if (item.product.sub_category) {
+                                    setProductStyle(item.product.sub_category);
+                                  }
+                                  if (item.product.orientation) {
+                                    setProductFormat(item.product.orientation);
+                                  }
+                                  if (categorySlug === "cabinets") {
+                                    const targetSlug = getFlagshipSlug(
+                                      categorySlug,
+                                      item.product.sub_category ||
+                                        item.product.type,
+                                      item.product.orientation,
+                                    );
+                                    if (
+                                      targetSlug &&
+                                      targetSlug !== productSlug
+                                    ) {
+                                      const currentSizeSlug =
+                                        item.product.sizeSlug || "";
+                                      const currentColor = (
+                                        item.product.color ||
+                                        selectedVariant?.color ||
+                                        ""
+                                      ).toLowerCase();
+                                      const params = new URLSearchParams();
+                                      if (currentSizeSlug)
+                                        params.set("size", currentSizeSlug);
+                                      if (currentColor)
+                                        params.set("color", currentColor);
+                                      const q = params.toString()
+                                        ? `?${params.toString()}`
+                                        : "";
+                                      router.push(
+                                        `/products/${categorySlug}/${targetSlug}${q}`,
+                                      );
+                                      setSizeOpen(false);
+                                      return;
+                                    }
+                                  }
+                                }
+                                handleOptionChange(
+                                  undefined,
+                                  undefined,
+                                  item.label,
+                                );
+                                setSizeOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
+                                (
+                                  selectedVariant
+                                    ? selectedVariant.id === item.product?.id ||
+                                      selectedVariant.sku === item.product?.sku
+                                    : productSize === item.label
+                                )
+                                  ? "font-semibold text-wbk-black bg-[#F4F2F0]/60"
+                                  : "text-wbk-brown"
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <span>{item.label}</span>
+                                {((item.product?.stock !== undefined &&
+                                  item.product?.stock !== null &&
+                                  Number(item.product.stock) <= 0) ||
+                                  item.product?.in_stock === false) && (
+                                  <span className="text-[10px] text-[#B85A53] font-normal">
+                                    ({t("waitlist.outOfStock", "Out of Stock")})
+                                  </span>
+                                )}
+                              </span>
+                              {item.product && (
+                                <span className="text-[11px] text-wbk-brown font-poppins">
+                                  {
+                                    getProductPrice(item.product, locale)
+                                      .display
+                                  }
                                 </span>
                               )}
                             </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Size */}
-                {availableSizes.length > 0 && !isTableProduct && (
-                  <div className="relative">
-                    <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
-                      {t("product.sizeLabel", "Size:")}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSizeOpen(!sizeOpen);
-                        setFormatOpen(false);
-                        setStyleOpen(false);
-                        setColorOpen(false);
-                        setTableFinishOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 border border-wbk-black/40 rounded-full text-xs font-semibold text-wbk-black bg-white/70 hover:bg-white backdrop-blur-xs transition-all duration-200 cursor-pointer"
-                    >
-                      <span className="truncate">{selectedSizeDisplay}</span>
-                      <IconChevronDown
-                        size={14}
-                        className="text-wbk-brown shrink-0 ml-1"
-                      />
-                    </button>
-                    {sizeOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-wbk-lightgrey rounded-xl lg:rounded-none shadow-lg z-50 overflow-y-auto max-h-56 text-xs py-1">
-                        {availableSizes.map((item, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              if (item.product) {
-                                setSelectedVariant(item.product);
-                                if (item.product.sub_category) {
-                                  setProductStyle(item.product.sub_category);
-                                }
-                                if (item.product.orientation) {
-                                  setProductFormat(item.product.orientation);
-                                }
-                                if (categorySlug === "cabinets") {
-                                  const targetSlug = getFlagshipSlug(
-                                    categorySlug,
-                                    item.product.sub_category || item.product.type,
-                                    item.product.orientation,
-                                  );
-                                  if (targetSlug && targetSlug !== productSlug) {
-                                    const currentSizeSlug = item.product.sizeSlug || "";
-                                    const currentColor = (
-                                      item.product.color ||
-                                      selectedVariant?.color ||
-                                      ""
-                                    ).toLowerCase();
-                                    const params = new URLSearchParams();
-                                    if (currentSizeSlug) params.set("size", currentSizeSlug);
-                                    if (currentColor) params.set("color", currentColor);
-                                    const q = params.toString() ? `?${params.toString()}` : "";
-                                    router.push(`/products/${categorySlug}/${targetSlug}${q}`);
-                                    setSizeOpen(false);
-                                    return;
-                                  }
-                                }
-                              }
-                              handleOptionChange(
-                                undefined,
-                                undefined,
-                                item.label,
-                              );
-                              setSizeOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F4F2F0] transition-colors flex items-center justify-between cursor-pointer ${
-                              (
-                                selectedVariant
-                                  ? selectedVariant.id === item.product?.id ||
-                                    selectedVariant.sku === item.product?.sku
-                                  : productSize === item.label
-                              )
-                                ? "font-semibold text-wbk-black bg-[#F4F2F0]/60"
-                                : "text-wbk-brown"
-                            }`}
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <span>{item.label}</span>
-                              {((item.product?.stock !== undefined &&
-                                item.product?.stock !== null &&
-                                Number(item.product.stock) <= 0) ||
-                                item.product?.in_stock === false) && (
-                                <span className="text-[10px] text-[#B85A53] font-normal">
-                                  ({t("waitlist.outOfStock", "Out of Stock")})
-                                </span>
-                              )}
-                            </span>
-                            {item.product && (
-                              <span className="text-[11px] text-wbk-brown font-poppins">
-                                {getProductPrice(item.product, locale).display}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Sofa toggle (shown for all Morphy beds) */}
-                {isMorphyBed && (
-                  <div className="pt-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
-                        {t("common.frontSofa", "+ Front Sofa")}:
-                      </label>
-                      <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
-                        +
-                        {formatPrice(sofaPriceValue, locale)}
-                      </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
-                      <button
-                        type="button"
-                        onClick={() => setSofaIncluded(true)}
-                        className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
-                          sofaIncluded
-                            ? "text-white"
-                            : "text-wbk-brown hover:text-wbk-black"
-                        }`}
-                      >
+                  )}
+
+                  {/* Sofa toggle (shown for all Morphy beds) */}
+                  {isMorphyBed && (
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                          {t("common.frontSofa", "+ Front Sofa")}:
+                        </label>
+                        <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
+                          +{formatPrice(sofaPriceValue, locale)}
+                        </span>
+                      </div>
+                      <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
+                        <button
+                          type="button"
+                          onClick={() => setSofaIncluded(true)}
+                          className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
+                            sofaIncluded
+                              ? "text-white"
+                              : "text-wbk-brown hover:text-wbk-black"
+                          }`}
+                        >
+                          {sofaIncluded && (
+                            <motion.div
+                              layoutId="sofaTogglePill"
+                              className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 35,
+                              }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {t("common.includeSofa", "Include Sofa")}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSofaIncluded(false)}
+                          className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
+                            !sofaIncluded
+                              ? "text-white"
+                              : "text-wbk-brown hover:text-wbk-black"
+                          }`}
+                        >
+                          {!sofaIncluded && (
+                            <motion.div
+                              layoutId="sofaTogglePill"
+                              className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 35,
+                              }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {t("common.bedOnly", "Bed Only")}
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Sofa Combination Images (Displayed only when sofa is selected) */}
+                      <AnimatePresence>
                         {sofaIncluded && (
                           <motion.div
-                            layoutId="sofaTogglePill"
-                            className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 35,
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{
+                              opacity: 1,
+                              height: "auto",
+                              marginTop: 10,
                             }}
-                          />
-                        )}
-                        <span className="relative z-10">
-                          {t("common.includeSofa", "Include Sofa")}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSofaIncluded(false)}
-                        className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
-                          !sofaIncluded
-                            ? "text-white"
-                            : "text-wbk-brown hover:text-wbk-black"
-                        }`}
-                      >
-                        {!sofaIncluded && (
-                          <motion.div
-                            layoutId="sofaTogglePill"
-                            className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 35,
-                            }}
-                          />
-                        )}
-                        <span className="relative z-10">
-                          {t("common.bedOnly", "Bed Only")}
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* Sofa Combination Images (Displayed only when sofa is selected) */}
-                    <AnimatePresence>
-                      {sofaIncluded && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                          animate={{
-                            opacity: 1,
-                            height: "auto",
-                            marginTop: 10,
-                          }}
-                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                          transition={{ duration: 0.25, ease: "easeOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="flex items-center justify-between pb-1.5 px-0.5">
-                            <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
-                              {t(
-                                "product.sofaCombinationViews",
-                                "Bed & Sofa Views",
-                              )}
-                            </span>
-                            <span className="text-[10px] text-wbk-brown/70 font-poppins flex items-center gap-1">
-                              <IconZoomIn size={11} />
-                              {t("product.clickToZoom", "Click to zoom")}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {sofaImages.map((img, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setActiveLightboxImages(sofaImages);
-                                  setLightboxIndex(idx);
-                                }}
-                                className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-wbk-lightgrey/80 hover:border-wbk-black bg-[#F4F2F0] p-1 transition-all duration-200 shadow-2xs hover:shadow-md cursor-zoom-in"
-                                title={`${img.alt} - Click to zoom`}
-                              >
-                                <img
-                                  src={img.src}
-                                  alt={img.alt}
-                                  className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white rounded-full p-1 shadow-sm">
-                                    <IconZoomIn size={12} />
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex items-center justify-between pb-1.5 px-0.5">
+                              <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                                {t(
+                                  "product.sofaCombinationViews",
+                                  "Bed & Sofa Views",
+                                )}
+                              </span>
+                              <span className="text-[10px] text-wbk-brown/70 font-poppins flex items-center gap-1">
+                                <IconZoomIn size={11} />
+                                {t("product.clickToZoom", "Click to zoom")}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {sofaImages.map((img, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveLightboxImages(sofaImages);
+                                    setLightboxIndex(idx);
+                                  }}
+                                  className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-wbk-lightgrey/80 hover:border-wbk-black bg-[#F4F2F0] p-1 transition-all duration-200 shadow-2xs hover:shadow-md cursor-zoom-in"
+                                  title={`${img.alt} - Click to zoom`}
+                                >
+                                  <img
+                                    src={img.src}
+                                    alt={img.alt}
+                                    className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                                    loading="lazy"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white rounded-full p-1 shadow-sm">
+                                      <IconZoomIn size={12} />
+                                    </div>
                                   </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ── DESKTOP ADD TO CART & PRICING BLOCK (Desktop only, hidden on mobile) ── */}
@@ -3132,7 +3284,9 @@ export default function ProductDetailPage() {
                 ) : (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-green-50 border border-green-300 text-green-700 text-xs font-bold shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-green-600 ring-2 ring-green-200 animate-pulse" />
-                    <span>{t("common.inStock", "In Stock • Fast Dispatch")}</span>
+                    <span>
+                      {t("common.inStock", "In Stock • Fast Dispatch")}
+                    </span>
                   </div>
                 )}
 
@@ -4239,22 +4393,32 @@ export default function ProductDetailPage() {
                       {/* Space-Saving Tables Specifications */}
                       {displayProduct.parent_category === "tables" && (
                         <>
-                          {(displayProduct.table_size || displayProduct.dimensions) && (
+                          {(displayProduct.table_size ||
+                            displayProduct.dimensions) && (
                             <tr className="border-b border-wbk-lightgrey/40">
                               <td className="py-2.5 font-medium">
-                                {t("product.tableDimensions", "Dimensions / Size")}
+                                {t(
+                                  "product.tableDimensions",
+                                  "Dimensions / Size",
+                                )}
                               </td>
                               <td className="py-2.5 text-right text-wbk-brown max-w-[280px] break-words">
-                                {displayProduct.table_size || displayProduct.dimensions}
+                                {displayProduct.table_size ||
+                                  displayProduct.dimensions}
                               </td>
                             </tr>
                           )}
                           {displayProduct.height &&
-                            displayProduct.height !== displayProduct.table_size &&
-                            displayProduct.height !== displayProduct.dimensions && (
+                            displayProduct.height !==
+                              displayProduct.table_size &&
+                            displayProduct.height !==
+                              displayProduct.dimensions && (
                               <tr className="border-b border-wbk-lightgrey/40">
                                 <td className="py-2.5 font-medium">
-                                  {t("product.tableHeight", "Height / Adjustment")}
+                                  {t(
+                                    "product.tableHeight",
+                                    "Height / Adjustment",
+                                  )}
                                 </td>
                                 <td className="py-2.5 text-right text-wbk-brown max-w-[280px] break-words">
                                   {displayProduct.height}
@@ -4421,27 +4585,30 @@ export default function ProductDetailPage() {
                         </>
                       )}
 
-                      {!isTableProduct && displayProduct.parent_category !== "tables" && !displayProduct.is_space_saving_table && (
-                        <tr>
-                          <td className="py-2.5 font-medium">
-                            {t("product.warranty", "Warranty")}
-                          </td>
-                          <td className="py-2.5 text-right text-wbk-brown">
-                            {displayProduct.warranty ||
-                              (displayProduct.parent_category === "beds" ||
-                              displayProduct.parent_category === "morphy-beds" ||
-                              displayProduct.parent_category ===
-                                "traditional-beds"
-                                ? t(
-                                    "product.lifetimeMechanism",
-                                    "Lifetime mechanism warranty",
-                                  )
-                                : locale === "fr"
-                                  ? "1 an pour les défauts de fabrication"
-                                  : "1 year for manufacturing defects")}
-                          </td>
-                        </tr>
-                      )}
+                      {!isTableProduct &&
+                        displayProduct.parent_category !== "tables" &&
+                        !displayProduct.is_space_saving_table && (
+                          <tr>
+                            <td className="py-2.5 font-medium">
+                              {t("product.warranty", "Warranty")}
+                            </td>
+                            <td className="py-2.5 text-right text-wbk-brown">
+                              {displayProduct.warranty ||
+                                (displayProduct.parent_category === "beds" ||
+                                displayProduct.parent_category ===
+                                  "morphy-beds" ||
+                                displayProduct.parent_category ===
+                                  "traditional-beds"
+                                  ? t(
+                                      "product.lifetimeMechanism",
+                                      "Lifetime mechanism warranty",
+                                    )
+                                  : locale === "fr"
+                                    ? "1 an pour les défauts de fabrication"
+                                    : "1 year for manufacturing defects")}
+                            </td>
+                          </tr>
+                        )}
                     </tbody>
                   </table>
                 </div>
@@ -5012,7 +5179,7 @@ export default function ProductDetailPage() {
 
             {/* Video Showcase (Clean background-less) */}
             <div className="space-y-6 pb-12 border-b border-wbk-lightgrey/40">
-              <div className="relative w-full aspect-video rounded-none overflow-hidden bg-black/90 shadow-md">
+              <div className="relative w-full aspect-video rounded-none overflow-hidden ">
                 <iframe
                   title="Discover Morphy – Modular Bed System"
                   src="https://www.youtube.com/embed/VJba8mH8WTk?showinfo=0&rel=0"
@@ -5028,7 +5195,7 @@ export default function ProductDetailPage() {
               {/* Feature 1: Two ways to flex your space (Cinematic Video Banner with Title Overlay & Description Below) */}
               <div className="space-y-8 pb-16 border-b border-wbk-lightgrey/40">
                 {/* Video Card with Overlay Title */}
-                <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-none overflow-hidden shadow-xl border border-wbk-lightgrey/40 bg-black group">
+                <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-none overflow-hidden group">
                   <video
                     src="/videos/morphy-indiegogo-trailer.mp4"
                     autoPlay
@@ -5062,7 +5229,7 @@ export default function ProductDetailPage() {
 
               {/* Card 2: SizeFlex™ */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md lg:order-1">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] lg:order-1">
                   <img
                     src="/sizeflex.jpg"
                     alt="Morphy SizeFlex™ Innovation"
@@ -5107,7 +5274,7 @@ export default function ProductDetailPage() {
                     )}
                   </p>
                 </div>
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5]">
                   <img
                     src="/typeflex.jpg"
                     alt="Morphy TypeFlex™ Adaptability"
@@ -5118,7 +5285,7 @@ export default function ProductDetailPage() {
 
               {/* Card 4: Flexible Orientation */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-16 border-b border-wbk-lightgrey/40">
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] border border-wbk-lightgrey/60 shadow-md lg:order-1">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-[#F8F7F5] lg:order-1">
                   <img
                     src="/endless.webp"
                     alt="Endless possibilities with Flexible Orientation"
@@ -5163,7 +5330,7 @@ export default function ProductDetailPage() {
                     )}
                   </p>
                 </div>
-                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-black border border-wbk-lightgrey/60 shadow-md relative">
+                <div className="lg:col-span-7 w-full aspect-[16/10] rounded-none overflow-hidden bg-black relative">
                   <video
                     src="/M%20Sizeflex.mp4"
                     autoPlay
@@ -5379,7 +5546,9 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                 <div className="flex flex-col items-end font-poppins">
                   <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-600" : "bg-green-600"}`} />
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-600" : "bg-green-600"}`}
+                    />
                     <span>{t("common.total", "Total")}</span>
                   </span>
                   <div className="flex items-baseline gap-1.5">

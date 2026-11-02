@@ -29,15 +29,16 @@
     "exploreAll": "Explore all models",
     "from": "from",
     "trade": "Trade Customers",
-    "caseStudies": "Case Studies"
+    "caseStudies": "Case Studies",
+    "more": "More"
   },
   "header": {
     "searchPlaceholder": "Search Murphy beds, sofas, mattresses...",
     "configuratorCta": "3D Configurator",
     "cart": "Cart",
     "account": "My Account",
-    "phone": "+44 1928 583 469",
-    "phoneRaw": "+441928583469",
+    "phone": "+44 1928 ••• •••",
+    "phoneRaw": "",
     "callNow": "Toll Free",
     "openingHours": "Mon-Fri 9AM - 8PM, Sat 9AM - 12PM GMT",
     "specialistAdvice": "Specialist Advice",
@@ -523,7 +524,7 @@
     "formSubmit": "Send Trade Inquiry",
     "formSubmitting": "Submitting...",
     "formSuccess": "Thank you! Our commercial team will review your project and get back to you within 24 hours.",
-    "formError": "Failed to send inquiry. Please try again or email us directly at trade@wallbedking.com"
+    "formError": "Failed to send inquiry. Please try again or email us directly:"
   },
   "caseStudiesPage": {
     "heroBadge": "Commercial Projects & Proven Results",
@@ -532,5 +533,13 @@
     "quoteBanner": "Transforming Spaces with Precision Engineering",
     "startProjectCta": "Ready to discuss your commercial project?",
     "contactTrade": "Contact Trade Team"
+  },
+  "security": {
+    "showEmail": "Show email",
+    "showPhone": "Show number",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "completeCaptcha": "Please complete the security check below."
   }
 }

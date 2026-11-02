@@ -48,6 +48,6 @@ WHERE id = 'tables' OR slug = 'tables';
 UPDATE public.navigation_menu
 SET available_locales = ARRAY['en', 'us', 'de', 'fr', 'es', 'por', 'it']::TEXT[],
     updated_at = NOW()
-WHERE id IN ('sofas', 'extras', 'beds', 'support')
+WHERE id IN ('more', 'sofas', 'extras', 'beds', 'support')
    OR available_locales IS NULL;
 
