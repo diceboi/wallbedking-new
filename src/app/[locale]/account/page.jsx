@@ -722,11 +722,24 @@ export default function AccountPage() {
                     </div>
                   ) : userOrders.length > 0 ? (
                     userOrders.map((order) => {
-                      const formattedDate = new Date(order.created_at).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      });
+                      const od = new Date(order.created_at);
+                      const formattedDate = Number.isNaN(od.getTime())
+                        ? String(order.created_at || "")
+                        : `${od.toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}, ${od.toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}`;
+                      const currSym =
+                        String(order.currency || "").toUpperCase() === "EUR"
+                          ? "€"
+                          : String(order.currency || "").toUpperCase() === "USD"
+                          ? "$"
+                          : "£";
 
                       const statusColor =
                         order.status === "paid" || order.status === "completed"
@@ -735,6 +748,8 @@ export default function AccountPage() {
                           ? "bg-purple-100 text-purple-800 border-purple-200"
                           : order.status === "cancelled"
                           ? "bg-red-100 text-red-800 border-red-200"
+                          : order.status === "refunded"
+                          ? "bg-gray-100 text-gray-800 border-gray-200"
                           : "bg-amber-100 text-amber-800 border-amber-200";
 
                       return (
@@ -744,7 +759,7 @@ export default function AccountPage() {
                         >
                           {/* Order Header */}
                           <div className="p-4 sm:p-5 bg-[#FBF9F8] border-b border-wbk-lightgrey flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
                               <div>
                                 <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
                                   Order ID
@@ -756,9 +771,9 @@ export default function AccountPage() {
                               <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
                               <div>
                                 <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                                  Date Placed
+                                  Date &amp; Time Placed
                                 </span>
-                                <span className="text-xs text-wbk-black">{formattedDate}</span>
+                                <span className="text-xs font-mono text-wbk-black">{formattedDate}</span>
                               </div>
                               <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
                               <div>
@@ -766,7 +781,7 @@ export default function AccountPage() {
                                   Total Amount
                                 </span>
                                 <span className="text-xs font-bold text-wbk-black">
-                                  £{Number(order.total_amount).toFixed(2)}
+                                  {currSym}{Number(order.total_amount).toFixed(2)}
                                 </span>
                               </div>
                             </div>
@@ -814,7 +829,7 @@ export default function AccountPage() {
                                   </div>
                                 </div>
                                 <div className="text-sm font-bold text-wbk-black">
-                                  £{(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                                  {currSym}{(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
                                 </div>
                               </div>
                             ))}

@@ -29,17 +29,28 @@ export function getStorePhone(locale = "en") {
 // ==========================================
 export const SAMPLE_ORDER = {
   id: "WBK-1000",
+  status: "paid",
+  payment_status: "paid",
+  payment_id: "pi_3QSampleStripeTx9921",
   customer_name: "John Doe",
   customer_email: "john.doe@example.com",
   customer_phone: "+44 7700 900077",
   payment_method: "Credit Card (Stripe)",
+  currency: "GBP",
+  subtotal: 1349.00,
+  shipping_amount: 100.00,
+  vat_amount: 241.50,
   total_amount: 1449.00,
+  delivery_label: "Standard UK Delivery & Room of Choice",
   locale: "en",
+  created_at: new Date().toISOString(),
   shipping_address: {
     address: "42 High Street, Flat 3B",
     city: "London",
     postal_code: "SW1A 1AA",
     country: "United Kingdom",
+    locale: "en",
+    company_entity: "UK",
   },
   items: [
     {
@@ -258,9 +269,9 @@ export function resolveOrderLocale(order, fallback = "en") {
   return "en";
 }
 
-export function formatOrderShippingAddress(order) {
-  if (!order) return "";
-  let s = order.shipping_address;
+export function formatAddressField(rawAddress) {
+  if (!rawAddress) return "";
+  let s = rawAddress;
   if (typeof s === "string") {
     try {
       s = JSON.parse(s);
@@ -269,9 +280,11 @@ export function formatOrderShippingAddress(order) {
     }
   }
   if (!s || typeof s !== "object") return "";
-  const street = [s.address || s.address1, s.address2].filter(Boolean).join(", ");
+  const street = [s.address || s.address1 || s.line1, s.address2 || s.line2]
+    .filter(Boolean)
+    .join(", ");
   const city = s.city || "";
-  const post = s.postcode || s.postal_code || "";
+  const post = s.postcode || s.postal_code || s.zip || "";
   const country = s.country || "";
 
   const parts = [];
@@ -282,6 +295,50 @@ export function formatOrderShippingAddress(order) {
   if (country) parts.push(country);
 
   return parts.join(", ");
+}
+
+export function formatOrderShippingAddress(order) {
+  if (!order) return "";
+  return formatAddressField(order.shipping_address);
+}
+
+export function formatOrderBillingAddress(order) {
+  if (!order) return "";
+  return formatAddressField(order.billing_address);
+}
+
+export function formatAdminOrderDateTime(dateInput) {
+  const d = dateInput ? new Date(dateInput) : new Date();
+  if (Number.isNaN(d.getTime())) {
+    return { datePart: "N/A", ukTime: "", cetTime: "", full: "N/A" };
+  }
+  const datePart = d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/London",
+  });
+  const ukTime = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "Europe/London",
+    timeZoneName: "short",
+  });
+  const cetTime = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Budapest",
+    timeZoneName: "short",
+  });
+  return {
+    datePart,
+    ukTime,
+    cetTime,
+    full: `${datePart}, ${ukTime} (${cetTime})`,
+  };
 }
 
 export function formatPaymentMethod(order) {
@@ -568,7 +625,12 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.date}</strong></td>
-                  <td style="padding: 4px 0; text-align: right; color: #111;">${new Date().toLocaleDateString(loc === "us" ? "en-US" : loc === "de" ? "de-DE" : "en-GB")}</td>
+                  <td style="padding: 4px 0; text-align: right; color: #111;">${(() => {
+                    const od = order.created_at ? new Date(order.created_at) : new Date();
+                    const safeDate = Number.isNaN(od.getTime()) ? new Date() : od;
+                    const dateLocale = loc === "us" ? "en-US" : loc === "de" ? "de-DE" : loc === "fr" ? "fr-FR" : loc === "es" ? "es-ES" : loc === "it" ? "it-IT" : loc === "por" ? "pt-PT" : "en-GB";
+                    return `${safeDate.toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric" })}, ${safeDate.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit", hour12: loc === "us" })}`;
+                  })()}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>${t.deliveryTo}</strong></td>
@@ -624,6 +686,17 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
   const adminOrderUrl = `${siteUrl}/admin/orders?search=${encodeURIComponent(order.id)}`;
   const paymentMethodLabel = formatPaymentMethod(order);
+  const orderTime = formatAdminOrderDateTime(order.created_at || order.updated_at);
+  const resolvedLocale = resolveOrderLocale(order).toUpperCase();
+  const entityMatch =
+    typeof order.admin_notes === "string"
+      ? order.admin_notes.match(/\[Entity:\s*([^\]]+)\]/i)
+      : null;
+  const companyEntity =
+    order.shipping_address?.company_entity ||
+    (entityMatch ? entityMatch[1].trim() : resolvedLocale === "EN" ? "UK" : "INTERNATIONAL");
+  const orderStatusLabel = String(order.status || (isPaid ? "paid" : "pending")).toUpperCase();
+  const txId = String(order.payment_id || order.paymentId || "").trim();
 
   let itemsList = [];
   if (Array.isArray(order.items)) {
@@ -678,8 +751,14 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const subtotalAmount = Number(order.subtotal || order.total_amount || 0);
   const shippingAmount = Number(order.shipping_amount || 0);
   const discountAmount = Number(order.discount_amount || 0);
+  const vatAmount = Number(order.vat_amount || 0);
   const deliveryLabel = order.delivery_label || order.delivery_option || "Delivery";
   const formattedAddress = formatOrderShippingAddress(order);
+  const formattedBillingAddress = formatOrderBillingAddress(order);
+  const billingDisplay =
+    formattedBillingAddress && formattedBillingAddress !== formattedAddress
+      ? formattedBillingAddress
+      : "Same as delivery address";
 
   return `
     <!DOCTYPE html>
@@ -699,6 +778,9 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
             <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">
               ${isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: ${order.id}
             </h2>
+            <div style="margin-top: 8px; font-size: 12px; color: #e5e5e5; font-family: monospace;">
+              🕒 Placed: <strong>${orderTime.datePart}</strong> at <strong>${orderTime.ukTime}</strong> (${orderTime.cetTime}) &nbsp;•&nbsp; 🌍 ${resolvedLocale} (${companyEntity} / ${currencyCode})
+            </div>
           </div>
 
           <div style="padding: 24px; color: #222; font-size: 14px; line-height: 1.6;">
@@ -719,22 +801,33 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
               </div>
             ` : ""}
 
-            <!-- Quick Summary Bar -->
+            <!-- Quick Summary Grid (2x2) -->
             <table style="width: 100%; border-collapse: collapse; background: #faf9f7; border: 1px solid #eee; border-radius: 6px; margin-bottom: 22px;">
               <tr>
-                <td style="padding: 12px 16px; vertical-align: top;">
-                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">Total Paid</span>
+                <td style="padding: 12px 16px; vertical-align: top; width: 50%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">${isPaid ? "Total Paid" : "Order Total"}</span>
                   <strong style="font-size: 18px; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
+                  <span style="font-size: 11px; color: #777; margin-left: 4px;">${currencyCode}</span>
                 </td>
-                <td style="padding: 12px 16px; vertical-align: top;">
-                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 4px;">Payment Status</span>
+                <td style="padding: 12px 16px; vertical-align: top; width: 50%; border-bottom: 1px solid #eee;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 4px;">Payment & Order Status</span>
                   <span style="display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: ${isPaid ? "#ecfdf5" : "#fef3c7"}; color: ${isPaid ? "#065f46" : "#92400e"}; border: 1px solid ${isPaid ? "#a7f3d0" : "#fde68a"};">
                     ${isPaid ? "✓ PAID" : "⏳ UNPAID"}
                   </span>
+                  <span style="display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; margin-left: 4px;">
+                    ${orderStatusLabel}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; vertical-align: top; border-right: 1px solid #eee;">
+                  <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">Order Date & Time</span>
+                  <strong style="font-size: 13px; color: #111; display: block;">${orderTime.datePart}</strong>
+                  <span style="font-size: 12px; color: #666; font-family: monospace;">${orderTime.ukTime} (${orderTime.cetTime})</span>
                 </td>
                 <td style="padding: 12px 16px; vertical-align: top;">
                   <span style="font-size: 11px; text-transform: uppercase; color: #777; display: block; margin-bottom: 2px;">Payment Method</span>
-                  <strong style="font-size: 13px; color: #111;">${paymentMethodLabel}</strong>
+                  <strong style="font-size: 13px; color: #111; display: block;">${paymentMethodLabel}</strong>
                 </td>
               </tr>
             </table>
@@ -773,22 +866,36 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                     <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: #b45309;">-${currencySymbol}${discountAmount.toFixed(2)}</td>
                   </tr>
                   ` : ""}
+                  ${vatAmount > 0 ? `
+                  <tr>
+                    <td colspan="3" style="padding: 4px 14px; text-align: right; color: #777; font-size: 12px;">Includes VAT:</td>
+                    <td style="padding: 4px 14px; text-align: right; color: #777; font-size: 12px;">${currencySymbol}${vatAmount.toFixed(2)}</td>
+                  </tr>
+                  ` : ""}
                   <tr style="background: #faf9f7; border-top: 2px solid #111; font-size: 15px;">
-                    <td colspan="3" style="padding: 12px 14px; text-align: right; font-weight: 700; color: #111;">Total:</td>
+                    <td colspan="3" style="padding: 12px 14px; text-align: right; font-weight: 700; color: #111;">Total (${currencyCode}):</td>
                     <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
-            <!-- 2. Customer & Shipping Details -->
+            <!-- 2. Order Metadata, Customer & Shipping Details -->
             <div style="margin-bottom: 24px;">
               <h3 style="margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 2px solid #111; padding-bottom: 6px;">
-                👤 Customer & Shipping Information
+                👤 Order Metadata, Customer & Shipping Information
               </h3>
               <table style="width: 100%; border-collapse: collapse; background: #fbfbfb; border: 1px solid #eee; border-radius: 4px; font-size: 13px;">
                 <tr>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666; width: 35%;"><strong>Customer Name:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666; width: 35%;"><strong>Order Reference:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-family: monospace; font-weight: 700; color: #111;">${order.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Order Placed (Date & Time):</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-family: monospace; color: #111;">${orderTime.full}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Name:</strong></td>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: 600;">${order.customer_name || "N/A"}</td>
                 </tr>
                 <tr>
@@ -810,18 +917,33 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   </td>
                 </tr>
                 <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Billing Address:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #444;">
+                    ${billingDisplay}
+                  </td>
+                </tr>
+                <tr>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Delivery Speed:</strong></td>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee;">${deliveryLabel}</td>
                 </tr>
+                ${txId ? `
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Gateway Transaction ID:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px; color: #111;">${txId}</td>
+                </tr>
+                ` : ""}
                 ${order.customer_notes ? `
                 <tr>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Notes:</strong></td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #b45309; font-style: italic;">${order.customer_notes}</td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #b45309; font-style: italic; background: #fffbeb;">${order.customer_notes}</td>
                 </tr>
                 ` : ""}
                 <tr>
                   <td style="padding: 10px 14px; color: #666;"><strong>Storefront / Market:</strong></td>
-                  <td style="padding: 10px 14px; color: #777; font-size: 12px;">${order.admin_notes || `Locale: ${order.locale || "en"}`}</td>
+                  <td style="padding: 10px 14px; color: #444; font-size: 12px;">
+                    <strong>${resolvedLocale}</strong> • Entity: <strong>${companyEntity}</strong> • Currency: <strong>${currencyCode}</strong>
+                    ${order.admin_notes ? `<div style="color:#888; font-size:11px; margin-top:2px;">${order.admin_notes}</div>` : ""}
+                  </td>
                 </tr>
               </table>
             </div>
@@ -2319,3 +2441,922 @@ export function getPasswordResetHtml({ email = "customer@example.com", confirmat
     .replace(/\{\{\s*\.ConfirmationURL\s*\}\}/g, confirmationUrl);
 }
 
+
+// ==========================================
+// 9. MULTILINGUAL ORDER CANCELLED & REFUNDED NOTIFICATIONS
+// ==========================================
+
+function formatLocalizedDate(loc = "en", dateVal = null) {
+  const localeMap = {
+    en: "en-GB",
+    us: "en-US",
+    de: "de-DE",
+    fr: "fr-FR",
+    es: "es-ES",
+    it: "it-IT",
+    por: "pt-PT",
+    hu: "hu-HU",
+  };
+  const d = dateVal ? new Date(dateVal) : new Date();
+  const safeDate = Number.isNaN(d.getTime()) ? new Date() : d;
+  return safeDate.toLocaleDateString(localeMap[loc] || "en-GB");
+}
+
+function formatLocalizedPaymentMethod(order, loc = "en") {
+  const method = String(order?.payment_method || "").toLowerCase().trim();
+  const txId = String(order?.payment_id || order?.paymentId || "").trim();
+
+  const methodLabels = {
+    en: {
+      stripe: "Credit / Debit Card (Stripe)",
+      paypal: "PayPal",
+      bank: "Direct Bank Transfer",
+      online: "Online Payment",
+    },
+    us: {
+      stripe: "Credit / Debit Card (Stripe)",
+      paypal: "PayPal",
+      bank: "Bank Wire Transfer",
+      online: "Online Payment",
+    },
+    de: {
+      stripe: "Kredit- / Debitkarte (Stripe)",
+      paypal: "PayPal",
+      bank: "Banküberweisung",
+      online: "Online-Zahlung",
+    },
+    fr: {
+      stripe: "Carte bancaire (Stripe)",
+      paypal: "PayPal",
+      bank: "Virement bancaire",
+      online: "Paiement en ligne",
+    },
+    es: {
+      stripe: "Tarjeta de crédito / débito (Stripe)",
+      paypal: "PayPal",
+      bank: "Transferencia bancaria",
+      online: "Pago en línea",
+    },
+    it: {
+      stripe: "Carta di credito / debito (Stripe)",
+      paypal: "PayPal",
+      bank: "Bonifico bancario",
+      online: "Pagamento online",
+    },
+    por: {
+      stripe: "Cartão de crédito / débito (Stripe)",
+      paypal: "PayPal",
+      bank: "Transferência bancária",
+      online: "Pagamento online",
+    },
+    hu: {
+      stripe: "Bankkártya (Stripe)",
+      paypal: "PayPal",
+      bank: "Banki átutalás",
+      online: "Online fizetés",
+    },
+  };
+
+  const dict = methodLabels[loc] || methodLabels.en;
+  let label = dict.online;
+
+  if (method === "paypal" || (txId && (txId.startsWith("PAYID-") || txId.length === 17))) {
+    label = dict.paypal;
+  } else if (
+    method.includes("stripe") ||
+    method.includes("card") ||
+    (txId && (txId.startsWith("pi_") || txId.startsWith("cs_")))
+  ) {
+    label = dict.stripe;
+  } else if (method.includes("bank")) {
+    label = dict.bank;
+  } else if (order?.payment_method) {
+    label = order.payment_method;
+  }
+
+  return txId ? `${label} (TX: ${txId})` : label;
+}
+
+export const CANCELLED_I18N = {
+  en: {
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Cancelled`,
+    title: "Order Cancellation",
+    badge: "Order Cancelled",
+    headline: "Your Order Has Been Cancelled",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) =>
+      `This email confirms that your Wall Bed King order ${id} has been cancelled. No items from this order will enter production or be dispatched.`,
+    orderNumber: "Order Number:",
+    date: "Cancellation Date:",
+    statusLabel: "Order Status:",
+    statusValue: "Cancelled",
+    paymentMethod: "Payment Method:",
+    orderSummary: "Cancelled Order Items",
+    colItem: "Item",
+    colQty: "Qty",
+    colPrice: "Price",
+    totalLabel: "Cancelled Order Total:",
+    sofaLabel: "Front Sofa Module",
+    supportNoticeTitle: "Did not cancel this order?",
+    supportNoticeText:
+      'If you believe you received this email in error or did not request a cancellation, please contact our support team at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> and we will assist you right away.',
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
+    footerContact: (phone) =>
+      `Need assistance? Contact us at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${phone}</strong> (Mon–Fri 9:00–20:00, Sat 9:00–12:00).`,
+  },
+  us: {
+    subject: (id) => `Your Wall Bed King Order ${id} Has Been Cancelled`,
+    title: "Order Cancellation",
+    badge: "Order Cancelled",
+    headline: "Your Order Has Been Cancelled",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id) =>
+      `This email confirms that your Wall Bed King order ${id} has been cancelled. Your order has been removed from our fulfillment queue and will not be shipped.`,
+    orderNumber: "Order Number:",
+    date: "Cancellation Date:",
+    statusLabel: "Order Status:",
+    statusValue: "Cancelled",
+    paymentMethod: "Payment Method:",
+    orderSummary: "Cancelled Order Items",
+    colItem: "Item",
+    colQty: "Qty",
+    colPrice: "Price",
+    totalLabel: "Cancelled Order Total:",
+    sofaLabel: "Front Sofa Module",
+    supportNoticeTitle: "Did not cancel this order?",
+    supportNoticeText:
+      'If you believe you received this email in error or did not request a cancellation, please contact our support team at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> and we will assist you right away.',
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Warranty",
+    footerContact: (phone) =>
+      `Need assistance? Contact us at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${phone}</strong> (Mon–Fri 9:00–20:00, Sat 9:00–12:00 UK).`,
+  },
+  de: {
+    subject: (id) => `Ihre Wall Bed King Bestellung ${id} wurde storniert`,
+    title: "Bestellstornierung",
+    badge: "Bestellung Storniert",
+    headline: "Ihre Bestellung wurde storniert",
+    greeting: (name) => `Guten Tag ${name || "Kunde"},`,
+    intro: (id) =>
+      `Hiermit bestätigen wir, dass Ihre Wall Bed King Bestellung ${id} storniert wurde. Für diese Bestellung erfolgen keine Fertigung und kein Versand.`,
+    orderNumber: "Bestellnummer:",
+    date: "Stornierungsdatum:",
+    statusLabel: "Bestellstatus:",
+    statusValue: "Storniert",
+    paymentMethod: "Zahlungsart:",
+    orderSummary: "Stornierte Artikel",
+    colItem: "Artikel",
+    colQty: "Menge",
+    colPrice: "Preis",
+    totalLabel: "Stornierter Gesamtbetrag:",
+    sofaLabel: "Front-Sofa Modul",
+    supportNoticeTitle: "Haben Sie diese Bestellung nicht storniert?",
+    supportNoticeText:
+      'Falls Sie glauben, diese E-Mail irrtümlich erhalten zu haben, oder keine Stornierung veranlasst haben, schreiben Sie bitte an unser Support-Team unter <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a>.',
+    footerGuarantee: "Wall Bed King • Premium Schrankbetten • Lebenslange Mechanik-Garantie",
+    footerContact: (phone) =>
+      `Brauchen Sie Hilfe? Schreiben Sie uns an <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> oder rufen Sie uns an unter <strong>${phone}</strong> (Mo–Fr 9:00–20:00, Sa 9:00–12:00).`,
+  },
+  fr: {
+    subject: (id) => `Votre commande Wall Bed King ${id} a été annulée`,
+    title: "Annulation de Commande",
+    badge: "Commande Annulée",
+    headline: "Votre commande a été annulée",
+    greeting: (name) => `Bonjour ${name || "Cher Client"},`,
+    intro: (id) =>
+      `Nous vous confirmons que votre commande Wall Bed King ${id} a bien été annulée. Aucun article de cette commande ne sera mis en fabrication ni expédié.`,
+    orderNumber: "Numéro de commande :",
+    date: "Date d'annulation :",
+    statusLabel: "Statut de la commande :",
+    statusValue: "Annulée",
+    paymentMethod: "Mode de paiement :",
+    orderSummary: "Articles Annulés",
+    colItem: "Article",
+    colQty: "Qté",
+    colPrice: "Prix",
+    totalLabel: "Montant total annulé :",
+    sofaLabel: "Module Canapé Devant de Lit",
+    supportNoticeTitle: "Vous n'avez pas demandé cette annulation ?",
+    supportNoticeText:
+      'Si vous pensez avoir reçu cet e-mail par erreur ou si vous n’êtes pas à l’origine de cette annulation, veuillez contacter notre service client à <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a>.',
+    footerGuarantee: "Wall Bed King • Lits Escamotables Premium • Garantie Mécanisme à Vie",
+    footerContact: (phone) =>
+      `Besoin d'aide ? Contactez-nous à <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> ou par téléphone au <strong>${phone}</strong> (Lun–Ven 9h00–20h00, Sam 9h00–12h00).`,
+  },
+  es: {
+    subject: (id) => `Su pedido Wall Bed King ${id} ha sido cancelado`,
+    title: "Cancelación de Pedido",
+    badge: "Pedido Cancelado",
+    headline: "Su pedido ha sido cancelado",
+    greeting: (name) => `Hola ${name || "Cliente"},`,
+    intro: (id) =>
+      `Le confirmamos que su pedido Wall Bed King ${id} ha sido cancelado. Ningún artículo de este pedido pasará a producción ni será enviado.`,
+    orderNumber: "Número de pedido:",
+    date: "Fecha de cancelación:",
+    statusLabel: "Estado del pedido:",
+    statusValue: "Cancelado",
+    paymentMethod: "Método de pago:",
+    orderSummary: "Artículos Cancelados",
+    colItem: "Artículo",
+    colQty: "Cant.",
+    colPrice: "Precio",
+    totalLabel: "Importe total cancelado:",
+    sofaLabel: "Módulo Sofá Frontal",
+    supportNoticeTitle: "¿No solicitó esta cancelación?",
+    supportNoticeText:
+      'Si cree que ha recibido este correo por error o usted no solicitó ninguna cancelación, por favor escríbanos a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> y le ayudaremos de inmediato.',
+    footerGuarantee: "Wall Bed King • Camas Abatibles Premium • Garantía de Mecanismo de por Vida",
+    footerContact: (phone) =>
+      `¿Necesita ayuda? Escríbanos a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> o llámenos al <strong>${phone}</strong> (Lun–Vie 9:00–20:00, Sáb 9:00–12:00).`,
+  },
+  it: {
+    subject: (id) => `Il tuo ordine Wall Bed King ${id} è stato annullato`,
+    title: "Annullamento dell'Ordine",
+    badge: "Ordine Annullato",
+    headline: "Il tuo ordine è stato annullato",
+    greeting: (name) => `Gentile ${name || "Cliente"},`,
+    intro: (id) =>
+      `Ti confermiamo che il tuo ordine Wall Bed King ${id} è stato annullato. Nessun articolo di questo ordine verrà messo in produzione o spedito.`,
+    orderNumber: "Numero d'ordine:",
+    date: "Data di annullamento:",
+    statusLabel: "Stato dell'ordine:",
+    statusValue: "Annullato",
+    paymentMethod: "Metodo di pagamento:",
+    orderSummary: "Articoli Annullati",
+    colItem: "Articolo",
+    colQty: "Qtà",
+    colPrice: "Prezzo",
+    totalLabel: "Importo totale annullato:",
+    sofaLabel: "Modulo Divano Frontale",
+    supportNoticeTitle: "Non hai richiesto questo annullamento?",
+    supportNoticeText:
+      'Se ritieni di aver ricevuto questa email per errore o non hai richiesto alcun annullamento, contatta il nostro supporto all’indirizzo <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a>.',
+    footerGuarantee: "Wall Bed King • Letti a Scomparsa Premium • Garanzia a Vita sul Meccanismo",
+    footerContact: (phone) =>
+      `Hai bisogno di assistenza? Scrivici a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> o chiama il <strong>${phone}</strong> (Lun–Ven 9:00–20:00, Sab 9:00–12:00).`,
+  },
+  por: {
+    subject: (id) => `A sua encomenda Wall Bed King ${id} foi cancelada`,
+    title: "Cancelamento de Encomenda",
+    badge: "Encomenda Cancelada",
+    headline: "A sua encomenda foi cancelada",
+    greeting: (name) => `Olá ${name || "Cliente"},`,
+    intro: (id) =>
+      `Confirmamos que a sua encomenda Wall Bed King ${id} foi cancelada. Nenhum artigo desta encomenda entrará em produção ou será expedido.`,
+    orderNumber: "Número da encomenda:",
+    date: "Data de cancelamento:",
+    statusLabel: "Estado da encomenda:",
+    statusValue: "Cancelada",
+    paymentMethod: "Método de pagamento:",
+    orderSummary: "Artigos Cancelados",
+    colItem: "Artigo",
+    colQty: "Qtd",
+    colPrice: "Preço",
+    totalLabel: "Total da encomenda cancelada:",
+    sofaLabel: "Módulo Sofá Frontal",
+    supportNoticeTitle: "Não solicitou este cancelamento?",
+    supportNoticeText:
+      'Se considera que recebeu este e-mail por engano ou não pediu o cancelamento da encomenda, por favor contacte a nossa equipa de apoio através de <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a>.',
+    footerGuarantee: "Wall Bed King • Camas Rebatíveis Premium • Garantia Vitalícia do Mecanismo",
+    footerContact: (phone) =>
+      `Precisa de ajuda? Contacte-nos em <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> ou ligue para <strong>${phone}</strong> (Seg–Sex 9:00–20:00, Sáb 9:00–12:00).`,
+  },
+  hu: {
+    subject: (id) => `A(z) ${id} számú Wall Bed King rendelése törlésre került`,
+    title: "Rendelés Törlése",
+    badge: "Rendelés Törölve",
+    headline: "Rendelése törlésre került",
+    greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
+    intro: (id) =>
+      `Ezúton visszaigazoljuk, hogy a(z) ${id} számú Wall Bed King rendelése törlésre került. A rendelés tételei nem kerülnek gyártásba és kiszállításra.`,
+    orderNumber: "Rendelésszám:",
+    date: "Törlés dátuma:",
+    statusLabel: "Rendelés állapota:",
+    statusValue: "Törölve",
+    paymentMethod: "Fizetési mód:",
+    orderSummary: "Törölt tételek",
+    colItem: "Termék",
+    colQty: "Menny.",
+    colPrice: "Ár",
+    totalLabel: "Törölt rendelés végösszege:",
+    sofaLabel: "Elülső kanapé modul",
+    supportNoticeTitle: "Nem Ön kérte a rendelés törlését?",
+    supportNoticeText:
+      'Amennyiben úgy érzi, hogy tévedésből kapta ezt az e-mailt, vagy nem kezdeményezett lemondást, kérjük, írjon ügyfélszolgálatunknak a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> e-mail-címre.',
+    footerGuarantee: "Wall Bed King • Prémium Lenyitható Ágyak • Élethosszig Tartó Mechanika Garancia",
+    footerContact: (phone) =>
+      `Segítségre van szüksége? Írjon a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> címre, vagy hívjon: <strong>${phone}</strong> (H–P 9:00–20:00, Szo 9:00–12:00).`,
+  },
+};
+
+export const REFUNDED_I18N = {
+  en: {
+    subject: (id) => `Refund Confirmation for Your Wall Bed King Order ${id}`,
+    title: "Refund Confirmation",
+    badge: "Refund Issued",
+    headline: "Your Refund Has Been Processed",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id, amount) =>
+      `We are writing to confirm that a refund of <strong>${amount}</strong> has been issued for your Wall Bed King order <strong>${id}</strong> back to your original payment method.`,
+    summaryTitle: "Refund Summary",
+    orderNumber: "Order Number:",
+    date: "Refund Date:",
+    refundMethod: "Refunded To:",
+    timelineLabel: "Estimated Clearing Time:",
+    timelineValue: "3–10 business days",
+    refundAmountLabel: "Total Refunded:",
+    orderSummary: "Refunded Order Items",
+    colItem: "Item",
+    colQty: "Qty",
+    colPrice: "Price",
+    sofaLabel: "Front Sofa Module",
+    whatNextTitle: "When will the refund appear on my statement?",
+    whatNextDesc:
+      "Your refund has already been released from our system. Card issuers and banks typically take 3–10 business days to post the credit on your statement (PayPal refunds usually appear within 24–72 hours). If you need a VAT credit note or any assistance, simply reply to this email.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
+    footerContact: (phone) =>
+      `Need assistance? Contact us at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${phone}</strong> (Mon–Fri 9:00–20:00, Sat 9:00–12:00).`,
+  },
+  us: {
+    subject: (id) => `Refund Confirmation for Your Wall Bed King Order ${id}`,
+    title: "Refund Confirmation",
+    badge: "Refund Issued",
+    headline: "Your Refund Has Been Processed",
+    greeting: (name) => `Hello ${name || "Valued Customer"},`,
+    intro: (id, amount) =>
+      `We are writing to confirm that a refund of <strong>${amount}</strong> has been issued for your Wall Bed King order <strong>${id}</strong> back to your original payment method.`,
+    summaryTitle: "Refund Summary",
+    orderNumber: "Order Number:",
+    date: "Refund Date:",
+    refundMethod: "Refunded To:",
+    timelineLabel: "Estimated Posting Time:",
+    timelineValue: "3–10 business days",
+    refundAmountLabel: "Total Refunded:",
+    orderSummary: "Refunded Order Items",
+    colItem: "Item",
+    colQty: "Qty",
+    colPrice: "Price",
+    sofaLabel: "Front Sofa Module",
+    whatNextTitle: "When will the funds appear on my statement?",
+    whatNextDesc:
+      "Your refund has already been sent from our system. Credit card networks and banks typically take 3–10 business days to post the funds to your account (PayPal refunds generally appear within 24–72 hours). Reply anytime if you need a receipt or further assistance.",
+    footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Warranty",
+    footerContact: (phone) =>
+      `Need assistance? Contact us at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${phone}</strong> (Mon–Fri 9:00–20:00, Sat 9:00–12:00 UK).`,
+  },
+  de: {
+    subject: (id) => `Rückerstattungsbestätigung für Ihre Wall Bed King Bestellung ${id}`,
+    title: "Rückerstattungsbestätigung",
+    badge: "Rückerstattung Veranlasst",
+    headline: "Ihre Rückerstattung wurde veranlasst",
+    greeting: (name) => `Guten Tag ${name || "Kunde"},`,
+    intro: (id, amount) =>
+      `Hiermit bestätigen wir Ihnen, dass für Ihre Wall Bed King Bestellung <strong>${id}</strong> eine Rückerstattung in Höhe von <strong>${amount}</strong> auf Ihr ursprüngliches Zahlungsmittel veranlasst wurde.`,
+    summaryTitle: "Übersicht der Rückerstattung",
+    orderNumber: "Bestellnummer:",
+    date: "Erstattungsdatum:",
+    refundMethod: "Erstattet auf:",
+    timelineLabel: "Voraussichtliche Wertstellung:",
+    timelineValue: "3–10 Werktage",
+    refundAmountLabel: "Erstatteter Gesamtbetrag:",
+    orderSummary: "Erstattete Artikel",
+    colItem: "Artikel",
+    colQty: "Menge",
+    colPrice: "Preis",
+    sofaLabel: "Front-Sofa Modul",
+    whatNextTitle: "Wann ist der Betrag auf meinem Konto sichtbar?",
+    whatNextDesc:
+      "Die Rückzahlung wurde von unserem System bereits freigegeben. Banken und Kartenanbieter benötigen in der Regel 3–10 Werktage, um die Gutschrift auf Ihrem Kontoauszug anzuzeigen (bei PayPal meist innerhalb von 24–72 Stunden). Antworten Sie gerne auf diese E-Mail, falls Sie einen Beleg benötigen.",
+    footerGuarantee: "Wall Bed King • Premium Schrankbetten • Lebenslange Mechanik-Garantie",
+    footerContact: (phone) =>
+      `Brauchen Sie Hilfe? Schreiben Sie uns an <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> oder rufen Sie uns an unter <strong>${phone}</strong> (Mo–Fr 9:00–20:00, Sa 9:00–12:00).`,
+  },
+  fr: {
+    subject: (id) => `Confirmation de remboursement pour votre commande Wall Bed King ${id}`,
+    title: "Confirmation de Remboursement",
+    badge: "Remboursement Effectué",
+    headline: "Votre remboursement a été effectué",
+    greeting: (name) => `Bonjour ${name || "Cher Client"},`,
+    intro: (id, amount) =>
+      `Nous vous confirmons qu'un remboursement d'un montant de <strong>${amount}</strong> a été émis pour votre commande Wall Bed King <strong>${id}</strong> sur votre moyen de paiement initial.`,
+    summaryTitle: "Récapitulatif du Remboursement",
+    orderNumber: "Numéro de commande :",
+    date: "Date du remboursement :",
+    refundMethod: "Remboursé sur :",
+    timelineLabel: "Délai bancaire estimé :",
+    timelineValue: "3 à 10 jours ouvrés",
+    refundAmountLabel: "Montant total remboursé :",
+    orderSummary: "Articles Remboursés",
+    colItem: "Article",
+    colQty: "Qté",
+    colPrice: "Prix",
+    sofaLabel: "Module Canapé Devant de Lit",
+    whatNextTitle: "Quand le remboursement apparaîtra-t-il sur mon relevé ?",
+    whatNextDesc:
+      "Le remboursement a déjà été transmis par notre système. Les banques et émetteurs de cartes mettent généralement 3 à 10 jours ouvrés pour créditer votre compte (24 à 72 heures pour PayPal). N'hésitez pas à répondre à cet e-mail si vous avez besoin d'un avoir ou d'aide supplémentaire.",
+    footerGuarantee: "Wall Bed King • Lits Escamotables Premium • Garantie Mécanisme à Vie",
+    footerContact: (phone) =>
+      `Besoin d'aide ? Contactez-nous à <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> ou par téléphone au <strong>${phone}</strong> (Lun–Ven 9h00–20h00, Sam 9h00–12h00).`,
+  },
+  es: {
+    subject: (id) => `Confirmación de reembolso de su pedido Wall Bed King ${id}`,
+    title: "Confirmación de Reembolso",
+    badge: "Reembolso Emitido",
+    headline: "Su reembolso ha sido procesado",
+    greeting: (name) => `Hola ${name || "Cliente"},`,
+    intro: (id, amount) =>
+      `Le confirmamos que hemos emitido un reembolso de <strong>${amount}</strong> correspondiente a su pedido Wall Bed King <strong>${id}</strong> en su método de pago original.`,
+    summaryTitle: "Resumen del Reembolso",
+    orderNumber: "Número de pedido:",
+    date: "Fecha del reembolso:",
+    refundMethod: "Reembolsado en:",
+    timelineLabel: "Plazo bancario estimado:",
+    timelineValue: "3–10 días laborables",
+    refundAmountLabel: "Importe total reembolsado:",
+    orderSummary: "Artículos Reembolsados",
+    colItem: "Artículo",
+    colQty: "Cant.",
+    colPrice: "Precio",
+    sofaLabel: "Módulo Sofá Frontal",
+    whatNextTitle: "¿Cuándo veré el importe reflejado en mi cuenta?",
+    whatNextDesc:
+      "Nuestro sistema ya ha emitido el reembolso. Las entidades bancarias y emisores de tarjetas suelen tardar entre 3 y 10 días laborables en reflejar el abono en su extracto (en PayPal suele aparecer en 24–72 horas). Puede responder a este correo si necesita factura rectificativa o cualquier consulta.",
+    footerGuarantee: "Wall Bed King • Camas Abatibles Premium • Garantía de Mecanismo de por Vida",
+    footerContact: (phone) =>
+      `¿Necesita ayuda? Escríbanos a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> o llámenos al <strong>${phone}</strong> (Lun–Vie 9:00–20:00, Sáb 9:00–12:00).`,
+  },
+  it: {
+    subject: (id) => `Conferma di rimborso per il tuo ordine Wall Bed King ${id}`,
+    title: "Conferma di Rimborso",
+    badge: "Rimborso Emesso",
+    headline: "Il tuo rimborso è stato elaborato",
+    greeting: (name) => `Gentile ${name || "Cliente"},`,
+    intro: (id, amount) =>
+      `Ti confermiamo che è stato emesso un rimborso di <strong>${amount}</strong> per il tuo ordine Wall Bed King <strong>${id}</strong> sul metodo di pagamento utilizzato in fase d'acquisto.`,
+    summaryTitle: "Riepilogo del Rimborso",
+    orderNumber: "Numero d'ordine:",
+    date: "Data del rimborso:",
+    refundMethod: "Rimborsato su:",
+    timelineLabel: "Tempi stimati di accredito:",
+    timelineValue: "3–10 giorni lavorativi",
+    refundAmountLabel: "Totale rimborsato:",
+    orderSummary: "Articoli Rimborsati",
+    colItem: "Articolo",
+    colQty: "Qtà",
+    colPrice: "Prezzo",
+    sofaLabel: "Modulo Divano Frontale",
+    whatNextTitle: "Quando vedrò l'accredito sul mio estratto conto?",
+    whatNextDesc:
+      "Il rimborso è già stato autorizzato ed emesso dal nostro sistema. I circuiti delle carte e le banche impiegano normalmente 3–10 giorni lavorativi per contabilizzare l'accredito (su PayPal di solito entro 24–72 ore). Rispondi pure a questa email per qualsiasi necessità.",
+    footerGuarantee: "Wall Bed King • Letti a Scomparsa Premium • Garanzia a Vita sul Meccanismo",
+    footerContact: (phone) =>
+      `Hai bisogno di assistenza? Scrivici a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> o chiama il <strong>${phone}</strong> (Lun–Ven 9:00–20:00, Sab 9:00–12:00).`,
+  },
+  por: {
+    subject: (id) => `Confirmação de reembolso da sua encomenda Wall Bed King ${id}`,
+    title: "Confirmação de Reembolso",
+    badge: "Reembolso Emitido",
+    headline: "O seu reembolso foi processado",
+    greeting: (name) => `Olá ${name || "Cliente"},`,
+    intro: (id, amount) =>
+      `Confirmamos que foi emitido um reembolso no valor de <strong>${amount}</strong> referente à sua encomenda Wall Bed King <strong>${id}</strong> para o seu método de pagamento original.`,
+    summaryTitle: "Resumo do Reembolso",
+    orderNumber: "Número da encomenda:",
+    date: "Data do reembolso:",
+    refundMethod: "Reembolsado para:",
+    timelineLabel: "Prazo bancário estimado:",
+    timelineValue: "3 a 10 dias úteis",
+    refundAmountLabel: "Total reembolsado:",
+    orderSummary: "Artigos Reembolsados",
+    colItem: "Artigo",
+    colQty: "Qtd",
+    colPrice: "Preço",
+    sofaLabel: "Módulo Sofá Frontal",
+    whatNextTitle: "Quando ficará o valor disponível na minha conta?",
+    whatNextDesc:
+      "O reembolso já foi libertado pelo nosso sistema. Os bancos e entidades emissoras de cartões demoram habitualmente entre 3 a 10 dias úteis a refletir o crédito no extrato (no PayPal normalmente entre 24 e 72 horas). Responda a este e-mail caso necessite de nota de crédito ou apoio.",
+    footerGuarantee: "Wall Bed King • Camas Rebatíveis Premium • Garantia Vitalícia do Mecanismo",
+    footerContact: (phone) =>
+      `Precisa de ajuda? Contacte-nos em <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> ou ligue para <strong>${phone}</strong> (Seg–Sex 9:00–20:00, Sáb 9:00–12:00).`,
+  },
+  hu: {
+    subject: (id) => `Visszatérítési visszaigazolás a(z) ${id} számú Wall Bed King rendeléséhez`,
+    title: "Visszatérítési Igazolás",
+    badge: "Visszatérítve",
+    headline: "Visszatérítését feldolgoztuk",
+    greeting: (name) => `Kedves ${name || "Vásárlónk"},`,
+    intro: (id, amount) =>
+      `Ezúton igazoljuk, hogy a(z) <strong>${id}</strong> számú Wall Bed King rendeléséhez tartozó <strong>${amount}</strong> összegű visszatérítést elindítottuk az eredeti fizetési módjára.`,
+    summaryTitle: "Visszatérítés részletei",
+    orderNumber: "Rendelésszám:",
+    date: "Visszatérítés dátuma:",
+    refundMethod: "Visszatérítés helye:",
+    timelineLabel: "Várható banki jóváírás:",
+    timelineValue: "3–10 munkanap",
+    refundAmountLabel: "Visszatérített összeg:",
+    orderSummary: "Visszatérített tételek",
+    colItem: "Termék",
+    colQty: "Menny.",
+    colPrice: "Ár",
+    sofaLabel: "Elülső kanapé modul",
+    whatNextTitle: "Mikor jelenik meg az összeg a számlámon?",
+    whatNextDesc:
+      "A visszatérítést rendszerünk már kiadta. A kártyatársaságok és bankok jellemzően 3–10 munkanapon belül könyvelik le a jóváírást a számlakivonaton (PayPal esetén általában 24–72 órán belül). Bármilyen kérdés esetén válaszoljon nyugodtan erre az e-mailre.",
+    footerGuarantee: "Wall Bed King • Prémium Lenyitható Ágyak • Élethosszig Tartó Mechanika Garancia",
+    footerContact: (phone) =>
+      `Segítségre van szüksége? Írjon a <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> címre, vagy hívjon: <strong>${phone}</strong> (H–P 9:00–20:00, Szo 9:00–12:00).`,
+  },
+};
+
+function renderLocalizedOrderItemsRows(order, currencySymbol, sofaLabel) {
+  const rawItems = Array.isArray(order?.items) ? order.items : [];
+  if (rawItems.length === 0) {
+    return "";
+  }
+
+  return rawItems
+    .map((item) => {
+      const opts = item.options && typeof item.options === "object" ? item.options : {};
+      const optionsText =
+        [opts.size, opts.orientation, opts.type, opts.color].filter(Boolean).join(" • ") ||
+        item.variant ||
+        "";
+      const hasSofa = Boolean(opts.sofaIncluded);
+      const sofaPriceText = opts.sofaPrice
+        ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})`
+        : "";
+
+      return `
+      <tr>
+        <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111;">
+          <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed King"}</strong>
+          ${optionsText ? `<br><span style="color:#666; font-size:12px; display:inline-block; margin-top:3px;">${optionsText}</span>` : ""}
+          ${hasSofa ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + ${sofaLabel}${sofaPriceText}</span>` : ""}
+        </td>
+        <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
+          ${item.quantity || 1}
+        </td>
+        <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: right; font-weight: 500;">
+          ${currencySymbol}${Number(item.price || 0).toFixed(2)}
+        </td>
+      </tr>
+    `;
+    })
+    .join("");
+}
+
+export function getOrderCancelledHtml(
+  order = SAMPLE_ORDER,
+  requestedLocale = null,
+  isUpdate = false
+) {
+  const loc = resolveOrderLocale(order, requestedLocale);
+  const t = CANCELLED_I18N[loc] || CANCELLED_I18N.en;
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+  const currencyCode = (
+    order.currency ||
+    (loc === "us" ? "USD" : loc === "en" ? "GBP" : "EUR")
+  ).toUpperCase();
+  const currencySymbol =
+    currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+  const storePhone = getStorePhone(loc);
+
+  const itemsList = renderLocalizedOrderItemsRows(order, currencySymbol, t.sofaLabel);
+
+  const updateBannerHtml = isUpdate
+    ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  `
+    : "";
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${isUpdate ? upd.subjectPrefix : ""}${t.title} - ${order.id}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
+          .container { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+          .header { background: #111111; color: #ffffff; padding: 32px 28px; text-align: center; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; }
+          .header p { margin: 8px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+          .content { padding: 32px 28px; }
+          .badge { display: inline-block; padding: 5px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; margin-bottom: 16px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+          .order-box { background: #faf9f7; border: 1px solid #eeeae3; padding: 18px 20px; border-radius: 6px; margin: 22px 0; }
+          .table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+          .cta-btn { display: inline-block; background: #111111; color: #ffffff !important; text-decoration: none; padding: 12px 26px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 4px; margin-top: 12px; }
+          .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 24px 28px; text-align: center; font-size: 12px; color: #777777; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Wall Bed King</h1>
+            <p>${isUpdate ? upd.badge : t.title}</p>
+          </div>
+          <div class="content">
+            ${updateBannerHtml}
+            <span class="badge">✕ ${t.badge}</span>
+            <h2 style="font-size: 20px; color: #111; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <p style="font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              ${t.greeting(order.customer_name)}<br><br>
+              ${t.intro(order.id)}
+            </p>
+
+            <div class="order-box">
+              <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.orderNumber}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 700;">${order.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.date}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111;">${formatLocalizedDate(loc, order.updated_at)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.statusLabel}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #991b1b; font-weight: 700;">${t.statusValue}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.paymentMethod}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111;">${formatLocalizedPaymentMethod(order, loc)}</td>
+                </tr>
+              </table>
+            </div>
+
+            ${itemsList ? `
+            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-top: 26px; margin-bottom: 8px;">${t.orderSummary}</h3>
+            <table class="table">
+              <thead>
+                <tr style="border-bottom: 2px solid #111; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666;">
+                  <th style="padding-bottom: 10px;">${t.colItem}</th>
+                  <th style="padding-bottom: 10px; text-align: center;">${t.colQty}</th>
+                  <th style="padding-bottom: 10px; text-align: right;">${t.colPrice}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsList}
+              </tbody>
+            </table>
+            ` : ""}
+
+            <div style="text-align: right; margin-top: 18px; font-size: 14px; border-top: 2px solid #111; padding-top: 14px;">
+              <span style="color: #666; margin-right: 12px;">${t.totalLabel}</span>
+              <strong style="font-size: 19px; color: #555; text-decoration: line-through;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
+            </div>
+
+            <div style="margin-top: 28px; padding: 16px 18px; background: #faf9f7; border: 1px solid #eeeae3; border-left: 4px solid #d4b26f; border-radius: 6px;">
+              <div style="font-size: 12px; font-weight: 700; color: #111; margin-bottom: 4px;">
+                ${t.supportNoticeTitle}
+              </div>
+              <p style="margin: 0; font-size: 13px; color: #555; line-height: 1.55;">
+                ${t.supportNoticeText}
+              </p>
+            </div>
+          </div>
+          <div class="footer">
+            <p style="margin: 0 0 6px; font-weight: 500; color: #333;">${t.footerGuarantee}</p>
+            <p style="margin: 0;">${t.footerContact(storePhone)}</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+export function getOrderRefundedHtml(
+  order = SAMPLE_ORDER,
+  requestedLocale = null,
+  isUpdate = false
+) {
+  const loc = resolveOrderLocale(order, requestedLocale);
+  const t = REFUNDED_I18N[loc] || REFUNDED_I18N.en;
+  const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
+  const currencyCode = (
+    order.currency ||
+    (loc === "us" ? "USD" : loc === "en" ? "GBP" : "EUR")
+  ).toUpperCase();
+  const currencySymbol =
+    currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
+  const formattedTotal = `${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}`;
+  const storePhone = getStorePhone(loc);
+
+  const itemsList = renderLocalizedOrderItemsRows(order, currencySymbol, t.sofaLabel);
+
+  const updateBannerHtml = isUpdate
+    ? `
+    <div style="margin-bottom: 22px; padding: 14px 18px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #b45309; margin-bottom: 4px;">
+        ⚠️ ${upd.title}
+      </div>
+      <div style="font-size: 13px; color: #78350f; line-height: 1.5;">
+        ${upd.message}
+      </div>
+    </div>
+  `
+    : "";
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${isUpdate ? upd.subjectPrefix : ""}${t.title} - ${order.id}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
+          .container { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+          .header { background: #111111; color: #ffffff; padding: 32px 28px; text-align: center; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; }
+          .header p { margin: 8px 0 0; font-size: 12px; color: #d4b26f; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+          .content { padding: 32px 28px; }
+          .badge { display: inline-block; padding: 5px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; margin-bottom: 16px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+          .refund-card { background: #faf9f7; border: 1px solid #d4b26f; border-left: 5px solid #b4832c; padding: 20px 22px; border-radius: 6px; margin: 24px 0; }
+          .table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+          .footer { background: #faf8f5; border-top: 1px solid #eeebe6; padding: 24px 28px; text-align: center; font-size: 12px; color: #777777; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Wall Bed King</h1>
+            <p>${isUpdate ? upd.badge : t.title}</p>
+          </div>
+          <div class="content">
+            ${updateBannerHtml}
+            <span class="badge">↩ ${t.badge}</span>
+            <h2 style="font-size: 20px; color: #111; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <p style="font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              ${t.greeting(order.customer_name)}<br><br>
+              ${t.intro(order.id, formattedTotal)}
+            </p>
+
+            <div class="refund-card">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-bottom: 12px;">
+                ${t.summaryTitle}
+              </div>
+              <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.orderNumber}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 700;">${order.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.date}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111;">${formatLocalizedDate(loc, order.updated_at)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.refundMethod}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111;">${formatLocalizedPaymentMethod(order, loc)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #666;"><strong>${t.timelineLabel}</strong></td>
+                  <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${t.timelineValue}</td>
+                </tr>
+                <tr style="border-top: 1px dashed #d4b26f;">
+                  <td style="padding: 12px 0 2px; color: #111; font-weight: 700;">${t.refundAmountLabel}</td>
+                  <td style="padding: 12px 0 2px; text-align: right; font-size: 20px; font-weight: 800; color: #047857;">${formattedTotal}</td>
+                </tr>
+              </table>
+            </div>
+
+            ${itemsList ? `
+            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-top: 26px; margin-bottom: 8px;">${t.orderSummary}</h3>
+            <table class="table">
+              <thead>
+                <tr style="border-bottom: 2px solid #111; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666;">
+                  <th style="padding-bottom: 10px;">${t.colItem}</th>
+                  <th style="padding-bottom: 10px; text-align: center;">${t.colQty}</th>
+                  <th style="padding-bottom: 10px; text-align: right;">${t.colPrice}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsList}
+              </tbody>
+            </table>
+            ` : ""}
+
+            <div style="margin-top: 28px; padding: 16px 18px; background: #fafafa; border-radius: 6px; border-left: 3px solid #d4b26f;">
+              <p style="margin: 0; font-size: 12px; color: #444; line-height: 1.55;">
+                <strong>${t.whatNextTitle}</strong><br>${t.whatNextDesc}
+              </p>
+            </div>
+          </div>
+          <div class="footer">
+            <p style="margin: 0 0 6px; font-weight: 500; color: #333;">${t.footerGuarantee}</p>
+            <p style="margin: 0;">${t.footerContact(storePhone)}</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Send "Order Cancelled" Notification Email via Resend
+ */
+export async function sendOrderCancelledEmail(order, locale = null, isUpdate = false) {
+  if (!order || !order.customer_email) return { success: false, error: "Missing recipient email" };
+
+  const effectiveLocale = resolveOrderLocale(order, locale);
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log(
+      `[Email Service: Mock] Order Cancelled Notification for ${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`
+    );
+    return {
+      success: true,
+      mode: "mock",
+      message: "Cancellation notification logged in dev mode.",
+    };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    const i18n = CANCELLED_I18N[effectiveLocale.toLowerCase()] || CANCELLED_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+    const htmlContent = getOrderCancelledHtml(order, effectiveLocale, isUpdate);
+
+    const res = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [order.customer_email],
+      replyTo: SUPPORT_EMAIL,
+      subject: `${subjectPrefix}${i18n.subject(order.id)}`,
+      html: htmlContent,
+    });
+
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return {
+        success: false,
+        error: res.error.message || "Email delivery rejected by Resend.",
+      };
+    }
+
+    return { success: true, data: res?.data || res };
+  } catch (error) {
+    console.error("[Cancelled Email Error]", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send "Order Refunded" Notification Email via Resend
+ */
+export async function sendOrderRefundedEmail(order, locale = null, isUpdate = false) {
+  if (!order || !order.customer_email) return { success: false, error: "Missing recipient email" };
+
+  const effectiveLocale = resolveOrderLocale(order, locale);
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log(
+      `[Email Service: Mock] Order Refunded Notification for ${order.id} sent to ${order.customer_email} (${effectiveLocale}, isUpdate: ${isUpdate})`
+    );
+    return {
+      success: true,
+      mode: "mock",
+      message: "Refund notification logged in dev mode.",
+    };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    const i18n = REFUNDED_I18N[effectiveLocale.toLowerCase()] || REFUNDED_I18N.en;
+    const upd = UPDATE_NOTICE_I18N[effectiveLocale.toLowerCase()] || UPDATE_NOTICE_I18N.en;
+    const subjectPrefix = isUpdate ? upd.subjectPrefix : "";
+    const htmlContent = getOrderRefundedHtml(order, effectiveLocale, isUpdate);
+
+    const res = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [order.customer_email],
+      replyTo: SUPPORT_EMAIL,
+      subject: `${subjectPrefix}${i18n.subject(order.id)}`,
+      html: htmlContent,
+    });
+
+    if (res?.error) {
+      console.error("[Resend API Error]", res.error);
+      return {
+        success: false,
+        error: res.error.message || "Email delivery rejected by Resend.",
+      };
+    }
+
+    return { success: true, data: res?.data || res };
+  } catch (error) {
+    console.error("[Refunded Email Error]", error);
+    return { success: false, error: error.message };
+  }
+}

@@ -16,6 +16,8 @@ import {
   IconStar,
   IconHeartHandshake,
   IconKey,
+  IconCircleX,
+  IconReceiptRefund,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -39,6 +41,15 @@ const EMAIL_TEMPLATES = [
     trigger: "Triggered automatically when a Stripe checkout or PayPal payment succeeds.",
     recipient: "Customer's checkout email address",
     subject: "Wall Bed King Order Confirmation - WBK-1000",
+    subjectsByLocale: {
+      en: "Wall Bed King Order Confirmation - WBK-1000",
+      us: "Wall Bed King Order Confirmation - WBK-1000",
+      de: "Wall Bed King Bestellbestätigung - WBK-1000",
+      fr: "Confirmation de commande Wall Bed King - WBK-1000",
+      es: "Confirmación de pedido Wall Bed King - WBK-1000",
+      it: "Conferma d'ordine Wall Bed King - WBK-1000",
+      por: "Confirmação de encomenda Wall Bed King - WBK-1000",
+    },
     supportsLocale: true,
   },
   {
@@ -51,6 +62,46 @@ const EMAIL_TEMPLATES = [
     recipient: "Customer's checkout email address",
     subject: "Your Wall Bed King Order WBK-1000 Has Been Dispatched!",
     supportsLocale: false,
+  },
+  {
+    id: "order_cancelled",
+    title: "Order Cancelled",
+    audience: "Customer",
+    audienceColor: "bg-red-50 text-red-800 border-red-200",
+    icon: IconCircleX,
+    trigger: "Triggered automatically when an order's status is changed to 'Cancelled' in Admin Orders.",
+    recipient: "Customer's checkout email address (in their storefront language)",
+    subject: "Your Wall Bed King Order WBK-1000 Has Been Cancelled",
+    subjectsByLocale: {
+      en: "Your Wall Bed King Order WBK-1000 Has Been Cancelled",
+      us: "Your Wall Bed King Order WBK-1000 Has Been Cancelled",
+      de: "Ihre Wall Bed King Bestellung WBK-1000 wurde storniert",
+      fr: "Votre commande Wall Bed King WBK-1000 a été annulée",
+      es: "Su pedido Wall Bed King WBK-1000 ha sido cancelado",
+      it: "Il tuo ordine Wall Bed King WBK-1000 è stato annullato",
+      por: "A sua encomenda Wall Bed King WBK-1000 foi cancelada",
+    },
+    supportsLocale: true,
+  },
+  {
+    id: "order_refunded",
+    title: "Order Refunded",
+    audience: "Customer",
+    audienceColor: "bg-blue-50 text-blue-800 border-blue-200",
+    icon: IconReceiptRefund,
+    trigger: "Triggered automatically when an order's status is changed to 'Refunded' in Admin Orders.",
+    recipient: "Customer's checkout email address (in their storefront language)",
+    subject: "Refund Confirmation for Your Wall Bed King Order WBK-1000",
+    subjectsByLocale: {
+      en: "Refund Confirmation for Your Wall Bed King Order WBK-1000",
+      us: "Refund Confirmation for Your Wall Bed King Order WBK-1000",
+      de: "Rückerstattungsbestätigung für Ihre Wall Bed King Bestellung WBK-1000",
+      fr: "Confirmation de remboursement pour votre commande Wall Bed King WBK-1000",
+      es: "Confirmación de reembolso de su pedido Wall Bed King WBK-1000",
+      it: "Conferma di rimborso per il tuo ordine Wall Bed King WBK-1000",
+      por: "Confirmação de reembolso da sua encomenda Wall Bed King WBK-1000",
+    },
+    supportsLocale: true,
   },
   {
     id: "review_request",
@@ -234,10 +285,10 @@ export default function AdminEmailsPage() {
         })}
       </div>
 
-      {/* Language Switcher for Order Confirmation */}
+      {/* Language Switcher for Multi-Language Templates */}
       {activeTemplate.supportsLocale && (
         <div className="p-3 bg-white border border-wbk-lightgrey/70 flex flex-wrap items-center gap-2 text-xs shadow-2xs">
-          <span className="text-wbk-brown font-medium mr-2">Confirmation Language:</span>
+          <span className="text-wbk-brown font-medium mr-2">Template Language:</span>
           {LOCALES.map((loc) => (
             <button
               key={loc.code}
@@ -277,7 +328,9 @@ export default function AdminEmailsPage() {
 
           <div className="p-3 bg-[#FBF9F8] border border-wbk-lightgrey/60 text-xs">
             <span className="text-wbk-brown block text-[10px] uppercase tracking-wider font-semibold">Email Subject:</span>
-            <span className="text-wbk-gold font-mono font-medium mt-0.5 block">{activeTemplate.subject}</span>
+            <span className="text-wbk-gold font-mono font-medium mt-0.5 block">
+              {activeTemplate.subjectsByLocale?.[selectedLocale] || activeTemplate.subject}
+            </span>
           </div>
         </div>
 

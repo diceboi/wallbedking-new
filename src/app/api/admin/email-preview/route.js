@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   getOrderConfirmationHtml,
+  getOrderCancelledHtml,
+  getOrderRefundedHtml,
   getAdminOrderAlertHtml,
   getShippingNotificationHtml,
   getContactFormHtml,
@@ -13,6 +15,8 @@ import {
   SAMPLE_REVIEW,
   DEFAULT_FROM,
   CONFIRMATION_I18N,
+  CANCELLED_I18N,
+  REFUNDED_I18N,
   REVIEW_REQUEST_I18N,
 } from "@/lib/email";
 
@@ -55,9 +59,18 @@ export async function GET(request) {
       case "password_reset":
         html = getPasswordResetHtml();
         break;
+      case "order_cancelled":
+        html = getOrderCancelledHtml({ ...SAMPLE_ORDER, locale }, locale);
+        break;
+      case "order_refunded":
+        html = getOrderRefundedHtml(
+          { ...SAMPLE_ORDER, locale, payment_status: "refunded" },
+          locale
+        );
+        break;
       case "order_confirmation":
       default:
-        html = getOrderConfirmationHtml(SAMPLE_ORDER, locale);
+        html = getOrderConfirmationHtml({ ...SAMPLE_ORDER, locale }, locale);
         break;
     }
 
@@ -139,12 +152,35 @@ export async function POST(request) {
         subject = `[TEST] 🔒 Reset Your Password - Wall Bed King`;
         html = getPasswordResetHtml({ email: recipientEmail });
         break;
+      case "order_cancelled": {
+        const i18n = CANCELLED_I18N[locale.toLowerCase()] || CANCELLED_I18N.en;
+        subject = `[TEST] ${i18n.subject(SAMPLE_ORDER.id)}`;
+        html = getOrderCancelledHtml(
+          { ...SAMPLE_ORDER, customer_email: recipientEmail, locale },
+          locale
+        );
+        break;
+      }
+      case "order_refunded": {
+        const i18n = REFUNDED_I18N[locale.toLowerCase()] || REFUNDED_I18N.en;
+        subject = `[TEST] ${i18n.subject(SAMPLE_ORDER.id)}`;
+        html = getOrderRefundedHtml(
+          {
+            ...SAMPLE_ORDER,
+            customer_email: recipientEmail,
+            locale,
+            payment_status: "refunded",
+          },
+          locale
+        );
+        break;
+      }
       case "order_confirmation":
       default: {
         const i18n = CONFIRMATION_I18N[locale.toLowerCase()] || CONFIRMATION_I18N.en;
         subject = `[TEST] ${i18n.subjectPrefix} - #${SAMPLE_ORDER.id}`;
         html = getOrderConfirmationHtml(
-          { ...SAMPLE_ORDER, customer_email: recipientEmail },
+          { ...SAMPLE_ORDER, customer_email: recipientEmail, locale },
           locale
         );
         break;

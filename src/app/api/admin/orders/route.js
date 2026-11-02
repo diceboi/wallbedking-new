@@ -5,6 +5,8 @@ import {
   sendShippingNotificationEmail,
   sendProductionNotificationEmail,
   sendDeliveryNotificationEmail,
+  sendOrderCancelledEmail,
+  sendOrderRefundedEmail,
   isOwnDelivery,
 } from "@/lib/email";
 
@@ -163,6 +165,8 @@ export async function PATCH(request) {
     const wasProcessingSent = Boolean(notificationsSent.processing);
     const wasShippedSent = Boolean(currentOrder.dispatched_at || notificationsSent.shipped);
     const wasDeliveredSent = Boolean(currentOrder.delivered_at || notificationsSent.completed);
+    const wasCancelledSent = Boolean(notificationsSent.cancelled);
+    const wasRefundedSent = Boolean(notificationsSent.refunded);
 
     // ==========================================
     // ACTION: Direct Resend of Notification Email
@@ -188,6 +192,12 @@ export async function PATCH(request) {
       } else if (targetType === "delivery" || targetType === "completed") {
         emailResult = await sendDeliveryNotificationEmail(currentOrder, null, isUpdate);
         notificationsSent.completed = nowIso;
+      } else if (targetType === "cancelled") {
+        emailResult = await sendOrderCancelledEmail(currentOrder, null, isUpdate);
+        notificationsSent.cancelled = nowIso;
+      } else if (targetType === "refunded") {
+        emailResult = await sendOrderRefundedEmail(currentOrder, null, isUpdate);
+        notificationsSent.refunded = nowIso;
       } else {
         return NextResponse.json({ success: false, error: `Unknown email type: ${targetType}` }, { status: 400 });
       }
@@ -254,6 +264,20 @@ export async function PATCH(request) {
     const isCompletedUpdate = (status === "completed" || (status === undefined && currentOrder.status === "completed")) && wasDeliveredSent && Boolean(sendUpdateEmail);
     const willSendCompleted = isNowCompletedFirstTime || isCompletedUpdate;
 
+    // 4. Cancelled (cancelled)
+    const isNowCancelledFirstTime = status === "cancelled" && currentOrder.status !== "cancelled" && !wasCancelledSent;
+    const isCancelledUpdate = (status === "cancelled" || (status === undefined && currentOrder.status === "cancelled")) && wasCancelledSent && Boolean(sendUpdateEmail);
+    const willSendCancelled = isNowCancelledFirstTime || isCancelledUpdate;
+
+    // 5. Refunded (refunded)
+    const isNowRefundedFirstTime = status === "refunded" && currentOrder.status !== "refunded" && !wasRefundedSent;
+    const isRefundedUpdate = (status === "refunded" || (status === undefined && currentOrder.status === "refunded")) && wasRefundedSent && Boolean(sendUpdateEmail);
+    const willSendRefunded = isNowRefundedFirstTime || isRefundedUpdate;
+
+    if (status === "refunded" && paymentStatus === undefined) {
+      updates.payment_status = "refunded";
+    }
+
     // Set timestamps in DB
     if ((status === "shipped" || willSendShipped) && !currentOrder.dispatched_at) {
       updates.dispatched_at = nowIso;
@@ -270,6 +294,8 @@ export async function PATCH(request) {
     if (willSendProcessing) notificationsSent.processing = nowIso;
     if (willSendShipped) notificationsSent.shipped = nowIso;
     if (willSendCompleted) notificationsSent.completed = nowIso;
+    if (willSendCancelled) notificationsSent.cancelled = nowIso;
+    if (willSendRefunded) notificationsSent.refunded = nowIso;
 
     updates.shipping_address = { ...shippingAddr, notifications_sent: notificationsSent };
 
@@ -338,6 +364,26 @@ export async function PATCH(request) {
       } catch (mailErr) {
         console.error("[Delivery Email Error]", mailErr);
       }
+    } else if (willSendCancelled) {
+      const isUpdate = !isNowCancelledFirstTime;
+      wasUpdatedFlag = isUpdate;
+      try {
+        emailResult = await sendOrderCancelledEmail(updatedOrder, null, isUpdate);
+        notificationType = "cancelled";
+        console.log(`[Cancelled Email] Sent to ${updatedOrder.customer_email} (isUpdate: ${isUpdate}):`, emailResult);
+      } catch (mailErr) {
+        console.error("[Cancelled Email Error]", mailErr);
+      }
+    } else if (willSendRefunded) {
+      const isUpdate = !isNowRefundedFirstTime;
+      wasUpdatedFlag = isUpdate;
+      try {
+        emailResult = await sendOrderRefundedEmail(updatedOrder, null, isUpdate);
+        notificationType = "refunded";
+        console.log(`[Refunded Email] Sent to ${updatedOrder.customer_email} (isUpdate: ${isUpdate}):`, emailResult);
+      } catch (mailErr) {
+        console.error("[Refunded Email Error]", mailErr);
+      }
     }
 
     let feedbackMessage = "Order updated successfully";
@@ -355,6 +401,14 @@ export async function PATCH(request) {
       feedbackMessage = wasUpdatedFlag
         ? "Order updated and [UPDATED] Delivery email sent to customer!"
         : "Order marked as Delivered and confirmation email sent to customer!";
+    } else if (notificationType === "cancelled") {
+      feedbackMessage = wasUpdatedFlag
+        ? "Order updated and [UPDATED] Cancellation email sent to customer!"
+        : "Order marked as Cancelled and cancellation email sent to customer!";
+    } else if (notificationType === "refunded") {
+      feedbackMessage = wasUpdatedFlag
+        ? "Order updated and [UPDATED] Refund confirmation email sent to customer!"
+        : "Order marked as Refunded and refund confirmation email sent to customer!";
     }
 
     return NextResponse.json({

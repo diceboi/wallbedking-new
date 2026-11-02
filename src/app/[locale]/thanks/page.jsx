@@ -228,6 +228,16 @@ function ThanksContent() {
 
             <div className="space-y-2 text-xs text-wbk-brown">
               <div className="flex justify-between">
+                <span>Order Date &amp; Time:</span>
+                <span className="font-mono text-wbk-black">
+                  {(() => {
+                    const od = confirmedOrder?.created_at ? new Date(confirmedOrder.created_at) : new Date();
+                    const safeD = Number.isNaN(od.getTime()) ? new Date() : od;
+                    return `${safeD.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}, ${safeD.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
+                  })()}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span>Transaction ID:</span>
                 <span className="font-mono text-wbk-black truncate max-w-[160px]">{confirmedOrder?.payment_id || tx || "Verified"}</span>
               </div>

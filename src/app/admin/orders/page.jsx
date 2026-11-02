@@ -19,6 +19,8 @@ import {
   IconRefresh,
   IconMail,
   IconBuildingBank,
+  IconCircleX,
+  IconReceiptRefund,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -31,6 +33,75 @@ const STATUS_BADGES = {
   cancelled: { label: "Cancelled", bg: "bg-red-100 text-red-900 border-red-200" },
   refunded: { label: "Refunded", bg: "bg-gray-100 text-gray-700 border-gray-200" },
 };
+
+function getCurrencySymbol(currency) {
+  const code = String(currency || "GBP").toUpperCase();
+  if (code === "EUR") return "€";
+  if (code === "USD") return "$";
+  return "£";
+}
+
+function formatOrderDateParts(isoString) {
+  if (!isoString) return { date: "N/A", time: "", full: "N/A" };
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) {
+    return { date: String(isoString), time: "", full: String(isoString) };
+  }
+  const date = d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  return {
+    date,
+    time,
+    full: `${date}, ${time}`,
+  };
+}
+
+function extractOrderMarketMeta(order) {
+  if (!order) return { locale: "EN", entity: "UK", currency: "GBP" };
+  const notes = typeof order.admin_notes === "string" ? order.admin_notes : "";
+  const locMatch = notes.match(/\[Locale:\s*([^\]]+)\]/i);
+  const entMatch = notes.match(/\[Entity:\s*([^\]]+)\]/i);
+  const locale = String(
+    order.locale ||
+      order.shipping_address?.locale ||
+      (locMatch ? locMatch[1].trim() : "en")
+  ).toUpperCase();
+  const entity = String(
+    order.shipping_address?.company_entity ||
+      (entMatch ? entMatch[1].trim() : locale === "EN" ? "UK" : "INTERNATIONAL")
+  );
+  const currency = String(order.currency || "GBP").toUpperCase();
+  return { locale, entity, currency };
+}
+
+function normalizeAddressLines(rawAddr) {
+  if (!rawAddr) return null;
+  let addr = rawAddr;
+  if (typeof addr === "string") {
+    try {
+      addr = JSON.parse(addr);
+    } catch {
+      return { line1: addr, line2: "", city: "", postcode: "", country: "" };
+    }
+  }
+  if (!addr || typeof addr !== "object") return null;
+  const line1 = addr.address1 || addr.address || addr.line1 || "";
+  const line2 = addr.address2 || addr.line2 || "";
+  const city = addr.city || "";
+  const postcode = addr.postcode || addr.postal_code || addr.zip || "";
+  const country = addr.country || "United Kingdom";
+  if (!line1 && !city && !postcode) return null;
+  return { line1, line2, city, postcode, country };
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -50,18 +121,28 @@ export default function AdminOrdersPage() {
   const [sendUpdateEmail, setSendUpdateEmail] = useState(false);
   const [resendingEmailType, setResendingEmailType] = useState(null);
 
-  const loadOrders = async () => {
+  const loadOrders = async (overrideSearch = null, autoOpenExact = false) => {
     setLoading(true);
     try {
+      const effectiveSearch = overrideSearch !== null ? overrideSearch : searchQuery;
       const url = new URL("/api/admin/orders", window.location.origin);
       if (filterStatus !== "all") url.searchParams.set("status", filterStatus);
-      if (searchQuery.trim()) url.searchParams.set("search", searchQuery.trim());
+      if (effectiveSearch.trim()) url.searchParams.set("search", effectiveSearch.trim());
 
       const res = await fetch(url.toString());
       const data = await res.json();
       if (data.success) {
-        setOrders(data.orders || []);
+        const list = data.orders || [];
+        setOrders(list);
         if (data.stats) setStats(data.stats);
+        if (autoOpenExact && effectiveSearch.trim() && list.length > 0) {
+          const exact =
+            list.find((o) => String(o.id).toLowerCase() === effectiveSearch.trim().toLowerCase()) ||
+            (list.length === 1 ? list[0] : null);
+          if (exact) {
+            handleOpenDrawer(exact);
+          }
+        }
       }
     } catch (err) {
       console.error("Error loading orders:", err);
@@ -71,7 +152,14 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const urlSearch = params?.get("search") || "";
+    if (urlSearch && !searchQuery && filterStatus === "all") {
+      setSearchQuery(urlSearch);
+      loadOrders(urlSearch, true);
+    } else {
+      loadOrders();
+    }
   }, [filterStatus]);
 
   const handleSearchSubmit = (e) => {
@@ -104,7 +192,12 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({
           orderId: selectedOrder.id,
           status: editStatus,
-          paymentStatus: editStatus === "paid" ? "paid" : undefined,
+          paymentStatus:
+            editStatus === "paid"
+              ? "paid"
+              : editStatus === "refunded"
+              ? "refunded"
+              : undefined,
           trackingNumber: editTrackingNumber,
           trackingCarrier: editTrackingCarrier,
           adminNotes: editAdminNotes,
@@ -177,6 +270,8 @@ export default function AdminOrdersPage() {
       production: "In Production",
       shipped: "Dispatch & Tracking",
       delivery: "Delivered & Guides",
+      cancelled: "Order Cancelled",
+      refunded: "Order Refunded",
     };
     const typeLabel = labels[emailType] || emailType;
 
@@ -304,7 +399,7 @@ export default function AdminOrdersPage() {
       <div className="bg-white p-4 sm:p-5 border border-wbk-lightgrey/60 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Status Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
-          {["all", "paid", "processing", "shipped", "completed", "pending", "cancelled"].map((st) => (
+          {["all", "paid", "processing", "shipped", "completed", "pending", "cancelled", "refunded"].map((st) => (
             <button
               key={st}
               type="button"
@@ -362,7 +457,7 @@ export default function AdminOrdersPage() {
               <thead className="bg-[#FBF9F8] border-b border-wbk-lightgrey/80 text-wbk-brown uppercase tracking-wider text-[11px] font-semibold">
                 <tr>
                   <th className="p-4">Order Ref</th>
-                  <th className="p-4">Date</th>
+                  <th className="p-4">Date &amp; Time</th>
                   <th className="p-4">Customer</th>
                   <th className="p-4">Items</th>
                   <th className="p-4">Delivery</th>
@@ -375,16 +470,27 @@ export default function AdminOrdersPage() {
                 {orders.map((ord) => {
                   const badge = STATUS_BADGES[ord.status] || STATUS_BADGES.pending;
                   const firstItem = ord.items?.[0];
-                  const formattedDate = new Date(ord.created_at).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
+                  const dateParts = formatOrderDateParts(ord.created_at);
+                  const ordSymbol = getCurrencySymbol(ord.currency);
+                  const ordMarket = extractOrderMarketMeta(ord);
 
                   return (
                     <tr key={ord.id} className="hover:bg-[#FAF8F5] transition-colors">
-                      <td className="p-4 font-mono font-bold text-wbk-black">{ord.id}</td>
-                      <td className="p-4 text-wbk-brown whitespace-nowrap">{formattedDate}</td>
+                      <td className="p-4 font-mono font-bold text-wbk-black whitespace-nowrap">
+                        <span className="block">{ord.id}</span>
+                        <span className="inline-block text-[10px] font-sans font-normal text-wbk-brown">
+                          {ordMarket.locale} • {ordMarket.currency}
+                        </span>
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="block font-medium text-wbk-black">{dateParts.date}</span>
+                        {dateParts.time && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-wbk-brown mt-0.5">
+                            <IconClock size={12} className="text-wbk-gold shrink-0" />
+                            <span>{dateParts.time}</span>
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4">
                         <span className="block font-medium text-wbk-black">{ord.customer_name}</span>
                         <span className="block text-[11px] text-wbk-brown truncate max-w-[180px]">
@@ -433,7 +539,8 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
                       <td className="p-4 text-right font-bold text-wbk-black font-poppins whitespace-nowrap">
-                        £{Number(ord.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {ordSymbol}
+                        {Number(ord.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
                         <button
@@ -471,22 +578,46 @@ export default function AdminOrdersPage() {
         <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in">
           <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
             {/* Drawer Header */}
-            <div className="p-6 bg-[#090A0A] text-white flex items-center justify-between border-b border-white/10 shrink-0">
-              <div>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-wbk-gold block">
-                  Order Management
-                </span>
-                <h2 className="font-new-york text-xl sm:text-2xl text-white flex items-center gap-3">
-                  <span>{selectedOrder.id}</span>
-                  <span
-                    className={`text-[11px] font-sans px-2.5 py-0.5 border ${
-                      STATUS_BADGES[selectedOrder.status]?.bg || STATUS_BADGES.pending.bg
-                    }`}
-                  >
-                    {STATUS_BADGES[selectedOrder.status]?.label || selectedOrder.status}
-                  </span>
-                </h2>
-              </div>
+            <div className="p-6 bg-[#090A0A] text-white flex items-start justify-between border-b border-white/10 shrink-0">
+              {(() => {
+                const headerDate = formatOrderDateParts(selectedOrder.created_at);
+                const headerMarket = extractOrderMarketMeta(selectedOrder);
+                return (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-wbk-gold block">
+                      Order Management
+                    </span>
+                    <h2 className="font-new-york text-xl sm:text-2xl text-white flex flex-wrap items-center gap-3">
+                      <span>{selectedOrder.id}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(selectedOrder.id, "Order ID")}
+                        className="text-white/50 hover:text-wbk-gold transition-colors cursor-pointer"
+                        title="Copy Order Reference"
+                      >
+                        <IconCopy size={15} />
+                      </button>
+                      <span
+                        className={`text-[11px] font-sans px-2.5 py-0.5 border ${
+                          STATUS_BADGES[selectedOrder.status]?.bg || STATUS_BADGES.pending.bg
+                        }`}
+                      >
+                        {STATUS_BADGES[selectedOrder.status]?.label || selectedOrder.status}
+                      </span>
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-white/75 font-mono pt-0.5">
+                      <span className="inline-flex items-center gap-1.5">
+                        <IconClock size={13} className="text-wbk-gold shrink-0" />
+                        <span>Placed: {headerDate.full}</span>
+                      </span>
+                      <span className="text-white/30">•</span>
+                      <span>
+                        {headerMarket.locale} ({headerMarket.entity} / {headerMarket.currency})
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <button
                 type="button"
@@ -505,6 +636,21 @@ export default function AdminOrdersPage() {
                 const wasShippedSent = Boolean(selectedOrder.dispatched_at || sentHistory.shipped);
                 const wasDeliveredSent = Boolean(selectedOrder.delivered_at || sentHistory.completed);
                 const wasConfirmationSent = Boolean(sentHistory.confirmation);
+                const wasCancelledSent = Boolean(sentHistory.cancelled);
+                const wasRefundedSent = Boolean(sentHistory.refunded);
+                const createdMeta = formatOrderDateParts(selectedOrder.created_at);
+                const updatedMeta = selectedOrder.updated_at
+                  ? formatOrderDateParts(selectedOrder.updated_at)
+                  : null;
+                const dispatchedMeta =
+                  selectedOrder.dispatched_at || sentHistory.shipped
+                    ? formatOrderDateParts(selectedOrder.dispatched_at || sentHistory.shipped)
+                    : null;
+                const deliveredMeta =
+                  selectedOrder.delivered_at || sentHistory.completed
+                    ? formatOrderDateParts(selectedOrder.delivered_at || sentHistory.completed)
+                    : null;
+                const marketMeta = extractOrderMarketMeta(selectedOrder);
 
                 const formatNotificationDate = (isoString) => {
                   if (!isoString) return "";
@@ -524,6 +670,74 @@ export default function AdminOrdersPage() {
 
                 return (
                   <>
+                    {/* Order Metadata & Timestamps Card */}
+                    <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-3">
+                      <div className="flex items-center justify-between border-b border-wbk-lightgrey/60 pb-2">
+                        <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider flex items-center gap-1.5">
+                          <IconClock size={14} className="text-wbk-gold" />
+                          <span>Order Timestamps &amp; Metadata</span>
+                        </span>
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 bg-[#FAF8F5] border border-wbk-lightgrey text-wbk-black">
+                          {marketMeta.locale} • {marketMeta.entity} • {marketMeta.currency}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <span className="text-[11px] text-wbk-brown block">Order Placed (Date &amp; Time):</span>
+                          <span className="font-mono font-semibold text-wbk-black">{createdMeta.full}</span>
+                        </div>
+                        {updatedMeta && (
+                          <div>
+                            <span className="text-[11px] text-wbk-brown block">Last Modified:</span>
+                            <span className="font-mono text-wbk-black">{updatedMeta.full}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-[11px] text-wbk-brown block">Delivery Method:</span>
+                          <span className="font-medium text-wbk-black">
+                            {selectedOrder.delivery_label || selectedOrder.delivery_option || "Standard Delivery"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[11px] text-wbk-brown block">Payment Status &amp; Gateway:</span>
+                          <span className="font-medium text-wbk-black capitalize">
+                            {selectedOrder.payment_method || "Card"} •{" "}
+                            <span
+                              className={
+                                (selectedOrder.payment_status || "").toLowerCase() === "paid"
+                                  ? "text-emerald-700 font-semibold"
+                                  : "text-amber-800 font-semibold"
+                              }
+                            >
+                              {selectedOrder.payment_status || "Unpaid"}
+                            </span>
+                          </span>
+                        </div>
+                        {dispatchedMeta && (
+                          <div>
+                            <span className="text-[11px] text-wbk-brown block">Dispatched At:</span>
+                            <span className="font-mono text-purple-800">{dispatchedMeta.full}</span>
+                          </div>
+                        )}
+                        {deliveredMeta && (
+                          <div>
+                            <span className="text-[11px] text-wbk-brown block">Delivered At:</span>
+                            <span className="font-mono text-emerald-800">{deliveredMeta.full}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedOrder.customer_notes && (
+                        <div className="p-3 bg-amber-50/80 border border-amber-200 rounded text-xs">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-amber-900 block mb-0.5">
+                            Customer Checkout Notes:
+                          </span>
+                          <p className="text-amber-950 italic">{selectedOrder.customer_notes}</p>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Status & Carrier Control Box */}
                     <div className="bg-[#FAF8F5] border border-wbk-lightgrey p-5 space-y-4">
                       <h3 className="font-poppins text-base text-wbk-black font-semibold">
@@ -765,6 +979,96 @@ export default function AdminOrdersPage() {
                         </>
                       )}
 
+                      {editStatus === "cancelled" && (
+                        <>
+                          {!wasCancelledSent ? (
+                            <div className="p-3 bg-red-50/90 border border-red-200 text-red-900 text-xs flex items-start gap-2.5">
+                              <IconCircleX size={17} className="shrink-0 mt-0.5 text-red-600" />
+                              <div className="space-y-0.5">
+                                <span className="font-semibold block text-[11px] uppercase tracking-wider text-red-900">
+                                  ⚡ First Cancellation: Automatic Customer Notification
+                                </span>
+                                <p className="text-[11px] text-red-800 leading-relaxed">
+                                  When saving this order, the customer will automatically receive the official <strong>Order Cancelled</strong> email in their storefront language. <strong>No checkbox needed!</strong>
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-amber-50/90 border border-amber-200 text-amber-950 text-xs space-y-2">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                  <span>✉️ Cancellation email already sent on</span>
+                                </span>
+                                <span className="font-mono text-amber-800 text-[10px]">
+                                  {formatNotificationDate(sentHistory.cancelled)}
+                                </span>
+                              </div>
+                              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={sendUpdateEmail}
+                                  onChange={(e) => setSendUpdateEmail(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-wbk-gold focus:ring-wbk-gold cursor-pointer"
+                                />
+                                <div className="space-y-0.5">
+                                  <span className="font-semibold text-wbk-black block text-xs">
+                                    Send updated cancellation notice to customer (marked as [UPDATED])
+                                  </span>
+                                  <span className="text-[11px] text-amber-800/90 block leading-normal">
+                                    Tick this box if you wish to resend the cancellation email to the customer.
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {editStatus === "refunded" && (
+                        <>
+                          {!wasRefundedSent ? (
+                            <div className="p-3 bg-blue-50/90 border border-blue-200 text-blue-900 text-xs flex items-start gap-2.5">
+                              <IconReceiptRefund size={17} className="shrink-0 mt-0.5 text-blue-600" />
+                              <div className="space-y-0.5">
+                                <span className="font-semibold block text-[11px] uppercase tracking-wider text-blue-900">
+                                  ⚡ First Refund: Automatic Refund Confirmation
+                                </span>
+                                <p className="text-[11px] text-blue-800 leading-relaxed">
+                                  When saving this order, the customer will automatically receive the official <strong>Refund Confirmation</strong> email in their storefront language. <strong>No checkbox needed!</strong>
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-amber-50/90 border border-amber-200 text-amber-950 text-xs space-y-2">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                  <span>✉️ Refund confirmation already sent on</span>
+                                </span>
+                                <span className="font-mono text-amber-800 text-[10px]">
+                                  {formatNotificationDate(sentHistory.refunded)}
+                                </span>
+                              </div>
+                              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={sendUpdateEmail}
+                                  onChange={(e) => setSendUpdateEmail(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-wbk-gold focus:ring-wbk-gold cursor-pointer"
+                                />
+                                <div className="space-y-0.5">
+                                  <span className="font-semibold text-wbk-black block text-xs">
+                                    Send updated refund confirmation to customer (marked as [UPDATED])
+                                  </span>
+                                  <span className="text-[11px] text-amber-800/90 block leading-normal">
+                                    Tick this box if you wish to resend the refund confirmation email to the customer.
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          )}
+                        </>
+                      )}
+
                       <div className="flex items-center justify-end pt-2">
                         <button
                           type="button"
@@ -947,189 +1251,371 @@ export default function AdminOrdersPage() {
                             </button>
                           </div>
                         </div>
+
+                        {/* 5. Order Cancelled */}
+                        <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>5. Order Cancelled</span>
+                              {wasCancelledSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(sentHistory.cancelled)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Not sent yet
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Official order cancellation notice in the customer's language.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("cancelled", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend cancellation email with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "cancelled" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("cancelled", false)}
+                              className="px-2 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-[11px] font-medium rounded transition-colors disabled:opacity-50"
+                              title="Send standard cancellation email"
+                            >
+                              <span>Standard</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 6. Refund Confirmation */}
+                        <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-wbk-black flex items-center gap-2">
+                              <span>6. Refund Confirmation</span>
+                              {wasRefundedSent ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded font-normal font-mono">
+                                  Sent: {formatNotificationDate(sentHistory.refunded)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-normal">
+                                  Not sent yet
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-wbk-brown mt-0.5">
+                              Refund issued receipt & bank clearing timeline in the customer's language.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("refunded", true)}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-medium rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                              title="Resend refund confirmation with [UPDATED] warning banner"
+                            >
+                              {resendingEmailType === "refunded" ? (
+                                <IconLoader2 size={12} className="animate-spin" />
+                              ) : (
+                                <IconRefresh size={12} />
+                              )}
+                              <span>Resend [UPDATED]</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={resendingEmailType !== null}
+                              onClick={() => handleResendEmail("refunded", false)}
+                              className="px-2 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-[11px] font-medium rounded transition-colors disabled:opacity-50"
+                              title="Send standard refund confirmation email"
+                            >
+                              <span>Standard</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </>
                 );
               })()}
 
-              {/* Customer & Shipping Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2">
-                  <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
-                    Customer Information
-                  </span>
-                  <p className="font-semibold text-wbk-black text-sm">{selectedOrder.customer_name}</p>
-                  <p className="text-wbk-black">{selectedOrder.customer_email}</p>
-                  <p>Tel: {selectedOrder.customer_phone || "Not provided"}</p>
-                </div>
+              {/* Customer, Delivery & Billing Details */}
+              {(() => {
+                const shipAddr = normalizeAddressLines(selectedOrder.shipping_address);
+                const billAddr = normalizeAddressLines(selectedOrder.billing_address);
+                const currSymbol = getCurrencySymbol(selectedOrder.currency);
+                const marketMeta = extractOrderMarketMeta(selectedOrder);
+                const isSameBilling =
+                  !billAddr ||
+                  (shipAddr &&
+                    billAddr.line1 === shipAddr.line1 &&
+                    billAddr.postcode === shipAddr.postcode &&
+                    billAddr.city === shipAddr.city);
 
-                <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2 relative">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
-                      Delivery Address
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const addr = selectedOrder.shipping_address;
-                        const formatted = `${selectedOrder.customer_name}, ${addr?.address1 || ""}, ${addr?.city || ""}, ${addr?.postcode || ""}`;
-                        copyToClipboard(formatted, "Address");
-                      }}
-                      className="text-wbk-brown hover:text-wbk-black text-[11px] flex items-center gap-1"
-                    >
-                      <IconCopy size={13} />
-                      <span>Copy</span>
-                    </button>
-                  </div>
-                  <div className="text-xs text-wbk-black leading-relaxed">
-                    <p>{selectedOrder.shipping_address?.address1}</p>
-                    {selectedOrder.shipping_address?.address2 && (
-                      <p>{selectedOrder.shipping_address.address2}</p>
-                    )}
-                    <p>
-                      {selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.postcode}
-                    </p>
-                    <p>{selectedOrder.shipping_address?.country || "United Kingdom"}</p>
-                  </div>
-                </div>
-              </div>
+                return (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2">
+                        <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
+                          Customer Information
+                        </span>
+                        <p className="font-semibold text-wbk-black text-sm">{selectedOrder.customer_name}</p>
+                        <p className="text-wbk-black break-all">{selectedOrder.customer_email}</p>
+                        <p>Tel: {selectedOrder.customer_phone || "Not provided"}</p>
+                      </div>
 
-              {/* Order Items List */}
-              <div className="border border-wbk-lightgrey/80 bg-white p-4 space-y-3">
-                <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
-                  Ordered Items ({selectedOrder.items?.length || 0})
-                </span>
-
-                <div className="space-y-3 divide-y divide-wbk-lightgrey/40">
-                  {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="pt-3 first:pt-0 flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <div className="relative w-14 h-14 bg-gray-50 border border-wbk-lightgrey shrink-0 overflow-hidden">
-                          <Image
-                            src={item.image || "/sofa1.webp"}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-poppins font-semibold text-wbk-black text-xs">{item.title}</h4>
-                          <span className="text-[11px] text-wbk-brown block">
-                            {item.options?.size} {item.options?.orientation && `(${item.options.orientation})`}
+                      <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2 relative">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
+                            Delivery Address
                           </span>
-                          {item.options?.sofaIncluded && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-2 py-0.5 rounded mt-1">
-                              🛋️ + Front Sofa Included {item.options.sofaPrice ? `(+£${Number(item.options.sofaPrice).toFixed(2)})` : ""}
-                            </span>
+                          {shipAddr && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const formatted = [
+                                  selectedOrder.customer_name,
+                                  shipAddr.line1,
+                                  shipAddr.line2,
+                                  shipAddr.city,
+                                  shipAddr.postcode,
+                                  shipAddr.country,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ");
+                                copyToClipboard(formatted, "Address");
+                              }}
+                              className="text-wbk-brown hover:text-wbk-black text-[11px] flex items-center gap-1 cursor-pointer"
+                            >
+                              <IconCopy size={13} />
+                              <span>Copy</span>
+                            </button>
                           )}
-                          <span className="text-[11px] text-wbk-brown/80 block mt-0.5">
-                            Qty: {item.quantity} × £{Number(item.price || 0).toFixed(2)}
+                        </div>
+                        {shipAddr ? (
+                          <div className="text-xs text-wbk-black leading-relaxed">
+                            {shipAddr.line1 && <p>{shipAddr.line1}</p>}
+                            {shipAddr.line2 && <p>{shipAddr.line2}</p>}
+                            {(shipAddr.city || shipAddr.postcode) && (
+                              <p>
+                                {[shipAddr.city, shipAddr.postcode].filter(Boolean).join(", ")}
+                              </p>
+                            )}
+                            {shipAddr.country && <p>{shipAddr.country}</p>}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-wbk-brown italic">Address provided via checkout</p>
+                        )}
+                        {!isSameBilling && billAddr && (
+                          <div className="pt-2 mt-2 border-t border-wbk-lightgrey/60 text-[11px] text-wbk-brown">
+                            <span className="uppercase font-semibold text-[10px] block text-wbk-black">
+                              Billing Address:
+                            </span>
+                            <span>
+                              {[billAddr.line1, billAddr.line2, billAddr.city, billAddr.postcode, billAddr.country]
+                                .filter(Boolean)
+                                .join(", ")}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Order Items List */}
+                    <div className="border border-wbk-lightgrey/80 bg-white p-4 space-y-3">
+                      <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
+                        Ordered Items ({selectedOrder.items?.length || 0})
+                      </span>
+
+                      <div className="space-y-3 divide-y divide-wbk-lightgrey/40">
+                        {selectedOrder.items?.map((item, idx) => (
+                          <div key={idx} className="pt-3 first:pt-0 flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <div className="relative w-14 h-14 bg-gray-50 border border-wbk-lightgrey shrink-0 overflow-hidden">
+                                <Image
+                                  src={item.image || "/sofa1.webp"}
+                                  alt={item.title || item.name || "Wall Bed"}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="font-poppins font-semibold text-wbk-black text-xs">
+                                  {item.title || item.name}
+                                </h4>
+                                <span className="text-[11px] text-wbk-brown block">
+                                  {item.options?.size || item.variant}{" "}
+                                  {item.options?.orientation && `(${item.options.orientation})`}
+                                </span>
+                                {item.options?.sofaIncluded && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-2 py-0.5 rounded mt-1">
+                                    🛋️ + Front Sofa Included{" "}
+                                    {item.options.sofaPrice
+                                      ? `(+${currSymbol}${Number(item.options.sofaPrice).toFixed(2)})`
+                                      : ""}
+                                  </span>
+                                )}
+                                <span className="text-[11px] text-wbk-brown/80 block mt-0.5">
+                                  Qty: {item.quantity} × {currSymbol}
+                                  {Number(item.price || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span className="font-bold text-wbk-black font-poppins">
+                              {currSymbol}
+                              {(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Financial Summary */}
+                      <div className="pt-3 border-t border-wbk-lightgrey space-y-1.5 text-right font-poppins">
+                        <div className="flex justify-between text-xs">
+                          <span>Subtotal:</span>
+                          <span className="text-wbk-black font-medium">
+                            {currSymbol}
+                            {Number(selectedOrder.subtotal || selectedOrder.total_amount || 0).toFixed(2)}
+                          </span>
+                        </div>
+                        {Number(selectedOrder.discount_amount) > 0 && (
+                          <div className="flex justify-between text-xs text-wbk-green">
+                            <span>Discount ({selectedOrder.promo_code}):</span>
+                            <span>
+                              -{currSymbol}
+                              {Number(selectedOrder.discount_amount).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs">
+                          <span>Delivery ({selectedOrder.delivery_label || "Standard"}):</span>
+                          <span className="text-wbk-black font-medium">
+                            {Number(selectedOrder.shipping_amount || 0) === 0
+                              ? "Free"
+                              : `${currSymbol}${Number(selectedOrder.shipping_amount).toFixed(2)}`}
+                          </span>
+                        </div>
+                        {Number(selectedOrder.vat_amount) > 0 && (
+                          <div className="flex justify-between text-xs text-wbk-brown/70">
+                            <span>Includes VAT:</span>
+                            <span>
+                              {currSymbol}
+                              {Number(selectedOrder.vat_amount || 0).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-bold text-wbk-black pt-2 border-t border-wbk-lightgrey">
+                          <span>Total ({marketMeta.currency}):</span>
+                          <span>
+                            {currSymbol}
+                            {Number(selectedOrder.total_amount || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
+                    </div>
 
-                      <span className="font-bold text-wbk-black font-poppins">
-                        £{(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                    {/* Bank Transfer Unpaid Callout */}
+                    {(selectedOrder.payment_method || "").toLowerCase().includes("bank") &&
+                      (selectedOrder.payment_status || "").toLowerCase() !== "paid" && (
+                        <div className="p-4 bg-amber-50/90 border border-amber-300 text-amber-950 space-y-3 rounded-2xs">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 font-semibold text-xs text-amber-900">
+                              <IconBuildingBank size={18} className="text-amber-700 shrink-0" />
+                              <span>Awaiting Bank Wire / Transfer</span>
+                            </div>
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-amber-200/90 text-amber-900 rounded border border-amber-300">
+                              Unpaid
+                            </span>
+                          </div>
+                          <div className="text-xs text-amber-900 space-y-1">
+                            <div>
+                              • Expected Reference (Megjegyzés):{" "}
+                              <strong className="font-mono bg-white px-1.5 py-0.5 border border-amber-200">
+                                #{selectedOrder.id}
+                              </strong>{" "}
+                              or <strong>{selectedOrder.customer_email}</strong>
+                            </div>
+                            <div>
+                              • Amount Due:{" "}
+                              <strong>
+                                {currSymbol}
+                                {Number(selectedOrder.total_amount || 0).toFixed(2)}
+                              </strong>
+                            </div>
+                            <div>
+                              • Banking Destination: <strong>HSBC BANK PLC</strong> (IZN LTD)
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isUpdating}
+                            onClick={() => handleMarkAsPaid(selectedOrder.id)}
+                            className="w-full py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                          >
+                            {isUpdating ? <IconLoader2 size={15} className="animate-spin" /> : <IconCheck size={16} />}
+                            <span>Confirm Bank Payment Received &amp; Notify Customer</span>
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Payment Details */}
+                    <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2">
+                      <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
+                        Payment Transaction
                       </span>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-wbk-brown block">Method:</span>
+                          <span className="font-semibold text-wbk-black capitalize">
+                            {selectedOrder.payment_method || "Card"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-wbk-brown block">Payment Status:</span>
+                          <span
+                            className={`font-semibold capitalize ${
+                              (selectedOrder.payment_status || "").toLowerCase() === "paid"
+                                ? "text-emerald-700"
+                                : "text-amber-800"
+                            }`}
+                          >
+                            {selectedOrder.payment_status || "Unpaid"}
+                          </span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-wbk-brown block">Transaction / Gateway Reference:</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-wbk-black truncate block">
+                              {selectedOrder.payment_id || "Pending Confirmation"}
+                            </span>
+                            {selectedOrder.payment_id && (
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(selectedOrder.payment_id, "Transaction ID")}
+                                className="text-wbk-brown hover:text-wbk-black text-[11px] flex items-center gap-1 shrink-0 cursor-pointer"
+                              >
+                                <IconCopy size={13} />
+                                <span>Copy</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Financial Summary */}
-                <div className="pt-3 border-t border-wbk-lightgrey space-y-1.5 text-right font-poppins">
-                  <div className="flex justify-between text-xs">
-                    <span>Subtotal:</span>
-                    <span className="text-wbk-black font-medium">
-                      £{Number(selectedOrder.subtotal || 0).toFixed(2)}
-                    </span>
-                  </div>
-                  {Number(selectedOrder.discount_amount) > 0 && (
-                    <div className="flex justify-between text-xs text-wbk-green">
-                      <span>Discount ({selectedOrder.promo_code}):</span>
-                      <span>-£{Number(selectedOrder.discount_amount).toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-xs">
-                    <span>Delivery ({selectedOrder.delivery_label || "Standard"}):</span>
-                    <span className="text-wbk-black font-medium">
-                      {Number(selectedOrder.shipping_amount) === 0
-                        ? "Free"
-                        : `£${Number(selectedOrder.shipping_amount).toFixed(2)}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs text-wbk-brown/70">
-                    <span>Includes 20% VAT:</span>
-                    <span>£{Number(selectedOrder.vat_amount || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-bold text-wbk-black pt-2 border-t border-wbk-lightgrey">
-                    <span>Total Paid:</span>
-                    <span>£{Number(selectedOrder.total_amount || 0).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bank Transfer Unpaid Callout */}
-              {(selectedOrder.payment_method || "").toLowerCase().includes("bank") && (selectedOrder.payment_status || "").toLowerCase() !== "paid" && (
-                <div className="p-4 bg-amber-50/90 border border-amber-300 text-amber-950 space-y-3 rounded-2xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-amber-900">
-                      <IconBuildingBank size={18} className="text-amber-700 shrink-0" />
-                      <span>Awaiting Bank Wire / Transfer</span>
-                    </div>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-amber-200/90 text-amber-900 rounded border border-amber-300">
-                      Unpaid
-                    </span>
-                  </div>
-                  <div className="text-xs text-amber-900 space-y-1">
-                    <div>
-                      • Expected Reference (Megjegyzés): <strong className="font-mono bg-white px-1.5 py-0.5 border border-amber-200">#{selectedOrder.id}</strong> or <strong>{selectedOrder.customer_email}</strong>
-                    </div>
-                    <div>
-                      • Amount Due: <strong>{selectedOrder.currency === "EUR" ? "€" : selectedOrder.currency === "USD" ? "$" : "£"}{Number(selectedOrder.total_amount || 0).toFixed(2)}</strong>
-                    </div>
-                    <div>
-                      • Banking Destination: <strong>HSBC BANK PLC</strong> (IZN LTD)
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isUpdating}
-                    onClick={() => handleMarkAsPaid(selectedOrder.id)}
-                    className="w-full py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-                  >
-                    {isUpdating ? <IconLoader2 size={15} className="animate-spin" /> : <IconCheck size={16} />}
-                    <span>Confirm Bank Payment Received & Notify Customer</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Payment Details */}
-              <div className="p-4 border border-wbk-lightgrey/80 bg-white space-y-2">
-                <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block">
-                  Payment Transaction
-                </span>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-wbk-brown block">Method:</span>
-                    <span className="font-semibold text-wbk-black capitalize">
-                      {selectedOrder.payment_method || "Card"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-wbk-brown block">Payment Status:</span>
-                    <span className={`font-semibold capitalize ${(selectedOrder.payment_status || "").toLowerCase() === "paid" ? "text-emerald-700" : "text-amber-800"}`}>
-                      {selectedOrder.payment_status || "Unpaid"}
-                    </span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-wbk-brown block">Transaction / Gateway Reference:</span>
-                    <span className="font-mono text-wbk-black truncate block">
-                      {selectedOrder.payment_id || "Pending Confirmation"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
