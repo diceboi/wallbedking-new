@@ -444,7 +444,7 @@ export default function CartPage() {
                           type="text"
                           value={inputCode}
                           onChange={(e) => setInputCode(e.target.value)}
-                          placeholder="e.g. WBK10"
+                          placeholder={t("cart.promoCode", "Discount Code")}
                           className="flex-1 px-3 py-2 text-xs border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black uppercase"
                         />
                         <button

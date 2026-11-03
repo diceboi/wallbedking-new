@@ -30,11 +30,7 @@ export const DELIVERY_OPTIONS = {
   },
 };
 
-export const PROMO_CODES = {
-  WBK10: { type: "percent", value: 10, label: "10% Welcome Discount" },
-  SAVE50: { type: "fixed", value: 50, label: "£50 Off Orders" },
-  FREEDELIVERY: { type: "fixed", value: 0, label: "Free UK Delivery" },
-};
+export const PROMO_CODES = {};
 
 const LEGACY_RANDOM_IDS = new Set([
   "WBK-170692", "WBK-837390", "WBK-289712", "WBK-848749",

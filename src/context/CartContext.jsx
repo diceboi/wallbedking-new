@@ -52,12 +52,8 @@ export const DELIVERY_OPTIONS = {
   },
 };
 
-// Sample valid promo codes
-const PROMO_CODES = {
-  WBK10: { type: "percent", value: 10, label: "10% Welcome Discount" },
-  SAVE50: { type: "fixed", value: 50, label: "£50 Off Orders" },
-  FREEDELIVERY: { type: "fixed", value: 0, label: "Free UK Delivery" },
-};
+// Active promo codes (empty by default)
+const PROMO_CODES = {};
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
@@ -185,8 +181,10 @@ export function CartProvider({ children }) {
         if (Array.isArray(parsed)) setItems(parsed);
       }
       const savedPromo = localStorage.getItem(PROMO_STORAGE_KEY);
-      if (savedPromo) {
+      if (savedPromo && PROMO_CODES[savedPromo]) {
         setPromoCode(savedPromo);
+      } else if (savedPromo) {
+        localStorage.removeItem(PROMO_STORAGE_KEY);
       }
       const savedDelivery = localStorage.getItem(DELIVERY_STORAGE_KEY);
       if (savedDelivery && DELIVERY_OPTIONS[savedDelivery]) {
@@ -427,7 +425,7 @@ export function CartProvider({ children }) {
       setPromoError("");
       return true;
     } else {
-      setPromoError("Invalid discount code. Try 'WBK10' or 'SAVE50'.");
+      setPromoError("Invalid or expired discount code.");
       return false;
     }
   }, []);
