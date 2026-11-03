@@ -11,8 +11,9 @@ import posthog from "posthog-js";
  *  - 'test': Split interactive hover-preview desktop menu
  *
  * Supports URL override for immediate QA/testing:
- *  - ?menu=test
- *  - ?menu=control
+ *  - ?menu=control (or ?menu=a)  -> Variant A: Horizontal Swiper mega-menu
+ *  - ?menu=test    (or ?menu=b)  -> Variant B: Split interactive hover-preview menu
+ *  - ?menu=reset   (or ?menu=auto) -> Clears localStorage override & restores PostHog flag
  */
 export function useDesktopMenuABTest() {
   const [variant, setVariant] = useState("control");
@@ -21,14 +22,32 @@ export function useDesktopMenuABTest() {
     // 1. URL and LocalStorage overrides for instant testing & QA
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
-      const urlOverride = searchParams.get("menu") || searchParams.get("ab_menu");
-      if (urlOverride === "test" || urlOverride === "control") {
-        setVariant(urlOverride);
+      const rawOverride = (
+        searchParams.get("menu") ||
+        searchParams.get("ab_menu") ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+      if (rawOverride === "reset" || rawOverride === "auto" || rawOverride === "clear") {
         try {
-          localStorage.setItem("posthog_menu_override", urlOverride);
+          localStorage.removeItem("posthog_menu_override");
+        } catch (e) {}
+      } else if (
+        rawOverride === "test" ||
+        rawOverride === "b" ||
+        rawOverride === "control" ||
+        rawOverride === "a"
+      ) {
+        const normalized = rawOverride === "test" || rawOverride === "b" ? "test" : "control";
+        setVariant(normalized);
+        try {
+          localStorage.setItem("posthog_menu_override", normalized);
         } catch (e) {}
         return;
       }
+
       try {
         const stored = localStorage.getItem("posthog_menu_override");
         if (stored === "test" || stored === "control") {

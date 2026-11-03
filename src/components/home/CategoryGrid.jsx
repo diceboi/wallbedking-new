@@ -7,6 +7,7 @@ import { useCategories } from "@/context/CategoriesContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { isProductAvailableInLocale } from "@/lib/products";
 import { getLocalizedCategoryTitle } from "@/lib/categories-utils";
+import { getCategoryTileImage } from "@/components/ui/CategoryTileGrid";
 
 const getGridBorderClass = (idx, total) => {
   const isLeft = idx % 2 === 0;
@@ -65,8 +66,7 @@ export function CategoryGrid() {
             (cat.slug?.startsWith("/")
               ? cat.slug
               : `/products/${cat.slug || cat.id}`);
-          const imageSrc =
-            cat.grid_image || cat.image || `/category-images/${cat.id}.webp`;
+          const imageSrc = getCategoryTileImage(cat);
           const title =
             getLocalizedCategoryTitle(cat, locale) ||
             t(`categories.${cat.key}`, cat.title || cat.name);

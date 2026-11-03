@@ -544,6 +544,42 @@ export default function AdminNavigationPage() {
             )}
           </div>
         </div>
+
+        {/* Direct Storefront A/B Menu Variant Launchers */}
+        <div className="pt-1 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-[11px] text-wbk-brown">
+            <strong>Desktop Mega-Menu A/B Test</strong> (<code className="font-mono text-[10px] bg-[#FAF8F5] px-1 py-0.5 border border-wbk-lightgrey">desktop-menu-ab-test</code>): open either variant directly on the live storefront:
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`${previewLocale === "en" ? "/" : `/${previewLocale}`}?menu=control`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF8F5] hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-semibold transition-colors"
+            >
+              <span>Variant A (Control – Swiper)</span>
+              <IconExternalLink size={13} />
+            </a>
+            <a
+              href={`${previewLocale === "en" ? "/" : `/${previewLocale}`}?menu=test`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF8F5] hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-lightgrey text-[11px] font-semibold transition-colors"
+            >
+              <span>Variant B (Test – Split Preview)</span>
+              <IconExternalLink size={13} />
+            </a>
+            <a
+              href={`${previewLocale === "en" ? "/" : `/${previewLocale}`}?menu=reset`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-wbk-brown hover:text-wbk-black underline text-[11px]"
+              title="Clears saved menu override and returns to automatic PostHog assignment"
+            >
+              <span>Reset to Auto</span>
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Main Menu Items Management Table */}

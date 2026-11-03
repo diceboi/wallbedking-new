@@ -65,7 +65,7 @@
       "Studio Horizontal"
     ],
     "image": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/CategoryImages/traditional-beds.webp",
-    "display_order": 2,
+    "display_order": 5,
     "is_visible": true,
     "is_featured": true
   },
@@ -237,7 +237,7 @@
     ],
     "image": "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
     "grid_image": "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
-    "display_order": 5,
+    "display_order": 2,
     "is_visible": true,
     "is_unlisted": false,
     "visibility": "Visible",

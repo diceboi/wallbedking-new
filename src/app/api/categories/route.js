@@ -65,8 +65,14 @@ const formatCategory = (row, idx) => {
     description_it: row.description_it,
     slug,
     href,
-    image: row.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-    grid_image: row.grid_image || row.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    image:
+      (row.id === "tables" || slug === "tables") && (!row.image || row.image.includes("MORPHY-Bed"))
+        ? "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp"
+        : row.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
+    grid_image:
+      (row.id === "tables" || slug === "tables") && (!row.grid_image || row.grid_image.includes("MORPHY-Bed"))
+        ? "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp"
+        : row.grid_image || row.image || "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
     subcategories: Array.isArray(row.subcategories) ? row.subcategories : [],
     display_order: Number(row.display_order ?? idx + 1),
     is_visible: row.is_visible !== false,

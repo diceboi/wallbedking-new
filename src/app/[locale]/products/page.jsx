@@ -1,11 +1,20 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect, useContext, useMemo, useCallback } from "react";
+import {
+  Suspense,
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useMemo,
+  useCallback,
+} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { CategoryTileGrid } from "@/components/ui/CategoryTileGrid";
 import {
   IconSearch,
   IconChevronDown,
@@ -40,7 +49,12 @@ import { getLocalizedCategoryTitle } from "@/lib/categories-utils";
 
 // Multi-language string normalization for Hungarian and English search
 const normalizeStr = (s) =>
-  s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+  s
+    ? String(s)
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    : "";
 
 function ProductsSearchContent() {
   const router = useRouter();
@@ -175,7 +189,7 @@ function ProductsSearchContent() {
 
       window.history.replaceState(null, "", url.toString());
     },
-    [selectedTag]
+    [selectedTag],
   );
 
   // Track sticky state for the filter bar
@@ -187,7 +201,7 @@ function ProductsSearchContent() {
       ([entry]) => {
         setIsSticky(!entry.isIntersecting);
       },
-      { threshold: 0, rootMargin: "-100px 0px 0px 0px" }
+      { threshold: 0, rootMargin: "-100px 0px 0px 0px" },
     );
 
     observer.observe(sentinel);
@@ -220,7 +234,7 @@ function ProductsSearchContent() {
       selectedType,
       selectedPrice,
       selectedStock,
-      selectedTag
+      selectedTag,
     );
     scrollToProducts();
   };
@@ -235,7 +249,7 @@ function ProductsSearchContent() {
       selectedType,
       selectedPrice,
       selectedStock,
-      selectedTag
+      selectedTag,
     );
   };
 
@@ -276,18 +290,21 @@ function ProductsSearchContent() {
         if (isBed) {
           const prodIsMorphy = Boolean(
             prod.isMorphy ??
-            ((prod.name || "").includes("MORPHY") || (prod.title || "").includes("MORPHY"))
+            ((prod.name || "").includes("MORPHY") ||
+              (prod.title || "").includes("MORPHY")),
           );
           const itemIsBed =
             item.parent_category === "beds" ||
             item.parent_category === "morphy-beds" ||
             item.parent_category === "traditional-beds";
           const itemIsMorphy = Boolean(
-            (item.name || "").includes("MORPHY") || (item.category || "").includes("MORPHY")
+            (item.name || "").includes("MORPHY") ||
+            (item.category || "").includes("MORPHY"),
           );
           return (
             itemIsBed &&
-            (item.type || "").toLowerCase() === (prod.type || "").toLowerCase() &&
+            (item.type || "").toLowerCase() ===
+              (prod.type || "").toLowerCase() &&
             (item.orientation || "Vertical").toLowerCase() ===
               (prod.orientation || "Vertical").toLowerCase() &&
             itemIsMorphy === prodIsMorphy
@@ -305,18 +322,23 @@ function ProductsSearchContent() {
           const w = v.width ? Math.round(v.width / 10) : "";
           const l = v.length ? Math.round(v.length / 10) : "";
           const dims = w && l ? [`${w}x${l}`, `${l}x${w}`, `${w}`, `${l}`] : [];
-          return [v.name, v.sizeLabel, v.size, v.sku, v.ean, ...dims].filter(Boolean).join(" ");
+          return [v.name, v.sizeLabel, v.size, v.sku, v.ean, ...dims]
+            .filter(Boolean)
+            .join(" ");
         })
         .join(" ");
 
       const catSynonyms =
         {
           beds: "agy agyak murphy bed lenyithato falagy wall bed foldaway",
-          "morphy-beds": "agy agyak murphy bed lenyithato falagy wall bed foldaway",
-          "traditional-beds": "agy agyak murphy bed lenyithato falagy wall bed foldaway",
+          "morphy-beds":
+            "agy agyak murphy bed lenyithato falagy wall bed foldaway",
+          "traditional-beds":
+            "agy agyak murphy bed lenyithato falagy wall bed foldaway",
           sofas: "kanape kanapek sofa couches seating",
           tables: "asztal asztalok table tables desk extending",
-          mattresses: "matrac matracok mattress mattresses hybrid pocket spring",
+          mattresses:
+            "matrac matracok mattress mattresses hybrid pocket spring",
           cabinets: "szekreny szekrenyek cabinet cabinets wardrobe storage",
           extras: "tartozek kiegészítő alkatresz gazteleszkop gas strut led",
         }[prod.parent_category] || "";
@@ -324,7 +346,9 @@ function ProductsSearchContent() {
       const tagKeywords = (prod.tags || [])
         .map((tagId) => {
           const meta = getTagMeta(tagId);
-          return meta ? `${meta.name} ${meta.slug} ${getLocalizedTagName(tagId, locale)}` : tagId;
+          return meta
+            ? `${meta.name} ${meta.slug} ${getLocalizedTagName(tagId, locale)}`
+            : tagId;
         })
         .join(" ");
 
@@ -347,7 +371,7 @@ function ProductsSearchContent() {
           variantKeywords,
         ]
           .filter(Boolean)
-          .join(" ")
+          .join(" "),
       );
 
       return {
@@ -368,26 +392,28 @@ function ProductsSearchContent() {
 
     // 1. Search Query Multi-token Match
     if (activeQuery && activeQuery.trim().length > 0) {
-      const cleanQ = normalizeStr(activeQuery).trim().replace(/\s*[*x×]\s*/g, "x");
+      const cleanQ = normalizeStr(activeQuery)
+        .trim()
+        .replace(/\s*[*x×]\s*/g, "x");
       const tokens = cleanQ
         .split(/[\s,]+/)
         .map((t) => t.replace(/-(as|es|os|us)$/i, ""))
         .filter(Boolean);
 
       list = list.filter((item) =>
-        tokens.every((token) => item.searchableText.includes(token))
+        tokens.every((token) => item.searchableText.includes(token)),
       );
     }
 
     // 1b. Exclude unlisted products
     list = list.filter(
-      (item) => !item.is_unlisted && item.visibility !== "Unlisted"
+      (item) => !item.is_unlisted && item.visibility !== "Unlisted",
     );
 
     // 2. Category Filter
     if (selectedCategory !== "All") {
       list = list.filter(
-        (item) => item.parent_category === selectedCategory.toLowerCase()
+        (item) => item.parent_category === selectedCategory.toLowerCase(),
       );
     }
 
@@ -396,7 +422,7 @@ function ProductsSearchContent() {
       list = list.filter(
         (item) =>
           item.orientation &&
-          item.orientation.toLowerCase() === selectedOrientation.toLowerCase()
+          item.orientation.toLowerCase() === selectedOrientation.toLowerCase(),
       );
     }
 
@@ -407,7 +433,7 @@ function ProductsSearchContent() {
         (item) =>
           (item.type && item.type.toLowerCase() === cleanTyp) ||
           (item.sub_category && item.sub_category.toLowerCase() === cleanTyp) ||
-          (item.title && item.title.toLowerCase().includes(cleanTyp))
+          (item.title && item.title.toLowerCase().includes(cleanTyp)),
       );
     }
 
@@ -478,13 +504,28 @@ function ProductsSearchContent() {
       searchableProducts
         .filter((item) => isProductAvailableInLocale(item, locale))
         .map((item) => item.parent_category?.toLowerCase())
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     return allOptions.filter(
-      (opt) => opt.key === "All" || availableCategories.has(opt.key)
+      (opt) => opt.key === "All" || availableCategories.has(opt.key),
     );
   }, [t, searchableProducts, locale]);
+
+  // Featured 4 categories for 2x2 grid showcase
+  const exploreCategories = useMemo(() => {
+    const list = allDbCategories.filter((cat) => {
+      if (cat.is_visible === false) return false;
+      if (cat.id === "beds" && cat.slug === "beds") return false;
+      return true;
+    });
+
+    const sorted = [...list].sort(
+      (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999),
+    );
+    const featured = sorted.filter((c) => c.is_featured !== false);
+    return (featured.length >= 4 ? featured : sorted).slice(0, 4);
+  }, [allDbCategories]);
 
   const orientationOptions = [
     { key: "All", label: t("categories.all", "All") },
@@ -498,26 +539,25 @@ function ProductsSearchContent() {
     (opt) => {
       if (opt === "All") return t("categories.all", "All");
       if (opt === "Under £500") return `< ${formatPrice(500)}`;
-      if (opt === "£500 - £800") return `${formatPrice(500)} - ${formatPrice(800)}`;
+      if (opt === "£500 - £800")
+        return `${formatPrice(500)} - ${formatPrice(800)}`;
       if (opt === "Over £800") return `> ${formatPrice(800)}`;
       return opt;
     },
-    [t, formatPrice]
+    [t, formatPrice],
   );
 
   const distinctTypes = useMemo(() => {
     let sourceProducts = searchableProducts;
     if (selectedCategory !== "All") {
       sourceProducts = sourceProducts.filter(
-        (p) => p.parent_category === selectedCategory.toLowerCase()
+        (p) => p.parent_category === selectedCategory.toLowerCase(),
       );
     }
     const types = Array.from(
       new Set(
-        sourceProducts
-          .map((p) => p.sub_category || p.type)
-          .filter(Boolean)
-      )
+        sourceProducts.map((p) => p.sub_category || p.type).filter(Boolean),
+      ),
     );
     return ["All", ...types];
   }, [searchableProducts, selectedCategory]);
@@ -573,17 +613,24 @@ function ProductsSearchContent() {
         <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="flex-1">
             <nav className="flex items-center gap-1.5 text-[11px] text-wbk-brown/80 mb-2">
-              <Link href={localizedHref("/")} className="hover:text-wbk-black transition-colors">
+              <Link
+                href={localizedHref("/")}
+                className="hover:text-wbk-black transition-colors"
+              >
                 {t("nav.home", "Home")}
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                {activeQuery ? t("search.searchResults", "Search Results") : t("nav.products", "Products")}
+                {activeQuery
+                  ? t("search.searchResults", "Search Results")
+                  : t("nav.products", "Products")}
               </span>
               {activeQuery && (
                 <>
                   <span>/</span>
-                  <span className="text-wbk-brown truncate max-w-xs">&ldquo;{activeQuery}&rdquo;</span>
+                  <span className="text-wbk-brown truncate max-w-xs">
+                    &ldquo;{activeQuery}&rdquo;
+                  </span>
                 </>
               )}
             </nav>
@@ -598,11 +645,11 @@ function ProductsSearchContent() {
               {activeQuery
                 ? t(
                     "search.searchResultsDesc",
-                    "Browse all matching WallBedKing modular beds, sofas, mattresses, and storage cabinetry."
+                    "Browse all matching WallBedKing modular beds, sofas, mattresses, and storage cabinetry.",
                   )
                 : t(
                     "search.allProductsDesc",
-                    "Explore our complete collection of modular space-saving Murphy beds, sofas, mattresses, and cabinetry."
+                    "Explore our complete collection of modular space-saving Murphy beds, sofas, mattresses, and cabinetry.",
                   )}
             </p>
           </div>
@@ -633,7 +680,7 @@ function ProductsSearchContent() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t(
                 "search.placeholder",
-                "Search beds, sofas, mattresses, sizes (e.g. 160x200, Classic)..."
+                "Search beds, sofas, mattresses, sizes (e.g. 160x200, Classic)...",
               )}
               className="w-full h-10 text-xs sm:text-sm bg-transparent text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none"
             />
@@ -673,7 +720,7 @@ function ProductsSearchContent() {
                     selectedOrientation,
                     selectedType,
                     selectedPrice,
-                    selectedStock
+                    selectedStock,
                   );
                   scrollToProducts();
                 }}
@@ -690,7 +737,10 @@ function ProductsSearchContent() {
         </div>
 
         {/* Sentinel for sticky detection */}
-        <div ref={sentinelRef} className="h-px w-full pointer-events-none mb-0" />
+        <div
+          ref={sentinelRef}
+          className="h-px w-full pointer-events-none mb-0"
+        />
 
         {/* ── STICKY SWIPER FILTER BAR ── */}
         <div
@@ -729,16 +779,25 @@ function ProductsSearchContent() {
                   title="Filters"
                 >
                   <IconFilter size={15} className="text-wbk-gold" />
-                  <span className="hidden sm:inline">{t("common.filters", "Filters")}</span>
+                  <span className="hidden sm:inline">
+                    {t("common.filters", "Filters")}
+                  </span>
                 </div>
               </SwiperSlide>
 
               {/* 1. Category Filter */}
               <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="relative flex items-center !overflow-visible"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
-                    onClick={() => setActiveDropdown(activeDropdown === "category" ? null : "category")}
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === "category" ? null : "category",
+                      )
+                    }
                     className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                       selectedCategory !== "All"
                         ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -748,13 +807,16 @@ function ProductsSearchContent() {
                     <span>
                       {t("search.category", "Category")}:{" "}
                       <strong className="font-semibold">
-                        {categoryOptions.find((c) => c.key === selectedCategory)?.label || selectedCategory}
+                        {categoryOptions.find((c) => c.key === selectedCategory)
+                          ?.label || selectedCategory}
                       </strong>
                     </span>
                     <IconChevronDown
                       size={14}
                       className={`transition-transform duration-200 ${
-                        activeDropdown === "category" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        activeDropdown === "category"
+                          ? "rotate-180 text-wbk-gold"
+                          : "text-wbk-brown"
                       }`}
                     />
                   </button>
@@ -774,7 +836,7 @@ function ProductsSearchContent() {
                               selectedOrientation,
                               "All",
                               selectedPrice,
-                              selectedStock
+                              selectedStock,
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -796,10 +858,17 @@ function ProductsSearchContent() {
               {/* 2. Type / Model Filter */}
               {distinctTypes.length > 2 && (
                 <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                  <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
-                      onClick={() => setActiveDropdown(activeDropdown === "type" ? null : "type")}
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "type" ? null : "type",
+                        )
+                      }
                       className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                         selectedType !== "All"
                           ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -808,12 +877,16 @@ function ProductsSearchContent() {
                     >
                       <span>
                         {t("common.style", "Type")}:{" "}
-                        <strong className="font-semibold">{selectedType}</strong>
+                        <strong className="font-semibold">
+                          {selectedType}
+                        </strong>
                       </span>
                       <IconChevronDown
                         size={14}
                         className={`transition-transform duration-200 ${
-                          activeDropdown === "type" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                          activeDropdown === "type"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
                         }`}
                       />
                     </button>
@@ -832,7 +905,7 @@ function ProductsSearchContent() {
                                 selectedOrientation,
                                 opt,
                                 selectedPrice,
-                                selectedStock
+                                selectedStock,
                               );
                               setActiveDropdown(null);
                               scrollToProducts();
@@ -854,10 +927,17 @@ function ProductsSearchContent() {
 
               {/* 3. Orientation Filter */}
               <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="relative flex items-center !overflow-visible"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
-                    onClick={() => setActiveDropdown(activeDropdown === "orientation" ? null : "orientation")}
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === "orientation" ? null : "orientation",
+                      )
+                    }
                     className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                       selectedOrientation !== "All"
                         ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -866,12 +946,16 @@ function ProductsSearchContent() {
                   >
                     <span>
                       {t("product.orientation", "Orientation")}:{" "}
-                      <strong className="font-semibold">{selectedOrientation}</strong>
+                      <strong className="font-semibold">
+                        {selectedOrientation}
+                      </strong>
                     </span>
                     <IconChevronDown
                       size={14}
                       className={`transition-transform duration-200 ${
-                        activeDropdown === "orientation" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        activeDropdown === "orientation"
+                          ? "rotate-180 text-wbk-gold"
+                          : "text-wbk-brown"
                       }`}
                     />
                   </button>
@@ -890,7 +974,7 @@ function ProductsSearchContent() {
                               opt.key,
                               selectedType,
                               selectedPrice,
-                              selectedStock
+                              selectedStock,
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -911,10 +995,17 @@ function ProductsSearchContent() {
 
               {/* 4. Price Filter */}
               <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="relative flex items-center !overflow-visible"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
-                    onClick={() => setActiveDropdown(activeDropdown === "price" ? null : "price")}
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === "price" ? null : "price",
+                      )
+                    }
                     className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                       selectedPrice !== "All"
                         ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -923,12 +1014,16 @@ function ProductsSearchContent() {
                   >
                     <span>
                       {t("categories.filterPrice", "Price")}:{" "}
-                      <strong className="font-semibold">{formatPriceOption(selectedPrice)}</strong>
+                      <strong className="font-semibold">
+                        {formatPriceOption(selectedPrice)}
+                      </strong>
                     </span>
                     <IconChevronDown
                       size={14}
                       className={`transition-transform duration-200 ${
-                        activeDropdown === "price" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        activeDropdown === "price"
+                          ? "rotate-180 text-wbk-gold"
+                          : "text-wbk-brown"
                       }`}
                     />
                   </button>
@@ -947,7 +1042,7 @@ function ProductsSearchContent() {
                               selectedOrientation,
                               selectedType,
                               opt,
-                              selectedStock
+                              selectedStock,
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -968,10 +1063,17 @@ function ProductsSearchContent() {
 
               {/* 5. Stock Status Filter */}
               <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="relative flex items-center !overflow-visible"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
-                    onClick={() => setActiveDropdown(activeDropdown === "stock" ? null : "stock")}
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === "stock" ? null : "stock",
+                      )
+                    }
                     className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                       selectedStock !== "All"
                         ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -989,7 +1091,9 @@ function ProductsSearchContent() {
                     <IconChevronDown
                       size={14}
                       className={`transition-transform duration-200 ${
-                        activeDropdown === "stock" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                        activeDropdown === "stock"
+                          ? "rotate-180 text-wbk-gold"
+                          : "text-wbk-brown"
                       }`}
                     />
                   </button>
@@ -997,8 +1101,14 @@ function ProductsSearchContent() {
                   {activeDropdown === "stock" && (
                     <div className="absolute top-full right-0 sm:left-0 mt-1.5 z-50 bg-wbk-white border border-wbk-lightgrey/80 shadow-2xl p-2 min-w-[170px] rounded-none">
                       {[
-                        { key: "All", label: t("search.allStock", "All Stock") },
-                        { key: "in_stock", label: t("search.inStockOnly", "In Stock Only") },
+                        {
+                          key: "All",
+                          label: t("search.allStock", "All Stock"),
+                        },
+                        {
+                          key: "in_stock",
+                          label: t("search.inStockOnly", "In Stock Only"),
+                        },
                       ].map((opt) => (
                         <button
                           key={opt.key}
@@ -1012,7 +1122,7 @@ function ProductsSearchContent() {
                               selectedType,
                               selectedPrice,
                               opt.key,
-                              selectedTag
+                              selectedTag,
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -1034,10 +1144,17 @@ function ProductsSearchContent() {
               {/* 6. Tag Filter */}
               {availableTags.length > 0 && (
                 <SwiperSlide className="!w-auto !h-full flex items-center !overflow-visible">
-                  <div className="relative flex items-center !overflow-visible" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="relative flex items-center !overflow-visible"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
-                      onClick={() => setActiveDropdown(activeDropdown === "tag" ? null : "tag")}
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "tag" ? null : "tag",
+                        )
+                      }
                       className={`flex items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 h-9 border text-xs transition-all rounded-full cursor-pointer whitespace-nowrap select-none ${
                         selectedTag !== "All"
                           ? "border-wbk-black bg-[#FBF9F8] font-semibold text-wbk-black shadow-2xs"
@@ -1046,9 +1163,15 @@ function ProductsSearchContent() {
                     >
                       <span className="flex items-center gap-1.5">
                         <TagIcon
-                          tagIdOrSlug={selectedTag !== "All" ? selectedTag : "tag"}
+                          tagIdOrSlug={
+                            selectedTag !== "All" ? selectedTag : "tag"
+                          }
                           size={13}
-                          className={selectedTag !== "All" ? "text-wbk-black" : "text-wbk-brown"}
+                          className={
+                            selectedTag !== "All"
+                              ? "text-wbk-black"
+                              : "text-wbk-brown"
+                          }
                         />
                         <span>
                           {t("common.tags", "Tag")}:{" "}
@@ -1062,7 +1185,9 @@ function ProductsSearchContent() {
                       <IconChevronDown
                         size={14}
                         className={`transition-transform duration-200 ${
-                          activeDropdown === "tag" ? "rotate-180 text-wbk-gold" : "text-wbk-brown"
+                          activeDropdown === "tag"
+                            ? "rotate-180 text-wbk-gold"
+                            : "text-wbk-brown"
                         }`}
                       />
                     </button>
@@ -1080,7 +1205,7 @@ function ProductsSearchContent() {
                               selectedType,
                               selectedPrice,
                               selectedStock,
-                              "All"
+                              "All",
                             );
                             setActiveDropdown(null);
                             scrollToProducts();
@@ -1091,7 +1216,11 @@ function ProductsSearchContent() {
                               : "text-wbk-black hover:bg-[#FBF9F8] hover:text-wbk-green"
                           }`}
                         >
-                          <TagIcon tagIdOrSlug="tag" size={13} className="text-wbk-brown shrink-0" />
+                          <TagIcon
+                            tagIdOrSlug="tag"
+                            size={13}
+                            className="text-wbk-brown shrink-0"
+                          />
                           <span>{t("categories.all", "All Tags")}</span>
                         </button>
                         {availableTags.map((tag) => (
@@ -1107,7 +1236,7 @@ function ProductsSearchContent() {
                                 selectedType,
                                 selectedPrice,
                                 selectedStock,
-                                tag.id
+                                tag.id,
                               );
                               setActiveDropdown(null);
                               scrollToProducts();
@@ -1119,10 +1248,16 @@ function ProductsSearchContent() {
                             }`}
                           >
                             <span className="flex items-center gap-2">
-                              <TagIcon tagIdOrSlug={tag.id} size={13} className="text-wbk-black/75 shrink-0" />
+                              <TagIcon
+                                tagIdOrSlug={tag.id}
+                                size={13}
+                                className="text-wbk-black/75 shrink-0"
+                              />
                               <span>{getLocalizedTagName(tag.id, locale)}</span>
                             </span>
-                            {selectedTag === tag.id && <IconCheck size={14} className="text-wbk-black" />}
+                            {selectedTag === tag.id && (
+                              <IconCheck size={14} className="text-wbk-black" />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1159,7 +1294,9 @@ function ProductsSearchContent() {
             {/* Right scroll indicator green button */}
             <div
               className={`absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${
-                isFilterEnd ? "opacity-0 pointer-events-none scale-90" : "opacity-100 scale-100"
+                isFilterEnd
+                  ? "opacity-0 pointer-events-none scale-90"
+                  : "opacity-100 scale-100"
               }`}
             >
               <button
@@ -1189,7 +1326,11 @@ function ProductsSearchContent() {
                   <span className="font-medium text-white">
                     {t("search.query", "Keyword")}: &ldquo;{activeQuery}&rdquo;
                   </span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1198,16 +1339,28 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedCategory("All");
-                    updateUrlParams(activeQuery, "All", selectedOrientation, selectedType, selectedPrice, selectedStock);
+                    updateUrlParams(
+                      activeQuery,
+                      "All",
+                      selectedOrientation,
+                      selectedType,
+                      selectedPrice,
+                      selectedStock,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove category filter"
                 >
                   <span className="font-medium text-white">
-                    {categoryOptions.find((c) => c.key === selectedCategory)?.label || selectedCategory}
+                    {categoryOptions.find((c) => c.key === selectedCategory)
+                      ?.label || selectedCategory}
                   </span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1216,14 +1369,27 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedOrientation("All");
-                    updateUrlParams(activeQuery, selectedCategory, "All", selectedType, selectedPrice, selectedStock);
+                    updateUrlParams(
+                      activeQuery,
+                      selectedCategory,
+                      "All",
+                      selectedType,
+                      selectedPrice,
+                      selectedStock,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove orientation filter"
                 >
-                  <span className="font-medium text-white">{selectedOrientation}</span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <span className="font-medium text-white">
+                    {selectedOrientation}
+                  </span>
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1232,14 +1398,25 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedType("All");
-                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, "All", selectedPrice, selectedStock);
+                    updateUrlParams(
+                      activeQuery,
+                      selectedCategory,
+                      selectedOrientation,
+                      "All",
+                      selectedPrice,
+                      selectedStock,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove type filter"
                 >
                   <span className="font-medium text-white">{selectedType}</span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1248,14 +1425,27 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedPrice("All");
-                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, "All", selectedStock);
+                    updateUrlParams(
+                      activeQuery,
+                      selectedCategory,
+                      selectedOrientation,
+                      selectedType,
+                      "All",
+                      selectedStock,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove price filter"
                 >
-                  <span className="font-medium text-white">{formatPriceOption(selectedPrice)}</span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <span className="font-medium text-white">
+                    {formatPriceOption(selectedPrice)}
+                  </span>
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1264,14 +1454,28 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedStock("All");
-                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, selectedPrice, "All", selectedTag);
+                    updateUrlParams(
+                      activeQuery,
+                      selectedCategory,
+                      selectedOrientation,
+                      selectedType,
+                      selectedPrice,
+                      "All",
+                      selectedTag,
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove stock filter"
                 >
-                  <span className="font-medium text-white">{t("search.inStockOnly", "In Stock Only")}</span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <span className="font-medium text-white">
+                    {t("search.inStockOnly", "In Stock Only")}
+                  </span>
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1280,17 +1484,33 @@ function ProductsSearchContent() {
                   type="button"
                   onClick={() => {
                     setSelectedTag("All");
-                    updateUrlParams(activeQuery, selectedCategory, selectedOrientation, selectedType, selectedPrice, selectedStock, "All");
+                    updateUrlParams(
+                      activeQuery,
+                      selectedCategory,
+                      selectedOrientation,
+                      selectedType,
+                      selectedPrice,
+                      selectedStock,
+                      "All",
+                    );
                     scrollToProducts();
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-1 bg-wbk-black text-white text-[11px] rounded-full hover:bg-neutral-800 transition-all cursor-pointer shadow-xs select-none"
                   title="Remove tag filter"
                 >
-                  <TagIcon tagIdOrSlug={selectedTag} size={12} className="text-white/80 shrink-0" />
+                  <TagIcon
+                    tagIdOrSlug={selectedTag}
+                    size={12}
+                    className="text-white/80 shrink-0"
+                  />
                   <span className="font-medium text-white">
                     {getLocalizedTagName(selectedTag, locale)}
                   </span>
-                  <IconX size={11} className="text-white/80 hover:text-white ml-0.5" stroke={2.5} />
+                  <IconX
+                    size={11}
+                    className="text-white/80 hover:text-white ml-0.5"
+                    stroke={2.5}
+                  />
                 </button>
               )}
 
@@ -1323,7 +1543,7 @@ function ProductsSearchContent() {
               <p className="mt-2 text-xs sm:text-sm text-wbk-brown max-w-md mx-auto leading-relaxed">
                 {t(
                   "search.tryAdjusting",
-                  "Try checking your spelling or adjusting your filters. You can also explore popular suggestions below."
+                  "Try checking your spelling or adjusting your filters. You can also explore popular suggestions below.",
                 )}
               </p>
             </div>
@@ -1337,14 +1557,7 @@ function ProductsSearchContent() {
                   onClick={() => {
                     setSearchInput(sug);
                     setActiveQuery(sug);
-                    updateUrlParams(
-                      sug,
-                      "All",
-                      "All",
-                      "All",
-                      "All",
-                      "All"
-                    );
+                    updateUrlParams(sug, "All", "All", "All", "All", "All");
                     scrollToProducts();
                   }}
                   className="px-3.5 py-1.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-xs font-medium text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
@@ -1375,42 +1588,18 @@ function ProductsSearchContent() {
           </div>
         )}
 
-        {/* ── CATEGORIES SHOWCASE FOOTER ── */}
-        <div className="mt-20 border-t border-wbk-lightgrey/80 pt-16">
-          <h2 className="font-new-york text-3xl md:text-4xl text-wbk-black mb-8">
-            {t("categories.otherCategories", "Explore Categories")}
-          </h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {allDbCategories
-              .filter((c) => c.is_visible !== false && c.is_featured !== false && c.id !== "beds")
-              .slice(0, 4)
-              .map((cat) => {
-                const href = cat.href || (cat.slug?.startsWith("/") ? cat.slug : `/products/${cat.slug || cat.id}`);
-                const title = getLocalizedCategoryTitle(cat, locale) || t(`categories.${cat.key}`, cat.title || cat.name);
-                const imageSrc = cat.grid_image || cat.image;
-
-                return (
-                  <Link
-                    key={cat.id || cat.slug}
-                    href={localizedHref(href)}
-                    className="group flex flex-col items-center text-center p-3 rounded-none border border-wbk-lightgrey/50 hover:border-wbk-black bg-white hover:shadow-sm transition-all"
-                  >
-                    <div className="relative aspect-square w-full overflow-hidden bg-[#F8F7F5] flex items-center justify-center p-3 rounded-none mb-2">
-                      <img
-                        src={imageSrc}
-                        alt={title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-wbk-black group-hover:text-wbk-green transition-colors">
-                      {title}
-                    </span>
-                  </Link>
-                );
-              })}
+        {/* ── CATEGORIES SHOWCASE FOOTER (4 columns in a row) ── */}
+        <div className="mt-24 border-t border-wbk-lightgrey/80 pt-16">
+          <div className="mb-8">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold block mb-2">
+              {t("categories.browseByCollection", "Browse Collections")}
+            </span>
+            <h2 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
+              {t("categories.exploreCategories", "Explore Categories")}
+            </h2>
           </div>
 
+          <CategoryTileGrid categories={exploreCategories} columns={4} />
         </div>
       </Container>
     </div>

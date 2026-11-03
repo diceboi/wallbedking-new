@@ -13,6 +13,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { CategoryTileGrid } from "@/components/ui/CategoryTileGrid";
 import {
   IconChevronDown,
   IconFilter,
@@ -571,35 +572,37 @@ export default function CategoryArchivePage() {
   ]);
 
   const otherCategoriesToDisplay = useMemo(() => {
-    return allDbCategories.filter((cat) => {
-      // Only show visible and featured categories
-      if (cat.is_visible === false) return false;
-      if (cat.is_featured === false) return false;
-      // Exclude generic 'beds' container when displaying distinct categories
-      if (cat.id === "beds" && cat.slug === "beds") return false;
+    return allDbCategories
+      .filter((cat) => {
+        // Only show visible and featured categories
+        if (cat.is_visible === false) return false;
+        if (cat.is_featured === false) return false;
+        // Exclude generic 'beds' container when displaying distinct categories
+        if (cat.id === "beds" && cat.slug === "beds") return false;
 
-      // Filter out categories where all products are unavailable in current locale
-      const catKey = cat.id || cat.slug;
-      const productsMap = allProducts || ALL_PRODUCTS;
-      const catProds = productsMap[catKey];
-      if (locale && Array.isArray(catProds)) {
-        if (catProds.length === 0) return false;
-        const hasAvailable = catProds.some((p) =>
-          isProductAvailableInLocale(p, locale),
-        );
-        if (!hasAvailable) return false;
-      }
-
-      if (currentCategory === "beds") {
-        if (selectedCollection === "traditional") {
-          return (
-            cat.id !== "traditional-beds" && !cat.slug?.includes("traditional")
+        // Filter out categories where all products are unavailable in current locale
+        const catKey = cat.id || cat.slug;
+        const productsMap = allProducts || ALL_PRODUCTS;
+        const catProds = productsMap[catKey];
+        if (locale && Array.isArray(catProds)) {
+          if (catProds.length === 0) return false;
+          const hasAvailable = catProds.some((p) =>
+            isProductAvailableInLocale(p, locale),
           );
+          if (!hasAvailable) return false;
         }
-        return cat.id !== "morphy-beds" && !cat.slug?.includes("morphy");
-      }
-      return cat.id !== currentCategory && cat.slug !== currentCategory;
-    });
+
+        if (currentCategory === "beds") {
+          if (selectedCollection === "traditional") {
+            return (
+              cat.id !== "traditional-beds" && !cat.slug?.includes("traditional")
+            );
+          }
+          return cat.id !== "morphy-beds" && !cat.slug?.includes("morphy");
+        }
+        return cat.id !== currentCategory && cat.slug !== currentCategory;
+      })
+      .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   }, [
     allDbCategories,
     currentCategory,
@@ -1310,53 +1313,24 @@ export default function CategoryArchivePage() {
           </div>
         )}
 
-        {/* Other Categories Section */}
-        <div className="mt-20 border-t border-wbk-lightgrey/80 pt-16">
-          <h2 className="font-new-york text-3xl md:text-4xl text-wbk-black mb-8">
-            {t("categories.otherCategories", "Other categories")}
-          </h2>
+        {/* Other Categories Section (4 columns in a row) */}
+        {otherCategoriesToDisplay.length > 0 && (
+          <div className="mt-24 border-t border-wbk-lightgrey/80 pt-16">
+            <div className="mb-8">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold block mb-2">
+                {t("categories.exploreMore", "More To Explore")}
+              </span>
+              <h2 className="font-new-york text-3xl sm:text-4xl text-wbk-black">
+                {t("categories.otherCategories", "Other Categories")}
+              </h2>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {otherCategoriesToDisplay.map((otherCat) => {
-              const href =
-                otherCat.href ||
-                (otherCat.slug?.startsWith("/")
-                  ? otherCat.slug
-                  : `/products/${otherCat.slug || otherCat.id}`);
-              const title =
-                getLocalizedCategoryTitle(otherCat, locale) ||
-                (otherCat.titleKey
-                  ? t(
-                      otherCat.titleKey,
-                      otherCat.title || otherCat.name || otherCat.label,
-                    )
-                  : t(
-                      `categories.${otherCat.key || otherCat.slug}`,
-                      otherCat.title || otherCat.name || otherCat.label,
-                    ));
-              const imageSrc = otherCat.grid_image || otherCat.image;
-
-              return (
-                <Link
-                  key={otherCat.id || otherCat.slug}
-                  href={localizedHref(href)}
-                  className="group flex flex-col items-center text-center"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F2F0] flex items-center justify-center transition-all duration-300 group-hover:bg-[#E4E0DE]/60 border border-wbk-lightgrey/40 rounded-none">
-                    <img
-                      src={imageSrc}
-                      alt={title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <span className="mt-3 text-xs font-poppins font-medium uppercase tracking-[0.1em] text-wbk-black transition-colors duration-200 group-hover:text-wbk-green">
-                    {title}
-                  </span>
-                </Link>
-              );
-            })}
+            <CategoryTileGrid
+              categories={otherCategoriesToDisplay.slice(0, 4)}
+              columns={4}
+            />
           </div>
-        </div>
+        )}
       </Container>
     </div>
   );
