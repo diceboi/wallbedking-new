@@ -413,7 +413,8 @@
     "submitReview": "Submit Review for Approval",
     "verificationNote": "All reviews are verified by our team before publishing to protect against spam.",
     "successSubmitted": "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it.",
-    "errorRequired": "Please provide your name and review details."
+    "errorRequired": "Please provide your name and review details.",
+    "allProductsReviews": "Wallbedking reviews (all products)"
   },
   "morphy": {
     "featuresBadge": "System Innovations & Features",
@@ -821,5 +822,13 @@
     "copied": "Copied",
     "retry": "Retry",
     "completeCaptcha": "Please complete the security check below."
+  },
+  "clearance": {
+    "title": "Essential Range – Clearance Sale",
+    "subtitle": "Brand New Wall Beds. Previous-Generation Design. Exceptional Value.",
+    "description": "Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range.",
+    "limitedStockTitle": "Limited Stock – While Stocks Last",
+    "limitedStockDesc": "Essential models will not be restocked once sold out. If your preferred mattress size is unavailable, explore our MORPHY™ range for the latest-generation alternatives.",
+    "exploreMorphy": "Explore MORPHY™"
   }
 }

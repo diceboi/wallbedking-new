@@ -298,7 +298,8 @@
     "submitReview": "Invia per approvazione",
     "verificationNote": "Tutte le recensioni vengono verificate prima della pubblicazione per evitare spam.",
     "successSubmitted": "Grazie! La tua recensione è stata inviata e sarà visibile non appena approvata dal nostro team.",
-    "errorRequired": "Inserisci il tuo nome e il testo della recensione."
+    "errorRequired": "Inserisci il tuo nome e il testo della recensione.",
+    "allProductsReviews": "Recensioni Wallbedking (tutti i prodotti)"
   },
   "morphy": {
     "featuresBadge": "Innovazioni & Funzionalità",
@@ -540,5 +541,13 @@
     "copied": "Copiato",
     "retry": "Riprova",
     "completeCaptcha": "Completa la verifica di sicurezza qui sotto."
+  },
+  "clearance": {
+    "title": "Gamma Essential – Vendita di Liquidazione",
+    "subtitle": "Letti a scomparsa nuovi di fabbrica. Design di generazione precedente. Valore eccezionale.",
+    "description": "Scopri i nostri letti a scomparsa nuovi della gamma Essential a prezzi di liquidazione. Questi modelli di generazione precedente offrono funzionalità affidabile e massimo risparmio di spazio con meccanica collaudata, fino ad esaurimento scorte.",
+    "limitedStockTitle": "Scorte Limitate – Fino ad esaurimento scorte",
+    "limitedStockDesc": "I modelli Essential non saranno più riassortiti una volta esauriti. Se la misura di materasso desiderata non è disponibile, scopri la nostra gamma MORPHY™ di ultima generazione.",
+    "exploreMorphy": "Scopri MORPHY™"
   }
 }

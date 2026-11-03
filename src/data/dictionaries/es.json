@@ -298,7 +298,8 @@
     "submitReview": "Enviar para moderación",
     "verificationNote": "Todas las opiniones se revisan antes de publicarse para evitar spam.",
     "successSubmitted": "¡Gracias! Tu reseña ha sido enviada y se publicará tras su aprobación.",
-    "errorRequired": "Por favor indica tu nombre y escribe tu comentario."
+    "errorRequired": "Por favor indica tu nombre y escribe tu comentario.",
+    "allProductsReviews": "Opiniones de Wallbedking (todos los productos)"
   },
   "morphy": {
     "featuresBadge": "Innovaciones y Características",
@@ -540,5 +541,13 @@
     "copied": "Copiado",
     "retry": "Reintentar",
     "completeCaptcha": "Por favor, complete la verificación de seguridad."
+  },
+  "clearance": {
+    "title": "Gama Essential – Venta de Liquidación",
+    "subtitle": "Camas abatibles totalmente nuevas. Diseño de generación anterior. Precio excepcional.",
+    "description": "Descubre nuestras camas abatibles nuevas de la gama Essential a precios de liquidación. Estos modelos de generación anterior ofrecen funcionalidad fiable y ahorro de espacio con mecánica probada, hasta agotar existencias.",
+    "limitedStockTitle": "Stock Limitado – Hasta agotar existencias",
+    "limitedStockDesc": "Los modelos Essential no se repondrán una vez agotados. Si el tamaño de colchón deseado no está disponible, descubre nuestra gama MORPHY™ para conocer la última generación.",
+    "exploreMorphy": "Explorar MORPHY™"
   }
 }

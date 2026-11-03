@@ -271,6 +271,7 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   // Desktop Add to Cart ref & visibility state for floating bar
   const desktopAddToCartRef = useRef(null);
@@ -1108,6 +1109,23 @@ export default function ProductDetailPage() {
       return () => clearTimeout(timer);
     }
   }, [searchParams, tabsSwiper]);
+
+  // Open review modal and switch to reviews tab
+  const handleOpenWriteReview = useCallback(() => {
+    setActiveTab("reviews");
+    setIsReviewModalOpen(true);
+    if (tabsSwiper) {
+      tabsSwiper.slideTo(3);
+    }
+    setTimeout(() => {
+      const el =
+        document.getElementById("reviews-section") ||
+        document.getElementById("product-tabs");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 150);
+  }, [tabsSwiper]);
 
   // When dropdown selections change, pick matching variant or navigate
   const handleOptionChange = (newFormat, newStyle, newSizeLabel) => {
@@ -3859,7 +3877,7 @@ export default function ProductDetailPage() {
             </div>
             <button
               type="button"
-              onClick={() => setActiveTab("reviews")}
+              onClick={handleOpenWriteReview}
               className="px-5 py-2.5 bg-[#9A9A8C] hover:bg-wbk-black text-white text-[10px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-sm cursor-pointer"
             >
               {t("reviews.writeReview", "Write a review")}
@@ -5138,6 +5156,8 @@ export default function ProductDetailPage() {
                     activeProduct?.name ||
                     "Wall Bed King Murphy Bed"
                   }
+                  isOpen={isReviewModalOpen}
+                  onOpenChange={setIsReviewModalOpen}
                   initialOpen={
                     searchParams?.get("review") === "true" ||
                     searchParams?.get("review") === "open" ||

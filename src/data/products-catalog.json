@@ -27817,7 +27817,7 @@
     "type": "Classic",
     "color": "",
     "weight": 1,
-    "stock": 100,
+    "stock": 8,
     "package_dimensions": "10",
     "price_gbp": 1,
     "price_euro": 1,
@@ -27833,7 +27833,7 @@
     "parent_category": "traditional-beds",
     "sub_category": "Classic Vertical",
     "backorder": true,
-    "visibility": "Hidden",
+    "visibility": "Visible",
     "warranty": "",
     "description": "testtest",
     "image": "",
@@ -27902,7 +27902,8 @@
     "extended_description_it": "",
     "size_us": "4\" x 4\"",
     "width_us": 4,
-    "length_us": 4
+    "length_us": 4,
+    "is_unlisted": false
   },
   {
     "id": 236,

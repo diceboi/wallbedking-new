@@ -298,7 +298,8 @@
     "submitReview": "Bewertung zur Freigabe senden",
     "verificationNote": "Alle Bewertungen werden vor der Veröffentlichung geprüft, um Spam zu verhindern.",
     "successSubmitted": "Vielen Dank! Ihre Bewertung wurde übermittelt und wird nach kurzer Prüfung auf der Seite angezeigt.",
-    "errorRequired": "Bitte geben Sie Ihren Namen und einen Bewertungstext ein."
+    "errorRequired": "Bitte geben Sie Ihren Namen und einen Bewertungstext ein.",
+    "allProductsReviews": "Wallbedking-Bewertungen (alle Produkte)"
   },
   "morphy": {
     "featuresBadge": "Systeminnovationen & Funktionen",
@@ -540,5 +541,13 @@
     "copied": "Kopiert",
     "retry": "Erneut versuchen",
     "completeCaptcha": "Bitte bestätigen Sie die Sicherheitsprüfung."
+  },
+  "clearance": {
+    "title": "Essential-Serie – Großer Abverkauf",
+    "subtitle": "Fabrikneue Schrankbetten. Bewährte Vorgängergeneration. Außergewöhnlicher Preisvorteil.",
+    "description": "Entdecken Sie unsere fabrikneuen Essential-Schrankbetten zu reduzierten Abverkaufspreisen. Diese Modelle der Vorgängergeneration bieten zuverlässige, platzsparende Funktionalität mit bewährter Mechanik – solange der Vorrat reicht.",
+    "limitedStockTitle": "Begrenzter Vorrat – Nur solange der Vorrat reicht",
+    "limitedStockDesc": "Essential-Modelle werden nach dem Ausverkauf nicht mehr nachproduziert. Falls Ihre gewünschte Matratzengröße vergriffen ist, entdecken Sie unsere MORPHY™-Kollektion für die neueste Generation.",
+    "exploreMorphy": "MORPHY™ entdecken"
   }
 }

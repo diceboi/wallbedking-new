@@ -298,7 +298,8 @@
     "submitReview": "Submeter para aprovação",
     "verificationNote": "Todas as avaliações são verificadas para evitar spam.",
     "successSubmitted": "Obrigado! A sua avaliação foi enviada e será exibida após aprovação.",
-    "errorRequired": "Por favor indique o seu nome e escreva a sua avaliação."
+    "errorRequired": "Por favor indique o seu nome e escreva a sua avaliação.",
+    "allProductsReviews": "Avaliações Wallbedking (todos os produtos)"
   },
   "morphy": {
     "featuresBadge": "Inovações e Funcionalidades",
@@ -540,5 +541,13 @@
     "copied": "Copiado",
     "retry": "Tentar novamente",
     "completeCaptcha": "Por favor, conclua a verificação de segurança."
+  },
+  "clearance": {
+    "title": "Gama Essential – Saldos de Liquidação",
+    "subtitle": "Camas rebatíveis novas. Design de geração anterior. Valor excecional.",
+    "description": "Descubra as nossas camas rebatíveis novas da gama Essential a preços de liquidação. Estes modelos de geração anterior oferecem funcionalidade fiável e otimização de espaço com engenharia comprovada, até ao fim do stock.",
+    "limitedStockTitle": "Stock Limitado – Até ao fim do stock",
+    "limitedStockDesc": "Os modelos Essential não serão repostos após esgotarem. Se o tamanho de colchão pretendido não estiver disponível, explore a nossa gama MORPHY™ de última geração.",
+    "exploreMorphy": "Explorar MORPHY™"
   }
 }

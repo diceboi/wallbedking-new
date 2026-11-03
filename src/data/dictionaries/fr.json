@@ -343,7 +343,8 @@
     "submitReview": "Soumettre pour validation",
     "verificationNote": "Tous les avis sont modérés par notre équipe pour éviter les spams.",
     "successSubmitted": "Merci ! Votre avis a bien été enregistré et s'affichera dès sa validation par notre équipe.",
-    "errorRequired": "Veuillez renseigner votre nom et votre commentaire."
+    "errorRequired": "Veuillez renseigner votre nom et votre commentaire.",
+    "allProductsReviews": "Avis Wallbedking (tous les produits)"
   },
   "morphy": {
     "featuresBadge": "Innovations & Caractéristiques",
@@ -780,5 +781,13 @@
     "copied": "Copié",
     "retry": "Réessayer",
     "completeCaptcha": "Veuillez compléter la vérification de sécurité."
+  },
+  "clearance": {
+    "title": "Gamme Essential – Vente Déstockage",
+    "subtitle": "Lits escamotables neufs. Conception de génération précédente. Rapport qualité-prix exceptionnel.",
+    "description": "Découvrez nos lits escamotables neufs de la gamme Essential à prix de déstockage. Ces modèles de génération précédente offrent une fonctionnalité fiable et un gain de place optimal avec une mécanique éprouvée – jusqu'à épuisement des stocks.",
+    "limitedStockTitle": "Stock Limité – Jusqu'à épuisement des stocks",
+    "limitedStockDesc": "Les modèles Essential ne seront plus réapprovisionnés une fois épuisés. Si la dimension souhaitée n'est plus disponible, découvrez notre gamme MORPHY™ de dernière génération.",
+    "exploreMorphy": "Découvrir MORPHY™"
   }
 }

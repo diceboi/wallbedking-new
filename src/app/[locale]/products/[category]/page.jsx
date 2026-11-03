@@ -516,7 +516,11 @@ export default function CategoryArchivePage() {
 
   const categoryTitle = useMemo(() => {
     if (isClearancePage) {
-      return "Essential Range – Clearance Sale";
+      const found = allDbCategories.find((c) => c.id === "traditional-beds");
+      return (
+        getLocalizedCategoryTitle(found, locale) ||
+        t("clearance.title", "Essential Range – Clearance Sale")
+      );
     }
     if (currentCategory === "beds") {
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
@@ -543,7 +547,14 @@ export default function CategoryArchivePage() {
 
   const categoryDescription = useMemo(() => {
     if (isClearancePage) {
-      return "Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range.";
+      const found = allDbCategories.find((c) => c.id === "traditional-beds");
+      return (
+        t(
+          "clearance.description",
+          getLocalizedCategoryDescription(found, locale) ||
+            "Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range."
+        )
+      );
     }
     if (currentCategory === "beds") {
       const found = allDbCategories.find((c) => c.id === "morphy-beds");
@@ -634,37 +645,49 @@ export default function CategoryArchivePage() {
               </Link>
               <span>/</span>
               <span className="capitalize text-wbk-black font-medium">
-                {isClearancePage ? "Clearance" : categoryTitle}
+                {isClearancePage ? t("nav.traditionalBeds", "Clearance") : categoryTitle}
               </span>
             </nav>
 
             {isClearancePage ? (
               <div>
                 <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black leading-tight tracking-tight">
-                  Essential Range – Clearance Sale
+                  {t("clearance.title", "Essential Range – Clearance Sale")}
                 </h1>
                 <p className="mt-2 text-base sm:text-lg font-semibold text-wbk-black font-poppins">
-                  Brand New Wall Beds. Previous-Generation Design. Exceptional Value.
+                  {t(
+                    "clearance.subtitle",
+                    "Brand New Wall Beds. Previous-Generation Design. Exceptional Value."
+                  )}
                 </p>
                 <p className="mt-2 text-sm text-wbk-brown font-poppins leading-relaxed">
-                  Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range.
+                  {t(
+                    "clearance.description",
+                    "Discover our brand-new Essential wall beds at clearance prices. These previous-generation models offer reliable, space-saving functionality without the modular sizing or TypeFlex features of our latest MORPHY™ range."
+                  )}
                 </p>
 
                 {/* Limited Stock Notice Callout */}
                 <div className="mt-4 p-3.5 sm:p-4 bg-[#FAF7F2] border-l-4 border-wbk-green flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="text-xs text-wbk-black font-poppins leading-relaxed">
                     <strong className="block text-xs uppercase tracking-wider font-bold text-wbk-black mb-0.5">
-                      Limited Stock – While Stocks Last
+                      {t(
+                        "clearance.limitedStockTitle",
+                        "Limited Stock – While Stocks Last"
+                      )}
                     </strong>
                     <span>
-                      Essential models will not be restocked once sold out. If your preferred mattress size is unavailable, explore our MORPHY™ range for the latest-generation alternatives.
+                      {t(
+                        "clearance.limitedStockDesc",
+                        "Essential models will not be restocked once sold out. If your preferred mattress size is unavailable, explore our MORPHY™ range for the latest-generation alternatives."
+                      )}
                     </span>
                   </div>
                   <Link
                     href={localizedHref("/products/beds?collection=morphy")}
                     className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-wbk-black text-wbk-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-all duration-200 self-start sm:self-center cursor-pointer"
                   >
-                    <span>Explore MORPHY™</span>
+                    <span>{t("clearance.exploreMorphy", "Explore MORPHY™")}</span>
                     <IconArrowRight size={13} />
                   </Link>
                 </div>

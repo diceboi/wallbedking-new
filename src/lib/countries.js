@@ -1,7 +1,7 @@
 /**
  * Centralized Storefront Delivery Countries and Regional Address Configurations
  * Strictly limited to Wall Bed King operational markets:
- * France, Germany, Portugal, Italy, Spain, USA (and UK for English storefront).
+ * France, Germany, Portugal, Italy, Spain, Ireland, USA (and UK for English storefront).
  */
 
 export const DEFAULT_COUNTRY_BY_LOCALE = {
@@ -14,6 +14,7 @@ export const DEFAULT_COUNTRY_BY_LOCALE = {
   por: "Portugal",
   pt: "Portugal",
   it: "Italy",
+  ie: "Ireland",
 };
 
 export function getDefaultCountry(locale) {
@@ -93,6 +94,19 @@ export const PERMITTED_EU_COUNTRIES = [
       por: "Portugal",
       pt: "Portugal",
       it: "Portogallo (Portugal)",
+    },
+  },
+  {
+    value: "Ireland",
+    code: "IE",
+    names: {
+      en: "Ireland",
+      fr: "Irlande (Ireland)",
+      de: "Irland (Ireland)",
+      es: "Irlanda (Ireland)",
+      por: "Irlanda (Ireland)",
+      pt: "Irlanda (Ireland)",
+      it: "Irlanda (Ireland)",
     },
   },
 ];
@@ -239,6 +253,7 @@ export function getPostcodePlaceholder(locale, country) {
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. 75001 (Code postal)";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. 28001 (Código postal)";
   if (c.includes("portugal")) return "ex. 1000-001";
+  if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. D02 X285 (Eircode)";
 
   // Fallback to storefront locale
   if (loc === "en" || loc === "uk") return "e.g. SW1A 1AA";
@@ -266,6 +281,7 @@ export function getCityPlaceholder(locale, country) {
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. Paris";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. Madrid";
   if (c.includes("portugal")) return "ex. Lisboa";
+  if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. Dublin";
 
   // Fallback to storefront locale
   if (loc === "en" || loc === "uk") return "e.g. London";

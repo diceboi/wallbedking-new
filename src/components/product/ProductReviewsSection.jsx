@@ -22,6 +22,8 @@ export function ProductReviewsSection({
   productSlug,
   productName = "Wall Bed King Murphy Bed",
   initialOpen = false,
+  isOpen,
+  onOpenChange,
   initialRating = 5,
   initialCustomerName = "",
   initialCustomerEmail = "",
@@ -35,20 +37,42 @@ export function ProductReviewsSection({
   const urlName = searchParams?.get("name") || "";
   const urlEmail = searchParams?.get("email") || "";
   const shouldAutoOpen =
-    initialOpen || urlReview === "true" || urlReview === "open" || Boolean(urlRating);
+    initialOpen ||
+    Boolean(isOpen) ||
+    urlReview === "true" ||
+    urlReview === "open" ||
+    Boolean(urlRating);
 
   const [mounted, setMounted] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({ totalCount: 0, avgRating: 5.0 });
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(shouldAutoOpen);
+  const [internalModalOpen, setInternalModalOpen] = useState(shouldAutoOpen);
+  const isModalOpen = isOpen !== undefined ? isOpen : internalModalOpen;
+
+  const setIsModalOpen = (val) => {
+    setInternalModalOpen(val);
+    if (onOpenChange) {
+      onOpenChange(val);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen !== undefined) {
+      setInternalModalOpen(isOpen);
+    }
+  }, [isOpen]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   // Form state
   const [rating, setRating] = useState(urlRating || initialRating || 5);
   const [hoverRating, setHoverRating] = useState(0);
-  const [authorName, setAuthorName] = useState(urlName || initialCustomerName || "");
-  const [authorEmail, setAuthorEmail] = useState(urlEmail || initialCustomerEmail || "");
+  const [authorName, setAuthorName] = useState(
+    urlName || initialCustomerName || "",
+  );
+  const [authorEmail, setAuthorEmail] = useState(
+    urlEmail || initialCustomerEmail || "",
+  );
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [photos, setPhotos] = useState([]);
@@ -81,9 +105,12 @@ export function ProductReviewsSection({
   useEffect(() => {
     if (shouldAutoOpen) {
       setIsModalOpen(true);
-      if (urlRating || initialRating) setRating(urlRating || initialRating || 5);
-      if (urlName || initialCustomerName) setAuthorName(urlName || initialCustomerName);
-      if (urlEmail || initialCustomerEmail) setAuthorEmail(urlEmail || initialCustomerEmail);
+      if (urlRating || initialRating)
+        setRating(urlRating || initialRating || 5);
+      if (urlName || initialCustomerName)
+        setAuthorName(urlName || initialCustomerName);
+      if (urlEmail || initialCustomerEmail)
+        setAuthorEmail(urlEmail || initialCustomerEmail);
     }
   }, [
     shouldAutoOpen,
@@ -110,7 +137,7 @@ export function ProductReviewsSection({
             "Cache-Control": "no-cache, no-store, must-revalidate",
             Pragma: "no-cache",
           },
-        }
+        },
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.reviews)) {
@@ -153,7 +180,7 @@ export function ProductReviewsSection({
         type: "error",
         message: t(
           "reviews.errorRequired",
-          "Please provide your name and review details."
+          "Please provide your name and review details.",
         ),
       });
       return;
@@ -164,7 +191,7 @@ export function ProductReviewsSection({
         type: "error",
         message: t(
           "security.completeCaptcha",
-          "Please complete the security check below."
+          "Please complete the security check below.",
         ),
       });
       return;
@@ -199,7 +226,7 @@ export function ProductReviewsSection({
         type: "success",
         message: t(
           "reviews.successSubmitted",
-          "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it."
+          "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it.",
         ),
       });
 
@@ -225,38 +252,32 @@ export function ProductReviewsSection({
     locale === "us"
       ? "en-US"
       : locale === "de"
-      ? "de-DE"
-      : locale === "fr"
-      ? "fr-FR"
-      : locale === "es"
-      ? "es-ES"
-      : locale === "por"
-      ? "pt-PT"
-      : locale === "it"
-      ? "it-IT"
-      : "en-GB";
+        ? "de-DE"
+        : locale === "fr"
+          ? "fr-FR"
+          : locale === "es"
+            ? "es-ES"
+            : locale === "por"
+              ? "pt-PT"
+              : locale === "it"
+                ? "it-IT"
+                : "en-GB";
 
   return (
     <div className="space-y-8 font-poppins">
       {/* Top Header & Write Review Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-white border border-wbk-lightgrey/60">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center text-wbk-gold text-lg">
-              {"★".repeat(Math.round(stats.avgRating || 5))}
-              {"☆".repeat(5 - Math.round(stats.avgRating || 5))}
-            </div>
-            <span className="font-semibold text-sm text-wbk-black">
-              {locale === "en" || locale === "us"
-                ? String(stats.avgRating || "5.0")
-                : String(stats.avgRating || "5").replace(".", ",")}{" "}
-              {t("reviews.outOfFive", "out of 5")}
-            </span>
-          </div>
+          <h3 className="text-base sm:text-lg text-wbk-black leading-tight">
+            {t(
+              "reviews.allProductsReviews",
+              "Wallbedking reviews (all products)",
+            )}
+          </h3>
           <p className="text-xs text-wbk-brown">
             {t(
               "reviews.basedOnReviews",
-              "Based on {count} verified customer reviews and installations."
+              "Based on {count} verified customer reviews and installations.",
             ).replace("{count}", stats.totalCount || reviews.length)}
           </p>
         </div>
@@ -285,7 +306,7 @@ export function ProductReviewsSection({
           <p className="text-xs text-wbk-brown">
             {t(
               "reviews.beFirstDesc",
-              "Share your experience with installation, space-saving benefits, and daily comfort."
+              "Share your experience with installation, space-saving benefits, and daily comfort.",
             )}
           </p>
         </div>
@@ -310,7 +331,7 @@ export function ProductReviewsSection({
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
-                      }
+                      },
                     )}
                   </span>
                 </div>
@@ -331,7 +352,7 @@ export function ProductReviewsSection({
                     <span className="text-[10px] uppercase font-semibold text-wbk-brown tracking-wider block mb-1.5">
                       {t(
                         "reviews.customerPhotos",
-                        "Customer Photos ({count}):"
+                        "Customer Photos ({count}):",
                       ).replace("{count}", rev.photos.length)}
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -429,10 +450,10 @@ export function ProductReviewsSection({
                           </button>
                         ))}
                         <span className="ml-3 text-xs font-semibold text-wbk-black">
-                          {t("reviews.ofFiveStars", "{rating} of 5 Stars").replace(
-                            "{rating}",
-                            rating
-                          )}
+                          {t(
+                            "reviews.ofFiveStars",
+                            "{rating} of 5 Stars",
+                          ).replace("{rating}", rating)}
                         </span>
                       </div>
                     </div>
@@ -448,7 +469,7 @@ export function ProductReviewsSection({
                           required
                           placeholder={t(
                             "reviews.namePlaceholder",
-                            "e.g. Sarah Jenkins"
+                            "e.g. Sarah Jenkins",
                           )}
                           value={authorName}
                           onChange={(e) => setAuthorName(e.target.value)}
@@ -459,7 +480,7 @@ export function ProductReviewsSection({
                         <label className="block text-[11px] font-medium text-wbk-black mb-1">
                           {t(
                             "reviews.yourEmail",
-                            "Your Email (not shown publicly)"
+                            "Your Email (not shown publicly)",
                           )}
                         </label>
                         <input
@@ -481,7 +502,7 @@ export function ProductReviewsSection({
                         type="text"
                         placeholder={t(
                           "reviews.headlinePlaceholder",
-                          "e.g. Smooth mechanism, huge space saver!"
+                          "e.g. Smooth mechanism, huge space saver!",
                         )}
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -499,7 +520,7 @@ export function ProductReviewsSection({
                         required
                         placeholder={t(
                           "reviews.reviewPlaceholder",
-                          "Tell us about the installation, build quality, and how the wall bed has improved your room..."
+                          "Tell us about the installation, build quality, and how the wall bed has improved your room...",
                         )}
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -512,7 +533,7 @@ export function ProductReviewsSection({
                       <label className="block text-[11px] font-medium text-wbk-black mb-1.5">
                         {t(
                           "reviews.attachPhotos",
-                          "Attach Setup Photos (Optional - Max 4)"
+                          "Attach Setup Photos (Optional - Max 4)",
                         )}
                       </label>
                       <div className="flex flex-wrap items-center gap-2">
@@ -596,7 +617,7 @@ export function ProductReviewsSection({
                             <span>
                               {t(
                                 "reviews.submittingReview",
-                                "Submitting for Review..."
+                                "Submitting for Review...",
                               )}
                             </span>
                           </>
@@ -604,7 +625,7 @@ export function ProductReviewsSection({
                           <span>
                             {t(
                               "reviews.submitReview",
-                              "Submit Review for Approval"
+                              "Submit Review for Approval",
                             )}
                           </span>
                         )}
@@ -612,7 +633,7 @@ export function ProductReviewsSection({
                       <p className="text-[10px] text-wbk-brown text-center mt-2">
                         {t(
                           "reviews.verificationNote",
-                          "All reviews are verified by our team before publishing to protect against spam."
+                          "All reviews are verified by our team before publishing to protect against spam.",
                         )}
                       </p>
                     </div>
@@ -621,7 +642,7 @@ export function ProductReviewsSection({
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {/* Lightbox / Full-size photo viewer */}
@@ -654,7 +675,7 @@ export function ProductReviewsSection({
               />
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
