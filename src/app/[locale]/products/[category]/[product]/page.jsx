@@ -538,21 +538,35 @@ export default function ProductDetailPage() {
     if (matchFullSlug) return matchFullSlug;
 
     // 3. Name or size category match (e.g. "door", "shelves", "double", "king", "single")
-    const matchName = variants.find((v) => {
-      const s = (v.size || v.sizeLabel || v.name || v.name_us || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-      return s.includes(clean) || clean.includes(s);
-    });
-    if (matchName) return matchName;
+    const isDimensionQuery = /\d{2,3}x\d{2,3}/.test(clean);
+    if (!isDimensionQuery) {
+      const matchName = variants.find((v) => {
+        const s = (v.size || v.sizeLabel || v.name || v.name_us || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+        return s.includes(clean) || clean.includes(s);
+      });
+      if (matchName) return matchName;
+    }
 
     // 4. Dimensions match (e.g. 135x190 or 1350x1900)
+    const dimMatch = clean.match(/(\d{2,4})x(\d{2,4})/);
+    const targetDimCm = dimMatch
+      ? `${dimMatch[1].length > 3 ? Math.round(Number(dimMatch[1]) / 10) : Number(dimMatch[1])}x${dimMatch[2].length > 3 ? Math.round(Number(dimMatch[2]) / 10) : Number(dimMatch[2])}`
+      : null;
+
     const matchDim = variants.find((v) => {
       const w = Math.min(v.width || 0, v.length || 0);
       const l = Math.max(v.width || 0, v.length || 0);
       const dimCm = `${Math.round(w / 10)}x${Math.round(l / 10)}`;
       const dimMm = `${w}x${l}`;
-      return clean.includes(dimCm) || clean.includes(dimMm);
+
+      if (targetDimCm && dimCm === targetDimCm) return true;
+      if (clean === dimCm || clean === dimMm) return true;
+
+      const boundaryCm = new RegExp(`(^|[^0-9])${dimCm}([^0-9]|$)`, "i");
+      const boundaryMm = new RegExp(`(^|[^0-9])${dimMm}([^0-9]|$)`, "i");
+      return boundaryCm.test(query) || boundaryMm.test(query);
     });
     if (matchDim) return matchDim;
 
@@ -1128,7 +1142,12 @@ export default function ProductDetailPage() {
   }, [tabsSwiper]);
 
   // When dropdown selections change, pick matching variant or navigate
-  const handleOptionChange = (newFormat, newStyle, newSizeLabel) => {
+  const handleOptionChange = (
+    newFormat,
+    newStyle,
+    newSizeLabel,
+    targetProduct,
+  ) => {
     const fmt = newFormat ?? productFormat;
     const sty = newStyle ?? productStyle;
 
@@ -1259,24 +1278,71 @@ export default function ProductDetailPage() {
         : familyVariants;
       const searchPool = pool.length > 0 ? pool : familyVariants;
 
+      const sizeKeyMatch = String(newSizeLabel).match(
+        /(\d{2,3})\s*[xX×]\s*(\d{2,3})/,
+      );
+      const targetDimKey = sizeKeyMatch
+        ? `${sizeKeyMatch[1]}x${sizeKeyMatch[2]}`
+        : null;
+
+      const isSizeMatch = (v) => {
+        if (!v) return false;
+        if (
+          v.sizeLabel === newSizeLabel ||
+          v.name === newSizeLabel ||
+          v.size === newSizeLabel ||
+          v.size_eu === newSizeLabel ||
+          v.size_us === newSizeLabel ||
+          v.sizeSlug === newSizeLabel
+        ) {
+          return true;
+        }
+        if (targetDimKey) {
+          const vDimKey =
+            v.sizeSlug ||
+            (v.width && v.length
+              ? `${Math.round(Math.min(v.width, v.length) / 10)}x${Math.round(Math.max(v.width, v.length) / 10)}`
+              : null);
+          if (vDimKey && vDimKey === targetDimKey) return true;
+          if (v.size_eu) {
+            const vEuMatch = String(v.size_eu).match(
+              /(\d{2,3})\s*[xX×]\s*(\d{2,3})/,
+            );
+            if (vEuMatch && `${vEuMatch[1]}x${vEuMatch[2]}` === targetDimKey) {
+              return true;
+            }
+          }
+        }
+        if (v.sizeSlug) {
+          const re = new RegExp("(^|[^0-9])" + v.sizeSlug + "([^0-9]|$)", "i");
+          if (re.test(newSizeLabel)) return true;
+        }
+        if (v.size_eu) {
+          const cleanEu = v.size_eu.replace(/\s*cm$/i, "").trim();
+          const re = new RegExp("(^|[^0-9])" + cleanEu + "([^0-9]|$)", "i");
+          if (re.test(newSizeLabel)) return true;
+        }
+        return false;
+      };
+
       const match =
+        (targetProduct &&
+        searchPool.some(
+          (p) =>
+            (p.id && p.id === targetProduct.id) ||
+            (p.sku && p.sku === targetProduct.sku) ||
+            p.slug === targetProduct.slug,
+        )
+          ? targetProduct
+          : null) ||
         searchPool.find((v) => {
-          const matchSize =
-            v.sizeLabel === newSizeLabel ||
-            v.name === newSizeLabel ||
-            v.size === newSizeLabel ||
-            (v.size_eu && newSizeLabel.includes(v.size_eu));
           const matchColor =
             !currentColor ||
             v.color?.toLowerCase() === currentColor.toLowerCase();
-          return matchSize && matchColor;
+          return isSizeMatch(v) && matchColor;
         }) ||
-        searchPool.find(
-          (v) =>
-            v.sizeLabel === newSizeLabel ||
-            v.name === newSizeLabel ||
-            (v.size_eu && newSizeLabel.includes(v.size_eu)),
-        ) ||
+        searchPool.find((v) => isSizeMatch(v)) ||
+        targetProduct ||
         searchPool.find((v) => v.size === newSizeLabel);
       if (match) {
         setSelectedVariant(match);
@@ -3099,6 +3165,7 @@ export default function ProductDetailPage() {
                                   undefined,
                                   undefined,
                                   item.label,
+                                  item.product,
                                 );
                                 setSizeOpen(false);
                               }}
