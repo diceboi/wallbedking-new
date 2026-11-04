@@ -361,7 +361,7 @@ export function UserDrawer() {
                       {user ? t("auth.customerAccount", "My Account") : t("auth.welcomeBack", "Welcome")}
                     </h2>
                     <p className="text-[10px] text-wbk-brown tracking-wide">
-                      {user ? "WallBedKing Member" : t("auth.signIn", "Sign in or create an account")}
+                      {user ? t("auth.memberStatus", "WallBedKing Member") : t("auth.signIn", "Sign in or create an account")}
                     </p>
                   </div>
                 </div>
@@ -500,7 +500,7 @@ export function UserDrawer() {
                         className="w-full py-2.5 bg-[#F4F2F0] hover:bg-wbk-gold hover:text-wbk-black text-xs font-semibold uppercase tracking-wider text-wbk-black transition-colors rounded-full text-center flex items-center justify-center gap-1.5"
                       >
                         <IconExternalLink size={14} />
-                        <span>Manage in Account Dashboard</span>
+                        <span>{t("auth.manageInDashboard", "Manage in Account Dashboard")}</span>
                       </Link>
 
                       <button
@@ -521,7 +521,7 @@ export function UserDrawer() {
                         <div className="flex items-center gap-2 min-w-0">
                           <IconKey size={18} className="text-wbk-gold shrink-0" />
                           <div className="text-[11px] leading-tight font-medium">
-                            Password recovery session active.
+                            {t("auth.passwordRecoveryActive", "Password recovery session active.")}
                           </div>
                         </div>
                         <button
@@ -532,7 +532,7 @@ export function UserDrawer() {
                           }}
                           className="px-3 py-1 bg-wbk-black text-white hover:bg-wbk-gold hover:text-wbk-black text-[10px] font-semibold uppercase tracking-wider rounded-full transition-colors shrink-0 cursor-pointer"
                         >
-                          Set Password
+                          {t("auth.setPassword", "Set Password")}
                         </button>
                       </div>
                     )}
@@ -557,7 +557,7 @@ export function UserDrawer() {
                         <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-medium mt-1">
                           <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAdmin ? "bg-wbk-gold" : "bg-wbk-green"}`} />
                           <span className={isAdmin ? "text-wbk-black font-semibold" : "text-wbk-green"}>
-                            {isAdmin ? "Administrator Privileges" : "Verified Account"}
+                            {isAdmin ? t("auth.adminPrivileges", "Administrator Privileges") : t("auth.verifiedAccount", "Verified Account")}
                           </span>
                         </div>
                       </div>
@@ -577,11 +577,11 @@ export function UserDrawer() {
                             </div>
                             <div>
                               <div className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                                <span>Admin Console</span>
+                                <span>{t("auth.adminConsole", "Admin Console")}</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                               </div>
                               <div className="text-[10px] text-white/70 group-hover:text-wbk-black/80">
-                                Catalog, orders, pricing & feeds
+                                {t("auth.adminConsoleDesc", "Catalog, orders, pricing & feeds")}
                               </div>
                             </div>
                           </div>
@@ -603,7 +603,7 @@ export function UserDrawer() {
                               {t("auth.myOrders", "My Orders & Tracking")}
                             </div>
                             <div className="text-[10px] text-wbk-brown">
-                              Track packages and view order history
+                              {t("auth.myOrdersDesc", "Track packages and view order history")}
                             </div>
                           </div>
                         </div>
@@ -650,7 +650,7 @@ export function UserDrawer() {
                               {t("auth.savedConfigs", "3D Bed Configurator")}
                             </div>
                             <div className="text-[10px] text-wbk-brown">
-                              Customise mechanisms and finishes
+                              {t("auth.savedConfigsDesc", "Customise mechanisms and finishes")}
                             </div>
                           </div>
                         </div>
@@ -671,7 +671,7 @@ export function UserDrawer() {
                               {t("auth.deliveryAddresses", "Delivery Addresses")}
                             </div>
                             <div className="text-[10px] text-wbk-brown">
-                              Manage default shipping addresses
+                              {t("auth.deliveryAddressesDesc", "Manage default shipping addresses")}
                             </div>
                           </div>
                         </div>
@@ -692,7 +692,7 @@ export function UserDrawer() {
                               {t("auth.accountSettings", "Account & Security")}
                             </div>
                             <div className="text-[10px] text-wbk-brown">
-                              Update details and password
+                              {t("auth.accountSettingsDesc", "Update details and password")}
                             </div>
                           </div>
                         </div>
@@ -709,7 +709,7 @@ export function UserDrawer() {
                           className="flex items-center justify-center gap-2 w-full py-3 text-center bg-[#090A0A] hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-[0.14em] transition-all rounded-full shadow-md cursor-pointer"
                         >
                           <IconShieldLock size={16} className="text-wbk-gold" />
-                          <span>Open Admin Dashboard</span>
+                          <span>{t("auth.openAdminDashboard", "Open Admin Dashboard")}</span>
                         </Link>
                       )}
 
@@ -848,7 +848,7 @@ export function UserDrawer() {
                         {isLoading ? (
                           <>
                             <IconLoader2 size={16} className="animate-spin" />
-                            <span>Signing In...</span>
+                            <span>{t("auth.signingIn", "Signing In...")}</span>
                           </>
                         ) : (
                           <span>{t("auth.signInBtn", "Sign In")}</span>
@@ -863,7 +863,7 @@ export function UserDrawer() {
                           disabled={isLoading}
                           className="w-full py-2 bg-[#F4F2F0] hover:bg-[#E4E0DE] text-wbk-black text-[11px] font-medium tracking-wide transition-colors rounded-full cursor-pointer flex items-center justify-center gap-1.5"
                         >
-                          <span>Fill Demo Account (Instant Test)</span>
+                          <span>{t("auth.demoFill", "Fill Demo Account (Instant Test)")}</span>
                         </button>
                       </div>
                     </form>
@@ -947,7 +947,7 @@ export function UserDrawer() {
                         {isLoading ? (
                           <>
                             <IconLoader2 size={16} className="animate-spin" />
-                            <span>Creating Account...</span>
+                            <span>{t("auth.creatingAccount", "Creating Account...")}</span>
                           </>
                         ) : (
                           <span>{t("auth.createAccountBtn", "Create Account")}</span>
@@ -955,7 +955,7 @@ export function UserDrawer() {
                       </button>
 
                       <p className="text-[10px] text-wbk-brown text-center leading-relaxed">
-                        By creating an account, you agree to WallBedKing&apos;s Terms of Service and Privacy Policy.
+                        {t("auth.termsNotice", "By creating an account, you agree to WallBedKing's Terms of Service and Privacy Policy.")}
                       </p>
                     </form>
                   )}
@@ -968,10 +968,10 @@ export function UserDrawer() {
                           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2">
                             <div className="flex items-center gap-2 font-semibold">
                               <IconCheck size={18} className="text-emerald-600 shrink-0" />
-                              <span>Reset Link Dispatched</span>
+                              <span>{t("auth.resetLinkDispatched", "Reset Link Dispatched")}</span>
                             </div>
                             <p className="text-[11px] text-emerald-800 leading-relaxed">
-                              We&apos;ve sent a password reset link to <strong className="font-semibold">{email}</strong>. Please check your inbox (and spam folder) and click the link to set a new password.
+                              {t("auth.resetLinkSentDesc", "We've sent a password reset link to {email}. Please check your inbox (and spam folder) and click the link to set a new password.").replace("{email}", email)}
                             </p>
                           </div>
 
@@ -991,13 +991,13 @@ export function UserDrawer() {
                             onClick={() => setSuccessMsg("")}
                             className="w-full text-center text-[11px] text-wbk-brown hover:text-wbk-black underline cursor-pointer"
                           >
-                            Didn&apos;t receive the email? Try again
+                            {t("auth.didntReceiveEmail", "Didn't receive the email? Try again")}
                           </button>
                         </div>
                       ) : (
                         <form onSubmit={handleForgotPassword} className="space-y-4">
                           <div className="text-xs text-wbk-brown leading-relaxed">
-                            Enter the email associated with your account and we&apos;ll send you a password reset link to create a new password.
+                            {t("auth.forgotPasswordDesc", "Enter the email associated with your account and we'll send you a password reset link to create a new password.")}
                           </div>
 
                           <div>
@@ -1035,7 +1035,7 @@ export function UserDrawer() {
                             {isLoading ? (
                               <>
                                 <IconLoader2 size={16} className="animate-spin" />
-                                <span>Sending Link...</span>
+                                <span>{t("auth.sendingLink", "Sending Link...")}</span>
                               </>
                             ) : (
                               <span>{t("auth.resetPasswordBtn", "Send Reset Link")}</span>
@@ -1060,7 +1060,7 @@ export function UserDrawer() {
             {/* Footer Assurances */}
             <div className="px-6 py-3 bg-[#F4F2F0] border-t border-wbk-lightgrey/80 flex items-center justify-center gap-2 text-[10px] text-wbk-brown">
               <IconShieldCheck size={14} className="text-wbk-gold" />
-              <span>Secure authentication powered by Supabase</span>
+              <span>{t("auth.secureAuth", "Secure authentication powered by Supabase")}</span>
             </div>
           </motion.aside>
         </div>

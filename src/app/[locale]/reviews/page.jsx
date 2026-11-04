@@ -136,7 +136,7 @@ const REVIEWS_DATA = [
 ];
 
 export default function ReviewsPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, locale } = useLocale();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [dynamicReviews, setDynamicReviews] = useState([]);
   const [visibleCount, setVisibleCount] = useState(24);
@@ -227,7 +227,7 @@ export default function ReviewsPage() {
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              Independent Verified Feedback
+              {t("reviews.badge", "Independent Verified Feedback")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
               {t("reviews.ratingSummary", "Loved by thousands of homeowners")}
@@ -244,8 +244,8 @@ export default function ReviewsPage() {
                 ))}
               </div>
               <div className="text-xs">
-                <span className="font-bold text-wbk-black text-sm">4.9 out of 5</span>
-                <span className="text-wbk-brown ml-1.5">• Based on Google & Verified Customer Reviews</span>
+                <span className="font-bold text-wbk-black text-sm">4.9 {t("reviews.outOfFive", "out of 5")}</span>
+                <span className="text-wbk-brown ml-1.5">• {t("reviews.basedOnGoogle", "Based on Google & Verified Customer Reviews")}</span>
               </div>
             </div>
           </div>
@@ -267,12 +267,18 @@ export default function ReviewsPage() {
                     : "bg-[#FBF9F8] text-wbk-black hover:bg-[#F4F2F0] border border-wbk-lightgrey/60"
                 }`}
               >
-                {tab === "All" ? t("reviews.allReviews", "All Reviews") : `${tab} Range`}
+                {tab === "All"
+                  ? t("reviews.allReviews", "All Reviews")
+                  : locale === "fr"
+                  ? `Gamme ${tab}`
+                  : locale === "es"
+                  ? `Gama ${tab}`
+                  : `${tab} Range`}
               </button>
             ))}
           </div>
           <span className="text-xs text-wbk-brown">
-            {t("categories.showing", "Showing")} {displayedReviews.length} of {filteredReviews.length} {t("reviews.title", "reviews")}
+            {t("categories.showing", "Showing")} {displayedReviews.length} {t("common.of", "of")} {filteredReviews.length} {t("reviews.allReviewsCount", "reviews")}
           </span>
         </div>
 
@@ -339,14 +345,14 @@ export default function ReviewsPage() {
               onClick={() => setVisibleCount((prev) => prev + 24)}
               className="w-full sm:w-auto px-8 py-3 bg-wbk-black text-white hover:bg-wbk-brown text-xs font-semibold uppercase tracking-wider rounded-none transition-colors cursor-pointer shadow-xs"
             >
-              Load More Reviews (+24)
+              {t("reviews.loadMore", "Load More Reviews (+24)")}
             </button>
             <button
               type="button"
               onClick={() => setVisibleCount(filteredReviews.length)}
               className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-stone-50 border border-wbk-lightgrey text-wbk-black text-xs font-semibold uppercase tracking-wider rounded-none transition-colors cursor-pointer"
             >
-              Show All ({filteredReviews.length})
+              {t("reviews.showAll", "Show All")} ({filteredReviews.length})
             </button>
           </div>
         )}

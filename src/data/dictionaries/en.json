@@ -278,7 +278,8 @@
     "allSofas": "All Sofas",
     "allMattresses": "All Mattresses",
     "allTables": "All Smart Tables",
-    "allBeds": "All Murphy Beds"
+    "allBeds": "All Murphy Beds",
+    "allTags": "All Tags"
   },
   "product": {
     "regionUnavailableBadge": "Regional Availability",
@@ -338,7 +339,42 @@
     "design": "Design",
     "spaceSavingTransforming": "Space-Saving Transforming",
     "colors": "Colors",
-    "orientation": "Orientation"
+    "orientation": "Orientation",
+    "tab_description": "Description",
+    "tab_media": "Photos & Videos",
+    "tab_support": "Support & Guides",
+    "tab_reviews": "Reviews",
+    "finishLabel": "Finish:",
+    "formatLabel": "Format:",
+    "cabinetType": "Cabinet Type:",
+    "styleLabel": "Style:",
+    "colorLabel": "Finish / Colour:",
+    "sizeLabel": "Size:",
+    "box": "Box",
+    "clickToZoom": "Tap photo to zoom",
+    "bundleBadge": "Pack",
+    "sale": "Sale",
+    "gallery": "Gallery",
+    "selectView": "Select view",
+    "shape": "Shape & Function",
+    "designStyle": "Design Style",
+    "application": "Suitable For",
+    "upTo": "Up to",
+    "view": "View",
+    "shareSetupPhoto": "Share your setup photo",
+    "uploadSetupPhoto": "Upload Setup Photo",
+    "videoWalkthrough": "Video Walkthrough",
+    "watchOnYoutube": "Watch on YouTube",
+    "openInApp": "Open in App",
+    "comingSoon": "Coming soon",
+    "pdfDocument": "PDF Document",
+    "downloadPdf": "Download PDF",
+    "inProgress": "In progress",
+    "tableDimensions": "Dimensions / Size",
+    "tableClosedSize": "Closed Dimensions",
+    "tableOpenSize": "Open Dimensions",
+    "tableSeats": "Seating Capacity",
+    "tableMechanism": "Transforming Mechanism"
   },
   "auth": {
     "recoveryBadge": "Password Recovery",
@@ -373,7 +409,28 @@
     "invalidCredentials": "Invalid email or password.",
     "confirmEmailSent": "Account created! Please check your email to verify.",
     "accountCreated": "Account created successfully!",
-    "signupFailed": "Could not create account. Please try again."
+    "signupFailed": "Could not create account. Please try again.",
+    "memberStatus": "WallBedKing Member",
+    "manageInDashboard": "Manage in Account Dashboard",
+    "adminPrivileges": "Administrator Privileges",
+    "verifiedAccount": "Verified Account",
+    "adminConsole": "Admin Console",
+    "adminConsoleDesc": "Catalog, orders, pricing & feeds",
+    "myOrdersDesc": "Track packages and view order history",
+    "savedConfigsDesc": "Customise mechanisms and finishes",
+    "deliveryAddressesDesc": "Manage default shipping addresses",
+    "accountSettingsDesc": "Update details and password",
+    "openAdminDashboard": "Open Admin Dashboard",
+    "signingIn": "Signing In...",
+    "demoFill": "Fill Demo Account (Instant Test)",
+    "creatingAccount": "Creating Account...",
+    "termsNotice": "By creating an account, you agree to WallBedKing's Terms of Service and Privacy Policy.",
+    "resetLinkDispatched": "Reset Link Dispatched",
+    "resetLinkSentDesc": "We've sent a password reset link to {email}. Please check your inbox (and spam folder) and click the link to set a new password.",
+    "didntReceiveEmail": "Didn't receive the email? Try again",
+    "forgotPasswordDesc": "Enter the email associated with your account and we'll send you a password reset link to create a new password.",
+    "sendingLink": "Sending Link...",
+    "secureAuth": "Secure authentication powered by Supabase"
   },
   "reviews": {
     "title": "Reviews",
@@ -414,7 +471,9 @@
     "verificationNote": "All reviews are verified by our team before publishing to protect against spam.",
     "successSubmitted": "Thank you! Your review has been submitted and will appear on the product page as soon as our team approves it.",
     "errorRequired": "Please provide your name and review details.",
-    "allProductsReviews": "Wallbedking reviews (all products)"
+    "allProductsReviews": "Wallbedking reviews (all products)",
+    "badge": "Independent Verified Feedback",
+    "basedOnGoogle": "Based on Google & Verified Customer Reviews"
   },
   "morphy": {
     "featuresBadge": "System Innovations & Features",
@@ -461,7 +520,14 @@
     "storyHeading": "Designed for everyday living, not just guest rooms.",
     "storyP1": "Modern living spaces—whether in London apartments, regional family homes, or contemporary studios—are more multifunctional than ever. Yet conventional beds permanently consume over 80% of floor space in bedrooms, guest rooms, and home offices.",
     "storyP2": "Wall Bed King was founded to disrupt this dilemma. By manufacturing our own cold-rolled steel mechanisms and pairing them with counterbalanced gas struts and sprung birch wood slats, we eliminated the clunky, heavy springs and flimsy frames of yesterday. The result is an effortless, feather-light foldaway bed engineered for decades of daily use.",
-    "exploreModels": "Explore Bed Collection"
+    "exploreModels": "Explore Bed Collection",
+    "whyBuyBadge": "Why Buy From WallBedKing",
+    "pillarsSubtitle": "Precision engineering, factory-direct savings, and customer service you can rely on.",
+    "showroomBadge": "Showroom & Warehouse",
+    "showroomTitle": "Experience our beds in person",
+    "showroomDesc": "Visit our showroom in Harlow, Essex (CM20 2HU) just north of London. Test the effortless gas piston mechanism, inspect the cabinet finishes, and speak directly with our engineering specialists.",
+    "customerQuote": "Saved our spare room. It's a fully functional office during weekdays, and a luxury guest room at weekends.",
+    "customerVerified": "Verified Customer — London, UK"
   },
   "contact": {
     "title": "Get in Touch with Our Specialists",
@@ -496,7 +562,10 @@
     "sendMessageTitle": "Send Us a Message",
     "sendMessageDesc": "Fill out the form below and our team will get back to you promptly with answers and technical guidance.",
     "mapBadge": "Find Us On Google Maps",
-    "mapTitle": "Showroom & Distribution Warehouse"
+    "mapTitle": "Showroom & Distribution Warehouse",
+    "badge": "We're Here To Help",
+    "tradeOption": "Trade / Commercial Partnership",
+    "messagePlaceholder": "Please let us know how we can help, including room dimensions, ceiling height, or bed models you're considering..."
   },
   "support": {
     "hubTitle": "Support Hub",

@@ -92,7 +92,7 @@ export default function ContactPage() {
             </nav>
 
             <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-wbk-gold mb-3">
-              We&apos;re Here To Help
+              {t("contact.badge", "We're Here To Help")}
             </span>
             <h1 className="font-new-york text-4xl sm:text-5xl md:text-6xl text-wbk-black tracking-tight leading-tight">
               {t("contact.title", "Get in touch with our specialists")}
@@ -380,7 +380,7 @@ export default function ContactPage() {
                             "Installation & Technical Assembly"
                           )}
                         </option>
-                        <option value="trade">Trade / Commercial Partnership</option>
+                        <option value="trade">{t("contact.tradeOption", "Trade / Commercial Partnership")}</option>
                       </select>
                     </div>
                   </div>
@@ -396,7 +396,10 @@ export default function ContactPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, message: e.target.value })
                       }
-                      placeholder="Please let us know how we can help, including room dimensions, ceiling height, or bed models you're considering..."
+                      placeholder={t(
+                        "contact.messagePlaceholder",
+                        "Please let us know how we can help, including room dimensions, ceiling height, or bed models you're considering..."
+                      )}
                       className="w-full p-4 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none text-wbk-black focus:outline-none focus:border-wbk-black transition-colors"
                     />
                   </div>

@@ -16,7 +16,7 @@ import "swiper/css/navigation";
 import { POPULAR_PRODUCTS_OVERVIEW } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
-import { isProductAvailableInLocale } from "@/lib/products";
+import { isProductAvailableInLocale, getLocalizedProductName } from "@/lib/products";
 
 export function ProductSlider() {
   const { locale, t, localizedHref } = useLocale();
@@ -47,28 +47,59 @@ export function ProductSlider() {
 
   const products = useMemo(() => {
     const list = (!allFlagships || allFlagships.length === 0)
-      ? POPULAR_PRODUCTS_OVERVIEW
+      ? POPULAR_PRODUCTS_OVERVIEW.map((item) => ({
+          ...item,
+          title: getLocalizedProductName(item, locale) || item.title,
+          name: getLocalizedProductName(item, locale) || item.name || item.title,
+        }))
       : POPULAR_PRODUCTS_OVERVIEW.map((item) => {
           const slug = item.link?.split("/").pop();
-          const match = allFlagships.find((f) => f.slug === slug);
+          const match = allFlagships.find(
+            (f) =>
+              f.slug === slug ||
+              f.slug?.includes(slug) ||
+              slug?.includes(f.slug),
+          );
           if (match) {
             return {
               ...item,
               ...match,
-              title: match.title || match.name || item.title,
+              title:
+                getLocalizedProductName(match, locale) ||
+                getLocalizedProductName(item, locale) ||
+                match.title ||
+                match.name ||
+                item.title,
+              name:
+                getLocalizedProductName(match, locale) ||
+                getLocalizedProductName(item, locale) ||
+                match.name ||
+                item.name ||
+                item.title,
               price: match.price || item.price,
               numericPrice: match.numericPrice || item.numericPrice,
               image: match.image || item.image,
-              hoverImage: match.hoverImage || match.hover_image || item.hoverImage,
+              hoverImage:
+                match.hoverImage || match.hover_image || item.hoverImage,
               tags: match.tags || item.tags,
-              available_locales: match.available_locales || item.available_locales,
+              available_locales:
+                match.available_locales || item.available_locales,
             };
           }
-          return item;
+          return {
+            ...item,
+            title: getLocalizedProductName(item, locale) || item.title,
+            name: getLocalizedProductName(item, locale) || item.name || item.title,
+          };
         });
 
     return list
-      .filter((p) => p.categoryKey !== "sofas" && p.parent_category !== "sofas" && p.category !== "sofas")
+      .filter(
+        (p) =>
+          p.categoryKey !== "sofas" &&
+          p.parent_category !== "sofas" &&
+          p.category !== "sofas",
+      )
       .filter((p) => isProductAvailableInLocale(p, locale));
   }, [allFlagships, locale]);
 

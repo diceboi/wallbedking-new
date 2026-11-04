@@ -7,146 +7,26 @@ import { Container } from "@/components/ui/Container";
 import { useLocale } from "@/context/LocaleContext";
 import {
   IconQuote,
-  IconBuildingCommunity,
-  IconBuildingSkyscraper,
-  IconFlame,
-  IconHome,
   IconArrowRight,
   IconCheck,
-  IconBriefcase,
-  IconStarFilled,
-  IconSparkles,
 } from "@tabler/icons-react";
-
-const CASE_STUDIES = [
-  {
-    id: "metropolitan-housing",
-    category: "housing",
-    categoryLabel: "Supported Living & Care",
-    client: "Metropolitan Housing Association",
-    contactPerson: "Delphine Chandler",
-    contactRole: "Care and Support Manager",
-    headline: "Delivering Instant Overnight Flexibility in Supported Living Lounges",
-    image: "/images/trade/trade-metropolitan.jpg",
-    stats: [
-      { value: "140", label: "Units Managed in Scheme" },
-      { value: "£600 vs £3,000", label: "Competitive Price Advantage" },
-      { value: "5 / 5", label: "Client Satisfaction Score" },
-    ],
-    challenge:
-      "Managing supported living complexes for individuals with learning disabilities requires finding temporary beds at very short notice. Permanent beds in communal lounges were unworkable; a sturdy bed was needed that could be folded out overnight and tidied away in seconds each morning.",
-    solution:
-      "Metropolitan Housing Association selected Wall Bed King's double wall bed system. Because they are publicly funded, price and durability were paramount. Research revealed competitor systems ranging up to £3,000 for comparable specifications.",
-    outcome:
-      "The Wall Bed King mechanism was delivered promptly with VAT included for seamless public administration. Months on, staff and service users report flawless daily performance, superior orthopedic comfort, and effortless operation.",
-    quote:
-      "Save yourself time searching the internet. I'd recommend this company to anyone thinking of purchasing a folding bed. In fact, ask my friends and colleagues and you'll find I already have.",
-  },
-  {
-    id: "bh-properties",
-    category: "development",
-    categoryLabel: "Prime Urban Development",
-    client: "B&H Properties",
-    contactPerson: "Joel Snitzer",
-    contactRole: "Property Developer",
-    headline: "52 Wall Beds Installed Across Modern City of London Apartments",
-    image: "/images/trade/trade-bh-properties.jpg",
-    stats: [
-      { value: "52", label: "Wall Beds Installed" },
-      { value: "100%", label: "Tenant Comfort Rating" },
-      { value: "Lifetime", label: "Mechanism Guarantee Confidence" },
-    ],
-    challenge:
-      "Developing high-standard luxury rental apartments in Central London where maximizing perceived living space is the key to commanding premium rental yields. Standard freestanding beds would dominate bedrooms and prevent daytime office or recreation usage.",
-    solution:
-      "B&H Properties procured 52 double wall bed systems directly from Wall Bed King. The industrial build quality, sleek profile, and Lifetime Warranty gave the development team total confidence for a volume investment.",
-    outcome:
-      "The beds were installed efficiently and operate seamlessly. Tenants enjoy full-size master bedrooms by night, and spacious home offices or children's play areas by day—with zero sleep quality compromises.",
-    quote:
-      "They were easy to install and worked beautifully once we saw them in situ. In fact, they're quite brilliant. We've never had any complaints about sleepless nights. Overall you can say I'm a very happy man with my purchases from WallBedKing.",
-  },
-  {
-    id: "riverside-shepherd-huts",
-    category: "hospitality",
-    categoryLabel: "Bespoke Glamping & Hospitality",
-    client: "Riverside Shepherd Huts",
-    contactPerson: "Jane Richmond",
-    contactRole: "Co-Founder & Director",
-    headline: "Doubling Usable Living Space in 77+ Handcrafted Shepherd Huts",
-    image: "/images/trade/trade-riverside-shepherd-huts.jpg",
-    stats: [
-      { value: "77+", label: "Luxury Huts Delivered" },
-      { value: "2x", label: "Usable Daytime Living Space" },
-      { value: "24-48h", label: "Fast Dispatch Turnaround" },
-    ],
-    challenge:
-      "Artisan shepherd huts and glamping retreats offer limited internal square footage. Guests expect full luxury sleeping comfort, yet permanent beds cluttered the interior and restricted daytime dining and relaxing.",
-    solution:
-      "Riverside Shepherd Huts integrated Wall Bed King mechanisms concealed within custom timber cabinetry. Counterbalanced gas pistons allow guests to lift the bed with one hand, revealing a spacious lounge and dining area.",
-    outcome:
-      "With over 77 huts sold across the UK and South of France, the wall beds have become a signature selling point. Fast warehouse delivery ensures Riverside Shepherd Huts maintains punctual manufacturing schedules.",
-    quote:
-      "The wall beds are incredibly popular and it's not difficult to see why. They're just such a brilliant space-saving device, yet so functional. Orders are coming in all the time and that's exactly why we need a supplier like Wall Bed King we can rely on.",
-  },
-  {
-    id: "stoneham-construction",
-    category: "development",
-    categoryLabel: "Social Housing & Conversions",
-    client: "Stoneham Construction Ltd",
-    contactPerson: "David Harris",
-    contactRole: "Managing Director",
-    headline: "Creating 2-Bedroom Living Capability Within 1-Room Layouts",
-    image: "/images/trade/trade-stoneham-construction.gif",
-    stats: [
-      { value: "10", label: "Double Beds Integrated" },
-      { value: "2-in-1", label: "Bedroom Multi-Functionality" },
-      { value: "Acoustic", label: "Partition Wall Integration" },
-    ],
-    challenge:
-      "On the Isle of Wight where land is at an absolute premium, Stoneham Construction was converting large single-room spaces into social housing rentals for local families. Accommodating two distinct sleeping areas within one open volume without blowing the budget was a complex architectural challenge.",
-    solution:
-      "Developer David Harris fitted 10 double wall beds behind custom neutral wardrobes against newly installed acoustic partition walls, giving each room independent sleeping and living versatility.",
-    outcome:
-      "The installation proved simple, aesthetic, and exceptionally durable. Tenants gained spacious, commodious living accommodation, and Stoneham Construction established a repeat commercial partnership with Wall Bed King.",
-    quote:
-      "Investing in quality wall beds was the obvious answer to this tricky dilemma. We fitted them into wardrobes painted the same neutral colour as the room, so they are completely unobtrusive and actually add to the aesthetics of the room.",
-  },
-  {
-    id: "lincolnshire-fire",
-    category: "public-services",
-    categoryLabel: "Emergency Services",
-    client: "Lincolnshire Fire and Rescue Unit",
-    contactPerson: "Station Logistics",
-    contactRole: "Facility Management",
-    headline: "Instant Shift Rest Quarters That Vanish When the Alarm Sounds",
-    image: "/images/trade/trade-linconshire-fire-rescue.gif",
-    stats: [
-      { value: "3s", label: "Instant Bed Stowage" },
-      { value: "24/7", label: "Operational Readiness" },
-      { value: "100%", label: "Industrial Heavy Gauge Steel" },
-    ],
-    challenge:
-      "Emergency service personnel require dependable, quiet rest between demanding callouts. However, station footprints are heavily restricted, and training, physical drills, and briefing sessions require wide open communal space.",
-    solution:
-      "Lincolnshire Fire & Rescue installed Wall Bed King commercial mechanisms in station on-call quarters. High-grade German gas struts ensure the beds can be stowed away effortlessly in 3 seconds flat.",
-    outcome:
-      "Station dormitories instantly convert into multipurpose training and briefing halls during daylight hours, maximizing facility efficiency while ensuring firefighters enjoy genuine orthopedic rest during long night shifts.",
-    quote:
-      "When the alarm sounds, the last thing anyone should worry about is their bed. Wall Bed King beds are rugged, silent, and effortlessly stowed in seconds.",
-  },
-];
-
-const CATEGORIES = [
-  { id: "all", label: "All Projects" },
-  { id: "development", label: "Property Development" },
-  { id: "hospitality", label: "Hospitality & Glamping" },
-  { id: "housing", label: "Supported Living & Care" },
-  { id: "public-services", label: "Public & Emergency Services" },
-];
+import {
+  CASE_STUDIES_EN,
+  CASE_STUDIES_FR,
+  CASE_STUDIES_ES,
+  CATEGORIES_EN,
+  CATEGORIES_FR,
+  CATEGORIES_ES,
+} from "@/data/case-studies-content";
 
 export default function CaseStudiesPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, locale } = useLocale();
+  const isFr = locale === "fr";
+  const isEs = locale === "es";
   const [activeCategory, setActiveCategory] = useState("all");
+
+  const CASE_STUDIES = isFr ? CASE_STUDIES_FR : isEs ? CASE_STUDIES_ES : CASE_STUDIES_EN;
+  const CATEGORIES = isFr ? CATEGORIES_FR : isEs ? CATEGORIES_ES : CATEGORIES_EN;
 
   const filteredStudies =
     activeCategory === "all"
@@ -263,7 +143,7 @@ export default function CaseStudiesPage() {
                         {study.headline}
                       </h2>
                       <p className="mt-1 text-xs font-medium uppercase tracking-wider text-wbk-brown">
-                        Client: <strong className="text-wbk-black">{study.client}</strong>
+                        {isFr ? "Client : " : isEs ? "Cliente: " : "Client: "}<strong className="text-wbk-black">{study.client}</strong>
                       </p>
                     </div>
 
@@ -271,7 +151,7 @@ export default function CaseStudiesPage() {
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-wbk-black mb-1.5 flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 bg-wbk-gold rounded-full" />
-                          The Challenge
+                          {isFr ? "Le Défi" : isEs ? "El Reto" : "The Challenge"}
                         </h4>
                         <p>{study.challenge}</p>
                       </div>
@@ -279,7 +159,7 @@ export default function CaseStudiesPage() {
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-wbk-black mb-1.5 flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 bg-wbk-green rounded-full" />
-                          The Wall Bed King Solution
+                          {isFr ? "La Solution Wall Bed King" : isEs ? "La Solución Wall Bed King" : "The Wall Bed King Solution"}
                         </h4>
                         <p>{study.solution}</p>
                       </div>
@@ -287,7 +167,7 @@ export default function CaseStudiesPage() {
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-wbk-black mb-1.5 flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 bg-wbk-black rounded-full" />
-                          The Commercial Outcome
+                          {isFr ? "Le Résultat Commercial" : isEs ? "El Resultado Comercial" : "The Commercial Outcome"}
                         </h4>
                         <p>{study.outcome}</p>
                       </div>
@@ -298,7 +178,7 @@ export default function CaseStudiesPage() {
                         href={localizedHref("/trade#inquiry-form")}
                         className="px-6 py-3 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-colors inline-flex items-center gap-2"
                       >
-                        <span>Start Similar Project</span>
+                        <span>{isFr ? "Démarrer un projet similaire" : isEs ? "Iniciar un proyecto similar" : "Start Similar Project"}</span>
                         <IconArrowRight size={14} />
                       </Link>
                     </div>
@@ -315,26 +195,34 @@ export default function CaseStudiesPage() {
         <Container size="xl">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold">
-              Collaborate With Wall Bed King
+              {isFr ? "Collaborer avec Wall Bed King" : isEs ? "Colaborar con Wall Bed King" : "Collaborate With Wall Bed King"}
             </span>
             <h2 className="font-new-york text-3xl sm:text-4xl md:text-5xl text-white">
-              Ready to transform your next development or hospitality scheme?
+              {isFr
+                ? "Prêt à optimiser votre prochain projet immobilier ou hôtelier ?"
+                : isEs
+                ? "¿Preparado para optimizar su próximo proyecto residencial u hotelero?"
+                : "Ready to transform your next development or hospitality scheme?"}
             </h2>
             <p className="text-sm sm:text-base text-wbk-lightgrey/80 font-light leading-relaxed">
-              Our engineering and commercial team is available to review your architectural drawings, recommend optimal Murphy bed orientations, and structure competitive volume pricing.
+              {isFr
+                ? "Notre équipe technique et commerciale est à votre disposition pour étudier vos plans, recommander les meilleures configurations et vous proposer des tarifs dégressifs."
+                : isEs
+                ? "Nuestro equipo técnico y comercial está a su disposición para analizar sus planos, recomendar las configuraciones óptimas y ofrecerle tarifas por volumen competitivas."
+                : "Our engineering and commercial team is available to review your architectural drawings, recommend optimal Murphy bed orientations, and structure competitive volume pricing."}
             </p>
             <div className="pt-4 flex flex-wrap justify-center gap-4">
               <Link
                 href={localizedHref("/trade#inquiry-form")}
                 className="px-8 py-4 bg-wbk-gold text-wbk-black text-xs font-bold uppercase tracking-wider hover:bg-white transition-colors"
               >
-                Inquire For Your Project
+                {isFr ? "Demander une étude de projet" : isEs ? "Solicitar estudio de proyecto" : "Inquire For Your Project"}
               </Link>
               <Link
                 href={localizedHref("/trade")}
                 className="px-8 py-4 border border-white/30 text-white text-xs font-bold uppercase tracking-wider hover:border-white transition-colors"
               >
-                Explore Trade Services
+                {isFr ? "Découvrir l'offre pro" : isEs ? "Descubrir servicios comerciales" : "Explore Trade Services"}
               </Link>
             </div>
           </div>

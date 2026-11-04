@@ -41,6 +41,30 @@ function getTableSwatches(product) {
   return hexes.slice(0, 5);
 }
 
+function formatOrientation(val, locale) {
+  if (!val) return "";
+  const norm = (locale || "en").toLowerCase();
+  const lower = String(val).toLowerCase();
+  if (lower.includes("vertical") && lower.includes("horizontal")) {
+    if (norm === "fr") return "Vertical et horizontal";
+    if (norm === "de") return "Vertikal & Horizontal";
+    if (norm === "es") return "Vertical y horizontal";
+    if (norm === "it") return "Verticale e orizzontale";
+    if (norm === "por" || norm === "pt") return "Vertical e horizontal";
+    return "Vertical & Horizontal";
+  }
+  if (lower.includes("vertical")) {
+    if (norm === "de") return "Vertikal";
+    if (norm === "it") return "Verticale";
+    return "Vertical";
+  }
+  if (lower.includes("horizontal")) {
+    if (norm === "it") return "Orizzontale";
+    return "Horizontal";
+  }
+  return val;
+}
+
 export function ProductCard({ product, className = "" }) {
   const { locale, localizedHref, t } = useLocale();
   const [isQuickOpen, setIsQuickOpen] = useState(false);
@@ -229,7 +253,7 @@ export function ProductCard({ product, className = "" }) {
               product.parent_category !== "sofas" && (
                 <div>
                   <span className="text-wbk-brown">{t("product.orientation", "Orientation")}:</span>{" "}
-                  <span className="font-medium text-wbk-black">{orientation}</span>
+                  <span className="font-medium text-wbk-black">{formatOrientation(orientation, locale)}</span>
                 </div>
               )}
 

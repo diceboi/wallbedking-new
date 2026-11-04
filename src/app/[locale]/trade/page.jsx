@@ -25,202 +25,19 @@ import {
   IconFileText,
 } from "@tabler/icons-react";
 
-const TRADE_PILLARS = [
-  {
-    number: "01",
-    title: "Direct European Manufacturer",
-    titleKey: "tradePillar1Title",
-    description:
-      "We design, weld, and inspect our cold-rolled steel frames in our European facility. No middleman markups, ensuring unbeatable factory-direct commercial margins.",
-    icon: IconBuildingFactory2,
-  },
-  {
-    number: "02",
-    title: "German-Engineered Gas Struts",
-    titleKey: "tradePillar2Title",
-    description:
-      "Calibrated automotive gas pistons endurance-tested to 30,000+ continuous cycles. Smooth, silent single-hand operation built for heavy daily commercial duty.",
-    icon: IconCpu,
-  },
-  {
-    number: "03",
-    title: "Lifetime Mechanism Warranty",
-    titleKey: "tradePillar3Title",
-    description:
-      "Complete confidence for commercial tenders. Every metal chassis, pivot hinge, and piston mounting is backed by an industry-leading Lifetime Warranty.",
-    icon: IconShieldCheck,
-  },
-  {
-    number: "04",
-    title: "Volume Pricing & Commercial Accounts",
-    titleKey: "tradePillar4Title",
-    description:
-      "Generous trade discounts for multi-unit developments, hotel refurbishments, and recurring retail partners. Custom tiered pricing structured to your project scale.",
-    icon: IconScale,
-  },
-  {
-    number: "05",
-    title: "Warehouse Stock & Fast Dispatch",
-    titleKey: "tradePillar5Title",
-    description:
-      "High inventory availability across our UK distribution warehouse (Harlow, Essex) and European hub (Passau, Germany) for reliable project milestones.",
-    icon: IconTruck,
-  },
-  {
-    number: "06",
-    title: "CAD Packages & Technical Support",
-    titleKey: "tradePillar6Title",
-    description:
-      "Comprehensive dimensional drawings, 3D CAD files, and direct engineering consultation for architects, interior designers, and bespoke cabinet makers.",
-    icon: IconFileCertificate,
-  },
-];
-
-const SECTORS = [
-  {
-    id: "hotels",
-    title: "Hotels, Hostels & Serviced Apartments",
-    tagline: "Turn every room into your most versatile and profitable asset.",
-    image: "/images/trade/customers/hotels.jpg",
-    description:
-      "In hospitality, flexibility drives revenue. Convert suites from boardroom meetings or day living into luxury bedrooms in seconds. Commercial-grade mechanisms engineered for rigorous daily guest turnover.",
-    bullets: [
-      "Boutique hotels seeking multi-functional suite layouts",
-      "Hostels maximizing beds-per-square-metre revenue",
-      "Apart-hotels balancing premium living and sleeping areas",
-      "Silent, effortless gas-piston operation that will never disturb guests",
-    ],
-  },
-  {
-    id: "cabinet-makers",
-    title: "Cabinet Makers & Bespoke Joiners",
-    tagline: "Your craftsmanship. Our engineering. Seamless integration.",
-    image: "/images/trade/customers/cabinet-makers.jpg",
-    description:
-      "Our versatile mechanism-only supply integrates cleanly into custom fitted cabinetry, bespoke wardrobes, and architectural joinery of any aesthetic—from traditional hardwoods to modern acoustic panelling.",
-    bullets: [
-      "Detailed CAD integration files and technical drawings",
-      "Direct technical consultation at the planning stage",
-      "Mechanism-only hardware supply for bespoke cabinetry",
-      "Priority manufacturing and dedicated B2B trade account",
-    ],
-  },
-  {
-    id: "property-developers",
-    title: "Property Developers & Micro-Apartments",
-    tagline: "Add functional square footage without increasing footprint.",
-    image: "/images/trade/customers/new-builds.jpg",
-    description:
-      "Market compact urban studios as full living spaces rather than compromised bedrooms. Wall beds command higher rental yields and appeal to design-conscious tenants who demand spacious living.",
-    bullets: [
-      "Higher perceived unit value and faster lettings/sales",
-      "Differentiate developments from conventional small apartments",
-      "Volume commercial pricing for multi-unit schemes",
-      "Available in vertical and horizontal orientations across 24 sizes",
-    ],
-  },
-  {
-    id: "furniture-retailers",
-    title: "Independent Furniture Retailers",
-    tagline: "Expand your product range. Increase margins. Delight clients.",
-    image: "/images/trade/customers/furniture-retailers.jpg",
-    description:
-      "Murphy beds are one of the fastest-growing categories in modern home furniture. Partner with Wall Bed King for showroom display units, staff training, marketing collateral, and direct drop-shipping.",
-    bullets: [
-      "Generous commercial margins and display discounts",
-      "Comprehensive sales training and point-of-sale materials",
-      "Drop-ship directly to your end client or stock replenishment",
-      "Direct factory backing with zero middleman supply delays",
-    ],
-  },
-  {
-    id: "care-homes",
-    title: "Care Homes & Assisted Living",
-    tagline: "Dignity, safety, and independence—by design.",
-    image: "/images/trade/customers/care-homes.jpg",
-    description:
-      "Lightweight, counterbalanced operation empowers residents of varying physical abilities to manage their space with dignity. Adaptable daytime rooms simplify daily routines and clinical care visits.",
-    bullets: [
-      "Finger-light operation counterbalanced by gas pistons",
-      "Hygic, anti-microbial easy-clean steel surfaces".replace("Hygic", "Hygienic"),
-      "Flexible layouts for physiotherapy and daytime activities",
-      "Lifetime mechanism warranty and priority customer support",
-    ],
-  },
-  {
-    id: "emergency-services",
-    title: "Fire Stations & Emergency Services",
-    tagline: "Rest when you can. Respond when you must.",
-    image: "/images/trade/customers/fire-stations.jpg",
-    description:
-      "Emergency personnel require dependable, restorative rest on shift. Our heavy-duty wall beds create comfortable private rest quarters that fold away in 3 seconds to clear rooms for briefings, drills, or communal duties.",
-    bullets: [
-      "Trusted by Lincolnshire Fire & Rescue, Met Police, and emergency services",
-      "Instant 3-second deployment for shift rotations",
-      "Heavy industrial gauge steel frames built for 24/7 duty",
-      "Frees valuable floor space for training and equipment storage",
-    ],
-  },
-  {
-    id: "hospitals",
-    title: "Hospitals & Healthcare Quarters",
-    tagline: "Keep families close without compromising clinical care.",
-    image: "/images/trade/customers/hospitals.jpg",
-    description:
-      "Comfortable overnight rest for family members, carers, and on-call medical staff in patient rooms or hospital accommodations. Folds neatly against the wall to maintain sterile, unobstructed medical corridors.",
-    bullets: [
-      "Infection-control friendly, non-porous powder-coated steel",
-      "Zero footprint during doctors' rounds and daytime care",
-      "Accepts standard orthopedic and pocket sprung mattresses up to 30cm",
-      "Rapid delivery for acute NHS and private clinic requirements",
-    ],
-  },
-  {
-    id: "tiny-homes",
-    title: "Tiny Homes & Modular Pod Builders",
-    tagline: "Maximum living comfort in a minimal structural footprint.",
-    image: "/images/trade/customers/tiny-home-builders.jpg",
-    description:
-      "Every centimeter matters in mobile and prefabricated architecture. Our robust frames endure the structural vibrations of transit while delivering full-size luxury sleeping comfort for owners and glamping guests.",
-    bullets: [
-      "Ideal for garden studios, glamping pods, and prefab units",
-      "Compact installation depth with integrated birch sprung slats",
-      "Smooth counterbalanced opening requiring zero floor tracks",
-      "Full range of sizes from compact Single to Super King",
-    ],
-  },
-  {
-    id: "shepherds-huts",
-    title: "Shepherd's Huts & Glamping Retreats",
-    tagline: "Heritage artisan charm meets modern German engineering.",
-    image: "/images/trade/customers/shepherds-hut-builders.jpg",
-    description:
-      "Featured by premier hut builders including Riverside Shepherd Huts. Wall beds double daytime living and dining space in boutique glamping retreats, creating an unforgettable guest experience.",
-    bullets: [
-      "Over 77+ huts supplied for Riverside Shepherd Huts and boutique makers",
-      "Hides neatly inside traditional timber cabinetry and cladded walls",
-      "Fast turnaround to keep custom hut builds on schedule",
-      "Guests love the clever space-saving novelty and supreme comfort",
-    ],
-  },
-  {
-    id: "renovations",
-    title: "Renovation & Conversion Specialists",
-    tagline: "Transform awkward spaces into high-value multifunctional rooms.",
-    image: "/images/trade/customers/renovation-conversion-specialists.jpg",
-    description:
-      "Loft conversions, basement suites, and garage transformations often deal with constrained dimensions. Wall beds unlock genuine multi-room functionality, turning small extensions into home offices by day and guest suites by night.",
-    bullets: [
-      "Vertical and horizontal models suited to sloped loft ceilings",
-      "Straightforward 1–2 hour installation by two trade fitters",
-      "Fits any standard depth wardrobe or bespoke framing",
-      "Higher client satisfaction and project appraisal value",
-    ],
-  },
-];
+import {
+  TRADE_PILLARS_EN,
+  TRADE_PILLARS_FR,
+  TRADE_PILLARS_ES,
+  SECTORS_EN,
+  SECTORS_FR,
+  SECTORS_ES,
+} from "@/data/trade-content";
 
 export default function TradePage() {
-  const { t, localizedHref } = useLocale();
+  const { t, localizedHref, locale } = useLocale();
+  const isFr = locale === "fr";
+  const isEs = locale === "es";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -299,12 +116,29 @@ export default function TradePage() {
     }
   };
 
-  const STATS = [
-    { value: "50,000+", label: "Commercial & Residential Units Installed" },
-    { value: "30,000+", label: "Piston Cycles Tested (German Struts)" },
-    { value: "Lifetime", label: "Mechanism Frame & Hinge Warranty" },
-    { value: "100%", label: "Direct European Factory Manufacturing" },
-  ];
+  const TRADE_PILLARS = locale === "fr" ? TRADE_PILLARS_FR : locale === "es" ? TRADE_PILLARS_ES : TRADE_PILLARS_EN;
+  const SECTORS = locale === "fr" ? SECTORS_FR : locale === "es" ? SECTORS_ES : SECTORS_EN;
+
+  const STATS = locale === "fr"
+    ? [
+        { value: "50 000+", label: "Unités résidentielles et professionnelles installées" },
+        { value: "30 000+", label: "Cycles de pistons testés (Vérins allemands)" },
+        { value: "À vie", label: "Garantie du mécanisme et du châssis" },
+        { value: "100%", label: "Fabrication directe en usine européenne" },
+      ]
+    : locale === "es"
+    ? [
+        { value: "50.000+", label: "Unidades residenciales y profesionales instaladas" },
+        { value: "30.000+", label: "Ciclos de pistones probados (Pistones alemanes)" },
+        { value: "De por vida", label: "Garantía del mecanismo y del chasis" },
+        { value: "100%", label: "Fabricación directa en fábrica europea" },
+      ]
+    : [
+        { value: "50,000+", label: "Commercial & Residential Units Installed" },
+        { value: "30,000+", label: "Piston Cycles Tested (German Struts)" },
+        { value: "Lifetime", label: "Mechanism Frame & Hinge Warranty" },
+        { value: "100%", label: "Direct European Factory Manufacturing" },
+      ];
 
   return (
     <div className="bg-wbk-white min-h-screen pt-12 pb-24 font-poppins">
@@ -387,7 +221,9 @@ export default function TradePage() {
               {t("tradePage.pillarsTitle", "Engineered for Commercial Reliability")}
             </h2>
             <p className="mt-3 text-sm text-wbk-brown">
-              Factory direct pricing, certified German gas pistons, and comprehensive technical CAD support.
+              {isFr
+                ? "Tarifs directs usine, vérins à gaz allemands certifiés et assistance technique avec fichiers CAD complets."
+                : "Factory direct pricing, certified German gas pistons, and comprehensive technical CAD support."}
             </p>
           </div>
 
@@ -433,7 +269,9 @@ export default function TradePage() {
               {t("tradePage.sectorsTitle", "Sectors We Specialize In")}
             </h2>
             <p className="mt-3 text-sm text-wbk-brown">
-              Explore how our precision wall bed mechanisms empower commercial clients across diverse industries.
+              {isFr
+                ? "Découvrez comment nos lits escamotables de précision répondent aux besoins des professionnels de nombreux secteurs."
+                : "Explore how our precision wall bed mechanisms empower commercial clients across diverse industries."}
             </p>
           </div>
 
@@ -463,7 +301,7 @@ export default function TradePage() {
                     {/* Content Column */}
                     <div className={`lg:col-span-7 space-y-4 ${isEven ? "lg:order-1" : "lg:order-2"}`}>
                       <div className="inline-block px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-wbk-black text-white">
-                        Sector #{String(index + 1).padStart(2, "0")}
+                        {isFr ? `Secteur n°${String(index + 1).padStart(2, "0")}` : isEs ? `Sector n.° ${String(index + 1).padStart(2, "0")}` : `Sector #${String(index + 1).padStart(2, "0")}`}
                       </div>
                       <h3 className="font-new-york text-2xl sm:text-3xl text-wbk-black">
                         {sector.title}
@@ -477,7 +315,7 @@ export default function TradePage() {
 
                       <div className="pt-2">
                         <h4 className="text-[11px] font-bold uppercase tracking-wider text-wbk-black mb-2.5">
-                          Key Advantages:
+                          {isFr ? "Principaux avantages :" : isEs ? "Ventajas principales:" : "Key Advantages:"}
                         </h4>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-wbk-brown">
                           {sector.bullets.map((b, i) => (
@@ -500,7 +338,7 @@ export default function TradePage() {
                           }
                           className="text-xs font-semibold text-wbk-black hover:text-wbk-green inline-flex items-center gap-1 transition-colors"
                         >
-                          <span>Inquire for {sector.title}</span>
+                          <span>{isFr ? `Demander un devis pour : ${sector.title}` : isEs ? `Solicitar presupuesto para: ${sector.title}` : `Inquire for ${sector.title}`}</span>
                           <IconArrowRight size={14} />
                         </a>
                       </div>
@@ -519,19 +357,21 @@ export default function TradePage() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
             <div className="max-w-2xl">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-wbk-gold">
-                Proven Client Results
+                {isFr ? "Résultats clients éprouvés" : isEs ? "Resultados contrastados de clientes" : "Proven Client Results"}
               </span>
               <h2 className="font-new-york text-3xl sm:text-4xl text-white mt-2">
-                Real Projects. Proven Commercial ROI.
+                {isFr ? "Projets réels. Rentabilité commerciale prouvée." : isEs ? "Proyectos reales. Rentabilidad comercial probada." : "Real Projects. Proven Commercial ROI."}
               </h2>
               <p className="mt-3 text-sm text-wbk-lightgrey/80 leading-relaxed font-light">
-                See how Metropolitan Housing Association, B&H Properties (52 units in Central London), Riverside Shepherd Huts (77+ glamping units), Stoneham Construction, and emergency services fire stations successfully optimize space with Wall Bed King.
+                {isFr
+                  ? "Découvrez comment Metropolitan Housing Association, B&H Properties (52 appartements à Londres), Riverside Shepherd Huts (77+ hébergements glamping) et les casernes de secours optimisent leurs espaces avec Wall Bed King."
+                  : "See how Metropolitan Housing Association, B&H Properties (52 units in Central London), Riverside Shepherd Huts (77+ glamping units), Stoneham Construction, and emergency services fire stations successfully optimize space with Wall Bed King."}
               </p>
               <div className="mt-6 flex flex-wrap gap-4 items-center text-xs text-wbk-lightgrey">
-                <span className="border-r border-white/20 pr-4">52 London Apartments</span>
-                <span className="border-r border-white/20 pr-4">77+ Glamping Huts</span>
-                <span className="border-r border-white/20 pr-4">Emergency Rest Stations</span>
-                <span>Supported Living</span>
+                <span className="border-r border-white/20 pr-4">{isFr ? "52 appartements à Londres" : isEs ? "52 apartamentos en Londres" : "52 London Apartments"}</span>
+                <span className="border-r border-white/20 pr-4">{isFr ? "77+ hébergements glamping" : isEs ? "Más de 77 cabañas glamping" : "77+ Glamping Huts"}</span>
+                <span className="border-r border-white/20 pr-4">{isFr ? "Casernes de secours" : isEs ? "Estaciones de emergencias" : "Emergency Rest Stations"}</span>
+                <span>{isFr ? "Habitats adaptés" : isEs ? "Viviendas tuteladas" : "Supported Living"}</span>
               </div>
             </div>
 
@@ -540,7 +380,7 @@ export default function TradePage() {
                 href={localizedHref("/case-studies")}
                 className="px-8 py-4 bg-wbk-gold text-wbk-black text-xs font-bold uppercase tracking-wider hover:bg-white transition-colors text-center inline-block"
               >
-                Read All Case Studies
+                {isFr ? "Consulter toutes les études de cas" : isEs ? "Leer todos los casos de estudio" : "Read All Case Studies"}
               </Link>
             </div>
           </div>
@@ -575,7 +415,7 @@ export default function TradePage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">
-                      Direct Commercial Line
+                      {isFr ? "Ligne directe professionnels" : isEs ? "Línea comercial directa" : "Direct Commercial Line"}
                     </p>
                     <div className="mt-1">
                       <ProtectedContact type="phone" />
@@ -589,7 +429,7 @@ export default function TradePage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">
-                      Trade Email Desk
+                      {isFr ? "E-mail service pro" : isEs ? "Correo del departamento comercial" : "Trade Email Desk"}
                     </p>
                     <div className="mt-1">
                       <ProtectedContact type="email" />
@@ -602,19 +442,27 @@ export default function TradePage() {
                     <IconClock size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">Operating Hours</p>
-                    <p className="text-xs text-wbk-brown">Monday – Friday: 9:00 – 20:00</p>
-                    <p className="text-xs text-wbk-brown">Saturday: 9:00 – 12:00</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-wbk-black">
+                      {isFr ? "Heures d'ouverture" : isEs ? "Horario de atención" : "Operating Hours"}
+                    </p>
+                    <p className="text-xs text-wbk-brown">
+                      {isFr ? "Lundi – Vendredi : 9h00 – 20h00" : isEs ? "Lunes – Viernes: 9:00 – 20:00" : "Monday – Friday: 9:00 – 20:00"}
+                    </p>
+                    <p className="text-xs text-wbk-brown">
+                      {isFr ? "Samedi : 9h00 – 12h00" : isEs ? "Sábado: 9:00 – 12:00" : "Saturday: 9:00 – 12:00"}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-5 bg-white border border-wbk-lightgrey/80">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-wbk-black mb-1.5">
-                  Need CAD Files or Tenders?
+                  {isFr ? "Besoin de fichiers CAD ou d'un appel d'offres ?" : isEs ? "¿Necesita archivos CAD o licitaciones?" : "Need CAD Files or Tenders?"}
                 </h4>
                 <p className="text-xs text-wbk-brown leading-relaxed">
-                  We supply 2D DWG, 3D STEP, and PDF integration manuals for architectural tenders and millwork packages.
+                  {isFr
+                    ? "Nous fournissons des fichiers 2D DWG, 3D STEP et des guides d'intégration PDF pour les architectes et menuisiers."
+                    : "We supply 2D DWG, 3D STEP, and PDF integration manuals for architectural tenders and millwork packages."}
                 </p>
               </div>
             </div>
@@ -627,7 +475,9 @@ export default function TradePage() {
                     <div className="w-12 h-12 bg-green-100 text-green-700 mx-auto flex items-center justify-center rounded-full">
                       <IconCheck size={24} />
                     </div>
-                    <h3 className="font-new-york text-xl text-green-900">Inquiry Received Successfully</h3>
+                    <h3 className="font-new-york text-xl text-green-900">
+                      {isFr ? "Demande reçue avec succès" : isEs ? "Solicitud recibida correctamente" : "Inquiry Received Successfully"}
+                    </h3>
                     <p className="text-xs sm:text-sm text-green-800 leading-relaxed">
                       {t(
                         "tradePage.formSuccess",
@@ -642,7 +492,7 @@ export default function TradePage() {
                       }}
                       className="mt-4 px-6 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-colors"
                     >
-                      Submit Another Inquiry
+                      {isFr ? "Envoyer une autre demande" : isEs ? "Enviar otra solicitud" : "Submit Another Inquiry"}
                     </button>
                   </div>
                 ) : (
@@ -675,7 +525,7 @@ export default function TradePage() {
                           value={formData.name}
                           onChange={handleInputChange}
                           className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none"
-                          placeholder="e.g. Jane Doe"
+                          placeholder={isFr ? "ex. Jean Dupont" : isEs ? "ej. Juan Pérez" : "e.g. Jane Doe"}
                         />
                       </div>
 
@@ -690,7 +540,7 @@ export default function TradePage() {
                           value={formData.company}
                           onChange={handleInputChange}
                           className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none"
-                          placeholder="e.g. Acme Developments Ltd"
+                          placeholder={isFr ? "ex. SARL Architecture & Design" : isEs ? "ej. Arquitectura y Promociones S.L." : "e.g. Acme Developments Ltd"}
                         />
                       </div>
                     </div>
@@ -721,7 +571,7 @@ export default function TradePage() {
                           value={formData.phone}
                           onChange={handleInputChange}
                           className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none"
-                          placeholder="+44 7123 456789"
+                          placeholder="+33 6 12 34 56 78"
                         />
                       </div>
                     </div>
@@ -737,18 +587,18 @@ export default function TradePage() {
                           onChange={handleInputChange}
                           className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white"
                         >
-                          <option value="Hospitality & Hotels">Hospitality & Hotels</option>
-                          <option value="Property Development & Micro-Apartments">Property Development & Micro-Apartments</option>
-                          <option value="Cabinet Makers & Custom Joiners">Cabinet Makers & Custom Joiners</option>
-                          <option value="Independent Furniture Retailers">Independent Furniture Retailers</option>
-                          <option value="Care Homes & Assisted Living">Care Homes & Assisted Living</option>
-                          <option value="Fire Stations & Emergency Services">Fire Stations & Emergency Services</option>
-                          <option value="Hospitals & Healthcare Facilities">Hospitals & Healthcare Facilities</option>
-                          <option value="Shepherd's Huts & Glamping Pods">Shepherd&apos;s Huts & Glamping Pods</option>
-                          <option value="Tiny Homes & Modular Buildings">Tiny Homes & Modular Buildings</option>
-                          <option value="Renovation & Conversion Specialists">Renovation & Conversion Specialists</option>
-                          <option value="Architectural / Interior Design">Architectural / Interior Design</option>
-                          <option value="Other">Other Commercial Application</option>
+                          <option value="Hospitality & Hotels">{isFr ? "Hôtellerie & Résidences de tourisme" : isEs ? "Hostelería y Residencias" : "Hospitality & Hotels"}</option>
+                          <option value="Property Development & Micro-Apartments">{isFr ? "Promotion immobilière & Micro-appartements" : isEs ? "Promoción inmobiliaria y Microapartamentos" : "Property Development & Micro-Apartments"}</option>
+                          <option value="Cabinet Makers & Custom Joiners">{isFr ? "Menuisiers & Agenceurs sur mesure" : isEs ? "Ebanistas y Carpinteros a medida" : "Cabinet Makers & Custom Joiners"}</option>
+                          <option value="Independent Furniture Retailers">{isFr ? "Revendeurs de mobilier & Boutiques" : isEs ? "Distribuidores y Tiendas de muebles" : "Independent Furniture Retailers"}</option>
+                          <option value="Care Homes & Assisted Living">{isFr ? "Résidences seniors & Soins" : isEs ? "Residencias de mayores y Asistidas" : "Care Homes & Assisted Living"}</option>
+                          <option value="Fire Stations & Emergency Services">{isFr ? "Casernes de pompiers & Urgences" : isEs ? "Parques de bomberos y Emergencias" : "Fire Stations & Emergency Services"}</option>
+                          <option value="Hospitals & Healthcare Facilities">{isFr ? "Hôpitaux & Cliniques" : isEs ? "Hospitales y Centros sanitarios" : "Hospitals & Healthcare Facilities"}</option>
+                          <option value="Shepherd's Huts & Glamping Pods">{isFr ? "Glamping, Roulottes & Hébergements insolites" : isEs ? "Glamping, Cabañas y Alojamientos singulares" : "Shepherd's Huts & Glamping Pods"}</option>
+                          <option value="Tiny Homes & Modular Buildings">{isFr ? "Tiny Houses & Bâtiments modulaires" : isEs ? "Mini-casas y Construcción modular" : "Tiny Homes & Modular Buildings"}</option>
+                          <option value="Renovation & Conversion Specialists">{isFr ? "Rénovation & Agencement d'intérieur" : isEs ? "Especialistas en reformas y reconversiones" : "Renovation & Conversion Specialists"}</option>
+                          <option value="Architectural / Interior Design">{isFr ? "Architecture & Décoration" : isEs ? "Arquitectura y Diseño de interiores" : "Architectural / Interior Design"}</option>
+                          <option value="Other">{isFr ? "Autre projet professionnel" : isEs ? "Otras aplicaciones profesionales" : "Other Commercial Application"}</option>
                         </select>
                       </div>
 
@@ -762,11 +612,11 @@ export default function TradePage() {
                           onChange={handleInputChange}
                           className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white"
                         >
-                          <option value="1-5 units">1 – 5 units</option>
-                          <option value="6-15 units">6 – 15 units</option>
-                          <option value="16-50 units">16 – 50 units</option>
-                          <option value="50+ units">50+ units (Large Tender / Scheme)</option>
-                          <option value="Ongoing / Retail Account">Ongoing / Retail Partnership</option>
+                          <option value="1-5 units">{isFr ? "1 à 5 unités" : isEs ? "1 – 5 unidades" : "1 – 5 units"}</option>
+                          <option value="6-15 units">{isFr ? "6 à 15 unités" : isEs ? "6 – 15 unidades" : "6 – 15 units"}</option>
+                          <option value="16-50 units">{isFr ? "16 à 50 unités" : isEs ? "16 – 50 unidades" : "16 – 50 units"}</option>
+                          <option value="50+ units">{isFr ? "50+ unités (Grand projet / Appel d'offres)" : isEs ? "50+ unidades (Gran proyecto / Licitación)" : "50+ units (Large Tender / Scheme)"}</option>
+                          <option value="Ongoing / Retail Account">{isFr ? "Partenariat continu / Compte revendeur" : isEs ? "Colaboración continua / Cuenta distribuidor" : "Ongoing / Retail Partnership"}</option>
                         </select>
                       </div>
                     </div>
@@ -782,7 +632,11 @@ export default function TradePage() {
                         value={formData.message}
                         onChange={handleInputChange}
                         className="w-full px-3.5 py-2.5 text-xs border border-wbk-lightgrey focus:border-wbk-black focus:outline-none resize-y"
-                        placeholder="Please describe your project, preferred bed sizes or orientations, delivery timeline, or CAD file requests..."
+                        placeholder={
+                          isFr
+                            ? "Décrivez votre projet, dimensions ou orientations souhaitées, calendrier de livraison, besoin de fichiers CAD..."
+                            : "Please describe your project, preferred bed sizes or orientations, delivery timeline, or CAD file requests..."
+                        }
                       />
                     </div>
 

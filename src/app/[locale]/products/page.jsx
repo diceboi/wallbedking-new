@@ -587,16 +587,42 @@ function ProductsSearchContent() {
     updateUrlParams("", "All", "All", "All", "All", "All", "All");
   };
 
-  const popularSuggestions = [
-    "Classic Vertical",
-    "Studio Bed",
-    "Integrated Murphy Bed",
-    "160x200",
-    "Single",
-    "Modular Sofa",
-    "Luxury Mattress",
-    "Vertical Cabinet",
-  ];
+  const popularSuggestions = useMemo(() => {
+    if (locale === "fr") {
+      return [
+        "Lit escamotable vertical",
+        "Lit studio",
+        "160x200",
+        "140x200",
+        "Simple",
+        "Canapé modulaire",
+        "Matelas luxe",
+        "Armoire verticale",
+      ];
+    }
+    if (locale === "es") {
+      return [
+        "Cama abatible vertical",
+        "Cama studio",
+        "160x200",
+        "140x200",
+        "Individual",
+        "Sofá modular",
+        "Colchón de lujo",
+        "Armario vertical",
+      ];
+    }
+    return [
+      "Classic Vertical",
+      "Studio Bed",
+      "Integrated Murphy Bed",
+      "160x200",
+      "Single",
+      "Modular Sofa",
+      "Luxury Mattress",
+      "Vertical Cabinet",
+    ];
+  }, [locale]);
 
   if (!mounted) {
     return (
@@ -947,7 +973,9 @@ function ProductsSearchContent() {
                     <span>
                       {t("product.orientation", "Orientation")}:{" "}
                       <strong className="font-semibold">
-                        {selectedOrientation}
+                        {selectedOrientation === "All"
+                          ? t("categories.all", "All")
+                          : orientationOptions.find((o) => o.key === selectedOrientation)?.label || selectedOrientation}
                       </strong>
                     </span>
                     <IconChevronDown
@@ -1221,7 +1249,7 @@ function ProductsSearchContent() {
                             size={13}
                             className="text-wbk-brown shrink-0"
                           />
-                          <span>{t("categories.all", "All Tags")}</span>
+                          <span>{t("categories.allTags", "All Tags")}</span>
                         </button>
                         {availableTags.map((tag) => (
                           <button
@@ -1383,7 +1411,7 @@ function ProductsSearchContent() {
                   title="Remove orientation filter"
                 >
                   <span className="font-medium text-white">
-                    {selectedOrientation}
+                    {orientationOptions.find((o) => o.key === selectedOrientation)?.label || selectedOrientation}
                   </span>
                   <IconX
                     size={11}
