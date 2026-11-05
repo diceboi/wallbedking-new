@@ -516,6 +516,125 @@ const LOCALIZED_FEATURES = {
   },
 };
 
+// Multilingual model overviews (subtitles & descriptions) per product href
+const PRODUCT_OVERVIEWS = {
+  "/products/beds/classic-morphy-bed": {
+    en: {
+      subtitle: "Versatile Space-Saving Wall Bed",
+      description:
+        "A flexible Murphy bed that can be used independently, paired with our ready-made cabinet, or fitted into custom-made furniture. Ideal for any room layout.",
+    },
+    de: {
+      subtitle: "Vielseitiges platzsparendes Schrankbett",
+      description:
+        "Ein flexibles Schrankbett, das freistehend genutzt, mit unserem fertigen Schrank kombiniert oder in maßgefertigte Möbel integriert werden kann. Ideal für jeden Raum.",
+    },
+    fr: {
+      subtitle: "Lit escamotable polyvalent gain de place",
+      description:
+        "Un lit escamotable flexible pouvant être utilisé seul, combiné avec notre armoire prête à poser ou intégré dans un meuble sur mesure. Idéal pour tout type de pièce.",
+    },
+    es: {
+      subtitle: "Cama abatible versátil para ahorrar espacio",
+      description:
+        "Una cama abatible flexible que se puede utilizar de forma independiente, combinada con nuestro armario listo para montar o integrada en muebles a medida. Ideal para cualquier espacio.",
+    },
+    it: {
+      subtitle: "Letto a scomparsa versatile e salvaspazio",
+      description:
+        "Un letto a scomparsa flessibile che può essere utilizzato in modo indipendente, abbinato al nostro mobile pronto all'uso o integrato in arredi su misura. Ideale per qualsiasi ambiente.",
+    },
+    por: {
+      subtitle: "Cama rebatível versátil para poupança de espaço",
+      description:
+        "Uma cama rebatível flexível que pode ser utilizada de forma independente, combinada com o nosso móvel pronto a montar ou integrada em mobiliário por medida. Ideal para qualquer divisão.",
+    },
+  },
+  "/products/beds/studio-morphy-bed": {
+    en: {
+      subtitle: "Complete Space-Saving Wall Bed",
+      description:
+        "A stylish, ready-to-install Murphy bed with sleek front panels. No additional cabinetry required, making it a practical solution for modern living.",
+    },
+    de: {
+      subtitle: "Komplettes platzsparendes Schrankbett",
+      description:
+        "Ein stilvolles, montagefertiges Schrankbett mit eleganten Frontblenden. Kein zusätzlicher Schrankkorpus erforderlich – die praktische Lösung für modernes Wohnen.",
+    },
+    fr: {
+      subtitle: "Lit escamotable complet gain de place",
+      description:
+        "Un lit escamotable élégant et prêt à installer avec des panneaux frontaux soignés. Aucune armoire supplémentaire nécessaire, une solution pratique pour l'habitat moderne.",
+    },
+    es: {
+      subtitle: "Cama abatible completa para ahorrar espacio",
+      description:
+        "Una elegante cama abatible lista para instalar con acabados frontales de diseño. No requiere armario adicional, siendo una solución práctica para la vida moderna.",
+    },
+    it: {
+      subtitle: "Letto a scomparsa completo e salvaspazio",
+      description:
+        "Un elegante letto a scomparsa pronto all'installazione con pannelli frontali rifiniti. Non necessita di mobile aggiuntivo, una soluzione practical per l'abitare moderno.",
+    },
+    por: {
+      subtitle: "Cama rebatível completa para poupança de espaço",
+      description:
+        "Uma elegante cama rebatível pronta a instalar com painéis frontais requintados. Não requer armário adicional, tornando-se uma solução prática para o estilo de vida moderno.",
+    },
+  },
+  "/products/beds/integrated-morphy-bed": {
+    en: {
+      subtitle: "Bespoke Integrated Wall Bed",
+      description:
+        "Designed for custom-made cabinetry, this discreet fold-away bed blends seamlessly with your furniture for a sophisticated, space-saving finish.",
+    },
+    de: {
+      subtitle: "Maßgeschneidertes integriertes Schrankbett",
+      description:
+        "Entwickelt für individuelle Einbaumöbel fügt sich dieses diskrete Klappbett nahtlos in Ihre Schränke ein – für ein anspruchsvolles, platzsparendes Gesamtbild.",
+    },
+    fr: {
+      subtitle: "Lit escamotable intégré sur mesure",
+      description:
+        "Conçu pour des meubles sur mesure, ce lit escamotable discret s'intègre harmonieusement dans vos menuiseries pour une finition raffinée et un gain de place optimal.",
+    },
+    es: {
+      subtitle: "Cama abatible integrada a medida",
+      description:
+        "Diseñada para muebles y armarios a medida, esta discreta cama abatible se integra a la perfección en su mobiliario logrando un acabado sofisticado y optimizado.",
+    },
+    it: {
+      subtitle: "Letto a scomparsa integrato su misura",
+      description:
+        "Progettato per armadiature su misura, questo discreto letto a ribalta si fonde perfettamente con i tuoi mobili per una finitura sofisticata e salvaspazio.",
+    },
+    por: {
+      subtitle: "Cama rebatível integrada por medida",
+      description:
+        "Concebida para carpintaria e roupeiros por medida, esta discreta cama rebatível funde-se perfeitamente no seu mobiliário para um acabamento sofisticado e funcional.",
+    },
+  },
+};
+
+function getProductOverview(item, locale = "en") {
+  if (!item) return null;
+  const normLocale = (locale || "en").toLowerCase();
+  const langKey = normLocale === "por" || normLocale === "pt" ? "por" : normLocale;
+
+  const getEntry = (href) => {
+    if (!href) return null;
+    const entry = PRODUCT_OVERVIEWS[href];
+    if (!entry) return null;
+    return entry[langKey] || entry.en || null;
+  };
+
+  const direct = getEntry(item.href);
+  if (direct) return direct;
+
+  const cleanHref = (item.href || "").split("?")[0].replace(/\/+$/, "");
+  return getEntry(cleanHref);
+}
+
 function getProductFeatures(item, locale = "en") {
   if (!item) return [];
   const normLocale = (locale || "en").toLowerCase();
@@ -690,6 +809,10 @@ export function SubmenuSplitTest() {
     return getProductFeatures(activeItem, locale);
   }, [activeItem, locale]);
 
+  const productOverview = useMemo(() => {
+    return getProductOverview(activeItem, locale);
+  }, [activeItem, locale]);
+
   const vatLabel = useMemo(() => {
     if (locale === "de") return "inkl. MwSt. & Rahmen";
     if (locale === "fr") return "TVA & cadre inclus";
@@ -756,7 +879,7 @@ export function SubmenuSplitTest() {
                 </div>
               </div>
             ) : (
-            <div className="w-full flex items-stretch gap-6 min-h-[390px] max-h-[440px]">
+            <div className="w-full flex items-stretch gap-6 min-h-[390px] max-h-[480px]">
               {/* ── LEFT COLUMN: Product List & All Category Link ── */}
               <div className="w-[330px] xl:w-[360px] shrink-0 border-r border-wbk-lightgrey/70 pr-5 flex flex-col justify-between">
                 <div>
@@ -927,7 +1050,7 @@ export function SubmenuSplitTest() {
                         <Link
                           href={localizedHref(activeItem.href)}
                           onClick={() => setSubMenu(null)}
-                          className="group relative flex-1 min-h-[280px] max-h-[300px] w-full rounded-none overflow-hidden bg-gradient-to-b from-[#FBF9F6] to-[#F5F2EC] flex items-center justify-center p-3 cursor-pointer shadow-xs"
+                          className="group relative flex-1 min-h-[280px] max-h-[330px] w-full rounded-none overflow-hidden bg-gradient-to-b from-[#FBF9F6] to-[#F5F2EC] flex items-center justify-center p-3 cursor-pointer shadow-xs"
                         >
                           {currentPreviewSrc && (
                             <Image
@@ -1005,6 +1128,22 @@ export function SubmenuSplitTest() {
                               </div>
                             ))}
                           </div>
+
+                          {/* Subtitle & Descriptive Paragraph under the bullet points */}
+                          {productOverview && (
+                            <div className="mt-3 pt-2.5 border-t border-wbk-lightgrey/60">
+                              {productOverview.subtitle && (
+                                <h5 className="text-[12px] xl:text-[13px] font-semibold text-wbk-black leading-snug">
+                                  {productOverview.subtitle}
+                                </h5>
+                              )}
+                              {productOverview.description && (
+                                <p className="mt-1 text-[11px] xl:text-xs text-wbk-black/75 leading-relaxed">
+                                  {productOverview.description}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Bottom CTA Button */}

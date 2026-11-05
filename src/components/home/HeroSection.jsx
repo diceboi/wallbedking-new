@@ -37,7 +37,7 @@ export function HeroSection() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4">
           <Button
             as="link"
-            href={localizedHref("/products/beds")}
+            href={localizedHref("/products")}
             variant="black"
             size="lg"
             className="text-xs font-semibold uppercase tracking-wider py-3.5 px-7 shadow-lg"

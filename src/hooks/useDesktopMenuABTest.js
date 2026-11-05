@@ -57,7 +57,13 @@ export function useDesktopMenuABTest() {
       } catch (e) {}
     }
 
-    // 2. PostHog Feature Flag evaluation
+    // 2. Only evaluate and trigger experiment exposure for desktop viewports (>= 1280px, where mega menu is visible)
+    if (typeof window !== "undefined" && window.innerWidth < 1280) {
+      setVariant("control");
+      return;
+    }
+
+    // 3. PostHog Feature Flag evaluation
     const checkFlag = () => {
       try {
         if (typeof posthog !== "undefined" && typeof posthog.getFeatureFlag === "function") {
