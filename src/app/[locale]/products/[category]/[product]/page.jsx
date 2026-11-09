@@ -2778,7 +2778,7 @@ export default function ProductDetailPage() {
 
                                   return (
                                     <button
-                                      key={variant.id || variant.sku || idx}
+                                      key={`table-finish-${variant.id || variant.sku || idx}-${idx}`}
                                       type="button"
                                       onClick={() => {
                                         handleTableVariantSelect(variant);

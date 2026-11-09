@@ -1737,9 +1737,23 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
   });
 
   const combinedItems = [...enrichedRawItems];
-  const existingSlugs = new Set(combinedItems.map((p) => p.slug));
+  const existingSlugs = new Set(combinedItems.map((p) => p.slug).filter(Boolean));
+  const existingIds = new Set(
+    combinedItems
+      .flatMap((p) => [p.id, p.rawId, String(p.id), String(p.rawId)])
+      .filter(Boolean)
+  );
+  const existingSkus = new Set(combinedItems.map((p) => p.sku).filter(Boolean));
+
   for (const tv of (tablesCatalogData?.variants || [])) {
-    if (!existingSlugs.has(tv.slug)) {
+    const tvIdStr = String(tv.id);
+    const isAlreadyPresent =
+      existingSlugs.has(tv.slug) ||
+      existingIds.has(tv.id) ||
+      existingIds.has(tvIdStr) ||
+      (tv.sku && existingSkus.has(tv.sku));
+
+    if (!isAlreadyPresent) {
       combinedItems.push(tv);
     }
   }
