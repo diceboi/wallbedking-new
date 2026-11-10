@@ -134,19 +134,22 @@ export function PromotionalCampaignModal({
           secondary_cta_text: campaign.hero_banner?.secondary_cta_text || "",
           secondary_cta_link: campaign.hero_banner?.secondary_cta_link || "",
           media_type:
-            campaign.hero_banner?.media_type ||
-            (/\.(mp4|webm|ogg|mov)($|\?)/i.test(campaign.hero_banner?.image || campaign.hero_banner?.video || "")
-              ? "video"
-              : "image"),
+            campaign.hero_banner?.media_type === "image"
+              ? "image"
+              : campaign.hero_banner?.media_type === "video"
+                ? "video"
+                : (/\.(mp4|webm|ogg|mov)($|\?)/i.test(campaign.hero_banner?.video || "") ? "video" : "image"),
           image:
             campaign.hero_banner?.image && !/\.(mp4|webm|ogg|mov)($|\?)/i.test(campaign.hero_banner.image)
               ? campaign.hero_banner.image
-              : "",
+              : (campaign.hero_banner?.image || ""),
           video:
-            campaign.hero_banner?.video ||
-            (/\.(mp4|webm|ogg|mov)($|\?)/i.test(campaign.hero_banner?.image || "")
-              ? campaign.hero_banner?.image
-              : ""),
+            campaign.hero_banner?.media_type === "image"
+              ? ""
+              : (campaign.hero_banner?.video ||
+                 (/\.(mp4|webm|ogg|mov)($|\?)/i.test(campaign.hero_banner?.image || "")
+                   ? campaign.hero_banner?.image
+                   : "")),
           translations: campaign.hero_banner?.translations || {},
         },
       });
@@ -536,25 +539,14 @@ export function PromotionalCampaignModal({
     setSaving(true);
     setError(null);
     try {
-      const heroMediaIsVideo =
-        form.hero_banner?.media_type === "video" ||
-        Boolean(
-          form.hero_banner?.video ||
-            /\.(mp4|webm|ogg|mov)($|\?)/i.test(form.hero_banner?.image || "")
-        );
+      const isVideoType = form.hero_banner?.media_type === "video";
 
       const heroBannerPayload = form.hero_banner
         ? {
             ...form.hero_banner,
-            media_type: heroMediaIsVideo ? "video" : "image",
-            video: heroMediaIsVideo
-              ? form.hero_banner.video || form.hero_banner.image
-              : "",
-            image:
-              form.hero_banner.image &&
-              !/\.(mp4|webm|ogg|mov)($|\?)/i.test(form.hero_banner.image)
-                ? form.hero_banner.image
-                : "",
+            media_type: isVideoType ? "video" : "image",
+            video: isVideoType ? (form.hero_banner.video || "") : "",
+            image: form.hero_banner.image || "",
           }
         : form.hero_banner;
 
@@ -1908,7 +1900,10 @@ export function PromotionalCampaignModal({
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => updateHero("media_type", "image")}
+                          onClick={() => {
+                            updateHero("media_type", "image");
+                            updateHero("video", "");
+                          }}
                           className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg border flex items-center justify-center gap-1.5 transition-colors ${
                             form.hero_banner?.media_type !== "video"
                               ? "bg-wbk-green text-white border-wbk-green"

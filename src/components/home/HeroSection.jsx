@@ -65,23 +65,31 @@ export function HeroSection() {
   const activeHero = heroCampaigns[currentIndex] || null;
   const hasPromo = Boolean(activeHero && activeHero.hero_banner?.enabled);
 
-  const rawMedia = hasPromo
-    ? activeHero.hero_banner.video || activeHero.hero_banner.image || ""
-    : "";
-  const isVideo = hasPromo && (activeHero.hero_banner.media_type === "video" || isVideoMedia(rawMedia));
+  // If campaign explicitly sets media_type: "image", it is NEVER a video!
+  // If media_type is "video", or not specified but video URL is set: it is a video.
+  const isVideo =
+    hasPromo &&
+    activeHero.hero_banner?.media_type !== "image" &&
+    (activeHero.hero_banner?.media_type === "video" ||
+      isVideoMedia(activeHero.hero_banner?.video) ||
+      isVideoMedia(activeHero.hero_banner?.image));
+
   const mediaSource = isVideo
-    ? activeHero.hero_banner.video || (isVideoMedia(activeHero.hero_banner.image) ? activeHero.hero_banner.image : "")
+    ? activeHero.hero_banner?.video || (isVideoMedia(activeHero.hero_banner?.image) ? activeHero.hero_banner?.image : "")
     : "";
 
-  // Custom fallback / poster image for promotional campaigns (from admin fallback field)
-  const promoFallbackImage =
-    hasPromo && activeHero.hero_banner.image && !isVideoMedia(activeHero.hero_banner.image)
+  // Custom fallback / poster image for promotional campaigns (from admin fallback field or image field)
+  const promoImage =
+    hasPromo && activeHero.hero_banner?.image && !isVideoMedia(activeHero.hero_banner.image)
       ? activeHero.hero_banner.image
       : null;
 
-  // Background image: promo fallback if provided, or default murphy bed hero ONLY when no promotion exists
+  // Background image:
+  // If promo is image-based: promoImage || "/hero2.webp"
+  // If promo is video-based: promoImage (only as poster/fallback behind video)
+  // If NO promo: "/hero2.webp"
   const backgroundImage = hasPromo
-    ? promoFallbackImage || (!isVideo ? rawMedia : null)
+    ? (isVideo ? promoImage : (promoImage || "/hero2.webp"))
     : "/hero2.webp";
 
   // Autoplay attempt guard
@@ -166,7 +174,7 @@ export function HeroSection() {
             ref={videoRef}
             key={mediaSource}
             src={mediaSource}
-            poster={promoFallbackImage || undefined}
+            poster={promoImage || undefined}
             autoPlay
             muted
             loop
@@ -274,11 +282,11 @@ export function HeroSection() {
         }`}
         aria-hidden={isHeroReady}
       >
-        {/* Slightly blurred promotional fallback image (e.g. video first frame) in background if provided */}
-        {hasPromo && promoFallbackImage && (
+        {/* Slightly blurred promotional image (or video first frame) in background if provided */}
+        {hasPromo && promoImage && (
           <div className="absolute inset-0 overflow-hidden">
             <Image
-              src={promoFallbackImage}
+              src={promoImage}
               alt="Hero Preview"
               fill
               priority
