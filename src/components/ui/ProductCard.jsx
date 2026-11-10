@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { IconShoppingCart, IconHeart } from "@tabler/icons-react";
+import { IconShoppingCart, IconHeart, IconEyeCheck } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { getProductPrice, formatSizeLabel } from "@/lib/i18n";
 import { getTagMeta, getLocalizedTagName } from "@/lib/tags";
 import { TagBadge } from "@/components/ui/TagBadge";
@@ -131,8 +132,10 @@ export function ProductCard({ product, className = "" }) {
     product.hover_image ||
     "/product-images/MORPHY-Bed-Vertical-Classic-200x200-2-mattress.webp";
 
+  const { campaigns } = usePromotions();
+
   // Market-aware Pricing format
-  const pricing = getProductPrice(product, locale);
+  const pricing = getProductPrice(product, locale, campaigns);
   const priceDisplay = pricing.display;
   const isFrom = !String(priceDisplay).toLowerCase().includes("from");
 
@@ -203,13 +206,26 @@ export function ProductCard({ product, className = "" }) {
 
           {/* Sale badge */}
           {pricing.isOnSale && (
-            <span className="absolute top-0 left-0 px-6 py-3 bg-wbk-green text-white text-xs sm:text-[13px] font-bold uppercase tracking-wider z-10 border-0 select-none">
-              {t("product.sale", "Sale")}{" "}
-              {pricing.discountLabel ||
-                (pricing.discountPercent > 0
-                  ? `-${pricing.discountPercent}%`
-                  : "")}
-            </span>
+            <div className="absolute top-0 left-0 z-10 flex flex-col items-start select-none pointer-events-none">
+              <span className="px-5 py-2.5 bg-[#2D5A27] text-white text-xs sm:text-[13px] font-bold uppercase tracking-wider border-0 shadow-sm flex items-center gap-1.5">
+                <span>{t("product.sale", "Sale")}</span>
+                <span>
+                  {pricing.discountLabel ||
+                    (pricing.discountPercent > 0
+                      ? `-${pricing.discountPercent}%`
+                      : "")}
+                </span>
+              </span>
+              {pricing.appliedCampaign?.status === "preview" && (
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold uppercase tracking-wider shadow-sm mt-0.5"
+                  title="Admin Preview: Only visible to logged-in administrators"
+                >
+                  <IconEyeCheck className="w-3 h-3" />
+                  Preview
+                </span>
+              )}
+            </div>
           )}
 
           {/* Primary Tag badge */}
@@ -319,14 +335,14 @@ export function ProductCard({ product, className = "" }) {
               {isFrom ? `${t("common.from", "from")} ` : ""}
               <span
                 className={`font-semibold text-base ${
-                  pricing.isOnSale ? "text-wbk-green" : "text-wbk-black"
+                  pricing.isOnSale ? "text-[#2D5A27]" : "text-wbk-black"
                 }`}
               >
                 {priceDisplay}
               </span>
             </div>
             {pricing.isOnSale && (
-              <span className="text-xs text-wbk-brown line-through font-normal">
+              <span className="text-xs text-black line-through font-normal">
                 {pricing.regularDisplay}
               </span>
             )}

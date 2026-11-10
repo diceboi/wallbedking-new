@@ -17,6 +17,7 @@ import {
 import { WaitlistModal } from "@/components/product/WaitlistModal";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { getProductVariants, formatCatalogItem, isProductVisible } from "@/data/products";
 import { getProductPrice, formatPrice, formatSizeLabel } from "@/lib/i18n";
 import { getLocalizedProductName, parseTableFinish } from "@/lib/products";
@@ -24,6 +25,7 @@ import { useProductCatalog } from "@/context/ProductCatalogContext";
 
 export function QuickAddModal({ isOpen, onClose, product }) {
   const { locale, localizedHref, t } = useLocale();
+  const { campaigns } = usePromotions();
   const { addItem, openCart } = useCart();
   const { getProductVariants: catalogGetVariants } = useProductCatalog();
 
@@ -169,7 +171,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
   });
 
   // Calculate pricing
-  const pricing = getProductPrice(activeProduct, locale);
+  const pricing = getProductPrice(activeProduct, locale, campaigns);
   const unitPrice =
     Number(pricing?.raw ?? pricing?.numeric ?? pricing?.regularRaw) ||
     Number(activeProduct?.sale_price_gbp) ||
@@ -390,7 +392,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
               className="w-full h-full object-contain"
             />
             {pricing.isOnSale && (
-              <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-wbk-green text-white text-[9px] font-bold uppercase rounded-xs">
+              <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#2D5A27] text-white text-[9px] font-bold uppercase rounded-xs">
                 Sale
               </span>
             )}
@@ -398,11 +400,15 @@ export function QuickAddModal({ isOpen, onClose, product }) {
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-bold text-lg sm:text-xl text-wbk-black">
+              <span
+                className={`font-bold text-lg sm:text-xl ${
+                  pricing.isOnSale ? "text-[#2D5A27]" : "text-wbk-black"
+                }`}
+              >
                 {pricing.display || formatPrice(unitPrice, locale)}
               </span>
               {pricing.isOnSale && (
-                <span className="text-xs text-wbk-brown line-through">
+                <span className="text-xs text-black line-through font-normal">
                   {pricing.regularDisplay}
                 </span>
               )}
@@ -455,7 +461,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                       ? selectedVariant.sku === v.sku
                       : idx === 0;
                   const parsed = parseTableFinish(v, idx, variants);
-                  const vPricing = getProductPrice(v, locale);
+                  const vPricing = getProductPrice(v, locale, campaigns);
 
                   return (
                     <button
@@ -618,7 +624,7 @@ export function QuickAddModal({ isOpen, onClose, product }) {
                         locale,
                         variant
                       );
-                      const pPrice = getProductPrice(variant, locale);
+                      const pPrice = getProductPrice(variant, locale, campaigns);
                       const isVariantOutOfStock =
                         (variant.stock !== undefined &&
                           variant.stock !== null &&

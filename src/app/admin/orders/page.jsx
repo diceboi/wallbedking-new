@@ -1453,6 +1453,11 @@ export default function AdminOrdersPage() {
                                 <h4 className="font-poppins font-semibold text-wbk-black text-xs">
                                   {item.title || item.name}
                                 </h4>
+                                {item.sku && !/^\d+$/.test(String(item.sku).trim()) && (
+                                  <span className="text-[11px] font-mono text-gray-500 font-medium block">
+                                    SKU: {item.sku}
+                                  </span>
+                                )}
                                 <span className="text-[11px] text-wbk-brown block">
                                   {item.options?.size || item.variant}{" "}
                                   {item.options?.orientation && `(${item.options.orientation})`}
@@ -1540,7 +1545,7 @@ export default function AdminOrdersPage() {
                           </div>
                           <div className="text-xs text-amber-900 space-y-1">
                             <div>
-                              • Expected Reference (Megjegyzés):{" "}
+                              • Expected Reference:{" "}
                               <strong className="font-mono bg-white px-1.5 py-0.5 border border-amber-200">
                                 #{selectedOrder.id}
                               </strong>{" "}

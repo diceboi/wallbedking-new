@@ -76,6 +76,7 @@ export async function POST(request) {
               Math.round(it.price * discountMultiplier * 100) / 100;
             const unitAmountPence = Math.round(discountedPrice * 100);
             const optionsDesc = [
+              it.sku && !/^\d+$/.test(String(it.sku).trim()) ? `SKU: ${it.sku}` : null,
               it.options?.size,
               it.options?.orientation,
               it.options?.type,
@@ -90,6 +91,10 @@ export async function POST(request) {
                 product_data: {
                   name: it.title,
                   description: optionsDesc || "Wall Bed King Product",
+                  metadata: {
+                    sku: it.sku || "",
+                    slug: it.slug || "",
+                  },
                 },
                 unit_amount: unitAmountPence,
               },

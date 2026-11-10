@@ -1,0 +1,119 @@
+[
+  {
+    "id": "camp-10-until-monda-copy-mwah27au",
+    "name": "Take 10% off everything until Friday!",
+    "slug": "10-until-friday-copy",
+    "status": "preview",
+    "top_bar": {
+      "link": "/products",
+      "text": "10% off sale extended until monday!",
+      "enabled": true,
+      "bg_color": "#2D5A27",
+      "link_text": "Hurry up!",
+      "text_color": "#FFFFFF",
+      "dismissible": true,
+      "translations": {}
+    },
+    "apply_to": "categories",
+    "end_date": "2026-12-09T09:04:00.000Z",
+    "priority": 10,
+    "recurring": {
+      "end_time": "23:59",
+      "frequency": "weekly",
+      "start_time": "00:00",
+      "days_of_week": [3, 4, 5]
+    },
+    "created_at": "2026-11-10T09:12:42.870Z",
+    "start_date": "2026-11-08T06:00:00.000Z",
+    "updated_at": "2026-11-10T10:04:41.451Z",
+    "hero_banner": {
+      "badge": "DON'T MISS OUT!",
+      "image": "/hero-video2.png",
+      "video": "/hero-video2.mp4",
+      "enabled": true,
+      "cta_link": "/products",
+      "cta_text": "Explore",
+      "headline": "Take at least 10% off everything until Friday!",
+      "subtitle": "Premium wall beds, multi-functional tables and modular living solutions. Upgrade your space today.",
+      "media_type": "video",
+      "translations": {},
+      "secondary_cta_link": "",
+      "secondary_cta_text": ""
+    },
+    "discount_type": "percentage",
+    "schedule_type": "recurring",
+    "allow_stacking": false,
+    "discount_value": 10,
+    "target_markets": ["en"],
+    "target_products": [],
+    "excluded_products": [],
+    "target_categories": [
+      "beds",
+      "sofas",
+      "mattresses",
+      "morphy-beds",
+      "cabinets",
+      "tables",
+      "bundles"
+    ],
+    "excluded_categories": ["traditional-beds"]
+  },
+  {
+    "id": "camp-1-until-friday-copy-mw9jjxyq",
+    "name": "10% off sale extended until Monday",
+    "slug": "10-until-monda",
+    "status": "preview",
+    "top_bar": {
+      "link": "/products",
+      "text": "10% off sale extended until monday!",
+      "enabled": true,
+      "bg_color": "#2D5A27",
+      "link_text": "Hurry up!",
+      "text_color": "#FFFFFF",
+      "dismissible": true,
+      "translations": {}
+    },
+    "apply_to": "categories",
+    "end_date": "2026-12-09T14:04:00.000Z",
+    "priority": 10,
+    "recurring": {
+      "end_time": "23:59",
+      "frequency": "weekly",
+      "start_time": "00:00",
+      "days_of_week": [6, 0, 1]
+    },
+    "start_date": "2026-11-08T11:00:00.000Z",
+    "updated_at": "2026-11-10T09:10:58.722Z",
+    "hero_banner": {
+      "badge": "SALE EXTENDED!",
+      "image": "/hero-video2.png",
+      "video": "/hero-video.mp4",
+      "enabled": true,
+      "cta_link": "/products",
+      "cta_text": "Explore",
+      "headline": "You're still in time: 10% off until Monday midnight!",
+      "subtitle": "Premium wall beds, multi-functional tables and modular living solutions. Upgrade your space today.",
+      "media_type": "video",
+      "translations": {},
+      "secondary_cta_link": "",
+      "secondary_cta_text": ""
+    },
+    "discount_type": "percentage",
+    "schedule_type": "recurring",
+    "allow_stacking": false,
+    "discount_value": 10,
+    "target_markets": [],
+    "target_products": [],
+    "excluded_products": [],
+    "target_categories": [
+      "beds",
+      "sofas",
+      "mattresses",
+      "morphy-beds",
+      "cabinets",
+      "tables",
+      "bundles"
+    ],
+    "excluded_categories": ["traditional-beds"]
+  }
+]

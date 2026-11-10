@@ -3523,9 +3523,9 @@ export function ProductEditDrawer({ product, isOpen, onClose, onSaveSuccess }) {
                       }`}
                     >
                       {browserTarget === "image"
-                        ? "⭐ Primary Image (Főkép)"
+                        ? "⭐ Primary Image (Main)"
                         : browserTarget === "hover_image"
-                        ? "🔷 Hover Image (Hover kép)"
+                        ? "🔷 Hover Image"
                         : "🖼️ Product Gallery"}
                     </span>
                     <span className="text-[11px] text-wbk-brown hidden md:inline">

@@ -65,16 +65,16 @@ export default function AdminFeedsPage() {
       {/* Page Header */}
       <AdminPageHeader
         badge="Product Feeds & Syndication"
-        title="Termékfeedek & Exportálás"
+        title="Product Feeds & Exports"
         count={googleCountries.length + feeds.length}
-        description="Automatizált, élő termékfeedek a Google Merchant Centerhez (Shopping), valamint Amazon és Mirakl piacterekhez."
+        description="Automated live product feeds for Google Merchant Center (Shopping), Amazon, and Mirakl marketplaces."
         actions={
           <button
             type="button"
             onClick={fetchFeeds}
             disabled={loading}
             className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
-            title="Frissítés"
+            title="Refresh"
           >
             <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
           </button>
@@ -97,7 +97,7 @@ export default function AdminFeedsPage() {
           </span>
           <span>Google Merchant Center (Shopping)</span>
           <span className="px-2 py-0.5 text-[11px] font-mono font-medium bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200">
-            {googleCountries.length} ország
+            {googleCountries.length} countries
           </span>
         </button>
 
@@ -132,10 +132,10 @@ export default function AdminFeedsPage() {
                 </span>
                 <div>
                   <h3 className="font-poppins text-base font-semibold text-wbk-black">
-                    Google Merchant Center Élő Termékfeedek
+                    Google Merchant Center Live Product Feeds
                   </h3>
                   <p className="text-xs text-wbk-brown">
-                    Valós idejű, országonként elkülönített termékfeedek közvetlen Google Shopping integrációhoz.
+                    Real-time, country-specific product feeds for direct Google Shopping integration.
                   </p>
                 </div>
               </div>
@@ -143,7 +143,7 @@ export default function AdminFeedsPage() {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Élő & Automatikusan Frissülő
+                  Live & Auto-Updating
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-mono font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                   XML (RSS 2.0) & TSV
@@ -156,24 +156,24 @@ export default function AdminFeedsPage() {
               <div className="flex items-start gap-2 text-wbk-brown">
                 <IconCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-wbk-black block">Automatikus szinkronizáció</strong>
-                  Amikor az adminban vagy adatbázisban változik egy termék, a feed a Google következő lekérésekor automatikusan a friss adatokat szolgáltatja.
+                  <strong className="text-wbk-black block">Automatic Sync</strong>
+                  Whenever products update in the database or admin, feeds serve refreshed data on Google's next scheduled fetch.
                 </div>
               </div>
 
               <div className="flex items-start gap-2 text-wbk-brown">
                 <IconCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-wbk-black block">Nem publikus termékek kizárása</strong>
-                  A rejtett (<code className="font-mono text-[10px]">hidden</code>), piszkozat vagy archivált termékeket a rendszer automatikusan kihagyja.
+                  <strong className="text-wbk-black block">Private & Draft Exclusion</strong>
+                  Hidden (<code className="font-mono text-[10px]">hidden</code>), draft, or archived items are automatically excluded.
                 </div>
               </div>
 
               <div className="flex items-start gap-2 text-wbk-brown">
                 <IconCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-wbk-black block">10 Kötelező mező + Akciók</strong>
-                  <code className="font-mono text-[10px]">id, title, description, link, image_link, availability, price, condition, brand, gtin</code> (valamint akciós ár és kategóriák).
+                  <strong className="text-wbk-black block">10 Required Attributes + Sales</strong>
+                  <code className="font-mono text-[10px]">id, title, description, link, image_link, availability, price, condition, brand, gtin</code> (plus promotional sale price and product categories).
                 </div>
               </div>
             </div>
@@ -186,18 +186,18 @@ export default function AdminFeedsPage() {
                 className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer"
               >
                 <IconInfoCircle size={15} />
-                <span>Hogyan kell beállítani a Google Merchant Centerben?</span>
+                <span>How to set up in Google Merchant Center?</span>
                 {showSetupGuide ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
               </button>
 
               {showSetupGuide && (
                 <div className="mt-3 bg-[#F8F9FA] border border-blue-100 p-4 rounded-none space-y-2 text-xs text-wbk-brown">
                   <div className="font-semibold text-wbk-black">
-                    Beállítási lépések a Google Merchant Centerben (Ütemezett lekérés):
+                    Setup steps in Google Merchant Center (Scheduled Fetch):
                   </div>
                   <ol className="list-decimal list-inside space-y-1.5 leading-relaxed">
                     <li>
-                      Lépj be a Google Merchant Center fiókodba:{" "}
+                      Sign in to your Google Merchant Center account:{" "}
                       <a
                         href="https://merchants.google.com"
                         target="_blank"
@@ -208,19 +208,19 @@ export default function AdminFeedsPage() {
                       </a>
                     </li>
                     <li>
-                      A bal menüben válaszd: <strong>Termékek (Products) &gt; Termékcsatornák (Feeds)</strong>, majd kattints az <strong>Elsődleges csatorna hozzáadása (+)</strong> gombra.
+                      In the left sidebar, navigate to: <strong>Products &gt; Feeds</strong>, then click <strong>Add primary feed (+)</strong>.
                     </li>
                     <li>
-                      Válaszd ki a <strong>Célországot</strong> és a <strong>Nyelvet</strong> (pl. <em>Egyesült Királyság – Angol</em> vagy <em>Németország – Német</em>).
+                      Select your <strong>Target Country</strong> and <strong>Language</strong> (e.g. <em>United Kingdom – English</em> or <em>Germany – German</em>).
                     </li>
                     <li>
-                      A feltöltési módnál válaszd az <strong>Ütemezett lekérés (Scheduled fetch)</strong> opciót.
+                      Under input method, choose <strong>Scheduled fetch</strong>.
                     </li>
                     <li>
-                      Másold ki az adott országhoz tartozó <strong>Feed URL</strong>-t alább, és illeszd be a <em>„Fájl URL-je”</em> mezőbe.
+                      Copy the matching country <strong>Feed URL</strong> below and paste it into the <em>File URL</em> field.
                     </li>
                     <li>
-                      Állítsd be a lekérés gyakoriságát (pl. <strong>Naponta 02:00</strong>). Kész! A Google innentől magától letölti és frissíti a katalógust.
+                      Set fetch frequency (e.g. <strong>Daily at 02:00</strong>). Done! Google will automatically fetch and refresh your catalog.
                     </li>
                   </ol>
                 </div>
@@ -232,10 +232,10 @@ export default function AdminFeedsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-poppins text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                Országonkénti Google Merchant Feedek ({googleCountries.length} ország)
+                Country-Specific Google Merchant Feeds ({googleCountries.length} countries)
               </h2>
               <span className="text-xs text-wbk-brown">
-                Kattints a „URL Másolása” gombra az Ütemezett lekéréshez
+                Click "Copy URL" to configure scheduled fetch in Merchant Center
               </span>
             </div>
 
@@ -266,18 +266,18 @@ export default function AdminFeedsPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-wbk-brown mt-0.5">
-                              <span>Nyelv / Nyelvterület: <strong>{country.targetLanguage.toUpperCase()} ({country.locale})</strong></span>
+                              <span>Language / Locale: <strong>{country.targetLanguage.toUpperCase()} ({country.locale})</strong></span>
                               <span>&bull;</span>
-                              <span>Pénznem: <strong>{country.currency} ({country.currencySymbol})</strong></span>
+                              <span>Currency: <strong>{country.currency} ({country.currencySymbol})</strong></span>
                               <span>&bull;</span>
-                              <span>Szállítási jegyzet: {country.defaultShippingNote}</span>
+                              <span>Shipping Note: {country.defaultShippingNote}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <span className="px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-semibold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            Aktív & Élő
+                            Active & Live
                           </span>
                         </div>
                       </div>
@@ -286,10 +286,10 @@ export default function AdminFeedsPage() {
                       <div className="bg-[#F8F9FA] p-3.5 border border-wbk-lightgrey/60 space-y-2 mb-3">
                         <div className="flex items-center justify-between">
                           <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-black">
-                            Google Merchant Center Feed URL (XML / RSS 2.0 – Ajánlott)
+                            Google Merchant Center Feed URL (XML / RSS 2.0 – Recommended)
                           </label>
                           <span className="text-[10px] text-emerald-700 font-medium">
-                            Automatikus szinkronizáció
+                            Automatic Sync
                           </span>
                         </div>
 
@@ -304,17 +304,17 @@ export default function AdminFeedsPage() {
                             type="button"
                             onClick={() => handleCopyText(xmlUrl, `xml_${country.code}`)}
                             className="px-3 py-2 bg-wbk-black text-white text-xs font-medium hover:bg-wbk-gold hover:text-wbk-black transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                            title="Feed URL másolása"
+                            title="Copy Feed URL"
                           >
                             {copiedId === `xml_${country.code}` ? (
                               <>
                                 <IconCheck size={14} className="text-emerald-400" />
-                                <span>Másolva!</span>
+                                <span>Copied!</span>
                               </>
                             ) : (
                               <>
                                 <IconCopy size={14} />
-                                <span>URL Másolása</span>
+                                <span>Copy URL</span>
                               </>
                             )}
                           </button>
@@ -325,7 +325,7 @@ export default function AdminFeedsPage() {
                       <div className="bg-[#FAF8F5] p-3 border border-wbk-lightgrey/40 space-y-1.5 mb-3">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wider font-semibold text-wbk-brown">
-                            Alternatív TSV (Tabulátorral tagolt szöveg / .txt) formátum
+                            Alternative TSV (Tab-delimited text / .txt) format
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -339,17 +339,17 @@ export default function AdminFeedsPage() {
                             type="button"
                             onClick={() => handleCopyText(tsvUrl, `tsv_${country.code}`)}
                             className="px-2.5 py-1.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 shrink-0"
-                            title="TSV URL másolása"
+                            title="Copy TSV URL"
                           >
                             {copiedId === `tsv_${country.code}` ? (
                               <>
                                 <IconCheck size={13} className="text-emerald-600" />
-                                <span>Másolva!</span>
+                                <span>Copied!</span>
                               </>
                             ) : (
                               <>
                                 <IconCopy size={13} />
-                                <span>TSV URL Másolása</span>
+                                <span>Copy TSV URL</span>
                               </>
                             )}
                           </button>
@@ -360,7 +360,7 @@ export default function AdminFeedsPage() {
                     {/* Footer Actions: Test in browser & Direct Downloads */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-wbk-lightgrey/40 text-xs">
                       <div className="flex items-center gap-3 text-wbk-brown">
-                        <span>Tesztelés & Letöltés:</span>
+                        <span>Testing & Direct Download:</span>
                         <a
                           href={directXmlUrl}
                           target="_blank"
@@ -368,7 +368,7 @@ export default function AdminFeedsPage() {
                           className="font-medium underline hover:text-wbk-black flex items-center gap-1 text-blue-700"
                         >
                           <IconExternalLink size={13} />
-                          <span>Megnyitás böngészőben (XML)</span>
+                          <span>Open in Browser (XML)</span>
                         </a>
                         <span>|</span>
                         <a
@@ -376,7 +376,7 @@ export default function AdminFeedsPage() {
                           className="underline hover:text-wbk-black flex items-center gap-1"
                         >
                           <IconDownload size={13} />
-                          <span>XML fájl letöltése</span>
+                          <span>Download XML File</span>
                         </a>
                         <span>|</span>
                         <a
@@ -384,7 +384,7 @@ export default function AdminFeedsPage() {
                           className="underline hover:text-wbk-black flex items-center gap-1"
                         >
                           <IconDownload size={13} />
-                          <span>TSV fájl letöltése</span>
+                          <span>Download TSV File</span>
                         </a>
                       </div>
 
@@ -406,21 +406,21 @@ export default function AdminFeedsPage() {
           {/* Summary Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs">
-              <div className="text-xs text-wbk-brown font-medium">Aktív Piactér Feedek</div>
+              <div className="text-xs text-wbk-brown font-medium">Active Marketplace Feeds</div>
               <div className="text-2xl font-bold font-poppins text-wbk-black mt-1">
                 {activeMarketplaceFeeds} <span className="text-xs text-wbk-brown font-normal font-poppins">/ {feeds.length} csatorna</span>
               </div>
             </div>
 
             <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs">
-              <div className="text-xs text-wbk-brown font-medium">Szindikált Termékek</div>
+              <div className="text-xs text-wbk-brown font-medium">Syndicated Products</div>
               <div className="text-2xl font-bold font-poppins text-wbk-black mt-1">
                 {totalMarketplaceItems} <span className="text-xs text-wbk-brown font-normal font-poppins">kezelt SKU</span>
               </div>
             </div>
 
             <div className="bg-white p-5 border border-wbk-lightgrey/50 shadow-xs">
-              <div className="text-xs text-wbk-brown font-medium">Piactér Protokoll</div>
+              <div className="text-xs text-wbk-brown font-medium">Marketplace Protocols</div>
               <div className="text-xs font-mono font-semibold text-wbk-black mt-2">
                 Live HTTP TSV / CSV / JSON
               </div>
@@ -431,7 +431,7 @@ export default function AdminFeedsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-poppins text-sm font-semibold uppercase tracking-wider text-wbk-black">
-                Elérhető Piactér Integrációk
+                Available Marketplace Integrations
               </h2>
             </div>
 
@@ -456,11 +456,11 @@ export default function AdminFeedsPage() {
                               {feed.name}
                             </h3>
                             <div className="flex items-center gap-2 text-[11px] text-wbk-brown">
-                              <span>Piactér: <strong>{feed.marketplace}</strong></span>
+                              <span>Marketplace: <strong>{feed.marketplace}</strong></span>
                               <span>&bull;</span>
-                              <span>Ország: {feed.country}</span>
+                              <span>Country: {feed.country}</span>
                               <span>&bull;</span>
-                              <span>Pénznem: {feed.currency}</span>
+                              <span>Currency: {feed.currency}</span>
                             </div>
                           </div>
                         </div>
@@ -477,11 +477,11 @@ export default function AdminFeedsPage() {
                       </div>
 
                       <p className="text-xs text-wbk-brown/90 mt-2 mb-4">
-                        Célkategória: <strong className="text-wbk-black font-mono">{feed.targetCategory}</strong>.
+                        Target Category: <strong className="text-wbk-black font-mono">{feed.targetCategory}</strong>.
                         {feed.itemCount > 0 ? (
-                          <span> Tartalma: <strong>{feed.itemCount}</strong> elem ({feed.parentCount} Fő termék + {feed.childCount} variáció).</span>
+                          <span> Contains: <strong>{feed.itemCount}</strong> items ({feed.parentCount} Parent products + {feed.childCount} variations).</span>
                         ) : (
-                          <span> Csatorna készen áll a jövőbeli termékleképezésre.</span>
+                          <span> Feed is ready for product mapping.</span>
                         )}
                       </p>
 
@@ -490,10 +490,10 @@ export default function AdminFeedsPage() {
                         <div className="bg-[#F4F2F0]/70 p-4 border border-wbk-lightgrey/60 space-y-2 mb-5">
                           <div className="flex items-center justify-between">
                             <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown">
-                              Élő Amazon Flat File Feed URL (TSV / Tab-Separated)
+                              Live Amazon Flat File Feed URL (TSV / Tab-Separated)
                             </label>
                             <span className="text-[10px] text-wbk-green font-medium">
-                              Automatikus szinkronizáció
+                              Automatic Sync
                             </span>
                           </div>
 
@@ -512,24 +512,24 @@ export default function AdminFeedsPage() {
                                 setTimeout(() => setCopiedId(null), 2500);
                               }}
                               className="px-3 py-2 bg-wbk-black text-white text-xs font-medium hover:bg-wbk-gold hover:text-wbk-black transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                              title="Feed URL másolása"
+                              title="Copy Feed URL"
                             >
                               {copiedId === `${feed.id}_tsv` ? (
                                 <>
                                   <IconCheck size={14} className="text-emerald-400" />
-                                  <span>Másolva!</span>
+                                  <span>Copied!</span>
                                 </>
                               ) : (
                                 <>
                                   <IconCopy size={14} />
-                                  <span>URL Másolása</span>
+                                  <span>Copy URL</span>
                                 </>
                               )}
                             </button>
                           </div>
 
                           <div className="flex items-center gap-3 pt-1 text-[11px] text-wbk-brown">
-                            <span>Közvetlen letöltés:</span>
+                            <span>Direct Download:</span>
                             <a
                               href={`/api/feeds/${feed.id}?format=tsv&download=1`}
                               className="underline hover:text-wbk-black flex items-center gap-1"
@@ -553,7 +553,7 @@ export default function AdminFeedsPage() {
                               className="underline hover:text-wbk-black flex items-center gap-1"
                             >
                               <IconExternalLink size={13} />
-                              <span>JSON Nézet</span>
+                              <span>JSON View</span>
                             </a>
                           </div>
                         </div>
@@ -563,14 +563,14 @@ export default function AdminFeedsPage() {
                     {/* Footer Action */}
                     <div className="flex items-center justify-between pt-3 border-t border-wbk-lightgrey/40 mt-2">
                       <span className="text-[11px] text-wbk-brown">
-                        Sablon forrás: <code className="font-mono text-[10px]">{feed.templateFile || "Egyéni leképezés"}</code>
+                        Template Source: <code className="font-mono text-[10px]">{feed.templateFile || "Custom mapping"}</code>
                       </span>
 
                       <Link
                         href={`/admin/feeds/${feed.id}`}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-wbk-black text-white text-xs font-medium uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-colors"
                       >
-                        <span>Termékek kezelése a feedben</span>
+                        <span>Manage Products in Feed</span>
                         <IconArrowRight size={14} />
                       </Link>
                     </div>

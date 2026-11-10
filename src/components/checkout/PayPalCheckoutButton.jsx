@@ -261,17 +261,25 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
             const orderDescription = (itemsSummary || "Wall Bed King Order").slice(0, 127);
 
             // Build itemized list for PayPal invoice and receipt emails
-            const paypalItems = parsedItems.map(({ it, priceCents, qty, opt }) => ({
-              name: String(it.title || it.name || "Wall Bed King Product").slice(0, 127),
-              description: String(opt || "Standard").slice(0, 127),
-              sku: String(it.rawId || it.productId || it.id || "WBK").slice(0, 60),
-              unit_amount: {
-                currency_code: curr,
-                value: (priceCents / 100).toFixed(2),
-              },
-              quantity: String(qty),
-              category: "PHYSICAL_GOODS",
-            }));
+            const paypalItems = parsedItems.map(({ it, priceCents, qty, opt }) => {
+              const rawCandidate = it.sku || it.options?.sku;
+              const resolvedSku =
+                rawCandidate && !/^\d+$/.test(String(rawCandidate).trim())
+                  ? String(rawCandidate).trim()
+                  : String(it.slug || "WBK-ITEM").slice(0, 60);
+
+              return {
+                name: String(it.title || it.name || "Wall Bed King Product").slice(0, 127),
+                description: String(opt || "Standard").slice(0, 127),
+                sku: resolvedSku.slice(0, 60),
+                unit_amount: {
+                  currency_code: curr,
+                  value: (priceCents / 100).toFixed(2),
+                },
+                quantity: String(qty),
+                category: "PHYSICAL_GOODS",
+              };
+            });
 
             // Construct purchase_unit payload
             const purchaseUnit = {

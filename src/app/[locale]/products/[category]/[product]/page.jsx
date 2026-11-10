@@ -34,6 +34,7 @@ import {
   IconMapPinOff,
   IconAlertCircle,
   IconArrowRight,
+  IconEyeCheck,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
@@ -44,6 +45,7 @@ import {
 } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import {
   getProductPrice,
@@ -106,14 +108,17 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
   raw = raw.replace(/\b[A-Z][0-9]{2,4}(?:-[0-9A-Z]+)?\s*/gi, "").trim();
   raw = raw.replace(/barble/gi, "Marble");
   raw = raw.replace(/drak/gi, "Dark");
+  // Clean up leading/trailing plus signs and collapse multiple plus signs
+  raw = raw.replace(/^[\s+]+/, "").replace(/[\s+]+$/, "").trim();
   raw = raw.replace(/\s*\+\s*/g, " + ");
+  raw = raw.replace(/^[\s+]+/, "").replace(/[\s+]+$/, "").trim();
 
   let label = raw
     .split(" ")
     .map((w) => {
       if (w === "+") return "+";
       if (!w) return "";
-      return w.charAt(0).toUpperCase() + w.slice(1);
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
     })
     .join(" ")
     .trim();
@@ -199,6 +204,7 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
 
 export default function ProductDetailPage() {
   const { locale, t, localizedHref } = useLocale();
+  const { campaigns } = usePromotions();
   const {
     findProductBySlug: catalogFindBySlug,
     getProductVariants: catalogGetVariants,
@@ -586,7 +592,7 @@ export default function ProductDetailPage() {
   // Track Product View (GA4 view_item + Meta ViewContent)
   useEffect(() => {
     if (activeProduct && activeProduct.id) {
-      const price = getProductPrice(activeProduct, locale) || 0;
+      const price = getProductPrice(activeProduct, locale, campaigns) || 0;
       const currency =
         locale === "us" ? "USD" : locale === "en" ? "GBP" : "EUR";
       trackViewItem({
@@ -1637,7 +1643,7 @@ export default function ProductDetailPage() {
   }, [morphyCounterpartSlug, targetMorphySizeSlug, localizedHref]);
 
   // Dynamic pricing strictly from Supabase columns
-  const productPricing = getProductPrice(displayProduct, locale);
+  const productPricing = getProductPrice(displayProduct, locale, campaigns);
   const sofaPriceValue = calculateSofaPrice(
     displayProduct,
     productFormat,
@@ -2226,6 +2232,7 @@ export default function ProductDetailPage() {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
       rawId: displayProduct?.id || displayProduct?.rawId || null,
+      sku: displayProduct?.sku || activeProduct?.sku || "",
       slug: displayProduct?.slug || productSlug || "",
       title: isTableProduct
         ? `${activeProduct?.title || activeProduct?.name?.split(" - ")[0]} (${parseTableFinish(displayProduct, 0, familyVariants).label})`
@@ -2694,6 +2701,7 @@ export default function ProductDetailPage() {
                         const activePricing = getProductPrice(
                           displayProduct,
                           locale,
+                          campaigns,
                         );
 
                         return (
@@ -2774,6 +2782,7 @@ export default function ProductDetailPage() {
                                   const varPricing = getProductPrice(
                                     variant,
                                     locale,
+                                    campaigns,
                                   );
 
                                   return (
@@ -3194,7 +3203,7 @@ export default function ProductDetailPage() {
                               {item.product && (
                                 <span className="text-[11px] text-wbk-brown font-poppins">
                                   {
-                                    getProductPrice(item.product, locale)
+                                    getProductPrice(item.product, locale, campaigns)
                                       .display
                                   }
                                 </span>
@@ -3376,39 +3385,60 @@ export default function ProductDetailPage() {
                 )}
 
                 {/* Total Price Display */}
-                <div className="flex items-baseline justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold block">
+                <div className="space-y-2 pt-1 pb-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold">
                       {t("common.price", "Price")}
                     </span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl xl:text-3xl font-bold text-wbk-black tracking-tight">
-                        {formatPrice(totalDecimal, locale)}
-                      </span>
-                      {productPricing.isOnSale && (
-                        <span className="text-xs text-wbk-brown/70 line-through font-normal">
-                          {formatPrice(
-                            productPricing.regularRaw + sofaSurcharge,
-                            locale,
-                          )}
+
+                    {/* Prominent Solid Sale Badge (matches ProductCard badge exactly) */}
+                    {productPricing.isOnSale && (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3.5 py-1.5 text-xs sm:text-[13px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5 ${
+                            displayProduct?.is_bundle
+                              ? "bg-emerald-700 text-white"
+                              : "bg-[#2D5A27] text-white"
+                          }`}
+                        >
+                          <span>
+                            {displayProduct?.is_bundle
+                              ? `${productPricing.discountLabel || "-10%"} ${t("product.bundleBadge", "Pack")}`
+                              : `${t("product.sale", "Sale")} ${productPricing.discountLabel || ""}`}
+                          </span>
                         </span>
-                      )}
-                    </div>
+                        {productPricing.appliedCampaign?.status === "preview" && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                            title="Admin Preview: Only visible to logged-in administrators"
+                          >
+                            <IconEyeCheck className="w-3 h-3" />
+                            Preview
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {productPricing.isOnSale && (
+                  <div className="flex items-baseline gap-3">
                     <span
-                      className={`px-2 py-0.5 border text-[10px] font-bold uppercase tracking-wider rounded ${
-                        displayProduct?.is_bundle
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                          : "bg-red-50 text-red-700 border-red-200"
+                      className={`text-2xl xl:text-3xl font-bold tracking-tight ${
+                        productPricing.isOnSale
+                          ? "text-[#2D5A27]"
+                          : "text-wbk-black"
                       }`}
                     >
-                      {displayProduct?.is_bundle
-                        ? `${productPricing.discountLabel || "-10%"} ${t("product.bundleBadge", "Pack")}`
-                        : t("product.sale", "Sale")}
+                      {formatPrice(totalDecimal, locale)}
                     </span>
-                  )}
+                    {productPricing.isOnSale && (
+                      <span className="text-sm text-black line-through font-normal">
+                        {formatPrice(
+                          productPricing.regularRaw + sofaSurcharge,
+                          locale,
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Desktop CTA Button */}
@@ -5639,15 +5669,26 @@ export default function ProductDetailPage() {
                     <span>{t("common.total", "Total")}</span>
                   </span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-wbk-black text-sm sm:text-xl md:text-2xl leading-none">
+                    <span
+                      className={`font-bold text-sm sm:text-xl md:text-2xl leading-none ${
+                        productPricing.isOnSale
+                          ? "text-[#2D5A27]"
+                          : "text-wbk-black"
+                      }`}
+                    >
                       {formatPrice(totalDecimal, locale)}
                     </span>
                     {productPricing.isOnSale && (
-                      <span className="text-[10px] sm:text-xs text-wbk-black/60 line-through font-normal hidden sm:inline">
+                      <span className="text-[10px] sm:text-xs text-black line-through font-normal hidden sm:inline">
                         {formatPrice(
                           productPricing.regularRaw + sofaSurcharge,
                           locale,
                         )}
+                      </span>
+                    )}
+                    {productPricing.isOnSale && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-wbk-black text-white px-1.5 py-0.5 rounded-none hidden xs:inline-block">
+                        {productPricing.discountLabel || t("product.sale", "Sale")}
                       </span>
                     )}
                   </div>

@@ -97,6 +97,14 @@ export function AuthProvider({ children }) {
           : "customer");
     }
 
+    if (typeof document !== "undefined") {
+      if (resolvedRole === "admin") {
+        document.cookie = "wbk_admin=1; path=/; max-age=604800; SameSite=Lax";
+      } else {
+        document.cookie = "wbk_admin=; path=/; max-age=0; SameSite=Lax";
+      }
+    }
+
     setRole(resolvedRole);
     setRoleLoading(false);
   }, []);
@@ -286,6 +294,9 @@ export function AuthProvider({ children }) {
       } catch (e) {
         console.warn("[PostHog] reset error:", e);
       }
+      try {
+        document.cookie = "wbk_admin=; path=/; max-age=0; SameSite=Lax";
+      } catch {}
     }
     setUser(null);
     setSession(null);

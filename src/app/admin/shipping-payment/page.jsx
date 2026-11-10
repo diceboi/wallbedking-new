@@ -231,17 +231,17 @@ export default function AdminShippingPaymentPage() {
           localStorage.setItem("wbk_settings_updated", Date.now().toString());
         }
         if (data.savedToSupabase) {
-          showToast("success", "Beállítások elmentve és Supabase adatbázisba szinkronizálva!");
+          showToast("success", "Settings saved and synced to Supabase database!");
         } else if (data.dbTableMissing) {
-          showToast("error", "Helyi gyorsítótárba mentve, de a Supabase tábla hiányzik! Futtasd le a supabase/checkout_settings.sql szkriptet.");
+          showToast("error", "Saved to local cache, but Supabase table is missing! Please run supabase/checkout_settings.sql.");
         } else {
-          showToast("success", "Beállítások sikeresen elmentve!");
+          showToast("success", "Settings saved successfully!");
         }
       } else {
-        showToast("error", data.error || "A mentés nem sikerült.");
+        showToast("error", data.error || "Failed to save settings.");
       }
     } catch (err) {
-      showToast("error", "Hálózati hiba történt a mentés során.");
+      showToast("error", "Network error occurred while saving.");
     } finally {
       setSaving(false);
     }
@@ -257,13 +257,13 @@ export default function AdminShippingPaymentPage() {
       });
       const data = await res.json();
       if (data.savedToSupabase) {
-        showToast("success", "Minden piac beállítása sikeresen szinkronizálva a Supabase adatbázisba!");
+        showToast("success", "All market configurations synced to Supabase database!");
         fetchSettings();
       } else {
-        showToast("error", data.message || "A szinkronizálás nem sikerült.");
+        showToast("error", data.message || "Failed to sync to Supabase.");
       }
     } catch (err) {
-      showToast("error", "Hálózati hiba történt a szinkronizálás során.");
+      showToast("error", "Network error occurred while syncing.");
     } finally {
       setSyncingToSupabase(false);
     }
@@ -373,7 +373,7 @@ export default function AdminShippingPaymentPage() {
               type="button"
               onClick={() => {
                 navigator.clipboard?.writeText("supabase/checkout_settings.sql");
-                showToast("success", "Szkript elérési út másolva: supabase/checkout_settings.sql");
+                showToast("success", "Script path copied: supabase/checkout_settings.sql");
               }}
               className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-semibold rounded text-[11px] whitespace-nowrap transition-colors cursor-pointer"
             >
@@ -1354,7 +1354,7 @@ export default function AdminShippingPaymentPage() {
           <div className="flex items-center gap-2 text-xs">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0" />
             <span className="font-medium">
-              Nem mentett módosítások: <strong>{activeMarket.name}</strong>
+              Unsaved changes in <strong>{activeMarket.name}</strong>
             </span>
           </div>
           <button
@@ -1368,7 +1368,7 @@ export default function AdminShippingPaymentPage() {
             ) : (
               <IconDeviceFloppy size={15} />
             )}
-            <span>{saving ? "Mentés folyamatban..." : "Módosítások Mentése Most"}</span>
+            <span>{saving ? "Saving..." : "Save Changes Now"}</span>
           </button>
         </div>
       )}

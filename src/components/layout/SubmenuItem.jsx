@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { getProductPrice } from "@/lib/i18n";
 
@@ -22,6 +23,7 @@ export function SubmenuItem({
   onClick,
 }) {
   const { locale, localizedHref, t, formatPrice } = useLocale();
+  const { campaigns } = usePromotions();
   const { allFlagships } = useProductCatalog();
   const targetLink = localizedHref(href);
 
@@ -46,8 +48,8 @@ export function SubmenuItem({
 
   const pricing = useMemo(() => {
     if (!dynamicFlagship) return null;
-    return getProductPrice(dynamicFlagship, locale);
-  }, [dynamicFlagship, locale]);
+    return getProductPrice(dynamicFlagship, locale, campaigns);
+  }, [dynamicFlagship, locale, campaigns]);
 
   const formattedPrice = useMemo(() => {
     if (pricing && pricing.display) {

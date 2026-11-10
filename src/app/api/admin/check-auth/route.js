@@ -69,7 +69,10 @@ export async function GET(request) {
         // Fallback to user_metadata or initial admin email
         if (user.user_metadata?.role) {
           role = user.user_metadata.role;
-        } else if (user.email?.toLowerCase() === "diceboii13@gmail.com") {
+        } else if (
+          user.email?.toLowerCase() === "diceboii13@gmail.com" ||
+          user.email?.toLowerCase() === "szasz.szabolcs1995@gmail.com"
+        ) {
           role = "admin";
         }
       }
@@ -77,7 +80,10 @@ export async function GET(request) {
       // Fallback
       if (user.user_metadata?.role) {
         role = user.user_metadata.role;
-      } else if (user.email?.toLowerCase() === "diceboii13@gmail.com") {
+      } else if (
+        user.email?.toLowerCase() === "diceboii13@gmail.com" ||
+        user.email?.toLowerCase() === "szasz.szabolcs1995@gmail.com"
+      ) {
         role = "admin";
       }
     }

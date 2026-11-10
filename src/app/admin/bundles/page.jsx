@@ -131,7 +131,7 @@ export default function AdminBundlesPage() {
       if (data.success) {
         setBundles(data.bundles || []);
       } else {
-        showNotification(data.error || "Hiba történt a csomagok betöltésekor", "error");
+        showNotification(data.error || "Failed to load bundles", "error");
       }
     } catch (err) {
       showNotification(err.message, "error");
@@ -230,15 +230,15 @@ export default function AdminBundlesPage() {
 
   // Delete Bundle
   const handleDeleteBundle = async (bundle) => {
-    if (!confirm(`Biztosan törölni szeretnéd a(z) "${bundle.name}" csomagot?`)) return;
+    if (!confirm(`Are you sure you want to delete bundle "${bundle.name}"?`)) return;
     try {
       const res = await fetch(`/api/admin/bundles/${bundle.id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        showNotification("Csomag sikeresen törölve!", "success");
+        showNotification("Bundle deleted successfully!", "success");
         fetchBundles();
       } else {
-        showNotification(data.error || "Hiba történt a törlés során", "error");
+        showNotification(data.error || "Failed to delete bundle", "error");
       }
     } catch (err) {
       showNotification(err.message, "error");
@@ -256,7 +256,7 @@ export default function AdminBundlesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showNotification(`Láthatóság módosítva: ${newVis === "Visible" ? "Látható" : "Rejtett"}`, "success");
+        showNotification(`Visibility updated: ${newVis === "Visible" ? "Visible" : "Hidden"}`, "success");
         fetchBundles();
       }
     } catch (err) {
@@ -267,7 +267,7 @@ export default function AdminBundlesPage() {
   // Add Component to formData
   const handleAddComponent = (prod) => {
     if (formData.items.some((it) => it.product_id === prod.id)) {
-      showNotification("Ez a termék már hozzá van adva a csomaghoz!", "warning");
+      showNotification("This product is already added to this bundle!", "warning");
       return;
     }
     const newItem = {
@@ -292,7 +292,7 @@ export default function AdminBundlesPage() {
       return updated;
     });
     setProductPickerOpen(false);
-    showNotification(`"${prod.name}" hozzáadva a csomaghoz!`, "success");
+    showNotification(`"${prod.name}" added to bundle!`, "success");
   };
 
   // Remove Component from formData
@@ -395,12 +395,12 @@ export default function AdminBundlesPage() {
   const handleSaveBundle = async (e) => {
     e?.preventDefault();
     if (!formData.name?.trim()) {
-      showNotification("A csomag nevének megadása kötelező!", "error");
+      showNotification("Bundle name is required!", "error");
       setActiveTab("info");
       return;
     }
     if (formData.items.length === 0) {
-      showNotification("Legalább egy terméket össze kell párosítani a csomaghoz!", "error");
+      showNotification("At least one product must be paired in the bundle!", "error");
       setActiveTab("components");
       return;
     }
@@ -421,13 +421,13 @@ export default function AdminBundlesPage() {
       const data = await res.json();
       if (data.success) {
         showNotification(
-          editingBundle ? "Csomag sikeresen frissítve!" : "Új csomag sikeresen létrehozva!",
+          editingBundle ? "Bundle updated successfully!" : "New bundle created successfully!",
           "success"
         );
         setDrawerOpen(false);
         fetchBundles();
       } else {
-        showNotification(data.error || "Hiba történt a mentéskor", "error");
+        showNotification(data.error || "Failed to save bundle", "error");
       }
     } catch (err) {
       showNotification(err.message, "error");
@@ -442,7 +442,7 @@ export default function AdminBundlesPage() {
     const textToTranslateDesc = formData.description_en || formData.description;
 
     if (!textToTranslateName) {
-      showNotification("Kérlek adj meg legalább egy angol nevet a fordításhoz!", "warning");
+      showNotification("Please enter at least an English name before translating!", "warning");
       return;
     }
 
@@ -479,7 +479,7 @@ export default function AdminBundlesPage() {
       }
 
       setFormData(updated);
-      showNotification("AI fordítások sikeresen elkészültek mind a 6 nyelvre!", "success");
+      showNotification("AI translations completed successfully for all 6 languages!", "success");
     } catch (err) {
       showNotification(err.message, "error");
     } finally {
@@ -507,9 +507,9 @@ export default function AdminBundlesPage() {
         hover_image: prev.hover_image || images[1] || images[0],
         product_images: Array.from(new Set([...(prev.product_images || []), ...images])),
       }));
-      showNotification(`${images.length} db kép átvéve az összekapcsolt termékekből!`, "success");
+      showNotification(`${images.length} images imported from linked products!`, "success");
     } else {
-      showNotification("Az összekapcsolt termékekhez nincs kép rendelve", "warning");
+      showNotification("No images found on linked products", "warning");
     }
   };
 
@@ -540,16 +540,16 @@ export default function AdminBundlesPage() {
       {/* Page Header */}
       <AdminPageHeader
         badge="Catalog & Sets Management"
-        title="Termékcsomagok (Product Bundles)"
+        title="Product Bundles"
         count={`${bundles.length} Csomag`}
-        description="Fix termékcsomagok (Classic+, Morphy+ Cabinet) kezelése és létrehozása. Az árak és a raktárkészlet automatikusan a Supabase-ben összekapcsolt termékekből kalkulálódnak."
+        description="Create and manage product bundles (e.g. Classic + Cabinet, Morphy + Cabinet). Pricing and inventory are automatically computed from linked components in Supabase."
         actions={
           <div className="flex items-center gap-2">
             <button
               onClick={fetchBundles}
               disabled={loading}
               className="p-2.5 rounded-lg border border-wbk-lightgrey/60 hover:bg-wbk-lightgrey/30 text-wbk-brown transition-colors"
-              title="Frissítés"
+              title="Refresh"
             >
               <IconRefresh size={18} className={loading ? "animate-spin" : ""} />
             </button>
@@ -558,7 +558,7 @@ export default function AdminBundlesPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-wbk-black text-white text-xs font-semibold hover:bg-wbk-gold transition-colors shadow-sm"
             >
               <IconPlus size={16} />
-              <span>Új Csomag Létrehozása</span>
+              <span>Create New Bundle</span>
             </button>
           </div>
         }
@@ -595,25 +595,25 @@ export default function AdminBundlesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-xl bg-white border border-wbk-lightgrey/60 shadow-xs">
           <div className="flex items-center justify-between text-wbk-brown text-xs font-medium">
-            <span>Összes Csomag</span>
+            <span>Total Bundles</span>
             <IconLayersLinked size={18} className="text-wbk-gold" />
           </div>
           <div className="mt-2 text-2xl font-bold text-wbk-black">{stats.total}</div>
-          <div className="text-[10px] text-wbk-brown mt-0.5">Készleten lévő konfigurációk</div>
+          <div className="text-[10px] text-wbk-brown mt-0.5">Configured packages</div>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-wbk-lightgrey/60 shadow-xs">
           <div className="flex items-center justify-between text-emerald-700 text-xs font-medium">
-            <span>Aktív & Elérhető</span>
+            <span>Active & Available</span>
             <IconCheck size={18} className="text-emerald-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-emerald-700">{stats.active}</div>
-          <div className="text-[10px] text-emerald-600 mt-0.5">Minden komponens raktáron</div>
+          <div className="text-[10px] text-emerald-600 mt-0.5">All components in stock</div>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-wbk-lightgrey/60 shadow-xs">
           <div className="flex items-center justify-between text-amber-700 text-xs font-medium">
-            <span>Figyelmeztetés</span>
+            <span>Inventory Alert</span>
             <IconAlertTriangle size={18} className="text-amber-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-amber-700">{stats.issues}</div>
@@ -622,11 +622,11 @@ export default function AdminBundlesPage() {
 
         <div className="p-4 rounded-xl bg-white border border-wbk-lightgrey/60 shadow-xs">
           <div className="flex items-center justify-between text-wbk-brown text-xs font-medium">
-            <span>Átlag Kedvezmény</span>
+            <span>Average Discount</span>
             <IconTag size={18} className="text-wbk-gold" />
           </div>
           <div className="mt-2 text-2xl font-bold text-wbk-black">{stats.avgDiscount}%</div>
-          <div className="text-[10px] text-wbk-brown mt-0.5">Csomag árelőny a vevőnek</div>
+          <div className="text-[10px] text-wbk-brown mt-0.5">Package savings for customer</div>
         </div>
       </div>
 
@@ -638,7 +638,7 @@ export default function AdminBundlesPage() {
             <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Keresés név, SKU, vagy termék alapján..."
+              placeholder="Search by name, SKU, or product..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-wbk-lightgrey/80 focus:outline-hidden focus:border-wbk-gold bg-wbk-lightgrey/20"
@@ -659,9 +659,9 @@ export default function AdminBundlesPage() {
             onChange={(e) => setVisibilityFilter(e.target.value)}
             className="text-xs px-3 py-2 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black focus:outline-hidden focus:border-wbk-gold"
           >
-            <option value="all">Minden státusz</option>
-            <option value="Visible">Látható csomagok</option>
-            <option value="Hidden">Rejtett csomagok</option>
+            <option value="all">All Statuses</option>
+            <option value="Visible">Visible Bundles</option>
+            <option value="Hidden">Hidden Bundles</option>
           </select>
 
           {/* Health filter */}
@@ -670,9 +670,9 @@ export default function AdminBundlesPage() {
             onChange={(e) => setHealthFilter(e.target.value)}
             className="text-xs px-3 py-2 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black focus:outline-hidden focus:border-wbk-gold"
           >
-            <option value="all">Minden készletállapot</option>
-            <option value="active">Csak vásárolható (In Stock)</option>
-            <option value="issues">Csak problémás (Figyelmeztetés)</option>
+            <option value="all">All Stock States</option>
+            <option value="active">In Stock Only</option>
+            <option value="issues">With Alerts (Issues)</option>
           </select>
         </div>
 
@@ -699,23 +699,23 @@ export default function AdminBundlesPage() {
         {loading ? (
           <div className="p-12 text-center bg-white rounded-xl border border-wbk-lightgrey/60 text-wbk-brown">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-wbk-gold border-t-transparent mb-3"></div>
-            <p className="text-xs font-medium">Csomagok betöltése és élő készletellenőrzés...</p>
+            <p className="text-xs font-medium">Loading bundles and verifying stock...</p>
           </div>
         ) : filteredBundles.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-xl border border-wbk-lightgrey/60 text-wbk-brown">
             <IconLayersLinked size={40} className="mx-auto text-gray-300 mb-3" />
-            <h3 className="text-sm font-semibold text-wbk-black mb-1">Nincs megjeleníthető csomag</h3>
+            <h3 className="text-sm font-semibold text-wbk-black mb-1">No bundles found</h3>
             <p className="text-xs text-wbk-brown mb-4">
               {search || visibilityFilter !== "all" || healthFilter !== "all"
-                ? "Nincs a keresési feltételeknek megfelelő termékcsomag."
-                : "Még nem hoztál létre termékcsomagot. Kattints a gombra új csomag párosításához!"}
+                ? "No bundles matched your search criteria."
+                : "No bundles created yet. Click the button to create your first bundle!"}
             </p>
             <button
               onClick={handleOpenCreate}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-wbk-black text-white text-xs font-semibold hover:bg-wbk-gold transition-colors"
             >
               <IconPlus size={16} />
-              <span>Új Csomag Létrehozása</span>
+              <span>Create New Bundle</span>
             </button>
           </div>
         ) : (
@@ -787,7 +787,7 @@ export default function AdminBundlesPage() {
                         {health.health_status === "active" ? (
                           <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Aktív & Vásárolható
+                            Active & In Stock
                           </span>
                         ) : health.health_status === "component_hidden" ? (
                           <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-semibold border border-amber-200">
@@ -797,7 +797,7 @@ export default function AdminBundlesPage() {
                         ) : health.health_status === "out_of_stock" ? (
                           <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-red-50 text-red-700 font-semibold border border-red-200">
                             <IconAlertCircle size={12} />
-                            Nincs raktáron (Out of stock)
+                            Out of Stock
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-semibold">
@@ -812,7 +812,7 @@ export default function AdminBundlesPage() {
                       <div className="text-[11px] text-gray-500 flex items-center gap-3 pt-1">
                         <span>Slug: <code className="text-wbk-black font-mono">/products/bundles/{bundle.slug}</code></span>
                         <span>•</span>
-                        <span>Összesített Készlet: <strong className={bundle.calculated_stock > 0 ? "text-emerald-700" : "text-red-600"}>{bundle.calculated_stock} db</strong></span>
+                        <span>Combined Stock: <strong className={bundle.calculated_stock > 0 ? "text-emerald-700" : "text-red-600"}>{bundle.calculated_stock} units</strong></span>
                       </div>
                     </div>
                   </div>
@@ -820,8 +820,8 @@ export default function AdminBundlesPage() {
                   {/* Middle: Components Breakdown */}
                   <div className="bg-wbk-lightgrey/25 p-3 rounded-lg border border-wbk-lightgrey/60 lg:w-80 shrink-0 space-y-2">
                     <div className="text-[10px] uppercase font-bold text-wbk-brown tracking-wider flex items-center justify-between">
-                      <span>Összekapcsolt Termékek ({bundle.items?.length || 0})</span>
-                      <span className="text-wbk-gold">Élő Készlet</span>
+                      <span>Linked Products ({bundle.items?.length || 0})</span>
+                      <span className="text-wbk-gold">Live Stock</span>
                     </div>
 
                     <div className="space-y-1.5">
@@ -848,7 +848,7 @@ export default function AdminBundlesPage() {
                                 )}
                               </div>
                               <span className="truncate text-wbk-black font-medium text-[11px]">
-                                {prod ? prod.name : `Termék ID #${it.product_id}`}
+                                {prod ? prod.name : `Product ID #${it.product_id}`}
                               </span>
                             </div>
 
@@ -874,13 +874,13 @@ export default function AdminBundlesPage() {
                   <div className="flex lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 shrink-0 lg:min-w-[170px] border-t lg:border-t-0 pt-3 lg:pt-0">
                     <div className="text-left lg:text-right">
                       <div className="text-[10px] text-gray-400 line-through">
-                        Összesen: {currSymbol}{Number(subtotal).toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                        Total: {currSymbol}{Number(subtotal).toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                       </div>
                       <div className="text-lg font-bold text-wbk-black">
                         {currSymbol}{Number(finalPrice).toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                       </div>
                       <div className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded inline-block">
-                        Megtakarítás: -{bundle.discount_percent}% ({currSymbol}{savings})
+                        Savings: -{bundle.discount_percent}% ({currSymbol}{savings})
                       </div>
                     </div>
 
@@ -892,7 +892,7 @@ export default function AdminBundlesPage() {
                             ? "border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
                             : "border-gray-200 text-gray-400 bg-gray-50 hover:bg-gray-100"
                         }`}
-                        title={bundle.visibility === "Visible" ? "Csomag elrejtése" : "Csomag megjelenítése"}
+                        title={bundle.visibility === "Visible" ? "Hide bundle" : "Show bundle"}
                       >
                         {bundle.visibility === "Visible" ? <IconEye size={16} /> : <IconEyeOff size={16} />}
                       </button>
@@ -900,7 +900,7 @@ export default function AdminBundlesPage() {
                       <button
                         onClick={() => handleOpenEdit(bundle)}
                         className="p-2 rounded-lg border border-wbk-lightgrey/80 text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/30 text-xs transition-colors"
-                        title="Csomag szerkesztése"
+                        title="Edit bundle"
                       >
                         <IconEdit size={16} />
                       </button>
@@ -908,7 +908,7 @@ export default function AdminBundlesPage() {
                       <button
                         onClick={() => handleDeleteBundle(bundle)}
                         className="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs transition-colors"
-                        title="Csomag törlése"
+                        title="Delete bundle"
                       >
                         <IconTrash size={16} />
                       </button>
@@ -929,10 +929,10 @@ export default function AdminBundlesPage() {
             <div className="p-5 border-b border-wbk-lightgrey/80 flex items-center justify-between bg-white sticky top-0 z-10">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-wbk-gold block">
-                  {editingBundle ? "Csomag Módosítása" : "Új Termékcsomag"}
+                  {editingBundle ? "Edit Bundle" : "New Product Bundle"}
                 </span>
                 <h2 className="text-lg font-bold text-wbk-black">
-                  {formData.name || "Névtelen Csomag"}
+                  {formData.name || "Untitled Bundle"}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -949,11 +949,11 @@ export default function AdminBundlesPage() {
             {/* Navigation Tabs */}
             <div className="flex items-center gap-1 px-5 border-b border-wbk-lightgrey/60 bg-wbk-lightgrey/20 overflow-x-auto text-xs font-semibold text-wbk-brown">
               {[
-                { id: "components", label: "1. Összekapcsolt Termékek", icon: IconLayersLinked, badge: formData.items.length },
+                { id: "components", label: "1. Linked Products", icon: IconLayersLinked, badge: formData.items.length },
                 { id: "info", label: "2. Alapadatok", icon: IconPackage },
-                { id: "translations", label: "3. Fordítások & Nyelvek", icon: IconLanguage },
-                { id: "media", label: "4. Képek & Média", icon: IconPhoto },
-                { id: "seo", label: "5. SEO Beállítások", icon: IconSparkles },
+                { id: "translations", label: "3. Translations & Languages", icon: IconLanguage },
+                { id: "media", label: "4. Images & Media", icon: IconPhoto },
+                { id: "seo", label: "5. SEO Settings", icon: IconSparkles },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -988,11 +988,11 @@ export default function AdminBundlesPage() {
                   <div className="p-4 rounded-xl bg-wbk-gold/10 border border-wbk-gold/30 text-xs text-wbk-black flex items-start gap-3">
                     <IconInfoCircle size={20} className="text-wbk-gold shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold mb-0.5">Hogyan működnek a fix párosítások?</h4>
+                      <h4 className="font-semibold mb-0.5">How bundled pairings work</h4>
                       <p className="text-wbk-brown leading-relaxed">
-                        Válassz ki legalább két terméket a Supabase katalógusból (pl. egy hagyományos vagy MORPHY ágyat, és egy hozzá illő szekrényt).
-                        A csomag alapára automatikusan az összeadott árakból származik, a készlet pedig mindig megegyezik a legkisebb készletű komponensével.
-                        Ha bármelyik párosított elem rejtett vagy elfogyott, a csomag automatikusan elrejtőzik vagy kifogyott állapotba kerül.
+                        Select at least two products from the Supabase catalog (e.g. a wall bed and matching cabinet unit).
+                        The bundle base price is automatically calculated from the sum of components, and stock equals the lowest component stock.
+                        If any paired component becomes hidden or out of stock, the bundle automatically updates its availability.
                       </p>
                     </div>
                   </div>
@@ -1001,7 +1001,7 @@ export default function AdminBundlesPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-wbk-black">
-                        Párosított Termékek ({formData.items.length})
+                        Linked Products ({formData.items.length})
                       </h3>
                       <button
                         type="button"
@@ -1009,23 +1009,23 @@ export default function AdminBundlesPage() {
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-wbk-black text-white text-xs font-semibold hover:bg-wbk-gold transition-colors"
                       >
                         <IconPlus size={14} />
-                        <span>Termék Hozzáadása a Katalógusból</span>
+                        <span>Add Product From Catalog</span>
                       </button>
                     </div>
 
                     {formData.items.length === 0 ? (
                       <div className="p-8 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 text-gray-500">
                         <IconPackage size={32} className="mx-auto mb-2 text-gray-300" />
-                        <p className="text-xs font-medium">Még nincs termék hozzáadva a csomaghoz.</p>
+                        <p className="text-xs font-medium">No products added to this bundle yet.</p>
                         <p className="text-[11px] text-gray-400 mt-1 mb-3">
-                          Kattints a fenti gombra az ágy és szekrény kiválasztásához.
+                          Click the button above to select components.
                         </p>
                         <button
                           type="button"
                           onClick={() => setProductPickerOpen(true)}
                           className="px-3 py-1.5 rounded-lg bg-wbk-gold text-wbk-black text-xs font-semibold hover:opacity-90"
                         >
-                          Válassz Terméket
+                          Select Product
                         </button>
                       </div>
                     ) : (
@@ -1051,16 +1051,16 @@ export default function AdminBundlesPage() {
                                       #{it.product_id}
                                     </span>
                                     <span className="text-[10px] text-wbk-gold font-semibold uppercase">
-                                      {prod?.parent_category || "Termék"}
+                                      {prod?.parent_category || "Product"}
                                     </span>
                                   </div>
                                   <h4 className="text-xs font-bold text-wbk-black truncate mt-0.5">
-                                    {prod?.name || `Termék #${it.product_id}`}
+                                    {prod?.name || `Product #${it.product_id}`}
                                   </h4>
                                   <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-3">
-                                    <span>Ár: <strong>£{Number(prod?.price_gbp || 0)}</strong> / €{Number(prod?.price_euro || 0)} / ${Number(prod?.price_usd || 0)}</span>
+                                    <span>Price: <strong>£{Number(prod?.price_gbp || 0)}</strong> / €{Number(prod?.price_euro || 0)} / ${Number(prod?.price_usd || 0)}</span>
                                     <span>•</span>
-                                    <span>Készlet: <strong className={prod?.stock > 0 ? "text-emerald-700" : "text-red-600"}>{prod?.stock ?? 0} db</strong></span>
+                                    <span>Stock: <strong className={prod?.stock > 0 ? "text-emerald-700" : "text-red-600"}>{prod?.stock ?? 0} units</strong></span>
                                   </div>
                                 </div>
                               </div>
@@ -1075,7 +1075,7 @@ export default function AdminBundlesPage() {
                                   >
                                     -
                                   </button>
-                                  <span className="px-3 py-1 font-mono">{it.quantity || 1} db</span>
+                                  <span className="px-3 py-1 font-mono">{it.quantity || 1} units</span>
                                   <button
                                     type="button"
                                     onClick={() => handleUpdateComponentQty(it.product_id, 1)}
@@ -1089,7 +1089,7 @@ export default function AdminBundlesPage() {
                                   type="button"
                                   onClick={() => handleRemoveComponent(it.product_id)}
                                   className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
-                                  title="Eltávolítás"
+                                  title="Remove"
                                 >
                                   <IconTrash size={16} />
                                 </button>
@@ -1104,28 +1104,28 @@ export default function AdminBundlesPage() {
                   {/* Pricing & Discount Card */}
                   <div className="p-5 rounded-xl bg-gray-50 border border-wbk-lightgrey/80 space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-wbk-black flex items-center justify-between">
-                      <span>Csomag Árkalkuláció & Kedvezmény</span>
+                      <span>Bundle Pricing & Discount</span>
                       <IconPercentage size={16} className="text-wbk-gold" />
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Discount Type */}
                       <div>
-                        <label className="text-xs font-medium text-wbk-brown block mb-1">Kedvezmény Típusa</label>
+                        <label className="text-xs font-medium text-wbk-brown block mb-1">Discount Type</label>
                         <select
                           value={formData.discount_type}
                           onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
                           className="w-full text-xs p-2.5 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black focus:outline-hidden focus:border-wbk-gold"
                         >
-                          <option value="percent">Százalékos Kedvezmény (%)</option>
-                          <option value="fixed">Fix Összegű Levonás (£/€/$)</option>
+                          <option value="percent">Percentage Discount (%)</option>
+                          <option value="fixed">Fixed Amount Discount (£/€/$)</option>
                         </select>
                       </div>
 
                       {/* Discount Value */}
                       {formData.discount_type === "percent" ? (
                         <div>
-                          <label className="text-xs font-medium text-wbk-brown block mb-1">Csomag Kedvezmény (%)</label>
+                          <label className="text-xs font-medium text-wbk-brown block mb-1">Bundle Discount (%)</label>
                           <div className="relative">
                             <input
                               type="number"
@@ -1141,7 +1141,7 @@ export default function AdminBundlesPage() {
                       ) : (
                         <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <label className="text-[10px] text-gray-500 block mb-1">Levonás (£ GBP)</label>
+                            <label className="text-[10px] text-gray-500 block mb-1">Discount (£ GBP)</label>
                             <input
                               type="number"
                               value={formData.discount_fix_gbp}
@@ -1150,7 +1150,7 @@ export default function AdminBundlesPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] text-gray-500 block mb-1">Levonás (€ EUR)</label>
+                            <label className="text-[10px] text-gray-500 block mb-1">Discount (€ EUR)</label>
                             <input
                               type="number"
                               value={formData.discount_fix_euro}
@@ -1159,7 +1159,7 @@ export default function AdminBundlesPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] text-gray-500 block mb-1">Levonás ($ USD)</label>
+                            <label className="text-[10px] text-gray-500 block mb-1">Discount ($ USD)</label>
                             <input
                               type="number"
                               value={formData.discount_fix_usd}
@@ -1174,28 +1174,28 @@ export default function AdminBundlesPage() {
                     {/* Live Price Table Preview */}
                     <div className="bg-white p-4 rounded-xl border border-wbk-lightgrey/60 space-y-2">
                       <div className="text-[11px] font-bold text-wbk-black uppercase tracking-wider mb-2">
-                        Élő Végfelhasználói Árak (Automatikusan Számolva)
+                        Live Customer Pricing (Calculated Automatically)
                       </div>
                       <div className="grid grid-cols-3 gap-3 text-center">
                         <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-                          <span className="text-[10px] font-bold text-gray-500 block">EGYESÜLT KIRÁLYSÁG (GBP)</span>
+                          <span className="text-[10px] font-bold text-gray-500 block">UNITED KINGDOM (GBP)</span>
                           <span className="text-xs text-gray-400 line-through">£{currentPricing.subtotal_gbp}</span>
                           <div className="text-base font-bold text-wbk-black">£{currentPricing.final_price_gbp}</div>
-                          <span className="text-[10px] text-emerald-600 font-semibold">Megtakarítás: £{currentPricing.savings_gbp}</span>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Savings: £{currentPricing.savings_gbp}</span>
                         </div>
 
                         <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-                          <span className="text-[10px] font-bold text-gray-500 block">EURÓPA (EUR)</span>
+                          <span className="text-[10px] font-bold text-gray-500 block">EUROPE (EUR)</span>
                           <span className="text-xs text-gray-400 line-through">€{currentPricing.subtotal_euro}</span>
                           <div className="text-base font-bold text-wbk-black">€{currentPricing.final_price_euro}</div>
-                          <span className="text-[10px] text-emerald-600 font-semibold">Megtakarítás: €{currentPricing.savings_euro}</span>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Savings: €{currentPricing.savings_euro}</span>
                         </div>
 
                         <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
                           <span className="text-[10px] font-bold text-gray-500 block">USA (USD)</span>
                           <span className="text-xs text-gray-400 line-through">${currentPricing.subtotal_usd}</span>
                           <div className="text-base font-bold text-wbk-black">${currentPricing.final_price_usd}</div>
-                          <span className="text-[10px] text-emerald-600 font-semibold">Megtakarítás: ${currentPricing.savings_usd}</span>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Savings: ${currentPricing.savings_usd}</span>
                         </div>
                       </div>
                     </div>
@@ -1203,9 +1203,9 @@ export default function AdminBundlesPage() {
                     {/* Stock Alert Summary */}
                     <div className="flex items-center justify-between text-xs p-3 rounded-lg bg-white border border-gray-200">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-wbk-black">Számított Csomag Készlet:</span>
+                        <span className="font-semibold text-wbk-black">Calculated Bundle Stock:</span>
                         <strong className={currentPricing.minStock > 0 ? "text-emerald-700" : "text-red-600"}>
-                          {currentPricing.minStock} db elérhető
+                          {currentPricing.minStock} units available
                         </strong>
                       </div>
                       {currentPricing.hasHidden && (
@@ -1228,7 +1228,7 @@ export default function AdminBundlesPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-wbk-brown block mb-1">Csomag Neve (EN / Default) *</label>
+                      <label className="text-xs font-medium text-wbk-brown block mb-1">Bundle Name (EN / Default) *</label>
                       <input
                         type="text"
                         required
@@ -1262,7 +1262,7 @@ export default function AdminBundlesPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-wbk-brown block mb-1">Cikkszám / SKU</label>
+                      <label className="text-xs font-medium text-wbk-brown block mb-1">SKU / Identifier</label>
                       <input
                         type="text"
                         value={formData.sku}
@@ -1273,7 +1273,7 @@ export default function AdminBundlesPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-medium text-wbk-brown block mb-1">Csomag Jelvény / Badge</label>
+                      <label className="text-xs font-medium text-wbk-brown block mb-1">Bundle Badge</label>
                       <input
                         type="text"
                         value={formData.badge}
@@ -1284,13 +1284,13 @@ export default function AdminBundlesPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-medium text-wbk-brown block mb-1">Láthatóság</label>
+                      <label className="text-xs font-medium text-wbk-brown block mb-1">Visibility</label>
                       <select
                         value={formData.visibility}
                         onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
                         className="w-full text-xs p-2.5 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black"
                       >
-                        <option value="Visible">Látható (Webshopban aktív)</option>
+                        <option value="Visible">Visible (Active on storefront)</option>
                         <option value="Hidden">Rejtett (Csak admin)</option>
                       </select>
                     </div>
@@ -1298,7 +1298,7 @@ export default function AdminBundlesPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-wbk-brown block mb-1">Alkategória</label>
+                      <label className="text-xs font-medium text-wbk-brown block mb-1">Subcategory</label>
                       <input
                         type="text"
                         value={formData.sub_category}
@@ -1321,12 +1321,12 @@ export default function AdminBundlesPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-wbk-brown block mb-1">Leírás (Description EN)</label>
+                    <label className="text-xs font-medium text-wbk-brown block mb-1">Description (English EN)</label>
                     <textarea
                       rows={4}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value, description_en: e.target.value })}
-                      placeholder="Írd le a csomag részleteit, az ágy és szekrény összeillőségét és a kedvezményt..."
+                      placeholder="Describe bundle details, component compatibility, and savings..."
                       className="w-full text-xs p-2.5 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black leading-relaxed"
                     />
                   </div>
@@ -1334,13 +1334,13 @@ export default function AdminBundlesPage() {
                   {/* Bullet features */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-medium text-wbk-brown">Főbb Jellemzők (Bullet Points)</label>
+                      <label className="text-xs font-medium text-wbk-brown">Key Highlights (Bullet Points)</label>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, features: [...formData.features, ""] })}
                         className="text-[11px] text-wbk-gold hover:underline font-semibold"
                       >
-                        + Új pont hozzáadása
+                        + Add highlight bullet
                       </button>
                     </div>
                     <div className="space-y-2">
@@ -1380,10 +1380,10 @@ export default function AdminBundlesPage() {
                     <div>
                       <h4 className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
                         <IconSparkles size={16} className="text-purple-600" />
-                        <span>Automatikus AI Fordítás (1-Kattintás)</span>
+                        <span>Automatic AI Translation (1-Click)</span>
                       </h4>
                       <p className="text-[11px] text-purple-700 mt-0.5">
-                        Lefordítja a csomag nevét és leírását mind a 6 európai nyelvre (DE, FR, ES, POR, IT, US) a WallBedKing terminológiának megfelelően.
+                        Translates bundle name and description to all 6 market languages (DE, FR, ES, POR, IT, US) matching WallBedKing terminology.
                       </p>
                     </div>
                     <button
@@ -1393,7 +1393,7 @@ export default function AdminBundlesPage() {
                       className="px-4 py-2 rounded-lg bg-purple-700 text-white text-xs font-semibold hover:bg-purple-800 transition-colors flex items-center gap-2 shrink-0 disabled:opacity-50"
                     >
                       <IconSparkles size={14} className={translating ? "animate-spin" : ""} />
-                      <span>{translating ? "Fordítás folyamatban..." : "AI Fordítás Mind a 6 Nyelvre"}</span>
+                      <span>{translating ? "Translating..." : "AI Translate to All 6 Languages"}</span>
                     </button>
                   </div>
 
@@ -1420,7 +1420,7 @@ export default function AdminBundlesPage() {
                   <div className="space-y-4 bg-gray-50/70 p-4 rounded-xl border border-gray-200">
                     <div>
                       <label className="text-xs font-medium text-wbk-brown block mb-1">
-                        Csomag Neve ({activeLocaleTab.toUpperCase()})
+                        Bundle Name ({activeLocaleTab.toUpperCase()})
                       </label>
                       <input
                         type="text"
@@ -1433,13 +1433,13 @@ export default function AdminBundlesPage() {
 
                     <div>
                       <label className="text-xs font-medium text-wbk-brown block mb-1">
-                        Csomag Leírása ({activeLocaleTab.toUpperCase()})
+                        Bundle Description ({activeLocaleTab.toUpperCase()})
                       </label>
                       <textarea
                         rows={4}
                         value={formData[`description_${activeLocaleTab}`] || ""}
                         onChange={(e) => setFormData({ ...formData, [`description_${activeLocaleTab}`]: e.target.value })}
-                        placeholder={`Csomag leírása ${activeLocaleTab.toUpperCase()} nyelven...`}
+                        placeholder={`Bundle description in ${activeLocaleTab.toUpperCase()}...`}
                         className="w-full text-xs p-2.5 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black leading-relaxed"
                       />
                     </div>
@@ -1452,8 +1452,8 @@ export default function AdminBundlesPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-bold text-wbk-black uppercase tracking-wider">Csomag Fotók & Galéria</h4>
-                      <p className="text-[11px] text-gray-500">Állítsd be a csomag kártya és a termékoldal képeit.</p>
+                      <h4 className="text-xs font-bold text-wbk-black uppercase tracking-wider">Bundle Photos & Gallery</h4>
+                      <p className="text-[11px] text-gray-500">Configure product card and product page images.</p>
                     </div>
                     <button
                       type="button"
@@ -1461,7 +1461,7 @@ export default function AdminBundlesPage() {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-wbk-black text-xs font-semibold transition-colors"
                     >
                       <IconPhoto size={14} />
-                      <span>Komponensek Képeinek Átvétele</span>
+                      <span>Import Images From Components</span>
                     </button>
                   </div>
 
@@ -1470,7 +1470,7 @@ export default function AdminBundlesPage() {
                     {/* Primary Image */}
                     <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-wbk-black">Elsődleges Kép (Fő Kép) *</label>
+                        <label className="text-xs font-bold text-wbk-black">Primary Image (Main Image) *</label>
                         <button
                           type="button"
                           onClick={() => {
@@ -1479,7 +1479,7 @@ export default function AdminBundlesPage() {
                           }}
                           className="text-[11px] text-wbk-gold font-semibold hover:underline"
                         >
-                          Tallózás Médiatárból
+                          Browse Media Storage
                         </button>
                       </div>
 
@@ -1489,14 +1489,14 @@ export default function AdminBundlesPage() {
                         ) : (
                           <div className="text-center text-gray-400">
                             <IconPhoto size={36} className="mx-auto mb-1 text-gray-300" />
-                            <span className="text-[11px]">Nincs kép kiválasztva</span>
+                            <span className="text-[11px]">No image selected</span>
                           </div>
                         )}
                       </div>
 
                       <input
                         type="text"
-                        placeholder="Kép URL címe (https://...)"
+                        placeholder="Image URL (https://...)"
                         value={formData.image}
                         onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                         className="w-full text-xs p-2 rounded border border-gray-300 bg-white"
@@ -1506,7 +1506,7 @@ export default function AdminBundlesPage() {
                     {/* Hover Image */}
                     <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-wbk-black">Lebegő Kép (Hover Image)</label>
+                        <label className="text-xs font-bold text-wbk-black">Hover Image</label>
                         <button
                           type="button"
                           onClick={() => {
@@ -1515,7 +1515,7 @@ export default function AdminBundlesPage() {
                           }}
                           className="text-[11px] text-wbk-gold font-semibold hover:underline"
                         >
-                          Tallózás Médiatárból
+                          Browse Media Storage
                         </button>
                       </div>
 
@@ -1525,14 +1525,14 @@ export default function AdminBundlesPage() {
                         ) : (
                           <div className="text-center text-gray-400">
                             <IconPhoto size={36} className="mx-auto mb-1 text-gray-300" />
-                            <span className="text-[11px]">Nincs hover kép kiválasztva</span>
+                            <span className="text-[11px]">No hover image selected</span>
                           </div>
                         )}
                       </div>
 
                       <input
                         type="text"
-                        placeholder="Hover kép URL címe (https://...)"
+                        placeholder="Hover image URL (https://...)"
                         value={formData.hover_image}
                         onChange={(e) => setFormData({ ...formData, hover_image: e.target.value })}
                         className="w-full text-xs p-2 rounded border border-gray-300 bg-white"
@@ -1543,7 +1543,7 @@ export default function AdminBundlesPage() {
                   {/* Gallery Images List */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-wbk-black">További Galéria Képek</label>
+                      <label className="text-xs font-bold text-wbk-black">Additional Gallery Images</label>
                       <button
                         type="button"
                         onClick={() => {
@@ -1552,7 +1552,7 @@ export default function AdminBundlesPage() {
                         }}
                         className="text-[11px] text-wbk-gold font-semibold hover:underline"
                       >
-                        + Kép hozzáadása médiatárból
+                        + Add image from media storage
                       </button>
                     </div>
 
@@ -1581,7 +1581,7 @@ export default function AdminBundlesPage() {
               {activeTab === "seo" && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-medium text-wbk-brown block mb-1">Meta Cím (SEO Title)</label>
+                    <label className="text-xs font-medium text-wbk-brown block mb-1">Meta Title (SEO Title)</label>
                     <input
                       type="text"
                       value={formData.meta_title}
@@ -1595,12 +1595,12 @@ export default function AdminBundlesPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-wbk-brown block mb-1">Meta Leírás (SEO Description)</label>
+                    <label className="text-xs font-medium text-wbk-brown block mb-1">Meta Description (SEO Description)</label>
                     <textarea
                       rows={3}
                       value={formData.meta_description}
                       onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                      placeholder="Keresőoptimalizált leírás a Google számára..."
+                      placeholder="Search-optimized description for Google..."
                       className="w-full text-xs p-2.5 rounded-lg border border-wbk-lightgrey/80 bg-white text-wbk-black leading-relaxed"
                     />
                     <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -1617,7 +1617,7 @@ export default function AdminBundlesPage() {
                   onClick={() => setDrawerOpen(false)}
                   className="px-4 py-2.5 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
-                  Mégse
+                  Cancel
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1627,7 +1627,7 @@ export default function AdminBundlesPage() {
                     className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-wbk-black text-white text-xs font-semibold hover:bg-wbk-gold transition-colors shadow-sm disabled:opacity-50"
                   >
                     <IconCheck size={16} />
-                    <span>{saving ? "Mentés folyamatban..." : editingBundle ? "Változtatások Mentése" : "Csomag Létrehozása"}</span>
+                    <span>{saving ? "Saving..." : editingBundle ? "Save Changes" : "Create Bundle"}</span>
                   </button>
                 </div>
               </div>
@@ -1643,8 +1643,8 @@ export default function AdminBundlesPage() {
             {/* Modal Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
               <div>
-                <h3 className="text-sm font-bold text-wbk-black">Válassz Terméket a Katalógusból</h3>
-                <p className="text-[11px] text-gray-500">Párosíts ágyat, szekrényt vagy matracot a csomaghoz.</p>
+                <h3 className="text-sm font-bold text-wbk-black">Select Product From Catalog</h3>
+                <p className="text-[11px] text-gray-500">Pair a bed, cabinet, sofa or mattress to this bundle.</p>
               </div>
               <button
                 onClick={() => setProductPickerOpen(false)}
@@ -1660,7 +1660,7 @@ export default function AdminBundlesPage() {
                 <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Keresés terméknév vagy SKU szerint..."
+                  placeholder="Search by product name or SKU..."
                   value={productPickerSearch}
                   onChange={(e) => setProductPickerSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-gray-300 bg-gray-50 focus:outline-hidden focus:border-wbk-gold"
@@ -1672,21 +1672,21 @@ export default function AdminBundlesPage() {
                 onChange={(e) => setProductPickerCategory(e.target.value)}
                 className="text-xs px-3 py-2 rounded-lg border border-gray-300 bg-white text-wbk-black"
               >
-                <option value="all">Minden kategória</option>
-                <option value="beds">Lenyitható Ágyak (Beds)</option>
-                <option value="cabinets">Szekrények (Cabinets)</option>
-                <option value="mattresses">Matracok (Mattresses)</option>
-                <option value="sofas">Kanapék (Sofas)</option>
-                <option value="extras">Kiegészítők (Extras)</option>
+                <option value="all">All Categories</option>
+                <option value="beds">Wall Beds</option>
+                <option value="cabinets">Cabinets & Storage</option>
+                <option value="mattresses">Mattresses</option>
+                <option value="sofas">Sofas & Seating</option>
+                <option value="extras">Accessories & Extras</option>
               </select>
             </div>
 
             {/* Modal Product List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {loadingCatalog ? (
-                <div className="p-8 text-center text-xs text-gray-500">Katalógus betöltése...</div>
+                <div className="p-8 text-center text-xs text-gray-500">Loading catalog...</div>
               ) : pickerFilteredProducts.length === 0 ? (
-                <div className="p-8 text-center text-xs text-gray-500">Nincs találat a megadott feltételekre.</div>
+                <div className="p-8 text-center text-xs text-gray-500">No products matched your search criteria.</div>
               ) : (
                 pickerFilteredProducts.map((prod) => {
                   const isSelected = formData.items.some((it) => it.product_id === prod.id);
@@ -1718,9 +1718,9 @@ export default function AdminBundlesPage() {
                           </div>
                           <h4 className="text-xs font-bold text-wbk-black truncate mt-0.5">{prod.name}</h4>
                           <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-3">
-                            <span>Ár: <strong>£{Number(prod.price_gbp || prod.price || 0)}</strong> / €{Number(prod.price_euro || 0)}</span>
+                            <span>Price: <strong>£{Number(prod.price_gbp || prod.price || 0)}</strong> / €{Number(prod.price_euro || 0)}</span>
                             <span>•</span>
-                            <span>Készlet: <strong className={prod.stock > 0 ? "text-emerald-700" : "text-red-600"}>{prod.stock ?? 0} db</strong></span>
+                            <span>Stock: <strong className={prod.stock > 0 ? "text-emerald-700" : "text-red-600"}>{prod.stock ?? 0} units</strong></span>
                           </div>
                         </div>
                       </div>
@@ -1735,7 +1735,7 @@ export default function AdminBundlesPage() {
                             : "bg-wbk-black text-white hover:bg-wbk-gold"
                         }`}
                       >
-                        {isSelected ? "Hozzáadva" : "Kiválasztás"}
+                        {isSelected ? "Added" : "Select"}
                       </button>
                     </div>
                   );
@@ -1750,7 +1750,7 @@ export default function AdminBundlesPage() {
                 onClick={() => setProductPickerOpen(false)}
                 className="px-4 py-2 rounded-lg bg-white border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50"
               >
-                Bezárás
+                Close
               </button>
             </div>
           </div>
@@ -1774,11 +1774,11 @@ export default function AdminBundlesPage() {
             }));
           }
           setMediaPickerOpen(false);
-          showNotification("Kép sikeresen kiválasztva!", "success");
+          showNotification("Image selected successfully!", "success");
         }}
         initialBucket="ProductImages"
         initialFolder="cabinets"
-        title="Válassz Képet a Supabase Médiatárból"
+        title="Select Image from Supabase Media Storage"
       />
     </div>
   );

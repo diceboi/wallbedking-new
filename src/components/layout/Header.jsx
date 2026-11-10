@@ -23,6 +23,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { FlagIcon } from "@/components/ui/FlagIcon";
+import { TopAnnouncementBar } from "./TopAnnouncementBar";
 
 /* ── Language choices (7 Parallel Markets) ────────────────── */
 const LANGUAGES = [
@@ -252,6 +253,9 @@ export function Header() {
         style={{ position: "sticky", top: 0 }}
         onMouseLeave={() => setSubMenu(null)}
       >
+        {/* Promotional Campaign Top Announcement Bar */}
+        <TopAnnouncementBar />
+
         {/* Single-row primary header bar */}
         <div className="w-full mx-auto px-4 sm:px-6 xl:px-6 2xl:px-8 h-14 sm:h-16 xl:h-[64px] flex items-center justify-between gap-3 xl:gap-4 2xl:gap-6 relative z-30 bg-wbk-white border-b border-wbk-lightgrey">
           {/* Left section: Logo + optional Contact Info */}

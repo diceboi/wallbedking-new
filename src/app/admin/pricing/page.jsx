@@ -1,425 +1,596 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   IconTag,
-  IconCoins,
-  IconDeviceFloppy,
+  IconPlus,
   IconRefresh,
   IconCheck,
   IconAlertCircle,
-  IconWand,
   IconSearch,
+  IconEyeCheck,
+  IconCalendar,
+  IconPercentage,
+  IconSpeakerphone,
+  IconPhoto,
+  IconEdit,
+  IconTrash,
+  IconCopy,
+  IconClock,
+  IconInfoCircle,
 } from "@tabler/icons-react";
-import { FlagIcon } from "@/components/ui/FlagIcon";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { PromotionalCampaignModal } from "@/components/admin/PromotionalCampaignModal";
+import { isCampaignActive } from "@/lib/promotions";
 
 export default function AdminPricingPage() {
-  const [products, setProducts] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState(null);
   const [search, setSearch] = useState("");
-  const [batchCategory, setBatchCategory] = useState("all");
-  const [batchDiscountPercent, setBatchDiscountPercent] = useState(30);
-  const [applyingBatch, setApplyingBatch] = useState(false);
+  const [filterTab, setFilterTab] = useState("all"); // "all" | "active" | "preview" | "inactive" | "expired"
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/products?limit=250");
+      const res = await fetch("/api/admin/promotions", { cache: "no-store" });
       const data = await res.json();
-      if (data.success && Array.isArray(data.products)) {
-        setProducts(data.products);
+      if (data.success && Array.isArray(data.campaigns)) {
+        setCampaigns(data.campaigns);
       }
-    } catch (err) {
-      setMessage({ type: "error", text: "Error loading pricing data." });
+    } catch (e) {
+      console.error("Failed to fetch campaigns:", e);
+      setMessage({ type: "error", text: "Failed to load promotional campaigns." });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handlePriceChange = (id, field, value) => {
-    const num = value === "" ? null : Number(value);
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [field]: isNaN(num) ? null : num } : p))
-    );
-  };
+  useEffect(() => {
+    fetchCampaigns();
+  }, [fetchCampaigns]);
 
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        String(p.id).includes(q) ||
-        (p.sku && p.sku.toLowerCase().includes(q)) ||
-        (p.name && p.name.toLowerCase().includes(q)) ||
-        (p.slug && p.slug.toLowerCase().includes(q))
-    );
-  }, [products, search]);
-
-  const handleSaveProduct = async (product) => {
-    setSavingId(product.id);
-    setMessage(null);
-
-    const payload = {
-      price_gbp: product.price_gbp,
-      price_euro: product.price_euro,
-      price_usd: product.price_usd,
-      sale_percent: product.sale_percent,
-      sale_price_gbp: product.sale_price_gbp,
-      sale_price_euro: product.sale_price_euro,
-      sale_price_usd: product.sale_price_usd,
+  const handleCreateNew = () => {
+    const nowIso = new Date().toISOString();
+    const newCamp = {
+      name: "",
+      slug: "",
+      status: "preview", // Default to admin preview mode for safety
+      priority: 5,
+      discount_type: "percentage",
+      discount_value: 15,
+      apply_to: "all",
+      target_categories: [],
+      target_products: [],
+      excluded_categories: [],
+      excluded_products: [],
+      allow_stacking: false,
+      schedule_type: "fixed",
+      start_date: nowIso,
+      end_date: new Date(Date.now() + 14 * 86400000).toISOString(),
+      recurring: {
+        frequency: "weekly",
+        days_of_week: [5, 6, 0],
+        start_time: "00:00",
+        end_time: "23:59",
+      },
+      top_bar: {
+        enabled: true,
+        text: "🌿 Special Promotion: 15% OFF across all space-saving furniture this weekend!",
+        link: "/products",
+        link_text: "Shop Now",
+        bg_color: "#2D5A27",
+        text_color: "#FFFFFF",
+        dismissible: true,
+      },
+      hero_banner: {
+        enabled: true,
+        badge: "Flash Sale • 15% OFF",
+        headline: "Save 15% On Space-Saving Furniture",
+        subtitle: "Premium foldaway wall beds, multi-functional tables and modular living solutions at exclusive prices.",
+        cta_text: "Explore Deals",
+        cta_link: "/products",
+        image: "/hero2.webp",
+      },
     };
+    setSelectedCampaign(newCamp);
+    setIsModalOpen(true);
+  };
 
+  const handleEdit = (camp) => {
+    setSelectedCampaign(camp);
+    setIsModalOpen(true);
+  };
+
+  const handleDuplicate = async (camp) => {
+    const copy = {
+      ...camp,
+      id: undefined,
+      name: `${camp.name} (Copy)`,
+      slug: `${camp.slug || "campaign"}-copy`,
+      status: "inactive",
+    };
     try {
-      const res = await fetch(`/api/admin/products/${product.id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/admin/promotions", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ campaign: copy }),
       });
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: "success", text: `Product #${product.id} prices saved successfully to Supabase!` });
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to save prices." });
+        setCampaigns(data.campaigns);
+        setMessage({ type: "success", text: "Campaign duplicated successfully as draft." });
       }
-    } catch (err) {
-      setMessage({ type: "error", text: "Network error while saving." });
-    } finally {
-      setSavingId(null);
-      setTimeout(() => setMessage(null), 3000);
+    } catch {
+      setMessage({ type: "error", text: "Failed to duplicate campaign." });
     }
   };
 
-  const handleApplyBatchDiscount = async () => {
-    if (!confirm(`Are you sure you want to apply a ${batchDiscountPercent}% discount to all products in "${batchCategory}"?`)) {
-      return;
+  const handleSave = async (campaignData) => {
+    const res = await fetch("/api/admin/promotions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaign: campaignData }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || "Failed to save campaign");
     }
+    setCampaigns(data.campaigns);
+    setMessage({ type: "success", text: "Promotional campaign saved successfully!" });
+  };
 
-    setApplyingBatch(true);
-    setMessage(null);
-
-    const targets = products.filter(
-      (p) => batchCategory === "all" || p.parent_category === batchCategory
-    );
-
+  const handleDelete = async (id) => {
     try {
-      for (const p of targets) {
-        await fetch(`/api/admin/products/${p.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sale_percent: Number(batchDiscountPercent) }),
+      const res = await fetch(`/api/admin/promotions?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.campaigns)) {
+        setCampaigns(data.campaigns);
+        setIsModalOpen(false);
+        setMessage({ type: "success", text: "Campaign deleted successfully." });
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to delete campaign." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Failed to delete campaign." });
+    }
+  };
+
+  // Quick cycle status: active -> preview -> inactive -> active
+  const handleCycleStatus = async (camp, e) => {
+    e.stopPropagation();
+    const nextStatus =
+      camp.status === "active"
+        ? "preview"
+        : camp.status === "preview"
+          ? "inactive"
+          : "active";
+
+    const updated = { ...camp, status: nextStatus };
+    try {
+      const res = await fetch("/api/admin/promotions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign: updated }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCampaigns(data.campaigns);
+        setMessage({
+          type: "success",
+          text: `Status updated to: ${
+            nextStatus === "active"
+              ? "Live"
+              : nextStatus === "preview"
+                ? "Admin Preview"
+                : "Inactive"
+          }`,
         });
       }
-
-      setProducts((prev) =>
-        prev.map((p) =>
-          batchCategory === "all" || p.parent_category === batchCategory
-            ? { ...p, sale_percent: Number(batchDiscountPercent) }
-            : p
-        )
-      );
-
-      setMessage({
-        type: "success",
-        text: `Successfully applied -${batchDiscountPercent}% discount to ${targets.length} products in Supabase!`,
-      });
-    } catch (err) {
-      setMessage({ type: "error", text: "Error applying batch discount." });
-    } finally {
-      setApplyingBatch(false);
-      setTimeout(() => setMessage(null), 4000);
+    } catch {
+      setMessage({ type: "error", text: "Failed to update status." });
     }
   };
 
+  // Filtered campaigns
+  const filteredCampaigns = useMemo(() => {
+    const now = new Date();
+    return campaigns.filter((camp) => {
+      // Search query filter
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchesName = (camp.name || "").toLowerCase().includes(q);
+        const matchesSlug = (camp.slug || "").toLowerCase().includes(q);
+        const matchesTopBar = (camp.top_bar?.text || "").toLowerCase().includes(q);
+        const matchesHero = (camp.hero_banner?.headline || "").toLowerCase().includes(q);
+        if (!matchesName && !matchesSlug && !matchesTopBar && !matchesHero) {
+          return false;
+        }
+      }
+
+      // Tab filter
+      const isExpired =
+        camp.end_date && new Date(camp.end_date).getTime() < now.getTime();
+
+      if (filterTab === "active") return camp.status === "active" && !isExpired;
+      if (filterTab === "preview") return camp.status === "preview";
+      if (filterTab === "inactive") return camp.status === "inactive" && !isExpired;
+      if (filterTab === "expired") return isExpired;
+
+      return true;
+    });
+  }, [campaigns, search, filterTab]);
+
+  // Tab counts
+  const counts = useMemo(() => {
+    const now = new Date();
+    return {
+      all: campaigns.length,
+      active: campaigns.filter(
+        (c) => c.status === "active" && (!c.end_date || new Date(c.end_date) >= now),
+      ).length,
+      preview: campaigns.filter((c) => c.status === "preview").length,
+      inactive: campaigns.filter(
+        (c) => c.status === "inactive" && (!c.end_date || new Date(c.end_date) >= now),
+      ).length,
+      expired: campaigns.filter(
+        (c) => c.end_date && new Date(c.end_date) < now,
+      ).length,
+    };
+  }, [campaigns]);
+
   return (
-    <div className="space-y-6 font-poppins">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
       <AdminPageHeader
-        badge="Pricing & Currencies"
-        title="Pricing & Discounts Manager"
-        count={products.length}
-        description="Manage regular prices, promotional discounts, and multi-currency rates (GBP, EUR, USD)"
+        title="Pricing & Promotional Campaigns"
+        description="Manage marketing promotions, scheduled sales, top announcement bars and hero banners."
         actions={
-          <button
-            type="button"
-            onClick={fetchProducts}
-            disabled={loading}
-            className="p-2.5 bg-white border border-wbk-lightgrey hover:border-wbk-black text-wbk-black rounded-full transition-colors cursor-pointer shadow-2xs"
-            title="Refresh database records"
-          >
-            <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={fetchCampaigns}
+              disabled={loading}
+              className="p-2 text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+              title="Refresh"
+            >
+              <IconRefresh className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-wbk-green hover:bg-wbk-green/90 rounded-xl transition-colors shadow-sm"
+            >
+              <IconPlus className="w-4 h-4" />
+              <span>Create Campaign</span>
+            </button>
+          </div>
         }
       />
 
-      {/* Status banner */}
+      {/* Info Banner on Admin Preview mode */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 flex items-start gap-3">
+        <IconEyeCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="text-xs text-amber-900 leading-relaxed">
+          <span className="font-bold">Admin Preview Mode: </span>
+          When a campaign is set to <span className="font-semibold text-amber-800">"Admin Preview"</span>, storefront visitors only see regular prices and normal banners. As a logged-in administrator, you will see the campaign live on the storefront with an admin preview indicator, allowing safe pre-launch testing.
+        </div>
+      </div>
+
+      {/* Notification Toast */}
       {message && (
         <div
-          className={`p-3.5 text-xs font-medium flex items-center gap-2 border ${
+          className={`p-3.5 rounded-xl border text-xs font-medium flex items-center justify-between shadow-sm ${
             message.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              ? "bg-green-50 border-green-200 text-green-800"
               : "bg-red-50 border-red-200 text-red-800"
           }`}
         >
-          {message.type === "success" ? (
-            <IconCheck size={16} />
-          ) : (
-            <IconAlertCircle size={16} />
-          )}
-          <span>{message.text}</span>
+          <div className="flex items-center gap-2">
+            {message.type === "success" ? (
+              <IconCheck className="w-4 h-4 text-green-600" />
+            ) : (
+              <IconAlertCircle className="w-4 h-4 text-red-600" />
+            )}
+            <span>{message.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMessage(null)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Batch Tool Panel */}
-      <div className="bg-white p-6 border border-wbk-lightgrey/60 shadow-xs space-y-4">
-        <div className="flex items-center gap-2">
-          <IconWand size={18} className="text-wbk-gold" />
-          <h3 className="font-poppins text-base font-semibold text-wbk-black">
-            Bulk Promotional Discounts
-          </h3>
+      {/* Filter Tabs & Search */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto text-xs font-semibold pb-1 sm:pb-0">
+          <button
+            type="button"
+            onClick={() => setFilterTab("all")}
+            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+              filterTab === "all"
+                ? "bg-gray-900 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            All ({counts.all})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab("active")}
+            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              filterTab === "active"
+                ? "bg-green-600 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+            Live ({counts.active})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab("preview")}
+            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              filterTab === "preview"
+                ? "bg-amber-600 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <IconEyeCheck className="w-3.5 h-3.5" />
+            Admin Preview ({counts.preview})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab("inactive")}
+            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+              filterTab === "inactive"
+                ? "bg-gray-600 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Inactive ({counts.inactive})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab("expired")}
+            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+              filterTab === "expired"
+                ? "bg-red-600 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Expired ({counts.expired})
+          </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
-          <div>
-            <label className="block text-[11px] font-medium text-wbk-brown uppercase mb-1">
-              Target Category
-            </label>
-            <select
-              value={batchCategory}
-              onChange={(e) => setBatchCategory(e.target.value)}
-              className="p-2 text-xs border border-wbk-lightgrey bg-[#FBF9F8] rounded-none focus:outline-none"
-            >
-              <option value="all">All Categories (234 items)</option>
-              <option value="beds">Murphy Beds</option>
-              <option value="sofas">Sofas</option>
-              <option value="mattresses">Mattresses</option>
-              <option value="cabinets">Cabinets</option>
-              <option value="extras">Extras & Accessories</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-medium text-wbk-brown uppercase mb-1">
-              Discount Percentage (-%)
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="90"
-              value={batchDiscountPercent}
-              onChange={(e) => setBatchDiscountPercent(e.target.value)}
-              className="p-2 text-xs w-32 border border-wbk-lightgrey bg-[#FBF9F8] rounded-none font-semibold focus:outline-none"
-            />
-          </div>
-
-          <div className="sm:self-end">
-            <button
-              type="button"
-              onClick={handleApplyBatchDiscount}
-              disabled={applyingBatch}
-              className="flex items-center gap-2 px-6 py-2.5 bg-wbk-black hover:bg-wbk-gold hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {applyingBatch ? (
-                <IconRefresh size={15} className="animate-spin" />
-              ) : (
-                <IconTag size={15} />
-              )}
-              <span>{applyingBatch ? "Applying..." : "Apply Category Discount"}</span>
-            </button>
-          </div>
+        {/* Search */}
+        <div className="relative w-full sm:w-64">
+          <IconSearch className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search campaigns..."
+            className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-wbk-green/30 focus:border-wbk-green"
+          />
         </div>
       </div>
 
-      {/* Pricing Matrix Table with Search */}
-      <div className="bg-white border border-wbk-lightgrey/60 shadow-xs overflow-x-auto">
-        <div className="p-4 border-b border-wbk-lightgrey/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-xs text-wbk-black font-semibold uppercase tracking-wider block">
-              Multi-Currency Price Matrix
-            </span>
-            <span className="text-[11px] text-wbk-brown">
-              Showing {filteredProducts.length} of {products.length} products. Each row can be saved directly to Supabase.
-            </span>
+      {/* Campaigns List */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-gray-400 text-xs">
+            <div className="w-6 h-6 border-2 border-wbk-green border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            Loading campaigns...
           </div>
-
-          {/* Search Box for Pricing */}
-          <div className="relative w-full sm:w-72">
-            <IconSearch
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-wbk-brown"
-            />
-            <input
-              type="text"
-              placeholder="Search by product name or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#FBF9F8] border border-wbk-lightgrey rounded-none focus:outline-none focus:border-wbk-black"
-            />
+        ) : filteredCampaigns.length === 0 ? (
+          <div className="p-12 text-center text-gray-400 space-y-3">
+            <IconTag className="w-10 h-10 mx-auto text-gray-300 stroke-1" />
+            <p className="text-sm font-medium text-gray-600">No campaigns found.</p>
+            <p className="text-xs text-gray-400">
+              {search
+                ? "No campaigns matched your search criteria."
+                : "Create a new campaign using the button above."}
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {filteredCampaigns.map((camp) => {
+              const now = new Date();
+              const isCurrentlyActive = isCampaignActive(camp, now);
+              const isExpired =
+                camp.end_date && new Date(camp.end_date).getTime() < now.getTime();
 
-        <table className="w-full text-left text-xs border-collapse font-poppins">
-          <thead>
-            <tr className="bg-[#F4F2F0] border-b border-wbk-lightgrey text-wbk-black uppercase tracking-wider text-[10px] font-semibold select-none">
-              <th className="py-3 px-3 w-16">ID</th>
-              <th className="py-3 px-4 min-w-[200px]">Product Name</th>
-              <th className="py-3 px-3 min-w-[150px]">
-                <div className="flex items-center gap-1.5">
-                  <FlagIcon country="en" size={13} />
-                  <span>GBP Base / Sale (£)</span>
-                </div>
-              </th>
-              <th className="py-3 px-3 min-w-[150px]">
-                <div className="flex items-center gap-1.5">
-                  <FlagIcon country="de" size={13} />
-                  <span>EUR Base / Sale (€)</span>
-                </div>
-              </th>
-              <th className="py-3 px-3 min-w-[150px]">
-                <div className="flex items-center gap-1.5">
-                  <FlagIcon country="us" size={13} />
-                  <span>USD Base / Sale ($)</span>
-                </div>
-              </th>
-              <th className="py-3 px-3 w-28 text-center">Discount (%)</th>
-              <th className="py-3 px-3 w-24 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-wbk-lightgrey/40">
-            {loading ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-wbk-brown">
-                  <IconRefresh size={20} className="animate-spin mx-auto mb-2" />
-                  Loading pricing matrix...
-                </td>
-              </tr>
-            ) : filteredProducts.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-wbk-brown">
-                  No products matched your search.
-                </td>
-              </tr>
-            ) : (
-              filteredProducts.map((p) => {
-                const isSaving = savingId === p.id;
-                return (
-                  <tr key={p.id} className="hover:bg-[#FBF9F8] transition-colors">
-                    <td className="py-3 px-3 font-mono font-semibold text-wbk-brown">
-                      #{p.id}
-                    </td>
-
-                    <td className="py-3 px-4 font-medium text-wbk-black max-w-xs">
-                      <div className="truncate">{p.name}</div>
-                      {p.sku && (
-                        <div className="text-[10px] font-mono text-wbk-brown mt-0.5">
-                          SKU: {p.sku}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* GBP */}
-                    <td className="py-2 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          value={p.price_gbp ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "price_gbp", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey font-semibold rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Regular"
-                        />
-                        <input
-                          type="number"
-                          value={p.sale_price_gbp ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "sale_price_gbp", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey text-red-600 rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Sale"
-                        />
-                      </div>
-                    </td>
-
-                    {/* EUR */}
-                    <td className="py-2 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          value={p.price_euro ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "price_euro", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey font-semibold rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Regular"
-                        />
-                        <input
-                          type="number"
-                          value={p.sale_price_euro ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "sale_price_euro", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey text-red-600 rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Sale"
-                        />
-                      </div>
-                    </td>
-
-                    {/* USD */}
-                    <td className="py-2 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          value={p.price_usd ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "price_usd", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey font-semibold rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Regular"
-                        />
-                        <input
-                          type="number"
-                          value={p.sale_price_usd ?? ""}
-                          onChange={(e) => handlePriceChange(p.id, "sale_price_usd", e.target.value)}
-                          className="w-20 p-1.5 text-xs bg-white border border-wbk-lightgrey text-red-600 rounded-none focus:outline-none focus:border-wbk-black"
-                          placeholder="Sale"
-                        />
-                      </div>
-                    </td>
-
-                    {/* Sale Percent */}
-                    <td className="py-2 px-3 text-center">
-                      <input
-                        type="number"
-                        min="0"
-                        max="90"
-                        value={p.sale_percent ?? ""}
-                        onChange={(e) => handlePriceChange(p.id, "sale_percent", e.target.value)}
-                        className="w-16 p-1.5 text-xs bg-white border border-wbk-lightgrey text-center font-bold text-red-600 rounded-none focus:outline-none"
-                        placeholder="%"
-                      />
-                    </td>
-
-                    {/* Save Button */}
-                    <td className="py-2 px-3 text-center">
+              return (
+                <div
+                  key={camp.id}
+                  onClick={() => handleEdit(camp)}
+                  className="p-5 hover:bg-gray-50/80 transition-all cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4 group"
+                >
+                  {/* Left Column: Info & Badges */}
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Status Pill with 1-click toggle */}
                       <button
                         type="button"
-                        onClick={() => handleSaveProduct(p)}
-                        disabled={isSaving}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#F4F2F0] hover:bg-wbk-black hover:text-white text-wbk-black rounded-full transition-colors cursor-pointer text-xs font-semibold disabled:opacity-50"
-                        title="Save row to Supabase"
+                        onClick={(e) => handleCycleStatus(camp, e)}
+                        title="Click to cycle status (Live -> Preview -> Inactive)"
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
+                          camp.status === "active"
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : camp.status === "preview"
+                              ? "bg-amber-100 text-amber-900 hover:bg-amber-200"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                       >
-                        {isSaving ? (
-                          <IconRefresh size={13} className="animate-spin" />
-                        ) : (
-                          <IconDeviceFloppy size={13} />
+                        {camp.status === "active" && (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            Live (Active)
+                          </>
                         )}
-                        <span>Save</span>
+                        {camp.status === "preview" && (
+                          <>
+                            <IconEyeCheck className="w-3.5 h-3.5 text-amber-700" />
+                            Admin Preview
+                          </>
+                        )}
+                        {camp.status === "inactive" && (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-gray-400" />
+                            Inactive (Draft)
+                          </>
+                        )}
                       </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+
+                      {isExpired && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-100 text-red-700">
+                          Expired
+                        </span>
+                      )}
+
+                      {/* Discount Badge */}
+                      <span className="px-2.5 py-0.5 rounded-lg bg-wbk-green/10 text-wbk-green text-xs font-bold border border-wbk-green/20">
+                        {camp.discount_type === "percentage"
+                          ? `${camp.discount_value}% OFF`
+                          : `£${camp.discount_value} OFF`}
+                      </span>
+
+                      {/* Scope Badge */}
+                      <span className="text-[11px] font-medium text-gray-500">
+                        {camp.apply_to === "all"
+                          ? "All Products"
+                          : camp.apply_to === "categories"
+                            ? `Categories: ${(camp.target_categories || []).join(", ") || "none specified"}`
+                            : `${camp.target_products?.length || 0} specific products`}
+                      </span>
+
+                      {camp.allow_stacking && (
+                        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded">
+                          Stackable
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Campaign Title & Slug */}
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 group-hover:text-wbk-green transition-colors flex items-center gap-2">
+                        <span>{camp.name}</span>
+                        <span className="text-xs font-normal text-gray-400 font-mono">
+                          ({camp.slug || camp.id})
+                        </span>
+                      </h3>
+                    </div>
+
+                    {/* Schedule Snippet */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1.5">
+                        <IconCalendar className="w-3.5 h-3.5 text-gray-400" />
+                        <span>
+                          {camp.start_date ? new Date(camp.start_date).toLocaleDateString() : "Immediate"}
+                          {" — "}
+                          {camp.end_date ? new Date(camp.end_date).toLocaleDateString() : "Ongoing"}
+                        </span>
+                      </div>
+
+                      {camp.schedule_type === "recurring" && camp.recurring && (
+                        <div className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                          <IconClock className="w-3.5 h-3.5" />
+                          <span>
+                            Recurring: {camp.recurring.days_of_week?.length || 0} days/week ({camp.recurring.start_time || "00:00"}-{camp.recurring.end_time || "23:59"})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Visual Creatives & Actions */}
+                  <div className="flex flex-wrap items-center gap-4 lg:justify-end">
+                    {/* Visual Creatives indicator pills */}
+                    <div className="flex items-center gap-2">
+                      {camp.top_bar?.enabled && (
+                        <div
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 text-[11px] text-gray-700"
+                          title={`Top bar: "${camp.top_bar.text}"`}
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full border border-black/20"
+                            style={{ backgroundColor: camp.top_bar.bg_color || "#2D5A27" }}
+                          />
+                          <IconSpeakerphone className="w-3.5 h-3.5 text-gray-500" />
+                          <span>Top Bar</span>
+                        </div>
+                      )}
+
+                      {camp.hero_banner?.enabled && (
+                        <div
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 text-[11px] text-gray-700"
+                          title={`Hero Banner: "${camp.hero_banner.headline}"`}
+                        >
+                          <IconPhoto className="w-3.5 h-3.5 text-gray-500" />
+                          <span>Hero Banner</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div
+                      className="flex items-center gap-1 border-l border-gray-200 pl-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicate(camp)}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Duplicate"
+                      >
+                        <IconCopy className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(camp)}
+                        className="p-1.5 text-gray-400 hover:text-wbk-green hover:bg-wbk-green/10 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <IconEdit className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete campaign "${camp.name}"?`)) {
+                            handleDelete(camp.id);
+                          }
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <IconTrash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Edit / Create Modal Popup */}
+      <PromotionalCampaignModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        campaign={selectedCampaign}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

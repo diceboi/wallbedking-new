@@ -35,6 +35,7 @@ import {
   OTHER_CATEGORIES_LIST,
 } from "@/data/products";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { useCategories } from "@/context/CategoriesContext";
 import { getProductPrice } from "@/lib/i18n";
@@ -60,6 +61,7 @@ function ProductsSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, localizedHref, formatPrice, locale } = useLocale();
+  const { campaigns } = usePromotions();
   const { rawCatalog, allFlagships } = useProductCatalog();
   const { categories: allDbCategories } = useCategories();
 
@@ -440,7 +442,7 @@ function ProductsSearchContent() {
     // 5. Price Filter
     if (selectedPrice !== "All") {
       list = list.filter((item) => {
-        const pricing = getProductPrice(item, locale);
+        const pricing = getProductPrice(item, locale, campaigns);
         const priceNum =
           Number(pricing.raw ?? pricing.numeric ?? pricing.regularRaw) ||
           Number(item.sale_price_gbp || item.price_gbp || item.numericPrice) ||

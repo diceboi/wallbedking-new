@@ -134,6 +134,21 @@ export async function validateOrderTotals(
   const validatedItems = [];
   const curr = String(targetCurrency || (targetLocale === "us" ? "USD" : (targetLocale === "en" ? "GBP" : "EUR"))).toUpperCase();
 
+  // Load active campaigns for server-side promotional pricing validation
+  let activeCampaigns = [];
+  try {
+    const { getCampaigns, isCampaignActive } = await import("@/lib/promotions");
+    const allCampaigns = (await getCampaigns({ fresh: true })) || [];
+    const now = new Date();
+    activeCampaigns = allCampaigns.filter((c) => {
+      if (!c || c.status === "inactive") return false;
+      if (c.end_date && new Date(c.end_date).getTime() < now.getTime()) return false;
+      return isCampaignActive(c, now);
+    });
+  } catch (campErr) {
+    console.warn("[validateOrderTotals] Could not load promotional campaigns:", campErr?.message);
+  }
+
   for (const item of items) {
     const qty = Math.max(1, parseInt(item.quantity || 1, 10));
     const { numericId, slug } = resolveProductIdentifiers(item);
@@ -148,7 +163,7 @@ export async function validateOrderTotals(
 
         const { data } = await supabaseAdmin
           .from("products")
-          .select("id, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
+          .select("id, sku, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
           .or(orClauses.join(","))
           .maybeSingle();
 
@@ -202,6 +217,27 @@ export async function validateOrderTotals(
         finalPrice = explicitSalePrice;
       }
 
+      // Dynamic promotional campaign discount evaluation
+      if (activeCampaigns.length > 0) {
+        try {
+          const { calculateCampaignDiscount } = await import("@/lib/promotions");
+          const promo = calculateCampaignDiscount(
+            prodSource,
+            regularPrice,
+            curr,
+            activeCampaigns,
+            targetLocale
+          );
+          if (promo && promo.isPromotional) {
+            if (finalPrice == null || promo.finalPrice < finalPrice) {
+              finalPrice = promo.finalPrice;
+            }
+          }
+        } catch (e) {
+          console.warn("[validateOrderTotals] Promo discount calculation error:", e?.message);
+        }
+      }
+
       // Morphy sofa surcharge if included
       const isSofaIncluded = Boolean(item.options?.sofaIncluded);
       let sofaSurcharge = 0;
@@ -241,6 +277,24 @@ export async function validateOrderTotals(
           unitPrice = bundleSource.calculated_price_gbp;
         }
 
+        if (activeCampaigns.length > 0) {
+          try {
+            const { calculateCampaignDiscount } = await import("@/lib/promotions");
+            const promo = calculateCampaignDiscount(
+              { ...bundleSource, is_bundle: true },
+              unitPrice,
+              curr,
+              activeCampaigns,
+              targetLocale
+            );
+            if (promo && promo.isPromotional && promo.finalPrice < unitPrice) {
+              unitPrice = promo.finalPrice;
+            }
+          } catch (e) {
+            console.warn("[validateOrderTotals] Bundle promo error:", e?.message);
+          }
+        }
+
         const isHidden = bundleSource.visibility === "Hidden" || bundleSource.has_hidden_component;
         const isStockZero = bundleSource.calculated_stock <= 0 || bundleSource.has_zero_stock_component;
         const isOutOfStock = Boolean(isHidden || isStockZero);
@@ -251,6 +305,7 @@ export async function validateOrderTotals(
         validatedItems.push({
           id: item.id || `bundle-${bundleSource.slug}`,
           rawId: bundleSource.id,
+          sku: item.sku || bundleSource.sku || `BDL-${String(bundleSource.slug || "").toUpperCase().slice(0, 20)}`,
           slug: bundleSource.slug,
           title: item.title || bundleSource.name,
           image: item.image || bundleSource.image,
@@ -303,9 +358,16 @@ export async function validateOrderTotals(
       ? Boolean(isStockZero)
       : Boolean(isStockZero || (isHidden && isStockZero));
 
+    const resolvedSku =
+      item.sku ||
+      prodSource?.sku ||
+      item.options?.sku ||
+      "";
+
     validatedItems.push({
       id: item.id || (numericId ? `wbk-${numericId}` : slug),
       rawId: numericId || item.rawId || item.id,
+      sku: resolvedSku,
       slug: slug || item.slug || "",
       title: item.title || prodSource?.name || "Wall Bed King Item",
       image: item.image || prodSource?.image || "",

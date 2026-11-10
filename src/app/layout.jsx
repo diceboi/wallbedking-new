@@ -14,6 +14,9 @@ import { getStorefrontProducts, getStorefrontBundles } from "@/lib/products-db";
 import { getStorefrontCategories } from "@/lib/categories-db";
 import { ProductCatalogProvider } from "@/context/ProductCatalogContext";
 import { CategoriesProvider } from "@/context/CategoriesContext";
+import { PromotionsProvider } from "@/context/PromotionsContext";
+import { getCampaigns, isCampaignActive } from "@/lib/promotions";
+import { cookies } from "next/headers";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ZendeskChat } from "@/components/chat/ZendeskChat";
@@ -46,11 +49,38 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const [initialProducts, initialCategories, initialBundles] = await Promise.all([
+  const [initialProducts, initialCategories, initialBundles, allCampaigns] = await Promise.all([
     getStorefrontProducts(),
     getStorefrontCategories(),
     getStorefrontBundles(),
+    getCampaigns().catch(() => []),
   ]);
+
+  const now = new Date();
+  let isAdmin = false;
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+    isAdmin =
+      cookieStore.get("wbk_admin")?.value === "1" ||
+      cookieStore.get("admin")?.value === "1" ||
+      /sb-[a-z0-9]+-auth-token/i.test(cookieHeader);
+  } catch {
+    // ignore
+  }
+
+  const initialActiveCampaigns = (allCampaigns || [])
+    .filter((c) => {
+      if (!c) return false;
+      if (c.status === "inactive") return false;
+      if (c.end_date && new Date(c.end_date).getTime() < now.getTime()) return false;
+      if (c.status === "preview" && !isAdmin) return false;
+      return isCampaignActive(c, now);
+    })
+    .map((c) => ({
+      ...c,
+      isPreview: c.status === "preview",
+    }));
 
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
@@ -62,18 +92,20 @@ export default async function RootLayout({ children }) {
               <AnalyticsScripts />
               <ProductCatalogProvider initialProducts={initialProducts} initialBundles={initialBundles}>
                 <CategoriesProvider initialCategories={initialCategories}>
-                  <CartProvider>
-                    <MenuContextProvider>
-                      <Header />
-                      <main className="flex-1">{children}</main>
-                      <Footer />
-                      <CartDrawer />
-                      <UserDrawer />
-                      <PasswordResetModal />
-                      <CookieConsent />
-                      <ZendeskChat />
-                    </MenuContextProvider>
-                  </CartProvider>
+                  <PromotionsProvider initialCampaigns={initialActiveCampaigns}>
+                    <CartProvider>
+                      <MenuContextProvider>
+                        <Header />
+                        <main className="flex-1">{children}</main>
+                        <Footer />
+                        <CartDrawer />
+                        <UserDrawer />
+                        <PasswordResetModal />
+                        <CookieConsent />
+                        <ZendeskChat />
+                      </MenuContextProvider>
+                    </CartProvider>
+                  </PromotionsProvider>
                 </CategoriesProvider>
               </ProductCatalogProvider>
             </LocaleProvider>

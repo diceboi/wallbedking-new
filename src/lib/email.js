@@ -7,6 +7,7 @@
  */
 
 import { BANK_DETAILS, getBankI18n } from "./bank-details.js";
+import { RAW_CATALOG } from "@/data/products";
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
 export const SUPPORT_EMAIL = "support@wallbedking.com";
@@ -716,7 +717,20 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
     const variantText = variantParts.length > 0 ? variantParts.join(" • ") : (item.variant || "");
     const hasSofa = Boolean(opts.sofaIncluded);
     const sofaPriceText = opts.sofaPrice ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})` : "";
-    const sku = item.sku || item.rawId || item.productId || item.id || "";
+    let sku = item.sku || item.options?.sku || "";
+    if (!sku || /^\d+$/.test(String(sku).trim())) {
+      const found = RAW_CATALOG?.find(
+        (p) =>
+          (item.rawId && p.id === Number(item.rawId)) ||
+          (item.slug && p.slug === item.slug) ||
+          (item.id && (p.slug === item.id || String(p.id) === String(item.id)))
+      );
+      if (found?.sku) {
+        sku = found.sku;
+      } else if (/^\d+$/.test(String(sku).trim())) {
+        sku = "";
+      }
+    }
     const qty = parseInt(item.quantity, 10) || 1;
     const unitPrice = Number(item.price || item.unitPrice || 0);
     const lineTotal = Number(item.itemTotal || (unitPrice * qty));

@@ -106,6 +106,7 @@ export function StripeCheckoutButton({
         const unitAmountPence = Math.round(discountedPrice * 100);
 
         const optionsDesc = [
+          item.sku && !/^\d+$/.test(String(item.sku).trim()) ? `SKU: ${item.sku}` : null,
           item.options?.size,
           item.options?.orientation,
           item.options?.type,
@@ -120,6 +121,10 @@ export function StripeCheckoutButton({
             product_data: {
               name: item.title,
               description: optionsDesc || "Wall Bed King Product",
+              metadata: {
+                sku: item.sku || "",
+                slug: item.slug || "",
+              },
             },
             unit_amount: unitAmountPence,
           },

@@ -135,7 +135,9 @@ export function formatPrice(amount, locale = DEFAULT_LOCALE) {
  * - Fixed discounts: sale_fix_gbp, sale_fix_euro, sale_fix_usd
  * - Percentage discount: sale_percent
  */
-export function getProductPrice(product, locale = DEFAULT_LOCALE) {
+import { calculateCampaignDiscount, getClientCampaignsCache } from "@/lib/promotions";
+
+export function getProductPrice(product, locale = DEFAULT_LOCALE, activeCampaigns = null) {
   if (!product) {
     return {
       display: "£0",
@@ -150,6 +152,7 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
       discountType: null,
       discountAmount: 0,
       discountLabel: "",
+      appliedCampaign: null,
     };
   }
 
@@ -220,6 +223,35 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
     }
   }
 
+  // 3. Evaluate dynamic Promotional Campaigns (Overlay Rule Engine)
+  let appliedCampaign = null;
+  const campaignsList =
+    Array.isArray(activeCampaigns) && activeCampaigns.length > 0
+      ? activeCampaigns
+      : Array.isArray(product?._activeCampaigns) && product._activeCampaigns.length > 0
+        ? product._activeCampaigns
+        : typeof window !== "undefined"
+          ? getClientCampaignsCache()
+          : [];
+
+  if (campaignsList.length > 0) {
+    const promo = calculateCampaignDiscount(
+      product,
+      regularPrice,
+      currency,
+      campaignsList,
+      normLocale,
+    );
+    if (promo && promo.isPromotional) {
+      if (finalSalePrice == null || promo.finalPrice < finalSalePrice) {
+        finalSalePrice = promo.finalPrice;
+        discountType = promo.appliedCampaign?.discount_type === "percentage" ? "percent" : "fixed";
+        discountAmount = promo.appliedCampaign?.discount_value || promo.discountAmount;
+        appliedCampaign = promo.appliedCampaign;
+      }
+    }
+  }
+
   // Handle pre-paired bundle packages: regularPrice is the combined subtotal, finalSalePrice is the bundle price
   if (product.is_bundle) {
     let bundleSubtotal = 0;
@@ -271,6 +303,8 @@ export function getProductPrice(product, locale = DEFAULT_LOCALE) {
     discountPercent: percentDiscount || (isOnSale ? Math.round(((regularPrice - finalSalePrice) / regularPrice) * 100) : 0),
     discountLabel,
     currency,
+    appliedCampaign,
+    isPromotionalCampaign: Boolean(appliedCampaign),
   };
 }
 

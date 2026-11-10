@@ -17,6 +17,7 @@ import {
 import { MenuContext } from "@/context/MenuContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import { usePromotions } from "@/context/PromotionsContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
 import { getProductPrice } from "@/lib/i18n";
 import { FlagIcon } from "@/components/ui/FlagIcon";
@@ -40,6 +41,7 @@ export function MobileMenuDrawer() {
   const { isMobileOpen, closeMobileMenu, navItems } = useContext(MenuContext);
   const { locale, market, switchLocale, localizedHref, t, formatPrice } =
     useLocale();
+  const { campaigns } = usePromotions();
   const { allFlagships } = useProductCatalog();
   const rawItems = navItems || MAIN_NAV_ITEMS;
 
@@ -58,7 +60,7 @@ export function MobileMenuDrawer() {
     );
 
     if (flagship) {
-      const pricing = getProductPrice(flagship, locale);
+      const pricing = getProductPrice(flagship, locale, campaigns);
       if (pricing?.display) {
         return `${t("common.from", "from")} ${pricing.display}`;
       }
