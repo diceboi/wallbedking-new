@@ -1555,7 +1555,9 @@ export default function CheckoutPage() {
                               : "text-wbk-black font-poppins"
                           }`}
                         >
-                          {opt.cost === 0
+                          {opt.discountPercent > 0
+                            ? `-${opt.discountPercent}% · ${t("cart.shippingFree", "Free")}`
+                            : opt.cost === 0
                             ? t("cart.shippingFree", "Free")
                             : formatPrice(opt.cost)}
                         </span>
@@ -1959,8 +1961,8 @@ export default function CheckoutPage() {
                   {discount > 0 && (
                     <div className="flex items-center justify-between text-wbk-green font-medium">
                       <span>
-                        {t("checkout.discount", "Promo Discount")} (
-                        {activePromoDetails?.code})
+                        {t("checkout.discount", "Discount")} (
+                        {activePromoDetails?.label || activePromoDetails?.code || "-5%"})
                       </span>
                       <span>-{formatPrice(discount)}</span>
                     </div>

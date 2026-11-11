@@ -3,28 +3,39 @@ import { ALL_PRODUCTS, RAW_CATALOG } from "@/data/products";
 import { calculateSofaPrice } from "@/lib/products";
 
 export const DELIVERY_OPTIONS = {
+  delivery_option_discount: {
+    id: "delivery_option_discount",
+    label: "Discount Delivery (-5%)",
+    cost: 0,
+    discountPercent: 5,
+    message: "Delivery within 5 - 8 weeks (Extra 5% off your order)",
+  },
   delivery_option_economy: {
     id: "delivery_option_economy",
     label: "Free delivery",
     cost: 0,
-    message: "Delivery within 2 - 4 weeks",
+    discountPercent: 0,
+    message: "Delivery within 3 - 5 weeks",
   },
   delivery_option_standard: {
     id: "delivery_option_standard",
     label: "Standard delivery",
-    cost: 49,
-    message: "Delivery within 1 - 2 weeks",
+    cost: 59,
+    discountPercent: 0,
+    message: "Delivery within 1 - 3 weeks",
   },
   delivery_option_express: {
     id: "delivery_option_express",
     label: "Express delivery",
     cost: 79,
-    message: "Delivery within 2 - 5 working days",
+    discountPercent: 0,
+    message: "Delivery within 7 working days",
   },
   delivery_option_pickup: {
     id: "delivery_option_pickup",
     label: "Warehouse Collection",
     cost: 0,
+    discountPercent: 0,
     address: "Wall Bed King, Harlow, CM20 2HU. Mon - Fri, 10am - 4pm.",
     message: "To be collected from our warehouse in Harlow, CM20 2HU.",
   },
@@ -380,21 +391,59 @@ export async function validateOrderTotals(
     });
   }
 
-  // Calculate discount
+  // Calculate delivery (merge with market-specific checkout settings if configured)
+  const baseDelivery = DELIVERY_OPTIONS[deliveryOptionId] || DELIVERY_OPTIONS.delivery_option_economy;
+  let selectedDelivery = { ...baseDelivery };
+  try {
+    const { getCheckoutSettingsForLocale } = await import("@/lib/checkout-settings");
+    const { config: localeCheckoutConfig } = await getCheckoutSettingsForLocale(targetLocale);
+    const configuredOpt = localeCheckoutConfig?.shipping?.[selectedDelivery.id];
+    if (configuredOpt) {
+      selectedDelivery = {
+        ...selectedDelivery,
+        label: configuredOpt.label || selectedDelivery.label,
+        message: configuredOpt.message || selectedDelivery.message,
+        cost: configuredOpt.cost !== undefined ? Number(configuredOpt.cost) || 0 : selectedDelivery.cost,
+        discountPercent:
+          configuredOpt.discountPercent !== undefined
+            ? Number(configuredOpt.discountPercent) || 0
+            : selectedDelivery.discountPercent,
+      };
+    }
+  } catch (e) {
+    // Fallback to baseDelivery
+  }
+
+  const shippingAmount = Number(selectedDelivery.cost) || 0;
+
+  // Calculate discount (promo code + discount delivery option)
   let discountAmount = 0;
   const normalizedPromo = (promoCode || "").toUpperCase().trim();
   const promo = PROMO_CODES[normalizedPromo];
   if (promo) {
     if (promo.type === "percent") {
-      discountAmount = Math.round((subtotal * (promo.value / 100)) * 100) / 100;
+      discountAmount += Math.round((subtotal * (promo.value / 100)) * 100) / 100;
     } else if (promo.type === "fixed") {
-      discountAmount = Math.min(subtotal, promo.value);
+      discountAmount += Math.min(subtotal, promo.value);
     }
   }
 
-  // Calculate delivery
-  const selectedDelivery = DELIVERY_OPTIONS[deliveryOptionId] || DELIVERY_OPTIONS.delivery_option_economy;
-  const shippingAmount = selectedDelivery.cost;
+  const deliveryDiscountPct =
+    Number(
+      selectedDelivery.discountPercent ??
+        (selectedDelivery.id === "delivery_option_discount" ? 5 : 0)
+    ) || 0;
+
+  if (deliveryDiscountPct > 0 && subtotal > 0) {
+    const deliveryDiscount = Math.round((subtotal * (deliveryDiscountPct / 100)) * 100) / 100;
+    discountAmount = Math.min(subtotal, Math.round((discountAmount + deliveryDiscount) * 100) / 100);
+  }
+
+  const effectivePromoLabel = promo
+    ? normalizedPromo
+    : deliveryDiscountPct > 0
+    ? `DELIVERY-${deliveryDiscountPct}%`
+    : null;
 
   const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + shippingAmount) * 100) / 100);
   const vatAmount = Math.round((totalAmount / 6) * 100) / 100; // 20% included UK VAT is 1/6th of gross
@@ -408,7 +457,7 @@ export async function validateOrderTotals(
     outOfStockItems,
     subtotal,
     discountAmount,
-    promoCode: promo ? normalizedPromo : null,
+    promoCode: effectivePromoLabel,
     delivery: selectedDelivery,
     shippingAmount,
     vatAmount,

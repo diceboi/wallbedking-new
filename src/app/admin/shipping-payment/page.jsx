@@ -852,6 +852,99 @@ export default function AdminShippingPaymentPage() {
             </div>
 
             <div className="space-y-4">
+              {/* 0. Discount Delivery (-5%) */}
+              <div
+                className={`p-4 border transition-all ${
+                  currentConfig?.shipping?.delivery_option_discount?.enabled
+                    ? "border-wbk-black bg-[#FBF9F8]"
+                    : "border-wbk-lightgrey bg-white opacity-70"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <IconClock size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-wbk-black">Discount Delivery (-5% Off)</span>
+                        <button
+                          type="button"
+                          onClick={() => handleShippingToggle("delivery_option_discount")}
+                          className={`text-[9.5px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${
+                            currentConfig?.shipping?.delivery_option_discount?.enabled
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {currentConfig?.shipping?.delivery_option_discount?.enabled ? "Active" : "Disabled"}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-wbk-brown mt-0.5">
+                        Extended delivery window (5 - 8 weeks) granting an extra 5% discount on cart subtotal.
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(currentConfig?.shipping?.delivery_option_discount?.enabled)}
+                      onChange={() => handleShippingToggle("delivery_option_discount")}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wbk-black"></div>
+                  </label>
+                </div>
+
+                {currentConfig?.shipping?.delivery_option_discount?.enabled && (
+                  <div className="mt-3 pt-3 border-t border-wbk-lightgrey/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-wbk-brown mb-1">
+                        Display Name
+                      </label>
+                      <input
+                        type="text"
+                        value={currentConfig?.shipping?.delivery_option_discount?.label || ""}
+                        onChange={(e) => handleShippingChange("delivery_option_discount", "label", e.target.value)}
+                        placeholder="e.g. Discount Delivery (-5%)"
+                        className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-wbk-brown mb-1">
+                        Discount (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={currentConfig?.shipping?.delivery_option_discount?.discountPercent ?? 5}
+                        onChange={(e) =>
+                          handleShippingChange("delivery_option_discount", "discountPercent", Number(e.target.value))
+                        }
+                        className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-wbk-brown mb-1">
+                        Timeframe Message
+                      </label>
+                      <input
+                        type="text"
+                        value={currentConfig?.shipping?.delivery_option_discount?.message || ""}
+                        onChange={(e) =>
+                          handleShippingChange("delivery_option_discount", "message", e.target.value)
+                        }
+                        placeholder="e.g. Delivery within 5 - 8 weeks"
+                        className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* 1. Economy / Free Delivery */}
               <div
                 className={`p-4 border transition-all ${
@@ -881,7 +974,7 @@ export default function AdminShippingPaymentPage() {
                         </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
-                        Standard inclusive delivery option. Usually free or included in price.
+                        Standard inclusive delivery option (3 - 5 weeks). Usually free or included in price.
                       </p>
                     </div>
                   </div>
@@ -936,7 +1029,7 @@ export default function AdminShippingPaymentPage() {
                         onChange={(e) =>
                           handleShippingChange("delivery_option_economy", "message", e.target.value)
                         }
-                        placeholder="e.g. Delivery within 2 - 4 weeks"
+                        placeholder="e.g. Delivery within 3 - 5 weeks"
                         className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
                       />
                     </div>
@@ -973,7 +1066,7 @@ export default function AdminShippingPaymentPage() {
                         </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
-                        Faster dispatch option with tracking (normally 1 - 2 weeks).
+                        Faster dispatch option with tracking (normally 1 - 3 weeks).
                       </p>
                     </div>
                   </div>
@@ -1011,7 +1104,7 @@ export default function AdminShippingPaymentPage() {
                         type="number"
                         min="0"
                         step="1"
-                        value={currentConfig?.shipping?.delivery_option_standard?.cost ?? 49}
+                        value={currentConfig?.shipping?.delivery_option_standard?.cost ?? 59}
                         onChange={(e) =>
                           handleShippingChange("delivery_option_standard", "cost", Number(e.target.value))
                         }
@@ -1028,7 +1121,7 @@ export default function AdminShippingPaymentPage() {
                         onChange={(e) =>
                           handleShippingChange("delivery_option_standard", "message", e.target.value)
                         }
-                        placeholder="e.g. Delivery within 1 - 2 weeks"
+                        placeholder="e.g. Delivery within 1 - 3 weeks"
                         className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
                       />
                     </div>
@@ -1065,7 +1158,7 @@ export default function AdminShippingPaymentPage() {
                         </button>
                       </div>
                       <p className="text-[11px] text-wbk-brown mt-0.5">
-                        Priority express courier dispatch (normally 2 - 5 working days).
+                        Priority express courier dispatch (normally 7 working days).
                       </p>
                     </div>
                   </div>
@@ -1120,7 +1213,7 @@ export default function AdminShippingPaymentPage() {
                         onChange={(e) =>
                           handleShippingChange("delivery_option_express", "message", e.target.value)
                         }
-                        placeholder="e.g. Delivery within 2 - 5 working days"
+                        placeholder="e.g. Delivery within 7 working days"
                         className="w-full text-xs px-2.5 py-1.5 border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black"
                       />
                     </div>
@@ -1243,8 +1336,16 @@ export default function AdminShippingPaymentPage() {
                         <div className="font-semibold text-wbk-black">{opt.label}</div>
                         <div className="text-[10px] text-wbk-brown">{opt.message}</div>
                       </div>
-                      <span className="text-xs font-bold text-wbk-black shrink-0 ml-2">
-                        {opt.cost === 0 ? "Free" : `${currencySymbol}${opt.cost}`}
+                      <span
+                        className={`text-xs font-bold shrink-0 ml-2 ${
+                          Number(opt.discountPercent) > 0 ? "text-emerald-700" : "text-wbk-black"
+                        }`}
+                      >
+                        {Number(opt.discountPercent) > 0
+                          ? `-${opt.discountPercent}% · Free`
+                          : opt.cost === 0
+                          ? "Free"
+                          : `${currencySymbol}${opt.cost}`}
                       </span>
                     </div>
                   ))}

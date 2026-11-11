@@ -46,7 +46,7 @@ VALUES (
   "flag": "🇬🇧",
   "payments": {
     "stripe": {
-      "enabled": false,
+      "enabled": true,
       "label": "Credit / Debit Card",
       "sublabel": "Stripe & Apple Pay"
     },
@@ -56,7 +56,7 @@ VALUES (
       "sublabel": "Express & Pay in 3"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Express Quick Pay in Cart"
     },
     "bankTransfer": {
@@ -67,23 +67,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Discount Delivery (-5%)",
+      "message": "Delivery within 5 - 8 weeks (Extra 5% off your order)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Free Mainland Delivery",
-      "message": "Delivery within 2 - 4 weeks"
+      "message": "Delivery within 3 - 5 weeks"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Standard Delivery",
-      "message": "Delivery within 1 - 2 weeks"
+      "message": "Delivery within 1 - 3 weeks"
     },
     "delivery_option_express": {
       "enabled": true,
       "cost": 79,
       "label": "Express Delivery",
-      "message": "Delivery within 2 - 5 working days"
+      "message": "Delivery within 7 working days"
     },
     "delivery_option_pickup": {
       "enabled": true,
@@ -121,7 +128,7 @@ VALUES (
       "sublabel": "Express & Pay Later"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Express Quick Pay in Cart"
     },
     "bankTransfer": {
@@ -132,23 +139,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Discount Delivery (-5%)",
+      "message": "Will arrive within 5 - 8 weeks (Extra 5% off your order)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Free US Delivery",
-      "message": "Will arrive within 2 - 4 weeks"
+      "message": "Will arrive within 3 - 5 weeks"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Standard Delivery",
-      "message": "Will arrive within 1 - 2 weeks"
+      "message": "Will arrive within 1 - 3 weeks"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Express Delivery",
-      "message": "Will arrive within 2 - 5 working days"
+      "message": "Will arrive within 7 working days"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -186,7 +200,7 @@ VALUES (
       "sublabel": "Express & Später Bezahlen"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Express-Zahlung im Warenkorb"
     },
     "bankTransfer": {
@@ -197,23 +211,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Spar-Lieferung (-5%)",
+      "message": "Lieferung innerhalb von 5 bis 8 Wochen (5% Extra-Rabatt)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Kostenlose Lieferung",
-      "message": "Lieferung innerhalb von 2 bis 4 Wochen"
+      "message": "Lieferung innerhalb von 3 bis 5 Wochen"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Standardlieferung",
-      "message": "Lieferung innerhalb von 1 bis 2 Wochen"
+      "message": "Lieferung innerhalb von 1 bis 3 Wochen"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Expresslieferung",
-      "message": "Lieferung innerhalb von 2 bis 5 Werktagen"
+      "message": "Lieferung innerhalb von 7 Werktagen"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -251,34 +272,41 @@ VALUES (
       "sublabel": "Express & Paiement en 4x"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Paiement rapide dans le panier"
     },
     "bankTransfer": {
-      "enabled": false,
+      "enabled": true,
       "label": "Virement Bancaire",
       "sublabel": "Virement SEPA",
       "instructions": "Veuillez effectuer le paiement par virement bancaire. Expédition dès réception."
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Livraison Éco (-5%)",
+      "message": "Livraison sous 5 à 8 semaines (5% de remise supplémentaire)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Livraison Gratuite",
-      "message": "Livraison sous 2 à 4 semaines"
+      "message": "Livraison sous 3 à 5 semaines"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Livraison Standard",
-      "message": "Livraison sous 1 à 2 semaines"
+      "message": "Livraison sous 1 à 3 semaines"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Livraison Express",
-      "message": "Livraison sous 2 à 5 jours ouvrés"
+      "message": "Livraison sous 7 jours ouvrés"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -316,7 +344,7 @@ VALUES (
       "sublabel": "Express & Paga en 3 plazos"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Pago rápido en el carrito"
     },
     "bankTransfer": {
@@ -327,23 +355,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Envío con Descuento (-5%)",
+      "message": "Entrega en un plazo de 5 a 8 semanas (5% de descuento extra)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Envío Gratuito",
-      "message": "Entrega en un plazo de 2 a 4 semanas"
+      "message": "Entrega en un plazo de 3 a 5 semanas"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Envío Estándar",
-      "message": "Entrega en un plazo de 1 a 2 semanas"
+      "message": "Entrega en un plazo de 1 a 3 semanas"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Envío Exprés",
-      "message": "Entrega en un plazo de 2 a 5 días laborables"
+      "message": "Entrega en un plazo de 7 días laborables"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -381,7 +416,7 @@ VALUES (
       "sublabel": "Express & Pague em 3x"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Pagamento rápido no carrinho"
     },
     "bankTransfer": {
@@ -392,23 +427,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Envio com Desconto (-5%)",
+      "message": "Entrega no prazo de 5 a 8 semanas (5% de desconto extra)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Envio Gratuito",
-      "message": "Entrega no prazo de 2 a 4 semanas"
+      "message": "Entrega no prazo de 3 a 5 semanas"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Envio Padrão",
-      "message": "Entrega no prazo de 1 a 2 semanas"
+      "message": "Entrega no prazo de 1 a 3 semanas"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Envio Expresso",
-      "message": "Entrega no prazo de 2 a 5 dias úteis"
+      "message": "Entrega no prazo de 7 dias úteis"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -446,7 +488,7 @@ VALUES (
       "sublabel": "Express & Paga in 3 rate"
     },
     "quickPayInCart": {
-      "enabled": true,
+      "enabled": false,
       "label": "Pagamento rapido nel carrello"
     },
     "bankTransfer": {
@@ -457,23 +499,30 @@ VALUES (
     }
   },
   "shipping": {
+    "delivery_option_discount": {
+      "enabled": true,
+      "cost": 0,
+      "discountPercent": 5,
+      "label": "Spedizione Scontata (-5%)",
+      "message": "Consegna entro 5 - 8 settimane (5% di sconto extra)"
+    },
     "delivery_option_economy": {
       "enabled": true,
       "cost": 0,
       "label": "Spedizione Gratuita",
-      "message": "Consegna entro 2 - 4 settimane"
+      "message": "Consegna entro 3 - 5 settimane"
     },
     "delivery_option_standard": {
       "enabled": true,
-      "cost": 49,
+      "cost": 59,
       "label": "Spedizione Standard",
-      "message": "Consegna entro 1 - 2 settimane"
+      "message": "Consegna entro 1 - 3 settimane"
     },
     "delivery_option_express": {
-      "enabled": false,
+      "enabled": true,
       "cost": 79,
       "label": "Spedizione Express",
-      "message": "Consegna entro 2 - 5 giorni lavorativi"
+      "message": "Consegna entro 7 giorni lavorativi"
     },
     "delivery_option_pickup": {
       "enabled": false,
@@ -488,4 +537,3 @@ VALUES (
 ON CONFLICT (locale) DO UPDATE 
 SET config = EXCLUDED.config,
     updated_at = NOW();
-

@@ -370,7 +370,11 @@ export default function CartPage() {
                               </div>
                             </div>
                             <span className={`font-semibold text-xs shrink-0 ml-2 ${opt.cost === 0 ? "text-wbk-green" : "text-wbk-black"}`}>
-                              {opt.cost === 0 ? t("cart.shippingFree", "FREE") : formatPrice(opt.cost)}
+                              {opt.discountPercent > 0
+                                ? `-${opt.discountPercent}% · ${t("cart.shippingFree", "FREE")}`
+                                : opt.cost === 0
+                                ? t("cart.shippingFree", "FREE")
+                                : formatPrice(opt.cost)}
                             </span>
                           </label>
                         );

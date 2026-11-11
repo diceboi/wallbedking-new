@@ -81,9 +81,18 @@ export async function getAllCheckoutSettingsWithMeta() {
       supabaseCount = data.length;
       data.forEach((row) => {
         if (row.locale && row.config) {
+          const baseLocale = settings[row.locale] || {};
           settings[row.locale] = {
-            ...settings[row.locale],
+            ...baseLocale,
             ...row.config,
+            payments: {
+              ...(baseLocale.payments || {}),
+              ...(row.config.payments || {}),
+            },
+            shipping: {
+              ...(baseLocale.shipping || {}),
+              ...(row.config.shipping || {}),
+            },
             locale: row.locale,
           };
         }

@@ -64,7 +64,7 @@ export const ALL_NAV_ITEMS = (
     : [
         {
           id: "morphyBeds",
-          title: "MORPHY™ Beds",
+          title: "Wall Beds",
           slug: "morphy-beds",
           href: "/products/beds?collection=morphy",
           is_visible: true,
@@ -74,20 +74,19 @@ export const ALL_NAV_ITEMS = (
           available_locales: ALL_NAV_LOCALE_CODES,
         },
         {
-          id: "traditionalBeds",
-          title: "Clearance",
-          slug: "traditional-beds",
-          href: "/products/beds?collection=traditional",
+          id: "tables",
+          title: "Smart Tables & Chairs",
+          slug: "tables",
+          href: "/products/tables",
           is_visible: true,
           order: 2,
           hasSubmenu: true,
           has_submenu: true,
-          badge: "%",
-          available_locales: UK_EU_NAV_LOCALE_CODES,
+          available_locales: ALL_NAV_LOCALE_CODES,
         },
         {
           id: "cabinets",
-          title: "Cabinets",
+          title: "Cabinets & Units",
           slug: "cabinets",
           href: "/products/cabinets",
           is_visible: true,
@@ -108,15 +107,16 @@ export const ALL_NAV_ITEMS = (
           available_locales: UK_EU_NAV_LOCALE_CODES,
         },
         {
-          id: "tables",
-          title: "Smart Tables",
-          slug: "tables",
-          href: "/products/tables",
+          id: "traditionalBeds",
+          title: "Clearance",
+          slug: "traditional-beds",
+          href: "/products/beds?collection=traditional",
           is_visible: true,
           order: 5,
           hasSubmenu: true,
           has_submenu: true,
-          available_locales: ALL_NAV_LOCALE_CODES,
+          badge: "%",
+          available_locales: UK_EU_NAV_LOCALE_CODES,
         },
         {
           id: "more",
@@ -169,7 +169,7 @@ const SUPABASE_MATTRESSES_STORAGE_URL =
 
 const morphySubmenu = {
   parent: {
-    title: "All MORPHY™ Beds",
+    title: "All Wall Beds",
     titleKey: "nav.allMorphyBeds",
     image: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_5.webp`,
     hoverImage: `${SUPABASE_STORAGE_URL}/1K/160x200-CV-MORPHY_1-m.webp`,
@@ -255,7 +255,7 @@ export const SUBMENU_DATA = {
     sections: [
       {
         id: "morphy",
-        title: "MORPHY™ Beds",
+        title: "Wall Beds",
         titleKey: "nav.morphyBeds",
         badge: "New Generation",
         parent: morphySubmenu.parent,
@@ -300,7 +300,7 @@ export const SUBMENU_DATA = {
   },
   tables: {
     parent: {
-      title: "All Space Saving Tables",
+      title: "All Smart Tables & Chairs",
       image:
         "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
       hoverImage:
@@ -391,7 +391,7 @@ export const SUBMENU_DATA = {
   },
   cabinets: {
     parent: {
-      title: "All Cabinets",
+      title: "All Cabinets & Units",
       image:
         "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/140x200-DV-OAK-CABINET_ANGLE_1.webp",
       hoverImage:

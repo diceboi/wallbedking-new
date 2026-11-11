@@ -1,7 +1,7 @@
 [
   {
     "id": "morphyBeds",
-    "title": "MORPHY™ Beds",
+    "title": "Wall Beds",
     "type": "category",
     "category_id": "beds",
     "slug": "morphy-beds",
@@ -22,29 +22,24 @@
     ]
   },
   {
-    "id": "traditionalBeds",
-    "title": "Clearance",
+    "id": "tables",
+    "title": "Smart Tables & Chairs",
     "type": "category",
-    "category_id": "beds",
-    "slug": "traditional-beds",
-    "href": "/products/beds?collection=traditional",
+    "category_id": "tables",
+    "slug": "tables",
+    "href": "/products/tables",
     "order": 2,
     "order_index": 2,
     "is_visible": true,
     "has_submenu": true,
-    "badge": "%",
+    "badge": "",
     "available_locales": [
-      "en",
-      "de",
-      "fr",
-      "es",
-      "por",
-      "it"
+      "en"
     ]
   },
   {
     "id": "cabinets",
-    "title": "Cabinets",
+    "title": "Cabinets & Units",
     "type": "category",
     "category_id": "cabinets",
     "slug": "cabinets",
@@ -85,19 +80,24 @@
     ]
   },
   {
-    "id": "tables",
-    "title": "Smart Tables",
+    "id": "traditionalBeds",
+    "title": "Clearance",
     "type": "category",
-    "category_id": "tables",
-    "slug": "tables",
-    "href": "/products/tables",
+    "category_id": "beds",
+    "slug": "traditional-beds",
+    "href": "/products/beds?collection=traditional",
     "order": 5,
     "order_index": 5,
     "is_visible": true,
     "has_submenu": true,
-    "badge": "",
+    "badge": "%",
     "available_locales": [
-      "en"
+      "en",
+      "de",
+      "fr",
+      "es",
+      "por",
+      "it"
     ]
   },
   {

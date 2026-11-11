@@ -832,7 +832,7 @@ export function SubmenuSplitTest() {
   }, [locale]);
 
   const getSectionTitle = (sec) => {
-    if (sec.id === "morphy") return t("nav.morphyBeds", "MORPHY™ Beds");
+    if (sec.id === "morphy") return t("nav.morphyBeds", "Wall Beds");
     if (sec.id === "traditional") return t("nav.traditionalBeds", "Clearance");
     return sec.titleKey ? t(sec.titleKey, sec.title) : sec.title;
   };

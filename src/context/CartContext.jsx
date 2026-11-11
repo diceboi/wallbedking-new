@@ -13,23 +13,35 @@ const DELIVERY_STORAGE_KEY = "wbk_delivery_v1";
 
 // Delivery options matching Wall Bed King standard
 export const DELIVERY_OPTIONS = {
+  delivery_option_discount: {
+    id: "delivery_option_discount",
+    key: "delivery_option_discount",
+    label: "Discount Delivery (-5%)",
+    menu: "Discount Delivery (-5%)",
+    cost: 0,
+    discountPercent: 5,
+    code: 0,
+    message: "Delivery within 5 - 8 weeks (Extra 5% off your order)",
+  },
   delivery_option_economy: {
     id: "delivery_option_economy",
     key: "delivery_option_economy",
     label: "Free delivery",
     menu: "Free delivery",
     cost: 0,
+    discountPercent: 0,
     code: 1,
-    message: "Delivery within 2 - 4 weeks",
+    message: "Delivery within 3 - 5 weeks",
   },
   delivery_option_standard: {
     id: "delivery_option_standard",
     key: "delivery_option_standard",
     label: "Standard delivery",
-    menu: "Standard delivery £49",
-    cost: 49,
+    menu: "Standard delivery £59",
+    cost: 59,
+    discountPercent: 0,
     code: 2,
-    message: "Delivery within 1 - 2 weeks",
+    message: "Delivery within 1 - 3 weeks",
   },
   delivery_option_express: {
     id: "delivery_option_express",
@@ -37,8 +49,9 @@ export const DELIVERY_OPTIONS = {
     label: "Express delivery",
     menu: "Express delivery £79",
     cost: 79,
+    discountPercent: 0,
     code: 3,
-    message: "Delivery within 2 - 5 working days",
+    message: "Delivery within 7 working days",
   },
   delivery_option_pickup: {
     id: "delivery_option_pickup",
@@ -46,6 +59,7 @@ export const DELIVERY_OPTIONS = {
     label: "Warehouse Collection",
     menu: "Collection (Free)",
     cost: 0,
+    discountPercent: 0,
     code: 1,
     address: "Wall Bed King, Harlow, CM20 2HU. Mon - Fri, 10am - 4pm. Must be arranged by contacting us.",
     message: "To be collected from our warehouse in Harlow, CM20 2HU. Mon - Fri, 10am - 4pm. Must be arranged by contacting us.",
@@ -105,14 +119,25 @@ export function CartProvider({ children }) {
 
   // Combine default JSON with remote settings for active market
   const checkoutSettings = useMemo(() => {
-    if (remoteSettings && remoteSettings.locale === activeLocale) {
-      return remoteSettings;
-    }
-    return (
+    const baseDefault =
       defaultSettingsData[activeLocale] ||
       defaultSettingsData.en ||
-      {}
-    );
+      {};
+    if (remoteSettings && remoteSettings.locale === activeLocale) {
+      return {
+        ...baseDefault,
+        ...remoteSettings,
+        payments: {
+          ...(baseDefault.payments || {}),
+          ...(remoteSettings.payments || {}),
+        },
+        shipping: {
+          ...(baseDefault.shipping || {}),
+          ...(remoteSettings.shipping || {}),
+        },
+      };
+    }
+    return baseDefault;
   }, [remoteSettings, activeLocale]);
 
   // Dynamic delivery options for the active market, filtered to enabled options only
@@ -122,8 +147,32 @@ export function CartProvider({ children }) {
     const symbol = checkoutSettings?.currencySymbol || "£";
     const result = {};
 
-    Object.entries(shippingConfig).forEach(([key, opt]) => {
-      if (opt.enabled) {
+    const orderedKeys = [
+      "delivery_option_discount",
+      "delivery_option_economy",
+      "delivery_option_standard",
+      "delivery_option_express",
+      "delivery_option_pickup",
+      ...Object.keys(shippingConfig).filter(
+        (k) =>
+          ![
+            "delivery_option_discount",
+            "delivery_option_economy",
+            "delivery_option_standard",
+            "delivery_option_express",
+            "delivery_option_pickup",
+          ].includes(k)
+      ),
+    ];
+
+    orderedKeys.forEach((key) => {
+      const opt = shippingConfig[key];
+      if (opt && opt.enabled) {
+        const discountPercent =
+          Number(
+            opt.discountPercent ??
+              (key === "delivery_option_discount" ? 5 : 0)
+          ) || 0;
         result[key] = {
           id: key,
           key: key,
@@ -133,11 +182,14 @@ export function CartProvider({ children }) {
               ? opt.label
               : `${opt.label} ${symbol}${opt.cost}`,
           cost: Number(opt.cost) || 0,
+          discountPercent,
           code:
             key === "delivery_option_express"
               ? 3
               : key === "delivery_option_standard"
               ? 2
+              : key === "delivery_option_discount"
+              ? 0
               : 1,
           message: opt.message,
           enabled: true,
@@ -152,8 +204,9 @@ export function CartProvider({ children }) {
         label: "Free delivery",
         menu: "Free delivery",
         cost: 0,
+        discountPercent: 0,
         code: 1,
-        message: "Delivery within 2 - 4 weeks",
+        message: "Delivery within 3 - 5 weeks",
         enabled: true,
       };
     }
@@ -463,18 +516,27 @@ export function CartProvider({ children }) {
   const isQuickPayEnabled = Boolean(checkoutSettings?.payments?.quickPayInCart?.enabled);
   const isBankTransferEnabled = Boolean(checkoutSettings?.payments?.bankTransfer?.enabled);
 
-  // Calculate discount based on active promo code
+  // Calculate discount based on active promo code and/or discount delivery option
   const discount = useMemo(() => {
-    if (!promoCode || !PROMO_CODES[promoCode]) return 0;
-    const promo = PROMO_CODES[promoCode];
-    if (promo.type === "percent") {
-      return Math.round((subtotal * promo.value) / 100);
+    let totalDisc = 0;
+    if (promoCode && PROMO_CODES[promoCode]) {
+      const promo = PROMO_CODES[promoCode];
+      if (promo.type === "percent") {
+        totalDisc += Math.round((subtotal * (promo.value / 100)) * 100) / 100;
+      } else if (promo.type === "fixed") {
+        totalDisc += Math.min(subtotal, promo.value);
+      }
     }
-    if (promo.type === "fixed") {
-      return Math.min(subtotal, promo.value);
+    const deliveryDiscountPct =
+      Number(
+        selectedDeliveryDetails?.discountPercent ??
+          (deliveryOption === "delivery_option_discount" ? 5 : 0)
+      ) || 0;
+    if (deliveryDiscountPct > 0 && subtotal > 0) {
+      totalDisc += Math.round((subtotal * (deliveryDiscountPct / 100)) * 100) / 100;
     }
-    return 0;
-  }, [promoCode, subtotal]);
+    return Math.min(subtotal, Math.round(totalDisc * 100) / 100);
+  }, [promoCode, subtotal, selectedDeliveryDetails, deliveryOption]);
 
   // 20% UK VAT included in price
   const vatIncluded = useMemo(() => {
@@ -483,7 +545,7 @@ export function CartProvider({ children }) {
   }, [subtotal, discount, shipping]);
 
   const total = useMemo(() => {
-    return Math.max(0, subtotal - discount + shipping);
+    return Math.max(0, Math.round((subtotal - discount + shipping) * 100) / 100);
   }, [subtotal, discount, shipping]);
 
   // Generate unique customCartId matching Wall Bed King standard
@@ -499,12 +561,27 @@ export function CartProvider({ children }) {
   }, [items, deliveryOption]);
 
   const activePromoDetails = useMemo(() => {
-    if (!promoCode || !PROMO_CODES[promoCode]) return null;
-    return {
-      code: promoCode,
-      ...PROMO_CODES[promoCode],
-    };
-  }, [promoCode]);
+    if (promoCode && PROMO_CODES[promoCode]) {
+      return {
+        code: promoCode,
+        ...PROMO_CODES[promoCode],
+      };
+    }
+    const deliveryDiscountPct =
+      Number(
+        selectedDeliveryDetails?.discountPercent ??
+          (deliveryOption === "delivery_option_discount" ? 5 : 0)
+      ) || 0;
+    if (deliveryDiscountPct > 0) {
+      return {
+        code: `-${deliveryDiscountPct}%`,
+        type: "percent",
+        value: deliveryDiscountPct,
+        label: selectedDeliveryDetails?.label || `Discount Delivery (-${deliveryDiscountPct}%)`,
+      };
+    }
+    return null;
+  }, [promoCode, selectedDeliveryDetails, deliveryOption]);
 
   const value = {
     items,

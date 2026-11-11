@@ -52,11 +52,11 @@ CREATE POLICY "Authenticated users full access on navigation" ON public.navigati
 -- 5. Seed initial menu items with current regional visibility
 INSERT INTO public.navigation_menu (id, title, type, category_id, slug, href, order_index, is_visible, has_submenu, badge, available_locales)
 VALUES
-  ('morphyBeds', 'MORPHY™ Beds', 'category', 'beds', 'morphy-beds', '/products/beds?collection=morphy', 1, true, true, 'New Gen', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
-  ('traditionalBeds', 'Clearance', 'category', 'beds', 'traditional-beds', '/products/beds?collection=traditional', 2, true, true, '%', ARRAY['en','de','fr','es','por','it']::TEXT[]),
-  ('cabinets', 'Cabinets', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
+  ('morphyBeds', 'Wall Beds', 'category', 'beds', 'morphy-beds', '/products/beds?collection=morphy', 1, true, true, 'New Gen', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('tables', 'Smart Tables & Chairs', 'category', 'tables', 'tables', '/products/tables', 2, true, true, '', ARRAY['en']::TEXT[]),
+  ('cabinets', 'Cabinets & Units', 'category', 'cabinets', 'cabinets', '/products/cabinets', 3, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
   ('mattresses', 'Mattresses', 'category', 'mattresses', 'mattresses', '/products/mattresses', 4, true, true, '', ARRAY['en','de','fr','es','por','it']::TEXT[]),
-  ('tables', 'Smart Tables', 'category', 'tables', 'tables', '/products/tables', 5, true, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
+  ('traditionalBeds', 'Clearance', 'category', 'beds', 'traditional-beds', '/products/beds?collection=traditional', 5, true, true, '%', ARRAY['en','de','fr','es','por','it']::TEXT[]),
   ('more', 'More', 'custom', NULL, 'more', '/support/delivery', 6, true, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
   ('sofas', 'Sofas', 'category', 'sofas', 'sofas', '/products/sofas', 7, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
   ('extras', 'Extras & Accessories', 'category', 'extras', 'extras', '/products/extras', 8, false, true, '', ARRAY['en','us','de','fr','es','por','it']::TEXT[]),
