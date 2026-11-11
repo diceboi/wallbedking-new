@@ -122,6 +122,32 @@ export const PERMITTED_EU_COUNTRIES = [
       it: "Belgio",
     },
   },
+  {
+    value: "Austria",
+    code: "AT",
+    names: {
+      en: "Austria",
+      fr: "Autriche (Austria)",
+      de: "Österreich",
+      es: "Austria",
+      por: "Áustria",
+      pt: "Áustria",
+      it: "Austria",
+    },
+  },
+  {
+    value: "Netherlands",
+    code: "NL",
+    names: {
+      en: "Netherlands",
+      fr: "Pays-Bas (Netherlands)",
+      de: "Niederlande",
+      es: "Países Bajos",
+      por: "Países Baixos",
+      pt: "Países Baixos",
+      it: "Paesi Bassi",
+    },
+  },
 ];
 
 export const USA_COUNTRY = {
@@ -202,6 +228,10 @@ export function getDeliveryCountries(locale) {
       if (a.value === "Belgium") return -1;
       if (b.value === "Belgium") return 1;
     }
+    if (norm === "de") {
+      if (a.value === "Austria") return -1;
+      if (b.value === "Austria") return 1;
+    }
     return a.value.localeCompare(b.value);
   });
 
@@ -269,6 +299,8 @@ export function getPostcodePlaceholder(locale, country) {
   if (c.includes("germany") || c.includes("deutschland")) return "z.B. 10115 (PLZ)";
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. 75001 (Code postal)";
   if (c.includes("belgi")) return "ex. 1000 (Code postal)";
+  if (c.includes("austria") || c.includes("österreich")) return "z.B. 1010 (PLZ)";
+  if (c.includes("netherland") || c.includes("niederlande") || c.includes("holland")) return "ex. 1012 AB";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. 28001 (Código postal)";
   if (c.includes("portugal")) return "ex. 1000-001";
   if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. D02 X285 (Eircode)";
@@ -298,6 +330,8 @@ export function getCityPlaceholder(locale, country) {
   if (c.includes("germany") || c.includes("deutschland")) return "z.B. Berlin";
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. Paris";
   if (c.includes("belgi")) return "ex. Bruxelles";
+  if (c.includes("austria") || c.includes("österreich")) return "z.B. Wien";
+  if (c.includes("netherland") || c.includes("niederlande") || c.includes("holland")) return "ex. Amsterdam";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. Madrid";
   if (c.includes("portugal")) return "ex. Lisboa";
   if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. Dublin";
@@ -311,5 +345,93 @@ export function getCityPlaceholder(locale, country) {
   if (loc === "es") return "ej. Madrid";
   if (loc === "por" || loc === "pt") return "ex. Lisboa";
   return "City";
+}
+
+/**
+ * Returns dynamic localized delivery banner text for storefront and destination country
+ */
+export function getDeliveryBannerTitle(locale, destinationCountry, defaultText) {
+  const loc = (locale || "en").toLowerCase();
+  const c = (destinationCountry || "").toLowerCase();
+
+  if (loc === "en" || loc === "uk") return "Free UK Mainland Delivery";
+  if (loc === "us") return "US Nationwide Delivery";
+
+  if (c.includes("belgi")) {
+    if (loc === "fr") return "Livraison Gratuite en Belgique";
+    if (loc === "de") return "Kostenloser Versand nach Belgien";
+    if (loc === "es") return "Envío Gratuito a Bélgica";
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para a Bélgica";
+    if (loc === "it") return "Spedizione Gratuita in Belgio";
+    return "Free Delivery to Belgium";
+  }
+
+  if (c.includes("austria") || c.includes("österreich")) {
+    if (loc === "de") return "Kostenlose Lieferung nach Österreich";
+    if (loc === "fr") return "Livraison Gratuite en Autriche";
+    if (loc === "it") return "Spedizione Gratuita in Austria";
+    return "Free Delivery to Austria";
+  }
+
+  if (c.includes("netherland") || c.includes("niederlande") || c.includes("holland") || c.includes("pays-bas")) {
+    if (loc === "de") return "Kostenloser Versand in die Niederlande";
+    if (loc === "fr") return "Livraison Gratuite aux Pays-Bas";
+    return "Free Delivery to the Netherlands";
+  }
+
+  if (c.includes("france") || c.includes("francia") || c.includes("frankreich")) {
+    if (loc === "fr") return "Livraison Gratuite en France";
+    if (loc === "de") return "Kostenloser Versand nach Frankreich";
+    if (loc === "es") return "Envío Gratuito a Francia";
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para França";
+    if (loc === "it") return "Spedizione Gratuita in Francia";
+    return "Free Delivery to France";
+  }
+
+  if (c.includes("german") || c.includes("deutsch")) {
+    if (loc === "de") return "Kostenlose Lieferung in Deutschland";
+    if (loc === "fr") return "Livraison Gratuite en Allemagne";
+    if (loc === "es") return "Envío Gratuito a Alemania";
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para a Alemanha";
+    if (loc === "it") return "Spedizione Gratuita in Germania";
+    return "Free Delivery to Germany";
+  }
+
+  if (c.includes("spain") || c.includes("españ") || c.includes("spanien")) {
+    if (loc === "es") return "Envío Gratuito a España";
+    if (loc === "fr") return "Livraison Gratuite en Espagne";
+    if (loc === "de") return "Kostenloser Versand nach Spanien";
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para Espanha";
+    if (loc === "it") return "Spedizione Gratuita in Spagna";
+    return "Free Delivery to Spain";
+  }
+
+  if (c.includes("portugal")) {
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para Portugal";
+    if (loc === "es") return "Envío Gratuito a Portugal";
+    if (loc === "fr") return "Livraison Gratuite au Portugal";
+    if (loc === "de") return "Kostenloser Versand nach Portugal";
+    if (loc === "it") return "Spedizione Gratuita in Portogallo";
+    return "Free Delivery to Portugal";
+  }
+
+  if (c.includes("ital")) {
+    if (loc === "it") return "Spedizione Gratuita in Italia";
+    if (loc === "fr") return "Livraison Gratuite en Italie";
+    if (loc === "de") return "Kostenloser Versand nach Italien";
+    if (loc === "es") return "Envío Gratuito a Italia";
+    if (loc === "por" || loc === "pt") return "Envio Gratuito para a Itália";
+    return "Free Delivery to Italy";
+  }
+
+  if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) {
+    if (loc === "fr") return "Livraison Gratuite en Irlande";
+    if (loc === "de") return "Kostenloser Versand nach Irland";
+    if (loc === "es") return "Envío Gratuito a Irlanda";
+    if (loc === "it") return "Spedizione Gratuita in Irlanda";
+    return "Free Delivery to Ireland";
+  }
+
+  return defaultText || "Free EU Delivery";
 }
 

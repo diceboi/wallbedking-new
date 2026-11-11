@@ -26,6 +26,7 @@ import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton
 import {
   getDefaultCountry,
   getDeliveryCountries,
+  getDeliveryBannerTitle,
 } from "@/lib/countries";
 
 export default function CartPage() {
@@ -173,13 +174,11 @@ export default function CartPage() {
                   <IconTruck size={20} className="text-wbk-green shrink-0" />
                   <span className="text-wbk-black">
                     <strong>
-                      {destinationCountry === "Belgium"
-                        ? locale === "fr"
-                          ? "Livraison Gratuite en Belgique"
-                          : t("common.freeDelivery", "Free Delivery to Belgium")
-                        : destinationCountry === "France" && locale === "fr"
-                        ? "Livraison Gratuite en France"
-                        : t("common.freeDelivery", "Free UK Mainland Delivery")}
+                      {getDeliveryBannerTitle(
+                        locale,
+                        destinationCountry,
+                        t("common.freeDelivery", "Free Delivery")
+                      )}
                     </strong>
                   </span>
                 </div>
