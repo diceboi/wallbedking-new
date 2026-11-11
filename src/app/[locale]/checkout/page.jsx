@@ -133,18 +133,28 @@ export default function CheckoutPage() {
     }
   }, [locale, formData.country]);
 
-  // Ensure selected country is valid for the current delivery countries list
+  // Ensure selected country is valid for the current delivery countries list, syncing from cart if stored
   useEffect(() => {
-    if (deliveryCountries.length > 0 && formData.country) {
-      const isValid = deliveryCountries.some((c) => c.value === formData.country);
-      if (!isValid) {
+    if (deliveryCountries.length > 0) {
+      let preferred = formData.country;
+      if (typeof window !== "undefined") {
+        try {
+          const saved = localStorage.getItem("wbk_destination_country");
+          if (saved && deliveryCountries.some((c) => c.value === saved)) {
+            preferred = saved;
+          }
+        } catch (e) {}
+      }
+      const isValid = deliveryCountries.some((c) => c.value === preferred);
+      const nextCountry = isValid ? preferred : deliveryCountries[0].value;
+      if (nextCountry !== formData.country) {
         setFormData((prev) => ({
           ...prev,
-          country: deliveryCountries[0].value,
+          country: nextCountry,
         }));
       }
     }
-  }, [deliveryCountries, formData.country]);
+  }, [deliveryCountries]);
 
   // Ensure active payment method stays valid if gateway availability changes
   useEffect(() => {
@@ -256,6 +266,11 @@ export default function CheckoutPage() {
       country: countryToUse,
       phone: addr.phone || prev.phone,
     }));
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("wbk_destination_country", countryToUse);
+      } catch (e) {}
+    }
     setAddressAppliedFeedback(
       t(
         "checkout.addressAppliedSuccess",
@@ -423,6 +438,11 @@ export default function CheckoutPage() {
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "country" && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("wbk_destination_country", value);
+      } catch (e) {}
+    }
   };
 
   const handleSubmitOrder = async (e) => {

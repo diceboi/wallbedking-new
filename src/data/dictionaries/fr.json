@@ -187,6 +187,7 @@
     "city": "Ville",
     "postalCode": "Code postal",
     "country": "Pays",
+    "deliveryCountry": "Pays de livraison",
     "requiredFieldsError": "Veuillez renseigner tous les champs obligatoires de l'adresse de livraison.",
     "shippingMethod": "Mode de livraison",
     "payment": "Paiement sécurisé",

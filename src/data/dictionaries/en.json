@@ -184,6 +184,7 @@
     "city": "Town / City",
     "postalCode": "Postcode",
     "country": "Country",
+    "deliveryCountry": "Delivery Country",
     "requiredFieldsError": "Please complete all required shipping address fields.",
     "shippingMethod": "Shipping Method",
     "payment": "Secure Payment",

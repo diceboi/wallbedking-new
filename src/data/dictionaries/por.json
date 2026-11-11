@@ -148,6 +148,7 @@
     "city": "Cidade / Localidade",
     "postalCode": "Código postal",
     "country": "País",
+    "deliveryCountry": "País de entrega",
     "requiredFieldsError": "Por favor, preencha todos os campos obrigatórios da morada de entrega.",
     "shippingMethod": "Método de envio",
     "payment": "Pagamento seguro",

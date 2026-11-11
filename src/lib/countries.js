@@ -109,6 +109,19 @@ export const PERMITTED_EU_COUNTRIES = [
       it: "Irlanda (Ireland)",
     },
   },
+  {
+    value: "Belgium",
+    code: "BE",
+    names: {
+      en: "Belgium",
+      fr: "Belgique",
+      de: "Belgien",
+      es: "Bélgica",
+      por: "Bélgica",
+      pt: "Bélgica",
+      it: "Belgio",
+    },
+  },
 ];
 
 export const USA_COUNTRY = {
@@ -185,6 +198,10 @@ export function getDeliveryCountries(locale) {
   const sortedEuCountries = [...PERMITTED_EU_COUNTRIES].sort((a, b) => {
     if (a.value === primaryCountryValue) return -1;
     if (b.value === primaryCountryValue) return 1;
+    if (norm === "fr") {
+      if (a.value === "Belgium") return -1;
+      if (b.value === "Belgium") return 1;
+    }
     return a.value.localeCompare(b.value);
   });
 
@@ -251,6 +268,7 @@ export function getPostcodePlaceholder(locale, country) {
   if (c.includes("ital")) return "es. 00185 (CAP)";
   if (c.includes("germany") || c.includes("deutschland")) return "z.B. 10115 (PLZ)";
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. 75001 (Code postal)";
+  if (c.includes("belgi")) return "ex. 1000 (Code postal)";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. 28001 (Código postal)";
   if (c.includes("portugal")) return "ex. 1000-001";
   if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. D02 X285 (Eircode)";
@@ -279,6 +297,7 @@ export function getCityPlaceholder(locale, country) {
   if (c.includes("ital")) return "es. Roma";
   if (c.includes("germany") || c.includes("deutschland")) return "z.B. Berlin";
   if (c.includes("france") || c.includes("frankreich") || c.includes("francia")) return "ex. Paris";
+  if (c.includes("belgi")) return "ex. Bruxelles";
   if (c.includes("spain") || c.includes("españa") || c.includes("spanien")) return "ej. Madrid";
   if (c.includes("portugal")) return "ex. Lisboa";
   if (c.includes("ireland") || c.includes("irland") || c.includes("irlande") || c.includes("irlanda")) return "e.g. Dublin";

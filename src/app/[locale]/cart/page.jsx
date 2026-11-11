@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
@@ -23,9 +23,37 @@ import { useLocale } from "@/context/LocaleContext";
 import { formatSizeLabel } from "@/lib/i18n";
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
+import {
+  getDefaultCountry,
+  getDeliveryCountries,
+} from "@/lib/countries";
 
 export default function CartPage() {
   const { t, formatPrice, localizedHref, locale, market } = useLocale();
+  const deliveryCountries = useMemo(() => getDeliveryCountries(locale), [locale]);
+  const [destinationCountry, setDestinationCountry] = useState(() => getDefaultCountry(locale));
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("wbk_destination_country");
+        if (saved && deliveryCountries.some((c) => c.value === saved)) {
+          setDestinationCountry(saved);
+          return;
+        }
+      } catch (e) {}
+    }
+    setDestinationCountry(getDefaultCountry(locale));
+  }, [locale, deliveryCountries]);
+
+  const handleCountryChange = (val) => {
+    setDestinationCountry(val);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("wbk_destination_country", val);
+      } catch (e) {}
+    }
+  };
   const {
     items,
     updateQuantity,
@@ -144,7 +172,15 @@ export default function CartPage() {
                 <div className="flex items-center gap-2.5">
                   <IconTruck size={20} className="text-wbk-green shrink-0" />
                   <span className="text-wbk-black">
-                    <strong>{t("common.freeDelivery", "Free UK Mainland Delivery")}</strong>
+                    <strong>
+                      {destinationCountry === "Belgium"
+                        ? locale === "fr"
+                          ? "Livraison Gratuite en Belgique"
+                          : t("common.freeDelivery", "Free Delivery to Belgium")
+                        : destinationCountry === "France" && locale === "fr"
+                        ? "Livraison Gratuite en France"
+                        : t("common.freeDelivery", "Free UK Mainland Delivery")}
+                    </strong>
                   </span>
                 </div>
                 <span className="hidden sm:inline-block text-[11px] font-semibold text-wbk-gold uppercase tracking-wider shrink-0">
@@ -331,6 +367,30 @@ export default function CartPage() {
                     <div className="flex items-center justify-between text-wbk-green font-medium">
                       <span>{t("checkout.discount", "Discount")} ({activePromoDetails?.label})</span>
                       <span>-{formatPrice(discount)}</span>
+                    </div>
+                  )}
+
+                  {/* Destination Country Selection */}
+                  {deliveryCountries.length > 1 && (
+                    <div className="pt-2 border-t border-wbk-lightgrey/60 space-y-1.5">
+                      <label
+                        htmlFor="cart-destination-country"
+                        className="block text-[11px] font-semibold uppercase tracking-wider text-wbk-black"
+                      >
+                        {t("checkout.deliveryCountry", "Delivery Country")}
+                      </label>
+                      <select
+                        id="cart-destination-country"
+                        value={destinationCountry}
+                        onChange={(e) => handleCountryChange(e.target.value)}
+                        className="w-full px-3 py-2 border border-wbk-lightgrey focus:border-wbk-black focus:outline-none bg-white text-xs font-medium text-wbk-black transition-colors cursor-pointer"
+                      >
+                        {deliveryCountries.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
 

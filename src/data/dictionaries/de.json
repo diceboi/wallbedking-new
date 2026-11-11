@@ -148,6 +148,7 @@
     "city": "Stadt / Ort",
     "postalCode": "Postleitzahl",
     "country": "Land",
+    "deliveryCountry": "Lieferland",
     "requiredFieldsError": "Bitte füllen Sie alle erforderlichen Pflichtfelder der Lieferadresse aus.",
     "shippingMethod": "Versandart",
     "payment": "Sichere Bezahlung",
