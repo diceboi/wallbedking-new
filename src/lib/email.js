@@ -40,7 +40,6 @@ export const SAMPLE_ORDER = {
   currency: "GBP",
   subtotal: 1349.00,
   shipping_amount: 100.00,
-  vat_amount: 241.50,
   total_amount: 1449.00,
   delivery_label: "Standard UK Delivery & Room of Choice",
   locale: "en",
@@ -126,7 +125,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Item",
     colQty: "Qty",
     colPrice: "Price",
-    totalPaid: "Total Paid (VAT incl.):",
+    totalPaid: "Total Paid:",
     whatNextTitle: "What happens next?",
     whatNextDesc: "Once your shipment has been scheduled with our freight carriers, you will receive a dispatch email with your tracking number and delivery booking window.",
     footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
@@ -166,7 +165,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Artikel",
     colQty: "Menge",
     colPrice: "Preis",
-    totalPaid: "Gesamtbetrag (inkl. MwSt.):",
+    totalPaid: "Gesamtbetrag:",
     whatNextTitle: "Wie geht es weiter?",
     whatNextDesc: "Sobald Ihre Sendung an unsere Spedition übergeben wurde, erhalten Sie eine Versandbestätigung mit Sendungsnummer.",
     footerGuarantee: "Wall Bed King • Premium Schrankbetten • Lebenslange Mechanik-Garantie",
@@ -186,7 +185,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Article",
     colQty: "Qté",
     colPrice: "Prix",
-    totalPaid: "Total payé (TTC) :",
+    totalPaid: "Total payé :",
     whatNextTitle: "Quelle est la suite ?",
     whatNextDesc: "Dès l'expédition de votre meuble avec notre transporteur spécialisé, vous recevrez un e-mail avec votre numéro de suivi.",
     footerGuarantee: "Wall Bed King • Lits Escamotables Premium • Garantie Mécanisme à Vie",
@@ -206,7 +205,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Artículo",
     colQty: "Cant.",
     colPrice: "Precio",
-    totalPaid: "Total pagado (IVA incl.):",
+    totalPaid: "Total pagado:",
     whatNextTitle: "¿Qué sucede después?",
     whatNextDesc: "Una vez programado el envío con nuestro transportista especializado, recibirá un correo con el número de seguimiento.",
     footerGuarantee: "Wall Bed King • Camas Abatibles Premium • Garantía de Mecanismo de por Vida",
@@ -226,7 +225,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Articolo",
     colQty: "Qtà",
     colPrice: "Prezzo",
-    totalPaid: "Totale pagato (IVA incl.):",
+    totalPaid: "Totale pagato:",
     whatNextTitle: "Cosa succede ora?",
     whatNextDesc: "Non appena la spedizione sarà affidata al corriere specializzato, riceverai una notifica con il codice di tracciamento.",
     footerGuarantee: "Wall Bed King • Letti a Scomparsa Premium • Garanzia a Vita sul Meccanismo",
@@ -246,7 +245,7 @@ export const CONFIRMATION_I18N = {
     colItem: "Artigo",
     colQty: "Qtd",
     colPrice: "Preço",
-    totalPaid: "Total pago (IVA incl.):",
+    totalPaid: "Total pago:",
     whatNextTitle: "Qual é o próximo passo?",
     whatNextDesc: "Assim que a sua encomenda for confiada à transportadora especializada, receberá um e-mail com o código de rastreio.",
     footerGuarantee: "Wall Bed King • Camas Rebatíveis Premium • Garantia Vitalícia do Mecanismo",
@@ -765,7 +764,6 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const subtotalAmount = Number(order.subtotal || order.total_amount || 0);
   const shippingAmount = Number(order.shipping_amount || 0);
   const discountAmount = Number(order.discount_amount || 0);
-  const vatAmount = Number(order.vat_amount || 0);
   const deliveryLabel = order.delivery_label || order.delivery_option || "Delivery";
   const formattedAddress = formatOrderShippingAddress(order);
   const formattedBillingAddress = formatOrderBillingAddress(order);
@@ -878,12 +876,6 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   <tr>
                     <td colspan="3" style="padding: 4px 14px; text-align: right; color: #b45309;">Discount (${order.promo_code || "Promo"}):</td>
                     <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: #b45309;">-${currencySymbol}${discountAmount.toFixed(2)}</td>
-                  </tr>
-                  ` : ""}
-                  ${vatAmount > 0 ? `
-                  <tr>
-                    <td colspan="3" style="padding: 4px 14px; text-align: right; color: #777; font-size: 12px;">Includes VAT:</td>
-                    <td style="padding: 4px 14px; text-align: right; color: #777; font-size: 12px;">${currencySymbol}${vatAmount.toFixed(2)}</td>
                   </tr>
                   ` : ""}
                   <tr style="background: #faf9f7; border-top: 2px solid #111; font-size: 15px;">
@@ -2785,7 +2777,7 @@ export const REFUNDED_I18N = {
     sofaLabel: "Front Sofa Module",
     whatNextTitle: "When will the refund appear on my statement?",
     whatNextDesc:
-      "Your refund has already been released from our system. Card issuers and banks typically take 3–10 business days to post the credit on your statement (PayPal refunds usually appear within 24–72 hours). If you need a VAT credit note or any assistance, simply reply to this email.",
+      "Your refund has already been released from our system. Card issuers and banks typically take 3–10 business days to post the credit on your statement (PayPal refunds usually appear within 24–72 hours). If you need a receipt or any assistance, simply reply to this email.",
     footerGuarantee: "Wall Bed King • Premium Murphy Beds • Lifetime Mechanism Guarantee",
     footerContact: (phone) =>
       `Need assistance? Contact us at <a href="mailto:support@wallbedking.com" style="color: #9f7d3d; text-decoration: none; font-weight: 600;">support@wallbedking.com</a> or call <strong>${phone}</strong> (Mon–Fri 9:00–20:00, Sat 9:00–12:00).`,
