@@ -98,23 +98,56 @@ export async function PATCH(request, { params }) {
       body: JSON.stringify(supabasePayload),
     });
 
-    if (!res.ok) {
+    // Auto-retry loop if Supabase schema cache is missing newly added columns
+    let retries = 0;
+    while (!res.ok && retries < 15) {
+      retries++;
       const err = await res.text();
-      let shouldRetry = false;
+      let modified = false;
+
+      // Check for missing column error: "Could not find the 'xyz' column of 'products' in the schema cache"
+      const match = err.match(/Could not find the '([^']+)' column of 'products' in the schema cache/i);
+      if (match && match[1]) {
+        const missingCol = match[1];
+        if (supabasePayload[missingCol] !== undefined) {
+          console.warn(`[Admin PATCH] Supabase missing column '${missingCol}'. Removing and retrying...`);
+          delete supabasePayload[missingCol];
+          modified = true;
+        }
+        if (missingCol.startsWith("short_description")) {
+          [
+            "short_description", "short_description_en", "short_description_us",
+            "short_description_de", "short_description_fr", "short_description_es",
+            "short_description_por", "short_description_pt", "short_description_it"
+          ].forEach(k => delete supabasePayload[k]);
+          modified = true;
+        }
+      }
+
+      if (err.includes("short_description")) {
+        console.warn("[Admin PATCH] short_description columns not in Supabase yet. Retrying without them...");
+        [
+          "short_description", "short_description_en", "short_description_us",
+          "short_description_de", "short_description_fr", "short_description_es",
+          "short_description_por", "short_description_pt", "short_description_it"
+        ].forEach(k => delete supabasePayload[k]);
+        modified = true;
+      }
+
       if (err.includes("is_unlisted") && supabasePayload.is_unlisted !== undefined) {
         console.warn("[Admin PATCH] is_unlisted column not in Supabase yet. Retrying without it...");
         delete supabasePayload.is_unlisted;
-        shouldRetry = true;
+        modified = true;
       }
       if (err.includes("installation_manual") && supabasePayload.installation_manual !== undefined) {
         console.warn("[Admin PATCH] installation_manual column not in Supabase yet. Retrying without it...");
         delete supabasePayload.installation_manual;
-        shouldRetry = true;
+        modified = true;
       }
       if (err.includes("installation_video") && supabasePayload.installation_video !== undefined) {
         console.warn("[Admin PATCH] installation_video column not in Supabase yet. Retrying without it...");
         delete supabasePayload.installation_video;
-        shouldRetry = true;
+        modified = true;
       }
       if (err.includes("description_") || err.includes("extended_description_")) {
         console.warn("[Admin PATCH] description localized columns not in Supabase yet. Retrying without them...");
@@ -122,29 +155,10 @@ export async function PATCH(request, { params }) {
           "description_en", "description_us", "description_de", "description_fr", "description_es", "description_por", "description_pt", "description_it",
           "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it"
         ].forEach(k => delete supabasePayload[k]);
-        shouldRetry = true;
+        modified = true;
       }
 
-      if (shouldRetry) {
-        res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
-          method: "PATCH",
-          headers: {
-            ...headers,
-            Prefer: "return=representation",
-          },
-          body: JSON.stringify(supabasePayload),
-        });
-
-        if (!res.ok) {
-          const retryErr = await res.text();
-          let parsedRetryErr = retryErr;
-          try {
-            const errObj = JSON.parse(retryErr);
-            parsedRetryErr = errObj.message || errObj.details || retryErr;
-          } catch (_) {}
-          return NextResponse.json({ success: false, error: parsedRetryErr }, { status: res.status });
-        }
-      } else {
+      if (!modified) {
         let parsedErr = err;
         try {
           const errObj = JSON.parse(err);
@@ -152,6 +166,25 @@ export async function PATCH(request, { params }) {
         } catch (_) {}
         return NextResponse.json({ success: false, error: parsedErr }, { status: res.status });
       }
+
+      res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(supabasePayload),
+      });
+    }
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let errMsg = errText;
+      try {
+        const errObj = JSON.parse(errText);
+        errMsg = errObj.message || errObj.details || errText;
+      } catch (_) {}
+      return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
     }
 
     const updated = await res.json();

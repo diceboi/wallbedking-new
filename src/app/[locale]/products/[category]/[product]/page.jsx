@@ -1585,12 +1585,6 @@ export default function ProductDetailPage() {
         "classic-morphy-bed",
         "studio-morphy-bed",
         "integrated-morphy-bed",
-        "classic-vertical-wall-bed",
-        "classic-horizontal-wall-bed",
-        "studio-vertical-wall-bed",
-        "studio-horizontal-wall-bed",
-        "integrated-vertical-wall-bed",
-        "integrated-horizontal-wall-bed",
       ].includes(productSlug),
     ) && !(productSlug || "").includes("traditional");
 
@@ -1600,7 +1594,19 @@ export default function ProductDetailPage() {
       categorySlug === "traditional-beds" ||
       displayProduct?.parent_category === "traditional-beds" ||
       activeProduct?.parent_category === "traditional-beds" ||
-      (productSlug || "").includes("traditional"),
+      (productSlug || "").includes("traditional") ||
+      [
+        "classic-traditional-bed",
+        "studio-traditional-bed",
+        "classic-vertical-traditional-bed",
+        "classic-horizontal-traditional-bed",
+        "classic-vertical-wall-bed",
+        "classic-horizontal-wall-bed",
+        "studio-vertical-wall-bed",
+        "studio-horizontal-wall-bed",
+        "integrated-vertical-wall-bed",
+        "integrated-horizontal-wall-bed",
+      ].includes(productSlug),
     );
 
   const morphyCounterpartSlug = useMemo(() => {
@@ -1610,8 +1616,14 @@ export default function ProductDetailPage() {
       "studio-traditional-bed": "studio-morphy-bed",
       "classic-vertical-traditional-bed": "classic-morphy-bed",
       "classic-horizontal-traditional-bed": "classic-morphy-bed",
+      "classic-vertical-wall-bed": "classic-morphy-bed",
+      "classic-horizontal-wall-bed": "classic-morphy-bed",
       "studio-vertical-traditional-bed": "studio-morphy-bed",
       "studio-horizontal-traditional-bed": "studio-morphy-bed",
+      "studio-vertical-wall-bed": "studio-morphy-bed",
+      "studio-horizontal-wall-bed": "studio-morphy-bed",
+      "integrated-vertical-wall-bed": "integrated-morphy-bed",
+      "integrated-horizontal-wall-bed": "integrated-morphy-bed",
     };
     if (MORPHY_TRADITIONAL_MAP[productSlug]) {
       return MORPHY_TRADITIONAL_MAP[productSlug];
@@ -1628,19 +1640,51 @@ export default function ProductDetailPage() {
   }, [isTraditionalBed, productSlug, displayProduct, activeProduct]);
 
   const targetMorphySizeSlug = useMemo(() => {
+    const prod = selectedVariant || displayProduct || activeProduct;
+    if (prod?.width && prod?.length) {
+      const w = Math.min(Number(prod.width), Number(prod.length)) / 10;
+      const l = Math.max(Number(prod.width), Number(prod.length)) / 10;
+      const isH =
+        (productFormat || prod.orientation || "").toLowerCase() === "horizontal";
+      return isH ? `${l}x${w}` : `${w}x${l}`;
+    }
     return (
       selectedVariant?.sizeSlug ||
       searchParams?.get("size") ||
       (displayProduct?.slug || "").match(/\d+x\d+/)?.[0] ||
       ""
     );
-  }, [selectedVariant, searchParams, displayProduct]);
+  }, [selectedVariant, searchParams, displayProduct, activeProduct, productFormat]);
 
   const morphyHref = useMemo(() => {
     if (!morphyCounterpartSlug) return "";
-    const query = targetMorphySizeSlug ? `?size=${targetMorphySizeSlug}` : "";
-    return localizedHref(`/products/beds/${morphyCounterpartSlug}${query}`);
-  }, [morphyCounterpartSlug, targetMorphySizeSlug, localizedHref]);
+    const params = new URLSearchParams();
+    const isHorizontal =
+      (productFormat || "").toLowerCase() === "horizontal" ||
+      (selectedVariant?.orientation || "").toLowerCase() === "horizontal" ||
+      (displayProduct?.orientation || "").toLowerCase() === "horizontal" ||
+      (activeProduct?.orientation || "").toLowerCase() === "horizontal" ||
+      (productSlug || "").includes("horizontal");
+    if (isHorizontal) {
+      params.set("format", "horizontal");
+    }
+    if (targetMorphySizeSlug) {
+      params.set("size", targetMorphySizeSlug);
+    }
+    const qs = params.toString();
+    return localizedHref(
+      `/products/beds/${morphyCounterpartSlug}${qs ? `?${qs}` : ""}`,
+    );
+  }, [
+    morphyCounterpartSlug,
+    targetMorphySizeSlug,
+    productFormat,
+    selectedVariant,
+    displayProduct,
+    activeProduct,
+    productSlug,
+    localizedHref,
+  ]);
 
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale, campaigns);

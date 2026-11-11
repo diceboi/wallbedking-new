@@ -1436,7 +1436,7 @@
     "type": "Classic",
     "color": "Black",
     "weight": 30,
-    "stock": 100,
+    "stock": 0,
     "package_dimensions": "Box 1: 150 x 45 x 15 cm",
     "pack_1": "150 x 45 x 15",
     "pack_2": null,

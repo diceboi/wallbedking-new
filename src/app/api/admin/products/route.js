@@ -158,35 +158,73 @@ export async function POST(request) {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
+    let retries = 0;
+    while (!res.ok && retries < 15) {
+      retries++;
       const errText = await res.text();
-      let shouldRetry = false;
+      let modified = false;
+
+      const match = errText.match(/Could not find the '([^']+)' column of 'products' in the schema cache/i);
+      if (match && match[1]) {
+        const missingCol = match[1];
+        if (payload[missingCol] !== undefined) {
+          console.warn(`[Admin Products POST] Supabase missing column '${missingCol}'. Removing and retrying...`);
+          delete payload[missingCol];
+          modified = true;
+        }
+        if (missingCol.startsWith("short_description")) {
+          [
+            "short_description", "short_description_en", "short_description_us",
+            "short_description_de", "short_description_fr", "short_description_es",
+            "short_description_por", "short_description_pt", "short_description_it"
+          ].forEach(k => delete payload[k]);
+          modified = true;
+        }
+      }
+
+      if (errText.includes("short_description")) {
+        console.warn("[Admin Products POST] short_description columns not in Supabase yet. Retrying without them...");
+        [
+          "short_description", "short_description_en", "short_description_us",
+          "short_description_de", "short_description_fr", "short_description_es",
+          "short_description_por", "short_description_pt", "short_description_it"
+        ].forEach(k => delete payload[k]);
+        modified = true;
+      }
+
       if (errText.includes("is_unlisted") && payload.is_unlisted !== undefined) {
         console.warn("[Admin Products POST] is_unlisted column not in Supabase yet. Retrying without it...");
         delete payload.is_unlisted;
-        shouldRetry = true;
+        modified = true;
       }
 
-      if (shouldRetry) {
-        res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-          method: "POST",
-          headers: {
-            ...headers,
-            Prefer: "return=representation",
-          },
-          body: JSON.stringify(payload),
-        });
-      }
-
-      if (!res.ok) {
-        const finalErrText = await res.text();
-        let errMsg = finalErrText;
+      if (!modified) {
+        let errMsg = errText;
         try {
-          const errObj = JSON.parse(finalErrText);
-          errMsg = errObj.message || errObj.details || finalErrText;
+          const errObj = JSON.parse(errText);
+          errMsg = errObj.message || errObj.details || errText;
         } catch (_) {}
         return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
       }
+
+      res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+        method: "POST",
+        headers: {
+          ...headers,
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    if (!res.ok) {
+      const finalErrText = await res.text();
+      let errMsg = finalErrText;
+      try {
+        const errObj = JSON.parse(finalErrText);
+        errMsg = errObj.message || errObj.details || finalErrText;
+      } catch (_) {}
+      return NextResponse.json({ success: false, error: errMsg }, { status: res.status });
     }
 
     const created = await res.json();
