@@ -1461,13 +1461,19 @@ export function getDynamicFlagshipCabinets(rawItems = RAW_CATALOG) {
 export const FLAGSHIP_TABLES = TABLES_FLAGSHIP_LIST;
 
 export function getDynamicFlagshipTables(rawItems = RAW_CATALOG) {
-  return TABLES_FLAGSHIP_LIST.map((f) => {
+  return TABLES_FLAGSHIP_LIST.filter(isProductVisible).map((f) => {
+    const allSlugs = new Set([f.slug, ...(f.aliases || [])].filter(Boolean));
     let matching = (rawItems || []).filter(
-      (p) => p.parent_category === "tables" && p.parent_slug === f.slug
+      (p) =>
+        isProductVisible(p) &&
+        p.parent_category === "tables" &&
+        (allSlugs.has(p.parent_slug) || allSlugs.has(p.slug))
     );
     if (matching.length === 0) {
       matching = (tablesCatalogData?.variants || []).filter(
-        (v) => v.parent_slug === f.slug
+        (v) =>
+          isProductVisible(v) &&
+          (allSlugs.has(v.parent_slug) || allSlugs.has(v.slug))
       );
     }
     if (matching.length > 0) {
@@ -2163,17 +2169,25 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
 
   if (parentCat === "tables") {
     const parentSlug = currentProduct.parent_slug || currentProduct.slug;
+    const allParentSlugs = new Set([
+      parentSlug,
+      currentProduct.slug,
+      ...(currentProduct.aliases || []),
+    ].filter(Boolean));
+
     let matching = catalog.filter((p) => {
       if (!isProductVisible(p)) return false;
       if (p.parent_category !== "tables") return false;
       return (
-        (parentSlug && p.parent_slug === parentSlug) ||
-        p.slug === currentProduct.slug
+        allParentSlugs.has(p.parent_slug) ||
+        allParentSlugs.has(p.slug)
       );
     });
     if (matching.length === 0) {
       matching = (tablesCatalogData?.variants || []).filter(
-        (v) => (parentSlug && v.parent_slug === parentSlug) || v.slug === currentProduct.slug
+        (v) =>
+          isProductVisible(v) &&
+          (allParentSlugs.has(v.parent_slug) || allParentSlugs.has(v.slug))
       );
     }
     matching.sort((a, b) => (Number(a.price_gbp) || 0) - (Number(b.price_gbp) || 0));

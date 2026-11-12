@@ -37,46 +37,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { formatSizeLabel } from "@/lib/i18n";
 
-// Sample mock orders for authenticated demonstration
-const SAMPLE_ORDERS = [
-  {
-    id: "WBK-89241",
-    date: "24 Aug 2026",
-    status: "Delivered",
-    statusColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    total: "£1,449.00",
-    items: [
-      {
-        name: "Classic Vertical Wall Bed",
-        size: "King (150x200 cm)",
-        finish: "Natural White / Beech Slats",
-        price: "£1,449.00",
-        image: "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
-      },
-    ],
-    trackingNumber: "DX-9923841GB",
-    estimatedDelivery: "Delivered on 28 Aug 2026",
-  },
-  {
-    id: "WBK-77192",
-    date: "12 May 2026",
-    status: "Completed",
-    statusColor: "bg-stone-100 text-stone-800 border-stone-200",
-    total: "£799.00",
-    items: [
-      {
-        name: "Studio Horizontal Wall Bed",
-        size: "Double (135x190 cm)",
-        finish: "Matte Anthracite Front Panel",
-        price: "£799.00",
-        image: "/product-images/morphy-integrated/160x200.jpg",
-      },
-    ],
-    trackingNumber: "DX-8812034GB",
-    estimatedDelivery: "Delivered on 16 May 2026",
-  },
-];
-
 export default function AccountPage() {
   const { locale, t, localizedHref } = useLocale();
   const {
@@ -854,94 +814,28 @@ export default function AccountPage() {
                       );
                     })
                   ) : (
-                    /* Sample demonstration orders when account has no purchases yet */
-                    SAMPLE_ORDERS.map((order) => (
-                      <div
-                        key={order.id}
-                        className="border border-wbk-lightgrey bg-wbk-white overflow-hidden shadow-2xs"
-                      >
-                        {/* Order Header */}
-                        <div className="p-4 sm:p-5 bg-[#FBF9F8] border-b border-wbk-lightgrey flex flex-wrap items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                                Order ID (Sample)
-                              </span>
-                              <span className="text-xs font-bold text-wbk-black">
-                                #{order.id}
-                              </span>
-                            </div>
-                            <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
-                            <div>
-                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                                Date Placed
-                              </span>
-                              <span className="text-xs text-wbk-black">{order.date}</span>
-                            </div>
-                            <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
-                            <div>
-                              <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                                Total Amount
-                              </span>
-                              <span className="text-xs font-bold text-wbk-black">{order.total}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${order.statusColor}`}
-                            >
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Order Item */}
-                        <div className="p-4 sm:p-5 divide-y divide-wbk-lightgrey/50">
-                          {order.items.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-4 sm:gap-6 py-2">
-                              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#F4F2F0] border border-wbk-lightgrey/60 p-2 shrink-0 flex items-center justify-center">
-                                <Image
-                                  src={item.image}
-                                  alt={item.name}
-                                  width={64}
-                                  height={64}
-                                  className="object-contain"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-wbk-black">
-                                  {item.name}
-                                </h3>
-                                <p className="text-xs text-wbk-brown mt-0.5">
-                                  {item.size ? formatSizeLabel(item.size, locale) : ""} • {item.finish}
-                                </p>
-                                <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
-                                  <IconTruck size={14} />
-                                  <span>{order.estimatedDelivery}</span>
-                                </div>
-                              </div>
-                              <div className="text-sm font-bold text-wbk-black">
-                                {item.price}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Order Actions */}
-                        <div className="px-4 sm:px-5 py-3 bg-[#F4F2F0]/40 border-t border-wbk-lightgrey/60 flex items-center justify-between text-xs text-wbk-brown">
-                          <span>
-                            Tracking: <strong className="text-wbk-black">{order.trackingNumber}</strong>
-                          </span>
-                          <Link
-                            href="/contact"
-                            className="text-wbk-black hover:text-wbk-green underline font-medium"
-                          >
-                            Request Support
-                          </Link>
-                        </div>
+                    /* Clean empty state when customer has no placed orders yet */
+                    <div className="py-16 px-6 text-center border border-wbk-lightgrey bg-wbk-white">
+                      <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#FAF5EA] flex items-center justify-center text-wbk-gold border border-wbk-gold/30">
+                        <IconPackage size={26} />
                       </div>
-                    ))
+                      <h3 className="font-new-york text-xl text-wbk-black mb-2">
+                        {t("account.noOrdersTitle", "No orders placed yet")}
+                      </h3>
+                      <p className="text-xs text-wbk-brown max-w-md mx-auto mb-6 leading-relaxed">
+                        {t(
+                          "account.noOrdersDesc",
+                          "You have not completed any purchases with this account yet. If you recently completed checkout with PayPal or Bank Transfer, it may take a few moments to confirm."
+                        )}
+                      </p>
+                      <Link
+                        href="/products"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-gold hover:text-wbk-black transition-all rounded-full cursor-pointer shadow-sm"
+                      >
+                        <span>{t("account.browseProducts", "Browse Wall Beds")}</span>
+                        <IconArrowRight size={14} />
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>
