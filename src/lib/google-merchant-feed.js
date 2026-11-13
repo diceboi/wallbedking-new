@@ -7,7 +7,8 @@ import {
   getStorefrontProductUrl,
   isProductAvailableInLocale,
 } from "@/lib/products";
-import { getProductPrice } from "@/lib/i18n";
+import { getProductPrice, formatSizeLabel } from "@/lib/i18n";
+import { getCampaigns, isCampaignActive } from "@/lib/promotions";
 
 import {
   GOOGLE_FEED_COUNTRIES,
@@ -94,24 +95,132 @@ function wrapCdata(text) {
   return `<![CDATA[${safe}]]>`;
 }
 
+function toMerchantIso(date) {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function parseUtcTimeParts(timeStr, defaultHour, defaultMin, defaultSec) {
+  if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":")) {
+    return [defaultHour, defaultMin, defaultSec];
+  }
+  const [h, m] = timeStr.split(":").map(Number);
+  return [
+    Number.isFinite(h) ? h : defaultHour,
+    Number.isFinite(m) ? m : defaultMin,
+    defaultSec,
+  ];
+}
+
+/**
+ * Computes Google Merchant Center `sale_price_effective_date` (ISO_START/ISO_END)
+ * for active fixed or recurring promotional campaigns.
+ */
+function getSalePriceEffectiveDate(campaign, now = new Date()) {
+  if (!campaign) return null;
+
+  const capStart = campaign.start_date ? new Date(campaign.start_date) : null;
+  const capEnd = campaign.end_date ? new Date(campaign.end_date) : null;
+
+  let winStart = null;
+  let winEnd = null;
+
+  if (campaign.schedule_type === "recurring" && campaign.recurring) {
+    const { frequency, days_of_week, days_of_month, start_time, end_time } = campaign.recurring;
+    const [sh, sm] = parseUtcTimeParts(start_time, 0, 0, 0);
+    const [eh, em] = parseUtcTimeParts(end_time, 23, 59, 59);
+    const isFullDay = (!start_time || start_time === "00:00") && (!end_time || end_time === "23:59");
+
+    const baseDayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+
+    if (
+      isFullDay &&
+      (frequency === "weekly" || frequency === "custom") &&
+      Array.isArray(days_of_week) &&
+      days_of_week.length > 0 &&
+      days_of_week.length < 7
+    ) {
+      let startDay = new Date(baseDayStart);
+      for (let i = 0; i < 6; i++) {
+        const prev = new Date(startDay.getTime() - 86400000);
+        if (!days_of_week.includes(prev.getUTCDay())) break;
+        startDay = prev;
+      }
+      let endDay = new Date(baseDayStart);
+      for (let i = 0; i < 6; i++) {
+        const next = new Date(endDay.getTime() + 86400000);
+        if (!days_of_week.includes(next.getUTCDay())) break;
+        endDay = next;
+      }
+      winStart = startDay;
+      winEnd = new Date(Date.UTC(endDay.getUTCFullYear(), endDay.getUTCMonth(), endDay.getUTCDate(), 23, 59, 59));
+    } else if (
+      isFullDay &&
+      frequency === "monthly" &&
+      Array.isArray(days_of_month) &&
+      days_of_month.length > 0 &&
+      days_of_month.length < 28
+    ) {
+      let startDay = new Date(baseDayStart);
+      for (let i = 0; i < 31; i++) {
+        const prev = new Date(startDay.getTime() - 86400000);
+        if (!days_of_month.includes(prev.getUTCDate())) break;
+        startDay = prev;
+      }
+      let endDay = new Date(baseDayStart);
+      for (let i = 0; i < 31; i++) {
+        const next = new Date(endDay.getTime() + 86400000);
+        if (!days_of_month.includes(next.getUTCDate())) break;
+        endDay = next;
+      }
+      winStart = startDay;
+      winEnd = new Date(Date.UTC(endDay.getUTCFullYear(), endDay.getUTCMonth(), endDay.getUTCDate(), 23, 59, 59));
+    } else if (isFullDay && capStart && capEnd && !isNaN(capStart.getTime()) && !isNaN(capEnd.getTime())) {
+      winStart = capStart;
+      winEnd = capEnd;
+    } else {
+      winStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), sh, sm, 0));
+      winEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), eh, em, 59));
+    }
+  } else if (capStart && capEnd && !isNaN(capStart.getTime()) && !isNaN(capEnd.getTime())) {
+    winStart = capStart;
+    winEnd = capEnd;
+  }
+
+  if (!winStart || !winEnd || isNaN(winStart.getTime()) || isNaN(winEnd.getTime())) {
+    return null;
+  }
+  if (capStart && !isNaN(capStart.getTime()) && winStart < capStart) winStart = capStart;
+  if (capEnd && !isNaN(capEnd.getTime()) && winEnd > capEnd) winEnd = capEnd;
+  if (winEnd <= winStart) return null;
+
+  return `${toMerchantIso(winStart)}/${toMerchantIso(winEnd)}`;
+}
+
 /**
  * Fetches and filters products for a specific country / market feed.
  * Products that are NOT public (hidden, draft, archived) or NOT available in the market are excluded.
  */
 export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.wallbedking.com") {
   const { locale, currency } = countryConfig;
+  const now = new Date();
 
-  // 1. Fetch live products from database (with local catalog fallback)
-  let catalog = [];
-  try {
-    catalog = (await getStorefrontProducts()) || fallbackCatalog;
-  } catch (err) {
-    catalog = fallbackCatalog;
-  }
+  // 1. Fetch live products and active public promotional campaigns in parallel
+  const [rawCatalog, allCampaigns] = await Promise.all([
+    getStorefrontProducts().catch(() => null),
+    getCampaigns({ fresh: true }).catch(() => []),
+  ]);
 
+  let catalog = rawCatalog || fallbackCatalog;
   if (!Array.isArray(catalog)) {
     catalog = fallbackCatalog;
   }
+
+  const activeCampaigns = (Array.isArray(allCampaigns) ? allCampaigns : []).filter((c) => {
+    if (!c) return false;
+    if (c.status === "inactive" || c.status === "preview") return false;
+    if (c.end_date && new Date(c.end_date).getTime() < now.getTime()) return false;
+    return isCampaignActive(c, now, locale);
+  });
 
   const items = [];
 
@@ -191,8 +300,8 @@ export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.w
       availability = "backorder";
     }
 
-    // Price and Sale Price
-    const pricing = getProductPrice(p, locale);
+    // Price, Product-level & Campaign Sale Price (identical logic to storefront)
+    const pricing = getProductPrice(p, locale, activeCampaigns);
     const regularRaw = pricing.regularRaw || pricing.raw || 0;
     if (regularRaw <= 0) {
       // Products without valid price cannot be listed on Google Shopping
@@ -201,8 +310,12 @@ export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.w
     const price = `${regularRaw.toFixed(2)} ${pricing.currency || currency}`;
 
     let salePrice = null;
+    let salePriceEffectiveDate = null;
     if (pricing.isOnSale && pricing.saleRaw && pricing.saleRaw > 0 && pricing.saleRaw < regularRaw) {
       salePrice = `${pricing.saleRaw.toFixed(2)} ${pricing.currency || currency}`;
+      if (pricing.isPromotionalCampaign && pricing.appliedCampaign) {
+        salePriceEffectiveDate = getSalePriceEffectiveDate(pricing.appliedCampaign, now);
+      }
     }
 
     // Condition: always new for manufactured furniture
@@ -216,11 +329,22 @@ export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.w
     const gtin = rawGtin ? String(rawGtin).trim().replace(/[^0-9]/g, "") : "";
     const hasValidGtin = gtin.length >= 8 && gtin.length <= 14;
 
-    // Optional attributes:
+    // Optional & Storefront-matched attributes:
     const itemGroupId = p.parent_sku || p.model_code || (p.orientation && p.type ? `wbk-${p.orientation}-${p.type}`.toLowerCase() : null);
     const googleProductCategory = getGoogleProductCategory(p.parent_category);
     const weight = Number(p.weight) || 0;
     const shippingWeight = weight > 0 ? `${weight} kg` : null;
+    const color = p.color ? String(p.color).trim().slice(0, 100) : null;
+    const rawSize = formatSizeLabel(null, locale, p);
+    const size = rawSize ? String(rawSize).trim().slice(0, 100) : null;
+    const customLabel0 = pricing.isOnSale ? String(pricing.discountLabel || "On Sale").slice(0, 100) : null;
+    const customLabel1 = pricing.isOnSale
+      ? String(
+          pricing.isPromotionalCampaign && pricing.appliedCampaign?.name
+            ? pricing.appliedCampaign.name
+            : "Product Sale"
+        ).slice(0, 100)
+      : null;
 
     items.push({
       id,
@@ -232,6 +356,7 @@ export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.w
       availability,
       price,
       sale_price: salePrice,
+      sale_price_effective_date: salePriceEffectiveDate,
       condition,
       brand,
       gtin: hasValidGtin ? gtin : null,
@@ -239,6 +364,10 @@ export async function getGoogleFeedItems(countryConfig, baseUrl = "https://www.w
       item_group_id: itemGroupId,
       google_product_category: googleProductCategory,
       shipping_weight: shippingWeight,
+      color,
+      size,
+      custom_label_0: customLabel0,
+      custom_label_1: customLabel1,
     });
   }
 
@@ -265,9 +394,9 @@ export function generateGoogleXmlFeed(countryConfig, items, baseUrl = "https://w
       <g:image_link>${escapeXml(item.image_link)}</g:image_link>
 ${additionalImagesTags ? additionalImagesTags + "\n" : ""}      <g:availability>${item.availability}</g:availability>
       <g:price>${item.price}</g:price>
-${item.sale_price ? `      <g:sale_price>${item.sale_price}</g:sale_price>\n` : ""}      <g:condition>${item.condition}</g:condition>
+${item.sale_price ? `      <g:sale_price>${item.sale_price}</g:sale_price>\n` : ""}${item.sale_price_effective_date ? `      <g:sale_price_effective_date>${item.sale_price_effective_date}</g:sale_price_effective_date>\n` : ""}      <g:condition>${item.condition}</g:condition>
       <g:brand>${escapeXml(item.brand)}</g:brand>
-${item.gtin ? `      <g:gtin>${item.gtin}</g:gtin>\n` : `      <g:identifier_exists>no</g:identifier_exists>\n`}${item.item_group_id ? `      <g:item_group_id>${escapeXml(item.item_group_id)}</g:item_group_id>\n` : ""}${item.shipping_weight ? `      <g:shipping_weight>${escapeXml(item.shipping_weight)}</g:shipping_weight>\n` : ""}      <g:google_product_category>${item.google_product_category}</g:google_product_category>
+${item.gtin ? `      <g:gtin>${item.gtin}</g:gtin>\n` : `      <g:identifier_exists>no</g:identifier_exists>\n`}${item.item_group_id ? `      <g:item_group_id>${escapeXml(item.item_group_id)}</g:item_group_id>\n` : ""}${item.color ? `      <g:color>${escapeXml(item.color)}</g:color>\n` : ""}${item.size ? `      <g:size>${escapeXml(item.size)}</g:size>\n` : ""}${item.shipping_weight ? `      <g:shipping_weight>${escapeXml(item.shipping_weight)}</g:shipping_weight>\n` : ""}${item.custom_label_0 ? `      <g:custom_label_0>${escapeXml(item.custom_label_0)}</g:custom_label_0>\n` : ""}${item.custom_label_1 ? `      <g:custom_label_1>${escapeXml(item.custom_label_1)}</g:custom_label_1>\n` : ""}      <g:google_product_category>${item.google_product_category}</g:google_product_category>
     </item>`;
     })
     .join("\n");
@@ -299,12 +428,17 @@ export function generateGoogleTsvFeed(countryConfig, items) {
     "availability",
     "price",
     "sale_price",
+    "sale_price_effective_date",
     "condition",
     "brand",
     "gtin",
     "identifier_exists",
     "item_group_id",
+    "color",
+    "size",
     "shipping_weight",
+    "custom_label_0",
+    "custom_label_1",
     "google_product_category",
   ];
 
@@ -330,12 +464,17 @@ export function generateGoogleTsvFeed(countryConfig, items) {
       escapeTsv(item.availability),
       escapeTsv(item.price),
       escapeTsv(item.sale_price || ""),
+      escapeTsv(item.sale_price_effective_date || ""),
       escapeTsv(item.condition),
       escapeTsv(item.brand),
       escapeTsv(item.gtin || ""),
       escapeTsv(item.identifier_exists),
       escapeTsv(item.item_group_id || ""),
+      escapeTsv(item.color || ""),
+      escapeTsv(item.size || ""),
       escapeTsv(item.shipping_weight || ""),
+      escapeTsv(item.custom_label_0 || ""),
+      escapeTsv(item.custom_label_1 || ""),
       escapeTsv(item.google_product_category || ""),
     ];
     rows.push(row.join("\t"));

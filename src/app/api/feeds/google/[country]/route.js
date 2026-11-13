@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
       const tsvContent = generateGoogleTsvFeed(countryConfig, items);
       const headers = {
         "Content-Type": "text/tab-separated-values; charset=utf-8",
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       };
 
       if (shouldDownload) {
@@ -49,23 +49,30 @@ export async function GET(request, { params }) {
 
     // JSON format (useful for inspection and admin debugging)
     if (format === "json") {
-      return NextResponse.json({
-        success: true,
-        country: countryConfig.name,
-        countryCode: countryConfig.code,
-        locale: countryConfig.locale,
-        currency: countryConfig.currency,
-        count: items.length,
-        generatedAt: new Date().toISOString(),
-        items,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          country: countryConfig.name,
+          countryCode: countryConfig.code,
+          locale: countryConfig.locale,
+          currency: countryConfig.currency,
+          count: items.length,
+          generatedAt: new Date().toISOString(),
+          items,
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          },
+        }
+      );
     }
 
     // Default: Official Google XML (RSS 2.0 with g: namespace)
     const xmlContent = generateGoogleXmlFeed(countryConfig, items, baseUrl);
     const headers = {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
     };
 
     if (shouldDownload) {

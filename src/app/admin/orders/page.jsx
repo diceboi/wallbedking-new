@@ -23,6 +23,7 @@ import {
   IconReceiptRefund,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { getBankDetails } from "@/lib/bank-details";
 
 const STATUS_BADGES = {
   pending: { label: "Pending Payment", bg: "bg-amber-100 text-amber-900 border-amber-200" },
@@ -1559,7 +1560,11 @@ export default function AdminOrdersPage() {
                               </strong>
                             </div>
                             <div>
-                              • Banking Destination: <strong>HSBC BANK PLC</strong> (IZN LTD)
+                              • Banking Destination:{" "}
+                              <strong>
+                                {getBankDetails(marketMeta.locale, marketMeta.currency).bankName}
+                              </strong>{" "}
+                              ({getBankDetails(marketMeta.locale, marketMeta.currency).accountName})
                             </div>
                           </div>
                           <button

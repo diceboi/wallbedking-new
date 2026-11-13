@@ -6,7 +6,7 @@
  * Set RESEND_API_KEY in .env.local to activate automated outbound emails.
  */
 
-import { BANK_DETAILS, getBankI18n } from "./bank-details.js";
+import { getBankDetails, getBankI18n } from "./bank-details.js";
 import { RAW_CATALOG } from "@/data/products";
 
 export const DEFAULT_FROM = process.env.EMAIL_FROM || "Wall Bed King <orders@notifications.wallbedking.com>";
@@ -456,7 +456,8 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
   const isBankTransfer = (order.payment_method || "").toLowerCase().includes("bank");
   const isPaid = (order.payment_status || "").toLowerCase() === "paid";
   const bankI18n = getBankI18n(loc);
-  const isUk = loc === "en" || (order.shipping_address?.country || "").toLowerCase().includes("kingdom");
+  const bankDetails = getBankDetails(loc, currencyCode);
+  const isUk = bankDetails.isUkAccount;
 
   const itemsList = (order.items || [])
     .map((item) => {
@@ -536,28 +537,33 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
       <table style="width: 100%; font-size: 13px; line-height: 1.6; border-collapse: collapse;">
         <tr>
           <td style="padding: 5px 0; color: #666; width: 45%;"><strong>${bankI18n.accountHolderLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${BANK_DETAILS.accountName}</td>
+          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${bankDetails.accountName}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.bankNameLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${BANK_DETAILS.bankName}</td>
+          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${bankDetails.bankName}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.ibanLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.ibanFormatted}</td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${bankDetails.ibanFormatted}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.bicLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 13px; font-weight: 700; color: #111;">${BANK_DETAILS.bic}</td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 13px; font-weight: 700; color: #111;">${bankDetails.bic}</td>
         </tr>
         ${isUk ? `
         <tr>
           <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.sortCodeLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.sortCode}</td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${bankDetails.sortCode}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.accountNumberLabel}:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${BANK_DETAILS.accountNumber}</td>
+          <td style="padding: 5px 0; text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111;">${bankDetails.accountNumber}</td>
+        </tr>
+        ` : bankDetails.bankAddress ? `
+        <tr>
+          <td style="padding: 5px 0; color: #666;"><strong>${bankI18n.addressLabel}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; color: #111; font-weight: 600;">${bankDetails.bankAddress}</td>
         </tr>
         ` : ""}
         <tr style="border-top: 1px dashed #d4b26f;">
@@ -688,6 +694,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const paymentMethodLabel = formatPaymentMethod(order);
   const orderTime = formatAdminOrderDateTime(order.created_at || order.updated_at);
   const resolvedLocale = resolveOrderLocale(order).toUpperCase();
+  const adminBankDetails = getBankDetails(resolvedLocale, currencyCode);
   const entityMatch =
     typeof order.admin_notes === "string"
       ? order.admin_notes.match(/\[Entity:\s*([^\]]+)\]/i)
@@ -803,7 +810,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   Awaiting Bank Transfer Payment
                 </strong>
                 <p style="margin: 0; font-size: 13px; color: #78350f;">
-                  The customer chose <strong>Bank Transfer</strong>. The banking coordinates were emailed to them. Once the funds arrive with reference <strong>${order.id}</strong> or <strong>${order.customer_email}</strong>, mark the order as Paid in the dashboard.
+                  The customer chose <strong>Bank Transfer</strong>. The <strong>${adminBankDetails.bankName}</strong> (<strong>${adminBankDetails.accountName}</strong> • <span style="font-family:monospace;">${adminBankDetails.ibanFormatted}</span>) coordinates were emailed to them. Once the funds arrive with reference <strong>${order.id}</strong> or <strong>${order.customer_email}</strong>, mark the order as Paid in the dashboard.
                 </p>
                 <div style="margin-top: 12px;">
                   <a href="${adminOrderUrl}" style="display: inline-block; background: #111111; color: #ffffff; padding: 10px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px;">

@@ -35,7 +35,7 @@ import { TurnstileWidget, useFormSecurity } from "@/components/ui/FormSecurityFi
 import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
 import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 import { formatSizeLabel } from "@/lib/i18n";
-import { BANK_DETAILS, getBankI18n } from "@/lib/bank-details";
+import { getBankDetails, getBankI18n } from "@/lib/bank-details";
 import {
   getDefaultCountry,
   getDeliveryCountries,
@@ -558,7 +558,8 @@ export default function CheckoutPage() {
   if (orderComplete) {
     const isBank = (formData.paymentMethod || "").toLowerCase().includes("bank");
     const bankI18n = getBankI18n(locale);
-    const isUk = locale === "en" || (formData.country || "").toLowerCase().includes("kingdom");
+    const bankDetails = getBankDetails(locale);
+    const isUk = bankDetails.isUkAccount;
     const payableTotal = completedOrderTotal !== null ? completedOrderTotal : finalTotal;
 
     return (
@@ -591,7 +592,7 @@ export default function CheckoutPage() {
                     <span>{bankI18n.methodLabel} — Bank Details</span>
                   </div>
                   <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 border border-emerald-200">
-                    HSBC BANK PLC
+                    {bankDetails.bankName}
                   </span>
                 </div>
 
@@ -623,10 +624,10 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                     <span className="text-wbk-brown font-medium">{bankI18n.accountHolderLabel}:</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-wbk-black">{BANK_DETAILS.accountName}</span>
+                      <span className="font-bold text-wbk-black">{bankDetails.accountName}</span>
                       <button
                         type="button"
-                        onClick={() => handleCopyBank(BANK_DETAILS.accountName, "name")}
+                        onClick={() => handleCopyBank(bankDetails.accountName, "name")}
                         className="text-wbk-brown hover:text-wbk-black p-1"
                         title="Copy"
                       >
@@ -637,16 +638,16 @@ export default function CheckoutPage() {
 
                   <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                     <span className="text-wbk-brown font-medium">{bankI18n.bankNameLabel}:</span>
-                    <span className="font-bold text-wbk-black">{BANK_DETAILS.bankName}</span>
+                    <span className="font-bold text-wbk-black">{bankDetails.bankName}</span>
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                     <span className="text-wbk-brown font-medium">{bankI18n.ibanLabel}:</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-wbk-black text-sm tracking-wider">{BANK_DETAILS.ibanFormatted}</span>
+                      <span className="font-mono font-bold text-wbk-black text-sm tracking-wider">{bankDetails.ibanFormatted}</span>
                       <button
                         type="button"
-                        onClick={() => handleCopyBank(BANK_DETAILS.iban, "iban")}
+                        onClick={() => handleCopyBank(bankDetails.iban, "iban")}
                         className="text-wbk-brown hover:text-wbk-black p-1"
                         title="Copy IBAN"
                       >
@@ -658,10 +659,10 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                     <span className="text-wbk-brown font-medium">{bankI18n.bicLabel}:</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.bic}</span>
+                      <span className="font-mono font-bold text-wbk-black">{bankDetails.bic}</span>
                       <button
                         type="button"
-                        onClick={() => handleCopyBank(BANK_DETAILS.bic, "bic")}
+                        onClick={() => handleCopyBank(bankDetails.bic, "bic")}
                         className="text-wbk-brown hover:text-wbk-black p-1"
                         title="Copy BIC"
                       >
@@ -670,15 +671,15 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {isUk && (
+                  {isUk ? (
                     <>
                       <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                         <span className="text-wbk-brown font-medium">{bankI18n.sortCodeLabel}:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.sortCode}</span>
+                          <span className="font-mono font-bold text-wbk-black">{bankDetails.sortCode}</span>
                           <button
                             type="button"
-                            onClick={() => handleCopyBank(BANK_DETAILS.sortCode, "sort")}
+                            onClick={() => handleCopyBank(bankDetails.sortCode, "sort")}
                             className="text-wbk-brown hover:text-wbk-black p-1"
                             title="Copy Sort Code"
                           >
@@ -690,10 +691,10 @@ export default function CheckoutPage() {
                       <div className="flex items-center justify-between py-2 border-b border-wbk-lightgrey/60">
                         <span className="text-wbk-brown font-medium">{bankI18n.accountNumberLabel}:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-wbk-black">{BANK_DETAILS.accountNumber}</span>
+                          <span className="font-mono font-bold text-wbk-black">{bankDetails.accountNumber}</span>
                           <button
                             type="button"
-                            onClick={() => handleCopyBank(BANK_DETAILS.accountNumber, "acc")}
+                            onClick={() => handleCopyBank(bankDetails.accountNumber, "acc")}
                             className="text-wbk-brown hover:text-wbk-black p-1"
                             title="Copy Account Number"
                           >
@@ -702,6 +703,23 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     </>
+                  ) : (
+                    bankDetails.bankAddress && (
+                      <div className="flex items-center justify-between gap-4 py-2 border-b border-wbk-lightgrey/60">
+                        <span className="text-wbk-brown font-medium shrink-0">{bankI18n.addressLabel}:</span>
+                        <div className="flex items-center gap-2 text-right">
+                          <span className="font-medium text-wbk-black">{bankDetails.bankAddress}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyBank(bankDetails.bankAddress, "addr")}
+                            className="text-wbk-brown hover:text-wbk-black p-1 shrink-0"
+                            title="Copy Address"
+                          >
+                            {copiedBankKey === "addr" ? <IconCheck size={14} className="text-emerald-600" /> : <IconCopy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    )
                   )}
 
                   <div className="flex items-center justify-between pt-3 border-t border-amber-200">

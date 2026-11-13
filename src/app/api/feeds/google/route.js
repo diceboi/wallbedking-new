@@ -27,7 +27,7 @@ export async function GET(request) {
         const tsv = generateGoogleTsvFeed(countryConfig, items);
         const headers = {
           "Content-Type": "text/tab-separated-values; charset=utf-8",
-          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
         };
         if (shouldDownload) {
           headers["Content-Disposition"] = `attachment; filename="google-feed-${countryConfig.code}.tsv"`;
@@ -36,21 +36,28 @@ export async function GET(request) {
       }
 
       if (format === "json") {
-        return NextResponse.json({
-          success: true,
-          country: countryConfig.name,
-          countryCode: countryConfig.code,
-          locale: countryConfig.locale,
-          currency: countryConfig.currency,
-          count: items.length,
-          items,
-        });
+        return NextResponse.json(
+          {
+            success: true,
+            country: countryConfig.name,
+            countryCode: countryConfig.code,
+            locale: countryConfig.locale,
+            currency: countryConfig.currency,
+            count: items.length,
+            items,
+          },
+          {
+            headers: {
+              "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            },
+          }
+        );
       }
 
       const xml = generateGoogleXmlFeed(countryConfig, items, baseUrl);
       const headers = {
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       };
       if (shouldDownload) {
         headers["Content-Disposition"] = `attachment; filename="google-feed-${countryConfig.code}.xml"`;

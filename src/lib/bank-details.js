@@ -1,9 +1,12 @@
 /**
  * Centralized Bank Account Details and Multilingual Reference Instructions
- * Extracted from legacy Wall Bed King platform (IZN LTD / HSBC Bank PLC)
+ * - UK (GBP / en): IZN LTD / HSBC BANK PLC
+ * - EU (EUR / de, fr, it, es, por): WALL BED KING GmbH / FINOM PAYMENTS
  */
 
-export const BANK_DETAILS = {
+export const UK_BANK_DETAILS = {
+  region: "UK",
+  isUkAccount: true,
   accountName: "IZN LTD",
   bankName: "HSBC BANK PLC",
   bic: "HBUKGB4B",
@@ -14,6 +17,34 @@ export const BANK_DETAILS = {
   accountNumber: "76095517",
   bankAddress: "184 Brockles Mead, Harlow, Essex, CM19 4PZ, United Kingdom",
 };
+
+export const EU_BANK_DETAILS = {
+  region: "EU",
+  isUkAccount: false,
+  accountName: "WALL BED KING GmbH",
+  bankName: "FINOM PAYMENTS",
+  bic: "FNOMDEB2",
+  iban: "DE96100180000171952161",
+  ibanFormatted: "DE96 1001 8000 0171 9521 61",
+  sortCode: null,
+  accountNumber: null,
+  bankAddress: "Unterkaining 2, Tiefenbach, 94113, DEUTSCHLAND",
+};
+
+// Backwards-compatible default export (UK account)
+export const BANK_DETAILS = UK_BANK_DETAILS;
+
+const EU_BANK_LOCALES = new Set(["de", "fr", "it", "es", "por", "pt"]);
+
+export function getBankDetails(locale = "en", currency = null) {
+  const normLocale = String(locale || "en").toLowerCase().trim();
+  const normCurrency = currency ? String(currency).toUpperCase().trim() : "";
+
+  if (EU_BANK_LOCALES.has(normLocale) || normCurrency === "EUR") {
+    return EU_BANK_DETAILS;
+  }
+  return UK_BANK_DETAILS;
+}
 
 export const BANK_I18N = {
   en: {
@@ -32,6 +63,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code (UK)",
     accountNumberLabel: "Account Number (UK)",
+    addressLabel: "Beneficiary Address",
     amountToTransferLabel: "Exact Amount to Transfer",
     copyButton: "Copy",
     copiedToast: "Copied to clipboard!",
@@ -76,6 +108,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code",
     accountNumberLabel: "Kontonummer",
+    addressLabel: "Adresse",
     amountToTransferLabel: "Zu überweisender Gesamtbetrag",
     copyButton: "Kopieren",
     copiedToast: "In die Zwischenablage kopiert!",
@@ -98,6 +131,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code",
     accountNumberLabel: "Numéro de compte",
+    addressLabel: "Adresse",
     amountToTransferLabel: "Montant total à virer",
     copyButton: "Copier",
     copiedToast: "Copié dans le presse-papiers !",
@@ -120,6 +154,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code",
     accountNumberLabel: "Numero di conto",
+    addressLabel: "Indirizzo",
     amountToTransferLabel: "Importo totale da bonificare",
     copyButton: "Copia",
     copiedToast: "Copiato negli appunti!",
@@ -142,6 +177,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code",
     accountNumberLabel: "Número de cuenta",
+    addressLabel: "Dirección",
     amountToTransferLabel: "Importe exacto a transferir",
     copyButton: "Copiar",
     copiedToast: "¡Copiado al portapapeles!",
@@ -164,6 +200,7 @@ export const BANK_I18N = {
     bicLabel: "BIC / SWIFT",
     sortCodeLabel: "Sort Code",
     accountNumberLabel: "Número de conta",
+    addressLabel: "Endereço",
     amountToTransferLabel: "Montante exato a transferir",
     copyButton: "Copiar",
     copiedToast: "Copiado para a área de transferência!",

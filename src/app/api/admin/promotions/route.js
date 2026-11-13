@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { getCampaigns, saveCampaigns } from "@/lib/promotions";
+
+function revalidatePromotionsCache() {
+  try {
+    revalidateTag("promotions");
+    revalidatePath("/", "layout");
+  } catch (err) {
+    console.warn("[api/admin/promotions] Cache revalidation notice:", err?.message);
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +92,7 @@ export async function POST(req) {
     }
 
     await saveCampaigns(updatedCampaigns);
+    revalidatePromotionsCache();
 
     return NextResponse.json(
       {
@@ -120,6 +131,7 @@ export async function DELETE(req) {
     const updated = currentCampaigns.filter((c) => c.id !== id);
 
     await saveCampaigns(updated);
+    revalidatePromotionsCache();
 
     return NextResponse.json(
       {
