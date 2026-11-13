@@ -10,10 +10,9 @@ const ZOPIM_ACCOUNT_KEY = "h71OCp6k90A8wAbynqYDg4W3PJ89KXH6";
 
 /**
  * Custom theme color for Zendesk Chat widget.
- * Set to a HEX code (e.g. "#090A0A" for sleek black, "#D2AA7C" for WBK gold,
- * "#A3A48C" for olive sage), or null to use Zendesk default green.
+ * Set to null so Zendesk dashboard appearance settings take full effect.
  */
-export const CHAT_THEME_COLOR = "#090A0A";
+export const CHAT_THEME_COLOR = null;
 
 /**
  * Global helper to open Zendesk Live Chat window from anywhere in the app
@@ -62,8 +61,17 @@ export function ZendeskChat() {
       z.t = +new Date();
     }
 
-    // Configure zESettings for Web Widget
-    if (CHAT_THEME_COLOR) {
+    // Clear any previously cached zESettings color override so Zendesk dashboard settings apply immediately
+    if (!CHAT_THEME_COLOR) {
+      if (window.zESettings?.webWidget?.color) {
+        delete window.zESettings.webWidget.color;
+      }
+      try {
+        localStorage.removeItem("ZD-settings");
+      } catch {
+        // Ignore storage errors
+      }
+    } else {
       window.zESettings = {
         ...window.zESettings,
         webWidget: {
