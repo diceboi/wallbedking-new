@@ -81,6 +81,7 @@ export async function POST(request) {
               it.options?.orientation,
               it.options?.type,
               it.options?.sofaIncluded ? "Morphy Sofa Included" : null,
+              it.options?.cabinetIncluded ? "Cabinet Included" : null,
             ]
               .filter(Boolean)
               .join(" | ");

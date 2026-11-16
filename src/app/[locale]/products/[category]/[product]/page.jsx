@@ -41,6 +41,7 @@ import {
   getProductVariants,
   getFallbackProduct,
   GLOBAL_GALLERY_TEMPLATES,
+  getMorphyGallery2K,
   isProductVisible,
 } from "@/data/products";
 import { useCart } from "@/context/CartContext";
@@ -67,6 +68,8 @@ import {
   getLocalizedProductExtendedDescription,
   parseYouTubeVideo,
   calculateSofaPrice,
+  calculateCabinetPrice,
+  extractBedSleepingWidthCm,
 } from "@/lib/products";
 import { getMorphyFaqs } from "@/data/morphyFaq";
 import { trackViewItem } from "@/lib/analytics";
@@ -260,6 +263,7 @@ export default function ProductDetailPage() {
   // ── CUSTOMIZER & GALLERY STATES ──
   const [isFolded, setIsFolded] = useState(false);
   const [sofaIncluded, setSofaIncluded] = useState(false);
+  const [cabinetIncluded, setCabinetIncluded] = useState(false);
   const [productFormat, setProductFormat] = useState("Vertical");
   const [productStyle, setProductStyle] = useState("Integrated");
   const [productSize, setProductSize] = useState("");
@@ -381,7 +385,7 @@ export default function ProductDetailPage() {
 
     ro.observe(el);
     return () => ro.disconnect();
-  }, [mounted, productFormat, productStyle, productSize, sofaIncluded]);
+  }, [mounted, productFormat, productStyle, productSize, sofaIncluded, cabinetIncluded]);
 
   // Track desktop Add to Cart button intersection to trigger floating bar
   useEffect(() => {
@@ -1002,6 +1006,7 @@ export default function ProductDetailPage() {
       }
 
       setSofaIncluded(false);
+      setCabinetIncluded(false);
     }
 
     const timer = setTimeout(() => {
@@ -1588,6 +1593,19 @@ export default function ProductDetailPage() {
       ].includes(productSlug),
     ) && !(productSlug || "").includes("traditional");
 
+  const effectiveStyle = (
+    displayProduct?.sub_category ||
+    displayProduct?.type ||
+    activeProduct?.sub_category ||
+    productStyle ||
+    ""
+  ).toLowerCase();
+  const isIntegratedMorphy = Boolean(
+    isMorphyBed &&
+      (effectiveStyle.includes("integrated") ||
+        (productSlug || "").toLowerCase().includes("integrated")),
+  );
+
   const isTraditionalBed =
     !isMorphyBed &&
     Boolean(
@@ -1693,9 +1711,16 @@ export default function ProductDetailPage() {
     productFormat,
     productSize,
   );
+  const cabinetPriceValue = calculateCabinetPrice(
+    displayProduct,
+    productFormat,
+    productSize,
+  );
   const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
+  const cabinetSurcharge =
+    isIntegratedMorphy && cabinetIncluded ? cabinetPriceValue : 0;
   const currentPrice = productPricing.raw;
-  const totalDecimal = currentPrice + sofaSurcharge;
+  const totalDecimal = currentPrice + sofaSurcharge + cabinetSurcharge;
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
   const currentEan = getLocalizedProductGtin(displayProduct, locale);
@@ -2272,8 +2297,9 @@ export default function ProductDetailPage() {
       return;
     }
 
+    const hasCabinetSelected = Boolean(isIntegratedMorphy && cabinetIncluded);
     const itemToAdd = {
-      id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}`,
+      id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}${hasCabinetSelected ? "-cabinet" : ""}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
       rawId: displayProduct?.id || displayProduct?.rawId || null,
       sku: displayProduct?.sku || activeProduct?.sku || "",
@@ -2301,6 +2327,12 @@ export default function ProductDetailPage() {
             type: productStyle,
             sofaIncluded: Boolean(sofaIncluded),
             sofaPrice: sofaPriceValue,
+            ...(isIntegratedMorphy
+              ? {
+                  cabinetIncluded: hasCabinetSelected,
+                  cabinetPrice: cabinetPriceValue,
+                }
+              : {}),
           },
       href: `/products/${categorySlug}/${productSlug}${isTableProduct && displayProduct?.slug ? `?variant=${displayProduct.slug}` : productSize ? `?size=${encodeURIComponent(productSize)}` : ""}`,
     };
@@ -2310,9 +2342,59 @@ export default function ProductDetailPage() {
     setTimeout(() => setIsAdded(false), 2200);
   };
 
-  // Dynamic gallery images
-  const galleryImages =
-    displayProduct.gallery && displayProduct.gallery.length > 0
+  // Dynamic gallery images (switches to 2K -CABINET gallery when Integrated Morphy Cabinet is selected)
+  const integratedCabinetGallery = useMemo(() => {
+    if (!isIntegratedMorphy || !cabinetIncluded) return null;
+    const sampleUrl =
+      displayProduct?.gallery?.[0]?.src ||
+      displayProduct?.image ||
+      displayProduct?.hover_image ||
+      "";
+    const urlMatch = String(sampleUrl).match(
+      /(90x200|120x200|160x200|200x200)-(IV|IH)-MORPHY/i,
+    );
+    let sizeKey = urlMatch ? urlMatch[1] : null;
+    let typeCode = urlMatch ? urlMatch[2].toUpperCase() : null;
+
+    if (!typeCode) {
+      const o = (
+        productFormat ||
+        displayProduct?.orientation ||
+        ""
+      ).toLowerCase();
+      typeCode = o.includes("horizontal") ? "IH" : "IV";
+    }
+    if (!sizeKey) {
+      const wCm =
+        extractBedSleepingWidthCm(displayProduct, productSize) ?? 160;
+      sizeKey =
+        wCm <= 96
+          ? "90x200"
+          : wCm <= 120
+            ? "120x200"
+            : wCm <= 192
+              ? "160x200"
+              : "200x200";
+    }
+
+    return getMorphyGallery2K(
+      sizeKey,
+      typeCode,
+      `${localizedProductName || "Integrated MORPHY™ Bed"} with Cabinet`,
+      true,
+    );
+  }, [
+    isIntegratedMorphy,
+    cabinetIncluded,
+    displayProduct,
+    productFormat,
+    productSize,
+    localizedProductName,
+  ]);
+
+  const galleryImages = integratedCabinetGallery
+    ? integratedCabinetGallery
+    : displayProduct.gallery && displayProduct.gallery.length > 0
       ? displayProduct.gallery
       : isTableProduct
         ? [
@@ -3378,6 +3460,70 @@ export default function ProductDetailPage() {
                       </AnimatePresence>
                     </div>
                   )}
+
+                  {/* Cabinet toggle (shown for Integrated Morphy beds) */}
+                  {isIntegratedMorphy && (
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                          {t("common.cabinetEnclosure", "+ Cabinet")}:
+                        </label>
+                        <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
+                          +{formatPrice(cabinetPriceValue, locale)}
+                        </span>
+                      </div>
+                      <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
+                        <button
+                          type="button"
+                          onClick={() => setCabinetIncluded(true)}
+                          className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
+                            cabinetIncluded
+                              ? "text-white"
+                              : "text-wbk-brown hover:text-wbk-black"
+                          }`}
+                        >
+                          {cabinetIncluded && (
+                            <motion.div
+                              layoutId="cabinetTogglePill"
+                              className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 35,
+                              }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {t("common.includeCabinet", "With Cabinet")}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCabinetIncluded(false)}
+                          className={`relative z-10 flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-200 cursor-pointer text-center ${
+                            !cabinetIncluded
+                              ? "text-white"
+                              : "text-wbk-brown hover:text-wbk-black"
+                          }`}
+                        >
+                          {!cabinetIncluded && (
+                            <motion.div
+                              layoutId="cabinetTogglePill"
+                              className="absolute inset-0 bg-[#9A9A8C] rounded-full shadow-sm"
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 35,
+                              }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {t("common.bedOnly", "Bed Only")}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3477,7 +3623,9 @@ export default function ProductDetailPage() {
                     {productPricing.isOnSale && (
                       <span className="text-sm text-black line-through font-normal">
                         {formatPrice(
-                          productPricing.regularRaw + sofaSurcharge,
+                          productPricing.regularRaw +
+                            sofaSurcharge +
+                            cabinetSurcharge,
                           locale,
                         )}
                       </span>
@@ -5725,7 +5873,9 @@ export default function ProductDetailPage() {
                     {productPricing.isOnSale && (
                       <span className="text-[10px] sm:text-xs text-black line-through font-normal hidden sm:inline">
                         {formatPrice(
-                          productPricing.regularRaw + sofaSurcharge,
+                          productPricing.regularRaw +
+                            sofaSurcharge +
+                            cabinetSurcharge,
                           locale,
                         )}
                       </span>

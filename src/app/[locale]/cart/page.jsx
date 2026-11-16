@@ -240,6 +240,11 @@ export default function CartPage() {
                                 + {t("cart.frontSofa", "Front Sofa Module")}
                               </span>
                             )}
+                            {item.options.cabinetIncluded && (
+                              <span className="text-[11px] bg-[#F4F2F0] text-wbk-gold px-2 py-0.5 border border-wbk-lightgrey/60 font-semibold">
+                                + {t("cart.cabinetEnclosure", "Cabinet Enclosure")}
+                              </span>
+                            )}
                             {(item.isOutOfStock ||
                               (item.stock !== undefined &&
                                 item.stock !== null &&

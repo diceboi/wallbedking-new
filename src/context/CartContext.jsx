@@ -365,6 +365,7 @@ export function CartProvider({ children }) {
       item.options?.orientation || "",
       item.options?.type || "",
       item.options?.sofaIncluded ? "sofa" : "",
+      item.options?.cabinetIncluded ? "cabinet" : "",
       item.options?.color || "",
     ].filter(Boolean).join("-");
 

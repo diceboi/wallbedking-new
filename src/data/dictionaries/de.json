@@ -71,7 +71,10 @@
     "download": "Herunterladen",
     "currency": "€",
     "item": "Artikel",
-    "items": "Artikel"
+    "items": "Artikel",
+    "cabinetEnclosure": "+ Schrank",
+    "includeCabinet": "Mit Schrank",
+    "bedOnly": "Nur Bett"
   },
   "cart": {
     "title": "Ihr Warenkorb",
@@ -101,7 +104,8 @@
     "optionsCol": "Optionen",
     "quantityCol": "Menge",
     "priceCol": "Preis",
-    "totalCol": "Gesamt"
+    "totalCol": "Gesamt",
+    "cabinetEnclosure": "Schrankgehäuse"
   },
   "checkout": {
     "bankWireTransfer": "Banküberweisung",

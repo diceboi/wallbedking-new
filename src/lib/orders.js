@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { ALL_PRODUCTS, RAW_CATALOG } from "@/data/products";
-import { calculateSofaPrice } from "@/lib/products";
+import { calculateSofaPrice, calculateCabinetPrice } from "@/lib/products";
 
 export const DELIVERY_OPTIONS = {
   delivery_option_discount: {
@@ -260,7 +260,18 @@ export async function validateOrderTotals(
         );
       }
 
-      unitPrice = finalPrice + sofaSurcharge;
+      // Integrated Morphy cabinet surcharge if included
+      const isCabinetIncluded = Boolean(item.options?.cabinetIncluded);
+      let cabinetSurcharge = 0;
+      if (isCabinetIncluded) {
+        cabinetSurcharge = calculateCabinetPrice(
+          prodSource || item,
+          item.options?.orientation,
+          item.options?.size
+        );
+      }
+
+      unitPrice = finalPrice + sofaSurcharge + cabinetSurcharge;
     } else {
       // Check if item is a product bundle
       let bundleSource = null;

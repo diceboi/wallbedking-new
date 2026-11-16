@@ -1976,6 +1976,20 @@ export default function CheckoutPage() {
                           {item.options?.orientation &&
                             `(${item.options.orientation})`}
                         </span>
+                        {(item.options?.sofaIncluded || item.options?.cabinetIncluded) && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {item.options?.sofaIncluded && (
+                              <span className="text-[10px] bg-[#FAF5EA] text-wbk-gold font-semibold px-1.5 py-0.5 border border-wbk-gold/40 rounded">
+                                + {t("cart.frontSofa", "Front Sofa")}
+                              </span>
+                            )}
+                            {item.options?.cabinetIncluded && (
+                              <span className="text-[10px] bg-[#FAF5EA] text-wbk-gold font-semibold px-1.5 py-0.5 border border-wbk-gold/40 rounded">
+                                + {t("cart.cabinetEnclosure", "Cabinet")}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="text-xs font-bold text-wbk-black font-poppins">

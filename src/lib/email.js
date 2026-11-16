@@ -480,12 +480,26 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
       };
       const sofaLabel = sofaLabels[loc] || sofaLabels.en;
 
+      const hasCabinet = Boolean(opts.cabinetIncluded);
+      const cabinetPriceText = opts.cabinetPrice ? ` (+${currencySymbol}${Number(opts.cabinetPrice).toFixed(2)})` : "";
+      const cabinetLabels = {
+        en: "Cabinet Enclosure",
+        us: "Cabinet Enclosure",
+        de: "Schrankgehäuse",
+        fr: "Armoire d'Habillage",
+        it: "Struttura Armadio",
+        es: "Armario Exterior",
+        por: "Armário Exterior",
+      };
+      const cabinetLabel = cabinetLabels[loc] || cabinetLabels.en;
+
       return `
       <tr>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111;">
           <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed Item"}</strong>
           ${optionsText ? `<br><span style="color:#666; font-size:12px; display:inline-block; margin-top:3px;">${optionsText}</span>` : ""}
           ${hasSofa ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + ${sofaLabel}${sofaPriceText}</span>` : ""}
+          ${hasCabinet ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🗄️ + ${cabinetLabel}${cabinetPriceText}</span>` : ""}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
           ${item.quantity || 1}
@@ -723,6 +737,8 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
     const variantText = variantParts.length > 0 ? variantParts.join(" • ") : (item.variant || "");
     const hasSofa = Boolean(opts.sofaIncluded);
     const sofaPriceText = opts.sofaPrice ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})` : "";
+    const hasCabinet = Boolean(opts.cabinetIncluded);
+    const cabinetPriceText = opts.cabinetPrice ? ` (+${currencySymbol}${Number(opts.cabinetPrice).toFixed(2)})` : "";
     let sku = item.sku || item.options?.sku || "";
     if (!sku || /^\d+$/.test(String(sku).trim())) {
       const found = RAW_CATALOG?.find(
@@ -747,6 +763,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
           <strong style="color: #111; font-size: 14px; display: block;">${title}</strong>
           ${variantText ? `<div style="color: #666; font-size: 12px; margin-top: 3px;"><strong>Option:</strong> ${variantText}</div>` : ""}
           ${hasSofa ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + Front Sofa Included${sofaPriceText}</span></div>` : ""}
+          ${hasCabinet ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">🗄️ + Cabinet Included${cabinetPriceText}</span></div>` : ""}
           ${sku ? `<div style="color: #888; font-size: 11px; font-family: monospace; margin-top: 2px;">SKU: ${sku}</div>` : ""}
         </td>
         <td style="padding: 12px 14px; text-align: center; vertical-align: top; font-weight: 600; color: #111;">
@@ -2079,12 +2096,14 @@ export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en
         const opts = item.options || {};
         const optText = item.variant || [opts.size, opts.orientation, opts.type].filter(Boolean).join(" • ");
         const hasSofa = Boolean(opts.sofaIncluded);
+        const hasCabinet = Boolean(opts.cabinetIncluded);
         return `
         <tr style="border-bottom: 1px solid #f0f0f0;">
           <td style="padding: 12px 0;">
             <strong style="color: #111; font-size: 13px;">${item.name || item.title || "Wall Bed"}</strong>
             ${optText ? `<br><span style="font-size: 11px; color: #777;">${optText}</span>` : ""}
             ${hasSofa ? `<br><span style="display:inline-block; margin-top:4px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px;">🛋️ + Front Sofa Module</span>` : ""}
+            ${hasCabinet ? `<br><span style="display:inline-block; margin-top:4px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px;">🗄️ + Cabinet Enclosure</span>` : ""}
           </td>
           <td style="padding: 12px 0; text-align: center; color: #444; font-size: 13px;">${item.quantity || 1}</td>
           <td style="padding: 12px 0; text-align: right; color: #111; font-weight: 600; font-size: 13px;">${currencySymbol}${Number(item.price || 0).toFixed(2)}</td>
@@ -2985,6 +3004,17 @@ function renderLocalizedOrderItemsRows(order, currencySymbol, sofaLabel) {
   if (rawItems.length === 0) {
     return "";
   }
+  const cabLabels = {
+    en: "Cabinet Enclosure",
+    us: "Cabinet Enclosure",
+    de: "Schrankgehäuse",
+    fr: "Armoire d'Habillage",
+    it: "Struttura Armadio",
+    es: "Armario Exterior",
+    por: "Armário Exterior",
+    hu: "Szekrényburkolat",
+  };
+  const cabinetLabel = cabLabels[order?.locale] || cabLabels.en;
 
   return rawItems
     .map((item) => {
@@ -2997,6 +3027,10 @@ function renderLocalizedOrderItemsRows(order, currencySymbol, sofaLabel) {
       const sofaPriceText = opts.sofaPrice
         ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})`
         : "";
+      const hasCabinet = Boolean(opts.cabinetIncluded);
+      const cabinetPriceText = opts.cabinetPrice
+        ? ` (+${currencySymbol}${Number(opts.cabinetPrice).toFixed(2)})`
+        : "";
 
       return `
       <tr>
@@ -3004,6 +3038,7 @@ function renderLocalizedOrderItemsRows(order, currencySymbol, sofaLabel) {
           <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed King"}</strong>
           ${optionsText ? `<br><span style="color:#666; font-size:12px; display:inline-block; margin-top:3px;">${optionsText}</span>` : ""}
           ${hasSofa ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + ${sofaLabel}${sofaPriceText}</span>` : ""}
+          ${hasCabinet ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🗄️ + ${cabinetLabel}${cabinetPriceText}</span>` : ""}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
           ${item.quantity || 1}

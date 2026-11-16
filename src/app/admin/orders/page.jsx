@@ -522,6 +522,11 @@ export default function AdminOrdersPage() {
                               + Sofa
                             </span>
                           )}
+                          {ord.items?.some((it) => it.options?.cabinetIncluded) && (
+                            <span className="inline-block text-[9px] font-bold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-1.5 py-0.5 rounded shrink-0">
+                              + Cabinet
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-4 text-wbk-brown whitespace-nowrap">
@@ -1468,6 +1473,14 @@ export default function AdminOrdersPage() {
                                     🛋️ + Front Sofa Included{" "}
                                     {item.options.sofaPrice
                                       ? `(+${currSymbol}${Number(item.options.sofaPrice).toFixed(2)})`
+                                      : ""}
+                                  </span>
+                                )}
+                                {item.options?.cabinetIncluded && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#FAF5EA] text-wbk-gold border border-wbk-gold/40 px-2 py-0.5 rounded mt-1 ml-1">
+                                    🗄️ + Cabinet Included{" "}
+                                    {item.options.cabinetPrice
+                                      ? `(+${currSymbol}${Number(item.options.cabinetPrice).toFixed(2)})`
                                       : ""}
                                   </span>
                                 )}

@@ -71,7 +71,10 @@
     "download": "Scarica",
     "currency": "€",
     "item": "articolo",
-    "items": "articoli"
+    "items": "articoli",
+    "cabinetEnclosure": "+ Armadio",
+    "includeCabinet": "Con Armadio",
+    "bedOnly": "Solo Letto"
   },
   "cart": {
     "title": "Il Tuo Carrello",
@@ -101,7 +104,8 @@
     "optionsCol": "Opzioni",
     "quantityCol": "Quantità",
     "priceCol": "Prezzo",
-    "totalCol": "Totale"
+    "totalCol": "Totale",
+    "cabinetEnclosure": "Struttura Armadio"
   },
   "checkout": {
     "bankWireTransfer": "Bonifico bancario",
