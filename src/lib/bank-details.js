@@ -8,14 +8,14 @@ export const UK_BANK_DETAILS = {
   region: "UK",
   isUkAccount: true,
   accountName: "IZN LTD",
-  bankName: "HSBC BANK PLC",
-  bic: "HBUKGB4B",
-  iban: "GB18HBUK40127676095517",
-  ibanFormatted: "GB18 HBUK 4012 7676 0955 17",
+  bankName: "HSBC",
+  bic: "HBUKGB4104N",
+  iban: "GB16HBUK40231021792679",
+  ibanFormatted: "GB16 HBUK 4023 1021 7926 79",
   // UK Domestic transfers (Faster Payments / BACS)
-  sortCode: "40-12-76",
-  accountNumber: "76095517",
-  bankAddress: "184 Brockles Mead, Harlow, Essex, CM19 4PZ, United Kingdom",
+  sortCode: "40-23-10",
+  accountNumber: "21792679",
+  bankAddress: null,
 };
 
 export const EU_BANK_DETAILS = {
@@ -37,7 +37,9 @@ export const BANK_DETAILS = UK_BANK_DETAILS;
 const EU_BANK_LOCALES = new Set(["de", "fr", "it", "es", "por", "pt"]);
 
 export function getBankDetails(locale = "en", currency = null) {
-  const normLocale = String(locale || "en").toLowerCase().trim();
+  const normLocale = String(locale || "en")
+    .toLowerCase()
+    .trim();
   const normCurrency = currency ? String(currency).toUpperCase().trim() : "";
 
   if (EU_BANK_LOCALES.has(normLocale) || normCurrency === "EUR") {
@@ -54,9 +56,11 @@ export const BANK_I18N = {
     statusBadge: "Pending Payment",
     thankYouTitle: "Bank Transfer Request Received",
     thankYouSubtitle: "Thank you for your order reservation",
-    instructionIntro: "Please complete your bank transfer using the banking coordinates below. As soon as the payment arrives in our account, your order will be confirmed and processed for production.",
+    instructionIntro:
+      "Please complete your bank transfer using the banking coordinates below. As soon as the payment arrives in our account, your order will be confirmed and processed for production.",
     referenceFieldName: "Payment Reference / Memo",
-    referenceNotice: "Important: Please enter your Order Number {orderId} (or your email: {email}) into your banking app's payment reference field so we can instantly identify and confirm your transfer.",
+    referenceNotice:
+      "Important: Please enter your Order Number {orderId} (or your email: {email}) into your banking app's payment reference field so we can instantly identify and confirm your transfer.",
     accountHolderLabel: "Account Holder (Beneficiary)",
     bankNameLabel: "Bank Name",
     ibanLabel: "IBAN",
@@ -68,7 +72,8 @@ export const BANK_I18N = {
     copyButton: "Copy",
     copiedToast: "Copied to clipboard!",
     whatHappensNext: "What happens next?",
-    whatHappensNextText: "Once we receive your transfer (typically within a few hours to 1 business day depending on your bank), our administrative team will mark your order as Paid and you will receive an official payment confirmation email.",
+    whatHappensNextText:
+      "Once we receive your transfer (typically within a few hours to 1 business day depending on your bank), our administrative team will mark your order as Paid and you will receive an official payment confirmation email.",
   },
   us: {
     methodLabel: "Bank Wire Transfer",
@@ -77,9 +82,11 @@ export const BANK_I18N = {
     statusBadge: "Pending Payment",
     thankYouTitle: "Wire Transfer Request Received",
     thankYouSubtitle: "Thank you for your order reservation",
-    instructionIntro: "Please complete your wire transfer using the coordinates below. Once funds are received, your order will be confirmed and scheduled for dispatch.",
+    instructionIntro:
+      "Please complete your wire transfer using the coordinates below. Once funds are received, your order will be confirmed and scheduled for dispatch.",
     referenceFieldName: "Wire Memo / Payment Reference",
-    referenceNotice: "Important: Please enter your Order Number {orderId} (or your email: {email}) in the wire reference / memo field so we can promptly match your transfer.",
+    referenceNotice:
+      "Important: Please enter your Order Number {orderId} (or your email: {email}) in the wire reference / memo field so we can promptly match your transfer.",
     accountHolderLabel: "Beneficiary / Account Name",
     bankNameLabel: "Bank Name",
     ibanLabel: "IBAN",
@@ -90,7 +97,8 @@ export const BANK_I18N = {
     copyButton: "Copy",
     copiedToast: "Copied to clipboard!",
     whatHappensNext: "What happens next?",
-    whatHappensNextText: "Once your wire is received, our staff will mark your order as Paid and dispatch your official confirmation email.",
+    whatHappensNextText:
+      "Once your wire is received, our staff will mark your order as Paid and dispatch your official confirmation email.",
   },
   de: {
     methodLabel: "Banküberweisung",
@@ -99,9 +107,11 @@ export const BANK_I18N = {
     statusBadge: "Zahlung ausstehend",
     thankYouTitle: "Überweisungsanfrage erhalten",
     thankYouSubtitle: "Vielen Dank für Ihre Bestellreservierung",
-    instructionIntro: "Bitte tätigen Sie Ihre Überweisung unter Verwendung der unten stehenden Bankdaten. Sobald die Zahlung auf unserem Konto eingegangen ist, wird Ihre Bestellung sofort bestätigt und für die Produktion freigegeben.",
+    instructionIntro:
+      "Bitte tätigen Sie Ihre Überweisung unter Verwendung der unten stehenden Bankdaten. Sobald die Zahlung auf unserem Konto eingegangen ist, wird Ihre Bestellung sofort bestätigt und für die Produktion freigegeben.",
     referenceFieldName: "Verwendungszweck",
-    referenceNotice: "Wichtig: Bitte geben Sie unbedingt Ihre Bestellnummer {orderId} (oder Ihre E-Mail: {email}) als Verwendungszweck in Ihrem Online-Banking an, damit wir Ihre Zahlung sofort zuordnen können.",
+    referenceNotice:
+      "Wichtig: Bitte geben Sie unbedingt Ihre Bestellnummer {orderId} (oder Ihre E-Mail: {email}) als Verwendungszweck in Ihrem Online-Banking an, damit wir Ihre Zahlung sofort zuordnen können.",
     accountHolderLabel: "Kontoinhaber / Begünstigter",
     bankNameLabel: "Bankname",
     ibanLabel: "IBAN",
@@ -113,7 +123,8 @@ export const BANK_I18N = {
     copyButton: "Kopieren",
     copiedToast: "In die Zwischenablage kopiert!",
     whatHappensNext: "Wie geht es weiter?",
-    whatHappensNextText: "Sobald der Betrag bei uns verbucht ist, schalten unsere Mitarbeiter den Status auf Bezahlt. Sie erhalten unmittelbar danach eine E-Mail-Bestätigung über den erfolgreichen Zahlungseingang.",
+    whatHappensNextText:
+      "Sobald der Betrag bei uns verbucht ist, schalten unsere Mitarbeiter den Status auf Bezahlt. Sie erhalten unmittelbar danach eine E-Mail-Bestätigung über den erfolgreichen Zahlungseingang.",
   },
   fr: {
     methodLabel: "Virement bancaire",
@@ -122,9 +133,11 @@ export const BANK_I18N = {
     statusBadge: "Paiement en attente",
     thankYouTitle: "Demande de virement bancaire reçue",
     thankYouSubtitle: "Merci pour votre réservation de commande",
-    instructionIntro: "Veuillez effectuer votre virement bancaire en utilisant les coordonnées bancaires ci-dessous. Dès réception de votre paiement, votre commande sera confirmée et mise en fabrication.",
+    instructionIntro:
+      "Veuillez effectuer votre virement bancaire en utilisant les coordonnées bancaires ci-dessous. Dès réception de votre paiement, votre commande sera confirmée et mise en fabrication.",
     referenceFieldName: "Motif du virement / Référence",
-    referenceNotice: "Important : Veuillez obligatoirement indiquer votre numéro de commande {orderId} (ou votre e-mail : {email}) dans le champ motif / référence de votre virement pour que nous puissions identifier immédiatement votre paiement.",
+    referenceNotice:
+      "Important : Veuillez obligatoirement indiquer votre numéro de commande {orderId} (ou votre e-mail : {email}) dans le champ motif / référence de votre virement pour que nous puissions identifier immédiatement votre paiement.",
     accountHolderLabel: "Bénéficiaire du compte",
     bankNameLabel: "Nom de la banque",
     ibanLabel: "IBAN",
@@ -136,7 +149,8 @@ export const BANK_I18N = {
     copyButton: "Copier",
     copiedToast: "Copié dans le presse-papiers !",
     whatHappensNext: "Et ensuite ?",
-    whatHappensNextText: "Dès réception de vos fonds, notre équipe validera la commande et vous recevrez automatiquement un e-mail confirmant la bonne réception de votre paiement.",
+    whatHappensNextText:
+      "Dès réception de vos fonds, notre équipe validera la commande et vous recevrez automatiquement un e-mail confirmant la bonne réception de votre paiement.",
   },
   it: {
     methodLabel: "Bonifico Bancario",
@@ -145,9 +159,11 @@ export const BANK_I18N = {
     statusBadge: "Pagamento in attesa",
     thankYouTitle: "Richiesta di bonifico bancario ricevuta",
     thankYouSubtitle: "Grazie per la sua prenotazione d'ordine",
-    instructionIntro: "La preghiamo di effettuare il bonifico bancario utilizzando le coordinate sotto indicate. Non appena l'importo sarà accreditato sul nostro conto, il suo ordine verrà confermato e inoltrato alla produzione.",
+    instructionIntro:
+      "La preghiamo di effettuare il bonifico bancario utilizzando le coordinate sotto indicate. Non appena l'importo sarà accreditato sul nostro conto, il suo ordine verrà confermato e inoltrato alla produzione.",
     referenceFieldName: "Causale del bonifico",
-    referenceNotice: "Importante: Si ricordi di inserire il suo numero d'ordine {orderId} (o la sua email: {email}) come causale del bonifico per permetterci di identificare prontamente il suo pagamento.",
+    referenceNotice:
+      "Importante: Si ricordi di inserire il suo numero d'ordine {orderId} (o la sua email: {email}) come causale del bonifico per permetterci di identificare prontamente il suo pagamento.",
     accountHolderLabel: "Intestatario del conto (Beneficiario)",
     bankNameLabel: "Nome della banca",
     ibanLabel: "IBAN",
@@ -159,7 +175,8 @@ export const BANK_I18N = {
     copyButton: "Copia",
     copiedToast: "Copiato negli appunti!",
     whatHappensNext: "Cosa succede ora?",
-    whatHappensNextText: "Non appena riceveremo l'accredito sul conto, il nostro team imposterà l'ordine come Pagato e riceverà un'email di conferma dell'avvenuta ricezione del pagamento.",
+    whatHappensNextText:
+      "Non appena riceveremo l'accredito sul conto, il nostro team imposterà l'ordine come Pagato e riceverà un'email di conferma dell'avvenuta ricezione del pagamento.",
   },
   es: {
     methodLabel: "Transferencia Bancaria",
@@ -168,9 +185,11 @@ export const BANK_I18N = {
     statusBadge: "Pago pendiente",
     thankYouTitle: "Petición de transferencia bancaria recibida",
     thankYouSubtitle: "Gracias por tu reserva de pedido",
-    instructionIntro: "Por favor realiza la transferencia bancaria utilizando los datos a continuación. Tan pronto como recibamos el pago en nuestra cuenta, tu pedido quedará confirmado y pasará de inmediato a fabricación.",
+    instructionIntro:
+      "Por favor realiza la transferencia bancaria utilizando los datos a continuación. Tan pronto como recibamos el pago en nuestra cuenta, tu pedido quedará confirmado y pasará de inmediato a fabricación.",
     referenceFieldName: "Concepto de la transferencia",
-    referenceNotice: "Importante: Por favor indica tu número de pedido {orderId} (o tu correo: {email}) como concepto de la transferencia para que podamos identificar y validar tu pago rápidamente.",
+    referenceNotice:
+      "Importante: Por favor indica tu número de pedido {orderId} (o tu correo: {email}) como concepto de la transferencia para que podamos identificar y validar tu pago rápidamente.",
     accountHolderLabel: "Titular de la cuenta (Beneficiario)",
     bankNameLabel: "Nombre del banco",
     ibanLabel: "IBAN",
@@ -182,7 +201,8 @@ export const BANK_I18N = {
     copyButton: "Copiar",
     copiedToast: "¡Copiado al portapapeles!",
     whatHappensNext: "¿Qué sucede después?",
-    whatHappensNextText: "Tan pronto como se refleje el pago en nuestra cuenta, nuestro equipo marcará el pedido como Pagado y recibirás un correo electrónico de confirmación de pago.",
+    whatHappensNextText:
+      "Tan pronto como se refleje el pago en nuestra cuenta, nuestro equipo marcará el pedido como Pagado y recibirás un correo electrónico de confirmación de pago.",
   },
   por: {
     methodLabel: "Transferência Bancária",
@@ -191,9 +211,11 @@ export const BANK_I18N = {
     statusBadge: "Pagamento pendente",
     thankYouTitle: "Pedido de transferência bancária recebido",
     thankYouSubtitle: "Obrigado pela sua reserva de encomenda",
-    instructionIntro: "Por favor conclua a sua transferência bancária utilizando as coordenadas abaixo. Assim que o pagamento der entrada na nossa conta, a sua encomenda será confirmada e entrará em produção.",
+    instructionIntro:
+      "Por favor conclua a sua transferência bancária utilizando as coordenadas abaixo. Assim que o pagamento der entrada na nossa conta, a sua encomenda será confirmada e entrará em produção.",
     referenceFieldName: "Descrição / Referência do pagamento",
-    referenceNotice: "Importante: Por favor indique o seu número de encomenda {orderId} (ou o seu e-mail: {email}) na descrição/referência da transferência para que possamos identificar e confirmar o seu pagamento de imediato.",
+    referenceNotice:
+      "Importante: Por favor indique o seu número de encomenda {orderId} (ou o seu e-mail: {email}) na descrição/referência da transferência para que possamos identificar e confirmar o seu pagamento de imediato.",
     accountHolderLabel: "Titular da conta (Beneficiário)",
     bankNameLabel: "Nome do banco",
     ibanLabel: "IBAN",
@@ -205,7 +227,8 @@ export const BANK_I18N = {
     copyButton: "Copiar",
     copiedToast: "Copiado para a área de transferência!",
     whatHappensNext: "O que acontece a seguir?",
-    whatHappensNextText: "Assim que recebermos o valor na nossa conta, a nossa equipa marcará a encomenda como Paga e receberá um e-mail a confirmar a receção do pagamento.",
+    whatHappensNextText:
+      "Assim que recebermos o valor na nossa conta, a nossa equipa marcará a encomenda como Paga e receberá um e-mail a confirmar a receção do pagamento.",
   },
 };
 

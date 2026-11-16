@@ -14,30 +14,51 @@ import {
 } from "@tabler/icons-react";
 import { IconShieldCheck } from "@tabler/icons-react";
 import { useLocale } from "@/context/LocaleContext";
+import { useCart } from "@/context/CartContext";
 
 export default function DeliveryPage() {
-  const { t, localizedHref } = useLocale();
+  const { t, formatPrice, localizedHref } = useLocale();
+  const { deliveryOptions } = useCart();
 
-  const DELIVERY_TIERS = [
-    {
-      name: t("support.tierEconomyName", "Economy Delivery"),
-      price: t("support.tierEconomyPrice", "FREE"),
-      timeline: t("support.tierEconomyTimeline", "2 – 4 Weeks"),
+  const tierMetadata = {
+    delivery_option_discount: {
+      badge: t("support.tierDiscountBadge", "Extra Savings"),
+      defaultName: t("support.tierDiscountName", "Discount Delivery (-5%)"),
+      defaultTimeline: t("support.tierDiscountTimeline", "5 – 8 Weeks"),
+      description: t(
+        "support.tierDiscountDesc",
+        "Enjoy an automatic extra 5% discount on your entire order when you choose our flexible 5–8 week scheduled delivery window."
+      ),
+      features: [
+        t("support.tierDiscountF1", "Extra 5% off your order total"),
+        t("support.tierDiscountF2", "Zero shipping charges at checkout"),
+        t("support.tierDiscountF3", "Full tracking notification before dispatch"),
+        t("support.tierDiscountF4", "Ideal when planning ahead"),
+      ],
+    },
+    delivery_option_economy: {
       badge: t("support.tierEconomyBadge", "Most Popular"),
-      description: t("support.tierEconomyDesc", "Our complimentary delivery service across mainland UK on all bed orders."),
+      defaultName: t("support.tierEconomyName", "Economy Delivery"),
+      defaultTimeline: t("support.tierEconomyTimeline", "3 – 5 Weeks"),
+      description: t(
+        "support.tierEconomyDesc",
+        "Our complimentary delivery service across mainland UK on all bed orders."
+      ),
       features: [
         t("support.tierEconomyF1", "Zero shipping charges at checkout"),
         t("support.tierEconomyF2", "Full tracking notification before dispatch"),
         t("support.tierEconomyF3", "Delivered directly to your door"),
-        t("support.tierEconomyF4", "All mainland UK postcodes included"),
+        t("support.tierEconomyF4", "All mainland postcodes included"),
       ],
     },
-    {
-      name: t("support.tierStandardName", "Standard Delivery"),
-      price: t("support.tierStandardPrice", "£49"),
-      timeline: t("support.tierStandardTimeline", "1 – 2 Weeks"),
+    delivery_option_standard: {
       badge: t("support.tierStandardBadge", "Faster Transit"),
-      description: t("support.tierStandardDesc", "Accelerate transit and receive your wall bed within 7 to 14 calendar days."),
+      defaultName: t("support.tierStandardName", "Standard Delivery"),
+      defaultTimeline: t("support.tierStandardTimeline", "1 – 3 Weeks"),
+      description: t(
+        "support.tierStandardDesc",
+        "Accelerate transit and receive your wall bed within 1 to 3 weeks."
+      ),
       features: [
         t("support.tierStandardF1", "Priority warehouse staging"),
         t("support.tierStandardF2", "Dedicated courier dispatch slot"),
@@ -45,25 +66,29 @@ export default function DeliveryPage() {
         t("support.tierStandardF4", "Ideal for scheduled room renovations"),
       ],
     },
-    {
-      name: t("support.tierExpressName", "Express Delivery"),
-      price: t("support.tierExpressPrice", "£79"),
-      timeline: t("support.tierExpressTimeline", "2 – 5 Working Days"),
+    delivery_option_express: {
       badge: t("support.tierExpressBadge", "Speediest Option"),
-      description: t("support.tierExpressDesc", "Super-speedy priority service for in-stock wall bed frames and mechanisms."),
+      defaultName: t("support.tierExpressName", "Express Delivery"),
+      defaultTimeline: t("support.tierExpressTimeline", "2 – 5 Working Days"),
+      description: t(
+        "support.tierExpressDesc",
+        "Super-speedy priority service for in-stock wall bed frames and mechanisms."
+      ),
       features: [
         t("support.tierExpressF1", "Same-day or next-day warehouse pick"),
-        t("support.tierExpressF2", "Express 2–5 business day delivery"),
+        t("support.tierExpressF2", "Express business day delivery"),
         t("support.tierExpressF3", "Real-time courier tracking link"),
-        t("support.tierExpressF4", "Available across mainland UK"),
+        t("support.tierExpressF4", "Priority handling from dispatch to door"),
       ],
     },
-    {
-      name: t("support.tierCollectName", "Click & Collect"),
-      price: t("support.tierCollectPrice", "FREE"),
-      timeline: t("support.tierCollectTimeline", "Ready in 24–48 Hours"),
+    delivery_option_pickup: {
       badge: t("support.tierCollectBadge", "Collect in Person"),
-      description: t("support.tierCollectDesc", "Collect directly from our central warehouse in Harlow, Essex (North of London)."),
+      defaultName: t("support.tierCollectName", "Click & Collect"),
+      defaultTimeline: t("support.tierCollectTimeline", "Ready in 24–48 Hours"),
+      description: t(
+        "support.tierCollectDesc",
+        "Collect directly from our central warehouse in Harlow, Essex (North of London)."
+      ),
       features: [
         t("support.tierCollectF1", "Zero delivery fee"),
         t("support.tierCollectF2", "Flexible collection by appointment"),
@@ -71,7 +96,44 @@ export default function DeliveryPage() {
         t("support.tierCollectF4", "Ample parking for vans, SUVs, or estate cars"),
       ],
     },
-  ];
+  };
+
+  const freeLabel = t("support.tierEconomyPrice", "FREE");
+
+  const DELIVERY_TIERS = Object.values(deliveryOptions || {}).map((opt) => {
+    const meta = tierMetadata[opt.key] || {};
+    const cost = Number(opt.cost) || 0;
+    const discountPct = Number(opt.discountPercent) || 0;
+
+    let priceDisplay = cost > 0 ? formatPrice(cost) : freeLabel;
+    if (cost === 0 && discountPct > 0) {
+      priceDisplay = `${freeLabel} (-${discountPct}%)`;
+    }
+
+    return {
+      key: opt.key,
+      name: opt.label || meta.defaultName || opt.key,
+      price: priceDisplay,
+      timeline: opt.message || meta.defaultTimeline || "",
+      badge:
+        discountPct > 0
+          ? meta.badge || `-${discountPct}%`
+          : meta.badge || t("support.deliveryTitle", "Delivery"),
+      description: meta.description || opt.message || "",
+      features: meta.features || [],
+    };
+  });
+
+  const isPickupEnabled = Boolean(deliveryOptions?.delivery_option_pickup);
+
+  const tierGridColsClass =
+    DELIVERY_TIERS.length === 1
+      ? "grid-cols-1 max-w-md mx-auto"
+      : DELIVERY_TIERS.length === 2
+        ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto"
+        : DELIVERY_TIERS.length === 3
+          ? "grid-cols-1 md:grid-cols-3"
+          : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
 
   const PRE_DELIVERY_STEPS = [
     {
@@ -136,10 +198,10 @@ export default function DeliveryPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className={`grid ${tierGridColsClass} gap-6`}>
           {DELIVERY_TIERS.map((tier) => (
             <div
-              key={tier.name}
+              key={tier.key || tier.name}
               className="bg-white rounded-none border border-wbk-lightgrey p-7 flex flex-col justify-between shadow-xs hover:shadow-md transition-all"
             >
               <div>
@@ -193,7 +255,7 @@ export default function DeliveryPage() {
             </div>
             <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 justify-end">
               <Link
-                href="/contact"
+                href={localizedHref("/contact")}
                 className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors text-center"
               >
                 {t("topbar.contact", "Contact Logistics Team")}
@@ -231,35 +293,37 @@ export default function DeliveryPage() {
         </div>
       </Container>
 
-      {/* Click & Collect Showroom Card */}
-      <Container size="xl" className="pt-20">
-        <div className="border border-wbk-lightgrey rounded-none p-8 sm:p-12 bg-white flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xs">
-          <div className="flex items-center gap-4 max-w-xl">
-            <div className="w-12 h-12 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center shrink-0">
-              <IconBuildingWarehouse size={24} className="text-wbk-gold" />
+      {/* Click & Collect Showroom Card (only when pickup is enabled for this market) */}
+      {isPickupEnabled && (
+        <Container size="xl" className="pt-20">
+          <div className="border border-wbk-lightgrey rounded-none p-8 sm:p-12 bg-white flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xs">
+            <div className="flex items-center gap-4 max-w-xl">
+              <div className="w-12 h-12 rounded-none bg-[#F4F2F0] text-wbk-black flex items-center justify-center shrink-0">
+                <IconBuildingWarehouse size={24} className="text-wbk-gold" />
+              </div>
+              <div>
+                <h3 className="font-new-york text-2xl text-wbk-black">
+                  {t("support.harlowCollectTitle", "Collecting In Person from Harlow?")}
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-wbk-brown leading-relaxed">
+                  {t(
+                    "support.harlowCollectDesc",
+                    "Our central warehouse is conveniently situated in Harlow, Essex (CM20 2HU) just off the M11, north of London. Please ensure you arrange an appointment at least 24 hours in advance so our warehouse team can have your order staged and ready for pickup."
+                  )}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-new-york text-2xl text-wbk-black">
-                {t("support.harlowCollectTitle", "Collecting In Person from Harlow?")}
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-wbk-brown leading-relaxed">
-                {t(
-                  "support.harlowCollectDesc",
-                  "Our central warehouse is conveniently situated in Harlow, Essex (CM20 2HU) just off the M11, north of London. Please ensure you arrange an appointment at least 24 hours in advance so our warehouse team can have your order staged and ready for pickup."
-                )}
-              </p>
+            <div className="shrink-0 flex gap-4">
+              <Link
+                href={localizedHref("/contact")}
+                className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
+              >
+                {t("support.bookAppointmentBtn", "Book Collection Appointment")}
+              </Link>
             </div>
           </div>
-          <div className="shrink-0 flex gap-4">
-            <Link
-              href={localizedHref("/contact")}
-              className="px-6 py-3 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors"
-            >
-              {t("support.bookAppointmentBtn", "Book Collection Appointment")}
-            </Link>
-          </div>
-        </div>
-      </Container>
+        </Container>
+      )}
     </div>
   );
 }
