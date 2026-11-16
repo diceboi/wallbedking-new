@@ -28,9 +28,18 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
   } = useCart();
 
   const containerRef = useRef(null);
+  const buttonsInstanceRef = useRef(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [sdkError, setSdkError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const hasItems = items.length > 0;
+  const hasOutOfStock = items.some(
+    (i) =>
+      i.isOutOfStock ||
+      (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
+  );
 
   // Helper to safely verify if PayPal Buttons constructor is fully loaded and functional
   const isPayPalButtonsReady = () => {
@@ -67,23 +76,27 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
     let matchingScript = null;
 
     existingScripts.forEach((s) => {
-      if (s.id === targetScriptId) {
-        matchingScript = s;
-      } else {
-        s.remove();
-        if (typeof window !== "undefined") {
-          try {
-            delete window.paypal;
-          } catch {
-            window.paypal = undefined;
+        if (s.id === targetScriptId && retryCount === 0) {
+          matchingScript = s;
+        } else {
+          s.remove();
+          if (typeof window !== "undefined") {
+            try {
+              delete window.paypal;
+            } catch {
+              window.paypal = undefined;
+            }
           }
         }
-      }
-    });
+      });
 
     const verifyAndSetReady = () => {
+      if (isPayPalButtonsReady()) {
+        if (isMounted) setSdkReady(true);
+        return;
+      }
       let attempts = 0;
-      const maxAttempts = 40; // 40 * 75ms = 3000ms max
+      const maxAttempts = 160; // 160 * 75ms = 12000ms max for slow mobile connections
       if (pollTimer) clearInterval(pollTimer);
       pollTimer = setInterval(() => {
         attempts++;
@@ -97,7 +110,7 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
           clearInterval(pollTimer);
           if (isMounted) {
             console.warn("[PayPal SDK] Buttons component not available after load.");
-            setSdkError("PayPal Buttons failed to initialize. Please refresh or try Card / Bank Transfer.");
+            setSdkError("PayPal Buttons took too long to initialize. Please click Retry or use Card / Bank Transfer.");
           }
         }
       }, 75);
@@ -121,13 +134,13 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
 
     const script = document.createElement("script");
     script.id = targetScriptId;
-    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=${paypalCurrency}&components=buttons&enable-funding=card&disable-funding=sofort`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=${paypalCurrency}&components=buttons&enable-funding=card`;
     script.async = true;
 
     script.addEventListener("load", verifyAndSetReady, { once: true });
     script.addEventListener("error", () => {
       if (isMounted) {
-        setSdkError("Failed to load PayPal SDK. Please refresh or try another payment method.");
+        setSdkError("Failed to load PayPal SDK. Please click Retry or try another payment method.");
       }
     }, { once: true });
 
@@ -137,419 +150,459 @@ export function PayPalCheckoutButton({ disabled = false, customerDetails = null,
       isMounted = false;
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [paypalClientId, paypalCurrency, paymentConfig.entity]);
+}, [paypalClientId, paypalCurrency, paymentConfig.entity, retryCount]);
 
-  // Render PayPal Buttons when SDK is ready
-  useEffect(() => {
-    let isCancelled = false;
+// Render PayPal Buttons when SDK is ready (only re-run on primitive state changes, NOT on items array reference updates)
+useEffect(() => {
+  let isCancelled = false;
+  let retryTimer = null;
 
-    const hasOutOfStock = items.some(
-      (i) =>
-        i.isOutOfStock ||
-        (i.stock !== undefined && i.stock !== null && Number(i.stock) <= 0)
-    );
+  const closeActiveButtons = () => {
+    if (buttonsInstanceRef.current) {
+      const prev = buttonsInstanceRef.current;
+      buttonsInstanceRef.current = null;
+      try {
+        if (typeof prev.close === "function") {
+          prev.close().catch(() => { });
+        }
+      } catch {
+        // Ignore Zoid cleanup errors on already-unmounted containers
+      }
+    }
+  };
 
-    if (
-      !sdkReady ||
-      !containerRef.current ||
-      !isPayPalButtonsReady() ||
-      disabled ||
-      items.length === 0 ||
-      hasOutOfStock
-    ) {
-      if (containerRef.current && hasOutOfStock) {
+  if (
+    !sdkReady ||
+    !containerRef.current ||
+    !isPayPalButtonsReady() ||
+    disabled ||
+    !hasItems ||
+    hasOutOfStock
+  ) {
+      closeActiveButtons();
+      if (containerRef.current && (!hasItems || hasOutOfStock)) {
         containerRef.current.innerHTML = "";
       }
       return;
     }
 
-    containerRef.current.innerHTML = "";
+        const renderPayPalButtons = (isRetry = false) => {
+          if (isCancelled || !containerRef.current || !isPayPalButtonsReady()) {
+            return;
+          }
 
-    try {
-      if (!isPayPalButtonsReady()) {
-        return;
-      }
+              closeActiveButtons();
+      containerRef.current.innerHTML = "";
 
-      const buttons = window.paypal
-        .Buttons({
-          style: {
-            layout: "vertical",
-            color: "gold",
-            shape: "rect",
-            label: "checkout",
-            tagline: false,
-          },
-
-          createOrder: async (data, actions) => {
-            const current = cartRef.current;
-            if (typeof current.onBeforeCheckout === "function") {
               try {
-                await current.onBeforeCheckout();
-              } catch (err) {
-                console.warn("PayPal onBeforeCheckout error:", err);
-              }
-            }
-            const curr = current.paypalCurrency || "GBP";
-
-            // 1. Authoritative real-time server-side price validation against Supabase database
-            let effectiveItems = current.items || [];
-            let effectiveShippingVal = Number(current.shipping) || 0;
-            let effectiveTotalVal = Number(current.total) || 0;
-
-            try {
-              const valRes = await fetch("/api/checkout/validate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  items: current.items,
-                  deliveryOption: current.deliveryOption,
-                  promoCode: current.promoCode || "",
-                  currency: curr,
-                  locale: current.locale || "en",
-                }),
-              });
-              const valData = await valRes.json();
-              if (valData?.hasOutOfStockItems) {
-                const outNames = (valData.outOfStockItems || []).map((i) => i.title).join(", ");
-                throw new Error(`The following item(s) are currently out of stock: ${outNames}. Please remove them to proceed.`);
-              }
-              if (valData?.success && Array.isArray(valData?.items) && valData.items.length > 0) {
-                effectiveItems = valData.items;
-                effectiveShippingVal = Number(valData.shippingAmount) || 0;
-                effectiveTotalVal = Number(valData.totalAmount) || 0;
-              }
-            } catch (vErr) {
-              console.warn("[PayPal Checkout] Real-time database validation notice:", vErr);
-              throw vErr;
-            }
-
-            // Calculate precise monetary values in cents to avoid IEEE 754 rounding mismatches
-            const parsedItems = effectiveItems.map((it) => {
-              const priceCents = Math.round((Math.max(0, Number(it.price)) || 0) * 100);
-              const qty = Math.max(1, parseInt(it.quantity, 10) || 1);
-              const opt = [it.options?.size, it.options?.orientation, it.options?.color].filter(Boolean).join(" - ");
-              return {
-                it,
-                priceCents,
-                qty,
-                totalCents: priceCents * qty,
-                opt,
-              };
-            });
-
-            const itemsTotalCents = parsedItems.reduce((acc, currItem) => acc + currItem.totalCents, 0);
-            const shippingCents = Math.round(effectiveShippingVal * 100);
-            const finalTotalCents = Math.round(effectiveTotalVal * 100);
-
-            // Calculate exact discount needed so that itemsTotal + shipping - discount === finalTotal
-            const effectiveDiscountCents = Math.max(0, itemsTotalCents + shippingCents - finalTotalCents);
-
-            const finalTotal = (finalTotalCents / 100).toFixed(2);
-            const itemsTotalStr = (itemsTotalCents / 100).toFixed(2);
-            const shippingStr = (shippingCents / 100).toFixed(2);
-            const discountStr = (effectiveDiscountCents / 100).toFixed(2);
-
-            // Construct human-readable order summary description (max 127 chars for PayPal)
-            // e.g.: "Classic Vertical Wall Bed (Double 135x190) x1"
-            const itemsSummary = parsedItems
-              .map(({ it, opt, qty }) => {
-                const optText = opt ? ` (${opt})` : "";
-                return `${it.title || it.name || "Product"}${optText} x${qty}`;
-              })
-              .join(", ");
-
-            const orderDescription = (itemsSummary || "Wall Bed King Order").slice(0, 127);
-
-            // Build itemized list for PayPal invoice and receipt emails
-            const paypalItems = parsedItems.map(({ it, priceCents, qty, opt }) => {
-              const rawCandidate = it.sku || it.options?.sku;
-              const resolvedSku =
-                rawCandidate && !/^\d+$/.test(String(rawCandidate).trim())
-                  ? String(rawCandidate).trim()
-                  : String(it.slug || "WBK-ITEM").slice(0, 60);
-
-              return {
-                name: String(it.title || it.name || "Wall Bed King Product").slice(0, 127),
-                description: String(opt || "Standard").slice(0, 127),
-                sku: resolvedSku.slice(0, 60),
-                unit_amount: {
-                  currency_code: curr,
-                  value: (priceCents / 100).toFixed(2),
-                },
-                quantity: String(qty),
-                category: "PHYSICAL_GOODS",
-              };
-            });
-
-            // Construct purchase_unit payload
-            const purchaseUnit = {
-              description: orderDescription,
-              custom_id: String(current.customCartId || "").slice(0, 127),
-              soft_descriptor: paypalDescriptor,
-              amount: {
-                currency_code: curr,
-                value: finalTotal,
-              },
-            };
-
-            // If we have items and the breakdown matches the final total, provide detailed itemization
-            if (
-              paypalItems.length > 0 &&
-              itemsTotalCents + shippingCents - effectiveDiscountCents === finalTotalCents
-            ) {
-              const breakdown = {
-                item_total: {
-                  currency_code: curr,
-                  value: itemsTotalStr,
-                },
-              };
-
-              if (shippingCents > 0) {
-                breakdown.shipping = {
-                  currency_code: curr,
-                  value: shippingStr,
-                };
-              }
-
-              if (effectiveDiscountCents > 0) {
-                breakdown.discount = {
-                  currency_code: curr,
-                  value: discountStr,
-                };
-              }
-
-              purchaseUnit.items = paypalItems;
-              purchaseUnit.amount.breakdown = breakdown;
-            }
-
-            return actions.order.create({
-              intent: "CAPTURE",
-              purchase_units: [purchaseUnit],
-            });
-          },
-
-          onApprove: async (data, actions) => {
-            setIsProcessing(true);
-            try {
-              const orderData = await actions.order.capture();
-              const pu = orderData?.purchase_units?.[0] || {};
-              const payer = orderData?.payer || {};
-              const shipping = pu.shipping || {};
-              const current = cartRef.current;
-
-              // Determine effective customer identity:
-              // Prioritize checkout form input > logged-in store account > PayPal payer info
-              const effectiveEmail = (
-                current.customerDetails?.email ||
-                current.user?.email ||
-                payer.email_address ||
-                ""
-              ).trim().toLowerCase();
-
-              const formFullName = `${current.customerDetails?.firstName || ""} ${current.customerDetails?.lastName || ""}`.trim();
-              const userFullName =
-                current.user?.user_metadata?.full_name ||
-                `${current.user?.user_metadata?.first_name || ""} ${current.user?.user_metadata?.last_name || ""}`.trim();
-              const payerFullName = `${payer.name?.given_name || ""} ${payer.name?.surname || ""}`.trim();
-
-              const effectiveFirstName = (
-                current.customerDetails?.firstName ||
-                current.user?.user_metadata?.first_name ||
-                (userFullName ? userFullName.split(" ")[0] : "") ||
-                payer.name?.given_name ||
-                ""
-              ).trim();
-
-              const effectiveLastName = (
-                current.customerDetails?.lastName ||
-                current.user?.user_metadata?.last_name ||
-                (userFullName ? userFullName.split(" ").slice(1).join(" ") : "") ||
-                payer.name?.surname ||
-                ""
-              ).trim();
-
-              const effectiveFullName =
-                formFullName ||
-                userFullName ||
-                [effectiveFirstName, effectiveLastName].filter(Boolean).join(" ") ||
-                payerFullName ||
-                "Valued Customer";
-
-              const effectivePhone =
-                current.customerDetails?.phone ||
-                payer.phone?.phone_number?.national_number ||
-                "";
-
-              const effectiveUserId =
-                current.customerDetails?.userId ||
-                current.user?.id ||
-                null;
-
-              const effectiveShippingAddress = {
-                firstName: effectiveFirstName,
-                lastName: effectiveLastName,
-                address1:
-                  current.customerDetails?.address1 ||
-                  shipping.address?.address_line_1 ||
-                  shipping.address?.street ||
-                  "Address provided via PayPal",
-                city:
-                  current.customerDetails?.city ||
-                  shipping.address?.admin_area_2 ||
-                  shipping.address?.admin_area_1 ||
-                  "City",
-                postcode:
-                  current.customerDetails?.postcode ||
-                  shipping.address?.postal_code ||
-                  "N/A",
-                country:
-                  current.customerDetails?.country ||
-                  shipping.address?.country_code ||
-                  (current.locale === "en" ? "United Kingdom" : "International"),
-                phone: effectivePhone,
-              };
-
-              // 1. Save order in Supabase database
-              let confirmedOrderId = null;
-              try {
-                const orderRes = await fetch("/api/checkout/create-order", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    items: current.items,
-                    customer: {
-                      email: effectiveEmail,
-                      phone: effectivePhone,
-                      name: effectiveFullName,
-                      firstName: effectiveFirstName,
-                      lastName: effectiveLastName,
+                const buttons = window.paypal
+                  .Buttons({
+                    style: {
+                      layout: "vertical",
+                      color: "gold",
+                      shape: "rect",
+                      label: "checkout",
+                      tagline: false,
                     },
-                    shippingAddress: effectiveShippingAddress,
-                    deliveryOption: current.deliveryOption,
-                    promoCode: current.promoCode || "",
-                    paymentMethod: "paypal",
-                    userId: effectiveUserId,
-                    locale: current.locale,
-                    currency: current.paypalCurrency,
-                    companyEntity: current.paymentConfig.entity,
-                  }),
-                });
-                const orderJson = await orderRes.json();
-                if (orderJson.success && orderJson.orderId) {
-                  confirmedOrderId = orderJson.orderId;
-                }
-              } catch (errDb) {
-                console.warn("PayPal database order sync notice:", errDb);
-              }
 
-              // 2. Finalize payment, update DB status, and trigger confirmation email
-              try {
-                await fetch("/api/checkout/paypal/capture", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    orderId: confirmedOrderId,
-                    paypalOrderId: orderData.id,
-                    captureData: pu.payments?.captures?.[0],
-                    customer: {
-                      email: effectiveEmail,
-                      name: effectiveFullName,
-                      firstName: effectiveFirstName,
-                      lastName: effectiveLastName,
-                      phone: effectivePhone,
-                      userId: effectiveUserId,
+                    createOrder: async (data, actions) => {
+                      const current = cartRef.current;
+                      if (typeof current.onBeforeCheckout === "function") {
+                        try {
+                          await current.onBeforeCheckout();
+                        } catch (err) {
+                          console.warn("PayPal onBeforeCheckout error:", err);
+                        }
+                      }
+                      const curr = current.paypalCurrency || "GBP";
+
+                      // 1. Authoritative real-time server-side price validation against Supabase database
+                      let effectiveItems = current.items || [];
+                      let effectiveShippingVal = Number(current.shipping) || 0;
+                      let effectiveTotalVal = Number(current.total) || 0;
+
+                      try {
+                        const valRes = await fetch("/api/checkout/validate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            items: current.items,
+                            deliveryOption: current.deliveryOption,
+                            promoCode: current.promoCode || "",
+                            currency: curr,
+                            locale: current.locale || "en",
+                          }),
+                        });
+                        const valData = await valRes.json();
+                        if (valData?.hasOutOfStockItems) {
+                          const outNames = (valData.outOfStockItems || []).map((i) => i.title).join(", ");
+                          throw new Error(`The following item(s) are currently out of stock: ${outNames}. Please remove them to proceed.`);
+                        }
+                        if (valData?.success && Array.isArray(valData?.items) && valData.items.length > 0) {
+                          effectiveItems = valData.items;
+                          effectiveShippingVal = Number(valData.shippingAmount) || 0;
+                          effectiveTotalVal = Number(valData.totalAmount) || 0;
+                        }
+                      } catch (vErr) {
+                        console.warn("[PayPal Checkout] Real-time database validation notice:", vErr);
+                        throw vErr;
+                      }
+
+                      // Calculate precise monetary values in cents to avoid IEEE 754 rounding mismatches
+                      const parsedItems = effectiveItems.map((it) => {
+                        const priceCents = Math.round((Math.max(0, Number(it.price)) || 0) * 100);
+                        const qty = Math.max(1, parseInt(it.quantity, 10) || 1);
+                        const opt = [it.options?.size, it.options?.orientation, it.options?.color].filter(Boolean).join(" - ");
+                        return {
+                          it,
+                          priceCents,
+                          qty,
+                          totalCents: priceCents * qty,
+                          opt,
+                        };
+                      });
+
+                      const itemsTotalCents = parsedItems.reduce((acc, currItem) => acc + currItem.totalCents, 0);
+                      const shippingCents = Math.round(effectiveShippingVal * 100);
+                      const finalTotalCents = Math.round(effectiveTotalVal * 100);
+
+                      // Calculate exact discount needed so that itemsTotal + shipping - discount === finalTotal
+                      const effectiveDiscountCents = Math.max(0, itemsTotalCents + shippingCents - finalTotalCents);
+
+                      const finalTotal = (finalTotalCents / 100).toFixed(2);
+                      const itemsTotalStr = (itemsTotalCents / 100).toFixed(2);
+                      const shippingStr = (shippingCents / 100).toFixed(2);
+                      const discountStr = (effectiveDiscountCents / 100).toFixed(2);
+
+                      // Construct human-readable order summary description (max 127 chars for PayPal)
+                      // e.g.: "Classic Vertical Wall Bed (Double 135x190) x1"
+                      const itemsSummary = parsedItems
+                        .map(({ it, opt, qty }) => {
+                          const optText = opt ? ` (${opt})` : "";
+                          return `${it.title || it.name || "Product"}${optText} x${qty}`;
+                        })
+                        .join(", ");
+
+                      const orderDescription = (itemsSummary || "Wall Bed King Order").slice(0, 127);
+
+                      // Build itemized list for PayPal invoice and receipt emails
+                      const paypalItems = parsedItems.map(({ it, priceCents, qty, opt }) => {
+                        const rawCandidate = it.sku || it.options?.sku;
+                        const resolvedSku =
+                          rawCandidate && !/^\d+$/.test(String(rawCandidate).trim())
+                            ? String(rawCandidate).trim()
+                            : String(it.slug || "WBK-ITEM").slice(0, 60);
+
+                        return {
+                          name: String(it.title || it.name || "Wall Bed King Product").slice(0, 127),
+                          description: String(opt || "Standard").slice(0, 127),
+                          sku: resolvedSku.slice(0, 60),
+                          unit_amount: {
+                            currency_code: curr,
+                            value: (priceCents / 100).toFixed(2),
+                          },
+                          quantity: String(qty),
+                          category: "PHYSICAL_GOODS",
+                        };
+                      });
+
+                      // Construct purchase_unit payload
+                      const purchaseUnit = {
+                        description: orderDescription,
+                        custom_id: String(current.customCartId || "").slice(0, 127),
+                        soft_descriptor: paypalDescriptor,
+                        amount: {
+                          currency_code: curr,
+                          value: finalTotal,
+                        },
+                      };
+
+                      // If we have items and the breakdown matches the final total, provide detailed itemization
+                      if (
+                        paypalItems.length > 0 &&
+                        itemsTotalCents + shippingCents - effectiveDiscountCents === finalTotalCents
+                      ) {
+                        const breakdown = {
+                          item_total: {
+                            currency_code: curr,
+                            value: itemsTotalStr,
+                          },
+                        };
+
+                        if (shippingCents > 0) {
+                          breakdown.shipping = {
+                            currency_code: curr,
+                            value: shippingStr,
+                          };
+                        }
+
+                        if (effectiveDiscountCents > 0) {
+                          breakdown.discount = {
+                            currency_code: curr,
+                            value: discountStr,
+                          };
+                        }
+
+                        purchaseUnit.items = paypalItems;
+                        purchaseUnit.amount.breakdown = breakdown;
+                      }
+
+                      return actions.order.create({
+                        intent: "CAPTURE",
+                        purchase_units: [purchaseUnit],
+                      });
                     },
-                    shippingAddress: effectiveShippingAddress,
-                    payer,
-                    shipping,
-                    items: current.items,
-                    total: pu.amount?.value || current.total,
-                    locale: current.locale,
-                    currency: current.paypalCurrency,
-                    companyEntity: current.paymentConfig.entity,
-                  }),
-                });
-              } catch (errCapture) {
-                console.warn("PayPal capture sync notice:", errCapture);
-              }
 
-              // 3. Redirect to thank you page in customer's selected language
-              // Parameters are standard UTF-8 URL encoded via URLSearchParams (NO base64 / btoa)
-              const params = new URLSearchParams({
-                tx: orderData.id || "",
-                order_id: confirmedOrderId || "",
-                cartIdFORM: current.customCartId || "",
-                amtFORM: pu.amount?.value || String(current.total),
-                payerEmail: effectiveEmail,
-                firstName: effectiveFirstName,
-                lastName: effectiveLastName,
-                fullName: effectiveFullName,
-                street: effectiveShippingAddress.address1 || "",
-                zip: effectiveShippingAddress.postcode || "",
-                city: effectiveShippingAddress.city || "",
-                country: effectiveShippingAddress.country || (current.locale === "en" ? "GB" : "EU"),
-              });
+                    onApprove: async (data, actions) => {
+                      setIsProcessing(true);
+                      try {
+                        const orderData = await actions.order.capture();
+                        const pu = orderData?.purchase_units?.[0] || {};
+                        const payer = orderData?.payer || {};
+                        const shipping = pu.shipping || {};
+                        const current = cartRef.current;
 
-              window.location.href = `/${current.locale}/thanks?${params.toString()}`;
-            } catch (err) {
-              console.error("PayPal capture error:", err);
-              setSdkError("Payment could not be captured. Please try again or contact support.");
-              setIsProcessing(false);
-            }
-          },
+                        // Determine effective customer identity:
+                        // Prioritize checkout form input > logged-in store account > PayPal payer info
+                        const effectiveEmail = (
+                          current.customerDetails?.email ||
+                          current.user?.email ||
+                          payer.email_address ||
+                          ""
+                        ).trim().toLowerCase();
 
-          onError: (err) => {
-            console.error("PayPal button error:", err);
-            setSdkError("PayPal encountered an unexpected error. Please try again.");
-          },
-        });
+                        const formFullName = `${current.customerDetails?.firstName || ""} ${current.customerDetails?.lastName || ""}`.trim();
+                        const userFullName =
+                          current.user?.user_metadata?.full_name ||
+                          `${current.user?.user_metadata?.first_name || ""} ${current.user?.user_metadata?.last_name || ""}`.trim();
+                        const payerFullName = `${payer.name?.given_name || ""} ${payer.name?.surname || ""}`.trim();
 
-      if (buttons && typeof buttons.isEligible === "function" && !buttons.isEligible()) {
-        console.warn("[PayPal] Buttons is not eligible for current configuration.");
-        setSdkError("PayPal is not eligible for this transaction. Please use Card or Bank Transfer.");
-        return;
-      }
+                        const effectiveFirstName = (
+                          current.customerDetails?.firstName ||
+                          current.user?.user_metadata?.first_name ||
+                          (userFullName ? userFullName.split(" ")[0] : "") ||
+                          payer.name?.given_name ||
+                          ""
+                        ).trim();
 
-      buttons.render(containerRef.current).catch((renderErr) => {
-        if (!isCancelled) {
-          console.warn("[PayPal render notice]:", renderErr);
+                        const effectiveLastName = (
+                          current.customerDetails?.lastName ||
+                          current.user?.user_metadata?.last_name ||
+                          (userFullName ? userFullName.split(" ").slice(1).join(" ") : "") ||
+                          payer.name?.surname ||
+                          ""
+                        ).trim();
+
+                        const effectiveFullName =
+                          formFullName ||
+                          userFullName ||
+                          [effectiveFirstName, effectiveLastName].filter(Boolean).join(" ") ||
+                          payerFullName ||
+                          "Valued Customer";
+
+                        const effectivePhone =
+                          current.customerDetails?.phone ||
+                          payer.phone?.phone_number?.national_number ||
+                          "";
+
+                        const effectiveUserId =
+                          current.customerDetails?.userId ||
+                          current.user?.id ||
+                          null;
+
+                        const effectiveShippingAddress = {
+                          firstName: effectiveFirstName,
+                          lastName: effectiveLastName,
+                          address1:
+                            current.customerDetails?.address1 ||
+                            shipping.address?.address_line_1 ||
+                            shipping.address?.street ||
+                            "Address provided via PayPal",
+                          city:
+                            current.customerDetails?.city ||
+                            shipping.address?.admin_area_2 ||
+                            shipping.address?.admin_area_1 ||
+                            "City",
+                          postcode:
+                            current.customerDetails?.postcode ||
+                            shipping.address?.postal_code ||
+                            "N/A",
+                          country:
+                            current.customerDetails?.country ||
+                            shipping.address?.country_code ||
+                            (current.locale === "en" ? "United Kingdom" : "International"),
+                          phone: effectivePhone,
+                        };
+
+                        // 1. Save order in Supabase database
+                        let confirmedOrderId = null;
+                        try {
+                          const orderRes = await fetch("/api/checkout/create-order", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              items: current.items,
+                              customer: {
+                                email: effectiveEmail,
+                                phone: effectivePhone,
+                                name: effectiveFullName,
+                                firstName: effectiveFirstName,
+                                lastName: effectiveLastName,
+                              },
+                              shippingAddress: effectiveShippingAddress,
+                              deliveryOption: current.deliveryOption,
+                              promoCode: current.promoCode || "",
+                              paymentMethod: "paypal",
+                              userId: effectiveUserId,
+                              locale: current.locale,
+                              currency: current.paypalCurrency,
+                              companyEntity: current.paymentConfig.entity,
+                            }),
+                          });
+                          const orderJson = await orderRes.json();
+                          if (orderJson.success && orderJson.orderId) {
+                            confirmedOrderId = orderJson.orderId;
+                          }
+                        } catch (errDb) {
+                          console.warn("PayPal database order sync notice:", errDb);
+                        }
+
+                        // 2. Finalize payment, update DB status, and trigger confirmation email
+                        try {
+                          await fetch("/api/checkout/paypal/capture", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              orderId: confirmedOrderId,
+                              paypalOrderId: orderData.id,
+                              captureData: pu.payments?.captures?.[0],
+                              customer: {
+                                email: effectiveEmail,
+                                name: effectiveFullName,
+                                firstName: effectiveFirstName,
+                                lastName: effectiveLastName,
+                                phone: effectivePhone,
+                                userId: effectiveUserId,
+                              },
+                              shippingAddress: effectiveShippingAddress,
+                              payer,
+                              shipping,
+                              items: current.items,
+                              total: pu.amount?.value || current.total,
+                              locale: current.locale,
+                              currency: current.paypalCurrency,
+                              companyEntity: current.paymentConfig.entity,
+                            }),
+                          });
+                        } catch (errCapture) {
+                          console.warn("PayPal capture sync notice:", errCapture);
+                        }
+
+                        // 3. Redirect to thank you page in customer's selected language
+                        // Parameters are standard UTF-8 URL encoded via URLSearchParams (NO base64 / btoa)
+                        const params = new URLSearchParams({
+                          tx: orderData.id || "",
+                          order_id: confirmedOrderId || "",
+                          cartIdFORM: current.customCartId || "",
+                          amtFORM: pu.amount?.value || String(current.total),
+                          payerEmail: effectiveEmail,
+                          firstName: effectiveFirstName,
+                          lastName: effectiveLastName,
+                          fullName: effectiveFullName,
+                          street: effectiveShippingAddress.address1 || "",
+                          zip: effectiveShippingAddress.postcode || "",
+                          city: effectiveShippingAddress.city || "",
+                          country: effectiveShippingAddress.country || (current.locale === "en" ? "GB" : "EU"),
+                        });
+
+                        window.location.href = `/${current.locale}/thanks?${params.toString()}`;
+                      } catch (err) {
+                        console.error("PayPal capture error:", err);
+                        setSdkError("Payment could not be captured. Please try again or contact support.");
+                        setIsProcessing(false);
+                      }
+                    },
+
+                    onError: (err) => {
+                      console.error("PayPal button error:", err);
+                      setSdkError("PayPal encountered an unexpected error. Please try again.");
+                    },
+                  });
+
+        if (buttons && typeof buttons.isEligible === "function" && !buttons.isEligible()) {
+          console.warn("[PayPal] Buttons is not eligible for current configuration.");
+          setSdkError("PayPal is not eligible for this transaction. Please use Card or Bank Transfer.");
+          return;
         }
-      });
-    } catch (e) {
-      console.warn("PayPal initialization notice:", e);
-      if (!isCancelled) {
-        setSdkError("Unable to initialize PayPal buttons. Please try Card or Bank Transfer.");
-      }
-    }
 
-    return () => {
-      isCancelled = true;
+          buttonsInstanceRef.current = buttons;
+
+          buttons.render(containerRef.current).catch((renderErr) => {
+            if (isCancelled) return;
+            console.warn("[PayPal render notice]:", renderErr);
+            if (!isRetry) {
+              retryTimer = setTimeout(() => {
+                renderPayPalButtons(true);
+              }, 250);
+            } else {
+              setSdkError("Unable to display PayPal button. Please click Retry or use Card / Bank Transfer.");
+            }
+          });
+        } catch (e) {
+          console.warn("PayPal initialization notice:", e);
+          if (!isCancelled) {
+            if (!isRetry) {
+              retryTimer = setTimeout(() => {
+                renderPayPalButtons(true);
+              }, 250);
+            } else {
+              setSdkError("Unable to initialize PayPal buttons. Please click Retry or try Card / Bank Transfer.");
+            }
+          }
+  }
     };
-  }, [sdkReady, disabled, items]);
 
-  return (
-    <div className="w-full space-y-2">
-      {isProcessing && (
-        <div className="flex items-center justify-center gap-2 p-3 bg-wbk-gold/10 text-wbk-black text-xs font-semibold">
-          <IconLoader2 size={16} className="animate-spin text-wbk-gold" />
-          <span>{t ? t("checkout.finalizingPayPal", "Finalizing your PayPal payment...") : "Finalizing your PayPal payment..."}</span>
+renderPayPalButtons(false);
+
+return () => {
+  isCancelled = true;
+  if (retryTimer) clearTimeout(retryTimer);
+  closeActiveButtons();
+};
+  }, [sdkReady, disabled, hasItems, hasOutOfStock, retryCount]);
+
+return (
+  <div className="w-full space-y-2">
+    {isProcessing && (
+      <div className="flex items-center justify-center gap-2 p-3 bg-wbk-gold/10 text-wbk-black text-xs font-semibold">
+        <IconLoader2 size={16} className="animate-spin text-wbk-gold" />
+        <span>{t ? t("checkout.finalizingPayPal", "Finalizing your PayPal payment...") : "Finalizing your PayPal payment..."}</span>
+      </div>
+    )}
+
+    {sdkError && (
+        <div className="flex items-center justify-between gap-2 p-3 text-xs text-red-700 bg-red-50 border border-red-200">
+          <div className="flex items-center gap-2">
+            <IconAlertCircle size={16} className="shrink-0" />
+            <span>{sdkError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRetryCount((c) => c + 1)}
+            className="px-2.5 py-1 bg-white border border-red-300 text-red-800 hover:bg-red-100 font-semibold uppercase tracking-wider text-[10px] shrink-0 cursor-pointer transition-colors"
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      {sdkError && (
-        <div className="flex items-center gap-2 p-3 text-xs text-red-700 bg-red-50 border border-red-200">
-          <IconAlertCircle size={16} className="shrink-0" />
-          <span>{sdkError}</span>
-        </div>
-      )}
+        {!sdkReady && !sdkError && (
+          <div className="h-12 bg-gray-100 animate-pulse flex items-center justify-center text-xs text-gray-500">
+            {t ? t("checkout.loadingPayPal", "Loading PayPal payment options...") : "Loading PayPal payment options..."}
+          </div>
+        )}
 
-      {!sdkReady && !sdkError && (
-        <div className="h-12 bg-gray-100 animate-pulse flex items-center justify-center text-xs text-gray-500">
-          {t ? t("checkout.loadingPayPal", "Loading PayPal payment options...") : "Loading PayPal payment options..."}
-        </div>
-      )}
-
-      <div ref={containerRef} className="w-full relative z-0" />
-    </div>
-  );
+        <div ref={containerRef} className="w-full relative z-0" />
+      </div>
+    );
 }
