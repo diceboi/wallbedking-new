@@ -243,7 +243,7 @@ export async function retrieveStripeCheckoutSession({
 }
 
 /**
- * Fallback item parser from legacy `cart_id` strings when an order wasn't pre-created.
+ * Fallback item parser from `cart_id` strings (`wbk-<id>-<qty>` or slug-based) when an order wasn't pre-created.
  */
 function parseItemsFromCartId(cartId) {
   if (!cartId || typeof cartId !== "string") return [];
@@ -251,6 +251,29 @@ function parseItemsFromCartId(cartId) {
     const rawItemsPart = cartId.split("||")[0];
     const items = [];
 
+    // 1. Parse `wbk-<id>-<qty>` tokens (current CartContext format)
+    const idTokens = [...rawItemsPart.matchAll(/wbk-(\d+)-(\d+)/gi)];
+    for (const match of idTokens) {
+      const numId = parseInt(match[1], 10);
+      const qty = Math.max(1, parseInt(match[2], 10) || 1);
+      const p = catalogProducts.find((prod) => Number(prod.id) === numId);
+      if (p) {
+        items.push({
+          id: p.id,
+          rawId: p.id,
+          name: p.name,
+          title: p.name,
+          variant: p.type ? `${p.type} ${p.orientation || ""}`.trim() : "Standard",
+          quantity: qty,
+          price: Number(p.price_gbp || p.price_euro || 0),
+          slug: p.slug,
+        });
+      }
+    }
+
+    if (items.length > 0) return items;
+
+    // 2. Fallback: legacy slug-based `cart_id`
     for (const p of catalogProducts) {
       if (p.slug && rawItemsPart.includes(p.slug)) {
         const regex = new RegExp(

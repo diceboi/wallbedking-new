@@ -21,8 +21,6 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { formatSizeLabel } from "@/lib/i18n";
-import { StripeCheckoutButton } from "@/components/checkout/StripeCheckoutButton";
-import { PayPalCheckoutButton } from "@/components/checkout/PayPalCheckoutButton";
 import {
   getDefaultCountry,
   getDeliveryCountries,
@@ -76,14 +74,10 @@ export default function CartPage() {
     removePromoCode,
     totalItems,
     isMounted,
-    isStripeEnabled,
-    isPayPalEnabled,
-    isQuickPayEnabled,
   } = useCart();
 
   const [inputCode, setInputCode] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
-  const isStripeAvailable = isStripeEnabled;
 
   const hasOutOfStockItems = items.some(
     (i) =>
@@ -556,26 +550,6 @@ export default function CartPage() {
                         className="group-hover:translate-x-1 transition-transform"
                       />
                     </Link>
-                  )}
-
-                  {/* Express Checkout Divider & Instant Buttons */}
-                  {!hasOutOfStockItems && isQuickPayEnabled && (isStripeAvailable || isPayPalEnabled) && (
-                    <>
-                      <div className="relative flex items-center justify-center py-1">
-                        <div className="border-t border-wbk-lightgrey w-full"></div>
-                        <span className="bg-[#FBF9F8] px-3 text-[10px] font-medium uppercase tracking-widest text-wbk-brown shrink-0">
-                          Or Quick Pay With
-                        </span>
-                        <div className="border-t border-wbk-lightgrey w-full"></div>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        {isStripeAvailable && (
-                          <StripeCheckoutButton label="Instant Pay with Card (Stripe)" />
-                        )}
-                        {isPayPalEnabled && <PayPalCheckoutButton />}
-                      </div>
-                    </>
                   )}
                 </div>
 
