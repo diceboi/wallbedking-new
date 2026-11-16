@@ -205,9 +205,34 @@ export async function POST(request) {
       }
 
       if (patchRes.ok) {
-        updatedProducts.push(item);
+        const returned = await patchRes.json();
+        updatedProducts.push(returned[0] || item);
       } else {
         console.warn(`[Bulk API] Failed to update #${item.id}:`, await patchRes.text());
+      }
+    }
+
+    // Sync bulk changes to local products-catalog.json fallback when filesystem is writable
+    if (updatedProducts.length > 0) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const catalogPath = path.join(process.cwd(), "src/data/products-catalog.json");
+        const rawCatalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
+        const byId = new Map(updatedProducts.map((u) => [Number(u.id), u]));
+        let changed = false;
+        for (let i = 0; i < rawCatalog.length; i++) {
+          const match = byId.get(Number(rawCatalog[i].id));
+          if (match) {
+            rawCatalog[i] = { ...rawCatalog[i], ...match };
+            changed = true;
+          }
+        }
+        if (changed) {
+          await fs.writeFile(catalogPath, JSON.stringify(rawCatalog, null, 2), "utf8");
+        }
+      } catch (catalogErr) {
+        console.warn("[Bulk API] Catalog JSON sync notice:", catalogErr.message);
       }
     }
 
