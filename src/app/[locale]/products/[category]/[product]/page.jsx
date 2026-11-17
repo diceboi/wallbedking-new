@@ -109,9 +109,15 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
   raw = raw.replace(/barble/gi, "Marble");
   raw = raw.replace(/drak/gi, "Dark");
   // Clean up leading/trailing plus signs and collapse multiple plus signs
-  raw = raw.replace(/^[\s+]+/, "").replace(/[\s+]+$/, "").trim();
+  raw = raw
+    .replace(/^[\s+]+/, "")
+    .replace(/[\s+]+$/, "")
+    .trim();
   raw = raw.replace(/\s*\+\s*/g, " + ");
-  raw = raw.replace(/^[\s+]+/, "").replace(/[\s+]+$/, "").trim();
+  raw = raw
+    .replace(/^[\s+]+/, "")
+    .replace(/[\s+]+$/, "")
+    .trim();
 
   let label = raw
     .split(" ")
@@ -381,7 +387,13 @@ export default function ProductDetailPage() {
 
     ro.observe(el);
     return () => ro.disconnect();
-  }, [mounted, productFormat, productStyle, productSize, sofaIncluded]);
+  }, [
+    mounted,
+    productFormat,
+    productStyle,
+    productSize,
+    sofaIncluded,
+  ]);
 
   // Track desktop Add to Cart button intersection to trigger floating bar
   useEffect(() => {
@@ -1645,7 +1657,8 @@ export default function ProductDetailPage() {
       const w = Math.min(Number(prod.width), Number(prod.length)) / 10;
       const l = Math.max(Number(prod.width), Number(prod.length)) / 10;
       const isH =
-        (productFormat || prod.orientation || "").toLowerCase() === "horizontal";
+        (productFormat || prod.orientation || "").toLowerCase() ===
+        "horizontal";
       return isH ? `${l}x${w}` : `${w}x${l}`;
     }
     return (
@@ -1654,7 +1667,13 @@ export default function ProductDetailPage() {
       (displayProduct?.slug || "").match(/\d+x\d+/)?.[0] ||
       ""
     );
-  }, [selectedVariant, searchParams, displayProduct, activeProduct, productFormat]);
+  }, [
+    selectedVariant,
+    searchParams,
+    displayProduct,
+    activeProduct,
+    productFormat,
+  ]);
 
   const morphyHref = useMemo(() => {
     if (!morphyCounterpartSlug) return "";
@@ -1688,13 +1707,13 @@ export default function ProductDetailPage() {
 
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale, campaigns);
+  const currentPrice = productPricing.raw;
   const sofaPriceValue = calculateSofaPrice(
     displayProduct,
     productFormat,
     productSize,
   );
   const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
-  const currentPrice = productPricing.raw;
   const totalDecimal = currentPrice + sofaSurcharge;
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
@@ -2283,7 +2302,7 @@ export default function ProductDetailPage() {
         : localizedProductName,
       stock: displayProduct?.stock ?? null,
       image:
-        currentMainImage?.src ||
+        (currentMainImage?.type !== "video" && currentMainImage?.src) ||
         displayProduct?.image ||
         "/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp",
       price: totalDecimal,
@@ -2310,8 +2329,20 @@ export default function ProductDetailPage() {
     setTimeout(() => setIsAdded(false), 2200);
   };
 
-  // Dynamic gallery images
-  const galleryImages =
+  // Dynamic gallery images (+ optional embedded YouTube product video at the end)
+  const productVideoInput =
+    displayProduct?.installation_video ||
+    selectedVariant?.installation_video ||
+    activeProduct?.installation_video ||
+    familyVariants?.find((v) => v?.installation_video)?.installation_video ||
+    null;
+
+  const parsedProductVideo = useMemo(
+    () => parseYouTubeVideo(productVideoInput),
+    [productVideoInput],
+  );
+
+  const baseGalleryImages =
     displayProduct.gallery && displayProduct.gallery.length > 0
       ? displayProduct.gallery
       : isTableProduct
@@ -2345,6 +2376,26 @@ export default function ProductDetailPage() {
                 img.src !== displayProduct.hover_image,
             ),
           ];
+
+  const galleryImages = useMemo(() => {
+    if (!parsedProductVideo) return baseGalleryImages;
+    return [
+      ...baseGalleryImages,
+      {
+        type: "video",
+        videoId: parsedProductVideo.videoId,
+        embedUrl: parsedProductVideo.embedUrl,
+        watchUrl: parsedProductVideo.watchUrl,
+        src: `https://img.youtube.com/vi/${parsedProductVideo.videoId}/hqdefault.jpg`,
+        alt: `${localizedProductName || displayProduct?.name || "Product"} - Video`,
+      },
+    ];
+  }, [
+    baseGalleryImages,
+    parsedProductVideo,
+    localizedProductName,
+    displayProduct?.name,
+  ]);
 
   const currentMainImage =
     galleryImages[selectedImageIndex] || galleryImages[0];
@@ -3247,8 +3298,11 @@ export default function ProductDetailPage() {
                               {item.product && (
                                 <span className="text-[11px] text-wbk-brown font-poppins">
                                   {
-                                    getProductPrice(item.product, locale, campaigns)
-                                      .display
+                                    getProductPrice(
+                                      item.product,
+                                      locale,
+                                      campaigns,
+                                    ).display
                                   }
                                 </span>
                               )}
@@ -3451,7 +3505,8 @@ export default function ProductDetailPage() {
                               : `${t("product.sale", "Sale")} ${productPricing.discountLabel || ""}`}
                           </span>
                         </span>
-                        {productPricing.appliedCampaign?.status === "preview" && (
+                        {productPricing.appliedCampaign?.status ===
+                          "preview" && (
                           <span
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold uppercase tracking-wider shadow-sm"
                             title="Admin Preview: Only visible to logged-in administrators"
@@ -3638,44 +3693,56 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
               ) : (
-                /* Non-3D Mode: High-Impact Center Main Image */
+                /* Non-3D Mode: High-Impact Center Main Image or Embedded Video */
                 <div className="relative w-full h-full flex flex-col items-center justify-center p-0 lg:p-2 sm:p-4 pointer-events-auto">
-                  <div
-                    onClick={() => {
-                      setActiveLightboxImages(galleryImages);
-                      setLightboxIndex(selectedImageIndex);
-                    }}
-                    className="relative group w-full lg:h-full aspect-[4/3] lg:aspect-auto sm:aspect-[16/11] lg:bg-transparent bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
-                  >
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={currentMainImage?.src || selectedImageIndex}
-                        src={currentMainImage?.src}
-                        alt={currentMainImage?.alt || displayProduct.title}
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                        className={`max-h-full max-w-full object-contain filter drop-shadow-xs select-none transition-transform duration-300 ${
-                          currentMainImage?.src?.includes("MORPHY")
-                            ? "scale-[1.2] group-hover:scale-[1.3]"
-                            : "scale-100 group-hover:scale-105"
-                        }`}
+                  {currentMainImage?.type === "video" ? (
+                    <div className="relative w-full lg:h-full aspect-video lg:aspect-auto sm:aspect-[16/11] bg-black border border-wbk-lightgrey/60 lg:border-0 overflow-hidden flex items-center justify-center">
+                      <iframe
+                        src={currentMainImage.embedUrl}
+                        title={currentMainImage.alt || "Product Video"}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full aspect-video max-h-full border-0"
                       />
-                    </AnimatePresence>
-
-                    <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs lg:shadow-none shadow-md">
-                      <IconZoomIn size={13} />
-                      <span>{t("product.clickToZoom", "Click to zoom")}</span>
                     </div>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        setActiveLightboxImages(galleryImages);
+                        setLightboxIndex(selectedImageIndex);
+                      }}
+                      className="relative group w-full lg:h-full aspect-[4/3] lg:aspect-auto sm:aspect-[16/11] lg:bg-transparent bg-[#F4F2F0]/80 lg:border-0 border border-wbk-lightgrey/60 overflow-hidden flex items-center justify-center p-2 sm:p-4 cursor-zoom-in transition-all duration-300"
+                    >
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={currentMainImage?.src || selectedImageIndex}
+                          src={currentMainImage?.src}
+                          alt={currentMainImage?.alt || displayProduct.title}
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeOut" }}
+                          className={`max-h-full max-w-full object-contain filter drop-shadow-xs select-none transition-transform duration-300 ${
+                            currentMainImage?.src?.includes("MORPHY")
+                              ? "scale-[1.2] group-hover:scale-[1.3]"
+                              : "scale-100 group-hover:scale-105"
+                          }`}
+                        />
+                      </AnimatePresence>
 
-                    <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs lg:shadow-none shadow-md">
-                      <IconPhoto size={12} className="text-wbk-brown" />
-                      <span>
-                        {selectedImageIndex + 1} / {galleryImages.length}
-                      </span>
+                      <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-wbk-black/80 text-white rounded-full text-[10px] font-poppins font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-xs lg:shadow-none shadow-md">
+                        <IconZoomIn size={13} />
+                        <span>{t("product.clickToZoom", "Click to zoom")}</span>
+                      </div>
+
+                      <div className="absolute top-4 left-4 flex items-center gap-1 px-2.5 py-1 bg-white/80 text-wbk-black rounded-full text-[10px] font-poppins font-semibold border border-wbk-lightgrey/60 backdrop-blur-xs shadow-2xs lg:shadow-none shadow-md">
+                        <IconPhoto size={12} className="text-wbk-brown" />
+                        <span>
+                          {selectedImageIndex + 1} / {galleryImages.length}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Main Image Navigation Arrows (Under Main Image) */}
                   {galleryImages.length > 1 && (
@@ -3811,12 +3878,23 @@ export default function ProductDetailPage() {
                             <img
                               src={img.src}
                               alt={img.alt}
-                              className={`w-full h-full object-contain object-center rounded-none ${
+                              className={`w-full h-full ${
+                                img.type === "video"
+                                  ? "object-cover"
+                                  : "object-contain"
+                              } object-center rounded-none ${
                                 img.src?.includes("MORPHY")
                                   ? "scale-[1.22]"
                                   : "scale-100"
                               }`}
                             />
+                            {img.type === "video" && (
+                              <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
+                                <span className="w-7 h-7 rounded-full bg-red-600/95 text-white flex items-center justify-center shadow-md">
+                                  <IconBrandYoutube size={15} />
+                                </span>
+                              </div>
+                            )}
                             {isSelected && (
                               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
                             )}
@@ -3945,13 +4023,27 @@ export default function ProductDetailPage() {
                               <img
                                 src={img.src}
                                 alt={img.alt}
-                                className={`w-full h-full object-contain object-center rounded-none group-hover:scale-110 transition-transform duration-300 ${
+                                className={`w-full h-full ${
+                                  img.type === "video"
+                                    ? "object-cover"
+                                    : "object-contain"
+                                } object-center rounded-none group-hover:scale-110 transition-transform duration-300 ${
                                   img.src?.includes("MORPHY")
                                     ? "scale-[1.22]"
                                     : "scale-100"
                                 }`}
                                 onLoad={updateScrollButtons}
                               />
+                              {img.type === "video" && (
+                                <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors flex flex-col items-center justify-center gap-1 pointer-events-none">
+                                  <span className="w-9 h-9 rounded-full bg-red-600/95 text-white flex items-center justify-center shadow-md">
+                                    <IconBrandYoutube size={18} />
+                                  </span>
+                                  <span className="text-[9px] font-bold uppercase tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded-xs">
+                                    Video
+                                  </span>
+                                </div>
+                              )}
                               {isSelected && (
                                 <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-wbk-green ring-2 ring-white" />
                               )}
@@ -4790,7 +4882,10 @@ export default function ProductDetailPage() {
                     {galleryImages.map((img, idx) => (
                       <div
                         key={idx}
-                        onClick={() => setLightboxIndex(idx)}
+                        onClick={() => {
+                          setActiveLightboxImages(galleryImages);
+                          setLightboxIndex(idx);
+                        }}
                         className="group relative aspect-square bg-[#F4F2F0] border border-wbk-lightgrey/40 overflow-hidden rounded-none cursor-pointer"
                       >
                         <img
@@ -4798,9 +4893,18 @@ export default function ProductDetailPage() {
                           alt={img.alt}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                        {img.type === "video" && (
+                          <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
+                            <span className="w-12 h-12 rounded-full bg-red-600/95 text-white flex items-center justify-center shadow-lg">
+                              <IconBrandYoutube size={24} />
+                            </span>
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <span className="text-white text-xs font-semibold uppercase tracking-wider font-poppins">
-                            {t("product.view", "View")}
+                            {img.type === "video"
+                              ? t("product.watchVideo", "Watch Video")
+                              : t("product.view", "View")}
                           </span>
                         </div>
                       </div>
@@ -4888,14 +4992,9 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Setup Video Guide */}
+                {/* Setup Video Guide / Official Product Video */}
                 {(() => {
-                  const mediaVideoInput =
-                    displayProduct?.installation_video ||
-                    selectedVariant?.installation_video ||
-                    activeProduct?.installation_video ||
-                    null;
-                  const parsedMediaVideo = parseYouTubeVideo(mediaVideoInput);
+                  const parsedMediaVideo = parsedProductVideo;
 
                   if (parsedMediaVideo) {
                     return (
@@ -4908,10 +5007,15 @@ export default function ProductDetailPage() {
                             )}
                           </span>
                           <h4 className="font-new-york text-xl sm:text-2xl text-wbk-black">
-                            {t(
-                              "product.watchSetupGuide",
-                              "Watch Setup & Assembly Guide",
-                            )}
+                            {isTableProduct
+                              ? t(
+                                  "product.watchProductVideo",
+                                  "Watch Product Showcase Video",
+                                )
+                              : t(
+                                  "product.watchSetupGuide",
+                                  "Watch Setup & Assembly Guide",
+                                )}
                           </h4>
                           <p className="text-xs font-poppins text-wbk-brown leading-relaxed max-w-lg mx-auto">
                             {t(
@@ -4923,27 +5027,31 @@ export default function ProductDetailPage() {
                         <div className="relative aspect-video bg-black rounded-none overflow-hidden border border-wbk-lightgrey shadow-md max-w-2xl mx-auto">
                           <iframe
                             src={parsedMediaVideo.embedUrl}
-                            title="Product Setup Guide"
+                            title="Product Video"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="absolute inset-0 w-full h-full border-0"
                             loading="lazy"
                           />
                         </div>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => setActiveTab("support")}
-                            className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer font-medium"
-                          >
-                            <span>
-                              {t(
-                                "product.downloadMatchingPdf",
-                                "Download matching PDF installation manuals in Support & Guides →",
-                              )}
-                            </span>
-                          </button>
-                        </div>
+                        {(!isTableProduct ||
+                          displayProduct?.installation_manual ||
+                          activeProduct?.installation_manual) && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab("support")}
+                              className="inline-flex items-center gap-1.5 text-xs text-wbk-brown hover:text-wbk-black underline cursor-pointer font-medium"
+                            >
+                              <span>
+                                {t(
+                                  "product.downloadMatchingPdf",
+                                  "Download matching PDF installation manuals in Support & Guides →",
+                                )}
+                              </span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   }
@@ -5645,21 +5753,36 @@ export default function ProductDetailPage() {
                   className="relative max-w-5xl max-h-[88vh] w-full bg-white border border-wbk-lightgrey shadow-2xl p-4 sm:p-8 flex flex-col items-center justify-center"
                 >
                   <div className="relative w-full flex-1 flex items-center justify-center min-h-0 bg-white">
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={
-                          activeLightboxList[lightboxIndex]?.src ||
-                          lightboxIndex
-                        }
-                        src={activeLightboxList[lightboxIndex]?.src}
-                        alt={activeLightboxList[lightboxIndex]?.alt}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
-                      />
-                    </AnimatePresence>
+                    {activeLightboxList[lightboxIndex]?.type === "video" ? (
+                      <div className="w-full max-w-4xl aspect-video bg-black shadow-lg">
+                        <iframe
+                          src={activeLightboxList[lightboxIndex].embedUrl}
+                          title={
+                            activeLightboxList[lightboxIndex].alt ||
+                            "Product Video"
+                          }
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={
+                            activeLightboxList[lightboxIndex]?.src ||
+                            lightboxIndex
+                          }
+                          src={activeLightboxList[lightboxIndex]?.src}
+                          alt={activeLightboxList[lightboxIndex]?.alt}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="max-w-full max-h-[66vh] sm:max-h-[72vh] object-contain bg-white select-none"
+                        />
+                      </AnimatePresence>
+                    )}
                   </div>
 
                   {(activeLightboxList[lightboxIndex]?.alt ||
@@ -5732,7 +5855,8 @@ export default function ProductDetailPage() {
                     )}
                     {productPricing.isOnSale && (
                       <span className="text-[9px] font-bold uppercase tracking-wider bg-wbk-black text-white px-1.5 py-0.5 rounded-none hidden xs:inline-block">
-                        {productPricing.discountLabel || t("product.sale", "Sale")}
+                        {productPricing.discountLabel ||
+                          t("product.sale", "Sale")}
                       </span>
                     )}
                   </div>
