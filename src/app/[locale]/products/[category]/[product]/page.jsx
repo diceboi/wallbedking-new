@@ -69,6 +69,7 @@ import {
   parseYouTubeVideo,
   calculateSofaPrice,
   calculateCabinetPrice,
+  isCabinetEligibleSize,
   extractBedSleepingWidthCm,
 } from "@/lib/products";
 import { getMorphyFaqs } from "@/data/morphyFaq";
@@ -1605,6 +1606,15 @@ export default function ProductDetailPage() {
       (effectiveStyle.includes("integrated") ||
         (productSlug || "").toLowerCase().includes("integrated")),
   );
+  const canSelectCabinet = Boolean(
+    isIntegratedMorphy && isCabinetEligibleSize(displayProduct, productSize),
+  );
+
+  useEffect(() => {
+    if (!canSelectCabinet && cabinetIncluded) {
+      setCabinetIncluded(false);
+    }
+  }, [canSelectCabinet, cabinetIncluded]);
 
   const isTraditionalBed =
     !isMorphyBed &&
@@ -1706,20 +1716,25 @@ export default function ProductDetailPage() {
 
   // Dynamic pricing strictly from Supabase columns
   const productPricing = getProductPrice(displayProduct, locale, campaigns);
+  const currentPrice = productPricing.raw;
   const sofaPriceValue = calculateSofaPrice(
     displayProduct,
     productFormat,
     productSize,
   );
-  const cabinetPriceValue = calculateCabinetPrice(
-    displayProduct,
-    productFormat,
-    productSize,
-  );
+  const cabinetPriceValue = canSelectCabinet
+    ? calculateCabinetPrice(
+        displayProduct,
+        productFormat,
+        productSize,
+        currentPrice,
+      )
+    : 0;
   const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
   const cabinetSurcharge =
-    isIntegratedMorphy && cabinetIncluded ? cabinetPriceValue : 0;
-  const currentPrice = productPricing.raw;
+    canSelectCabinet && cabinetIncluded ? cabinetPriceValue : 0;
+  const regularCabinetSurcharge =
+    canSelectCabinet && cabinetIncluded ? productPricing.regularRaw : 0;
   const totalDecimal = currentPrice + sofaSurcharge + cabinetSurcharge;
 
   const localizedProductName = getLocalizedProductName(displayProduct, locale);
@@ -2297,7 +2312,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const hasCabinetSelected = Boolean(isIntegratedMorphy && cabinetIncluded);
+    const hasCabinetSelected = Boolean(canSelectCabinet && cabinetIncluded);
     const itemToAdd = {
       id: `${displayProduct?.slug || displayProduct?.id || productSlug}-${productSize || "standard"}-${productFormat}-${productStyle}-${sofaIncluded ? "sofa" : "nosofa"}${hasCabinetSelected ? "-cabinet" : ""}`,
       productId: displayProduct?.slug || displayProduct?.id || productSlug,
@@ -2327,7 +2342,7 @@ export default function ProductDetailPage() {
             type: productStyle,
             sofaIncluded: Boolean(sofaIncluded),
             sofaPrice: sofaPriceValue,
-            ...(isIntegratedMorphy
+            ...(canSelectCabinet
               ? {
                   cabinetIncluded: hasCabinetSelected,
                   cabinetPrice: cabinetPriceValue,
@@ -2344,7 +2359,7 @@ export default function ProductDetailPage() {
 
   // Dynamic gallery images (switches to 2K -CABINET gallery when Integrated Morphy Cabinet is selected)
   const integratedCabinetGallery = useMemo(() => {
-    if (!isIntegratedMorphy || !cabinetIncluded) return null;
+    if (!canSelectCabinet || !cabinetIncluded) return null;
     const sampleUrl =
       displayProduct?.gallery?.[0]?.src ||
       displayProduct?.image ||
@@ -2384,7 +2399,7 @@ export default function ProductDetailPage() {
       true,
     );
   }, [
-    isIntegratedMorphy,
+    canSelectCabinet,
     cabinetIncluded,
     displayProduct,
     productFormat,
@@ -3461,8 +3476,8 @@ export default function ProductDetailPage() {
                     </div>
                   )}
 
-                  {/* Cabinet toggle (shown for Integrated Morphy beds) */}
-                  {isIntegratedMorphy && (
+                  {/* Cabinet toggle (shown for Integrated Morphy beds >= 90cm width) */}
+                  {canSelectCabinet && (
                     <div className="pt-1">
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
@@ -3625,7 +3640,7 @@ export default function ProductDetailPage() {
                         {formatPrice(
                           productPricing.regularRaw +
                             sofaSurcharge +
-                            cabinetSurcharge,
+                            regularCabinetSurcharge,
                           locale,
                         )}
                       </span>
@@ -5875,7 +5890,7 @@ export default function ProductDetailPage() {
                         {formatPrice(
                           productPricing.regularRaw +
                             sofaSurcharge +
-                            cabinetSurcharge,
+                            regularCabinetSurcharge,
                           locale,
                         )}
                       </span>

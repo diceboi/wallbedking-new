@@ -603,25 +603,25 @@ export function calculateSofaPrice(itemOrProduct, orientationStr = null, sizeStr
 }
 
 /**
- * Calculate Integrated MORPHY™ Cabinet add-on surcharge matching standalone Cabinet tiers.
- * - Vertical: <= 100cm => 479, <= 120cm => 509, <= 145cm => 549, >= 150cm => 579
- * - Horizontal: <= 100cm => 579, <= 120cm => 599, <= 145cm => 629, >= 150cm => 649
+ * Cabinet enclosure option is only available for beds >= 90cm sleeping width
+ * (hidden for narrower widths like 76cm / 80cm).
  */
-export function calculateCabinetPrice(itemOrProduct, orientationStr = null, sizeStr = null) {
-  const isHoriz = isHorizontalBed(itemOrProduct, orientationStr);
-  const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr) ?? 140;
+export function isCabinetEligibleSize(itemOrProduct, sizeStr = null) {
+  const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr);
+  return Boolean(widthCm && widthCm >= 90);
+}
 
-  if (isHoriz) {
-    if (widthCm <= 100) return 579;
-    if (widthCm <= 120) return 599;
-    if (widthCm <= 145) return 629;
-    return 649;
+/**
+ * Calculate Integrated MORPHY™ Cabinet add-on surcharge.
+ * Always matches the bed's active base price so Bed + Cabinet = 2 × bed price
+ * (e.g., 999 bed -> 999 surcharge = 1998 total). Returns 0 when width < 90cm.
+ */
+export function calculateCabinetPrice(itemOrProduct, orientationStr = null, sizeStr = null, baseBedPrice = null) {
+  if (!isCabinetEligibleSize(itemOrProduct, sizeStr)) {
+    return 0;
   }
-
-  if (widthCm <= 100) return 479;
-  if (widthCm <= 120) return 509;
-  if (widthCm <= 145) return 549;
-  return 579;
+  const base = Number(baseBedPrice);
+  return Number.isFinite(base) && base > 0 ? base : 0;
 }
 
 export function parseTableFinish(variant, index = 0, allVariants = []) {
