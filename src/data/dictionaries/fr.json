@@ -110,7 +110,10 @@
     "klarnaBadge": "Facilités de paiement",
     "frontSofa": "+ Canapé frontal",
     "itemsCount": "articles dans votre panier",
-    "itemCount": "article dans votre panier"
+    "itemCount": "article dans votre panier",
+    "cabinetEnclosure": "+ Armoire",
+    "includeCabinet": "Avec Armoire",
+    "bedOnly": "Lit Seul"
   },
   "cart": {
     "title": "Votre Panier",
@@ -140,7 +143,8 @@
     "optionsCol": "Options",
     "quantityCol": "Quantité",
     "priceCol": "Prix",
-    "totalCol": "Total"
+    "totalCol": "Total",
+    "cabinetEnclosure": "Armoire d'Habillage"
   },
   "checkout": {
     "bankWireTransfer": "Virement bancaire",

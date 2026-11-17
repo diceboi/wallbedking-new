@@ -779,6 +779,11 @@ export default function AccountPage() {
                                       🛋️ + {t("cart.frontSofa", "Front Sofa Module")}
                                     </span>
                                   )}
+                                  {item.options?.cabinetIncluded && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] bg-[#FAF5EA] text-wbk-gold font-semibold px-2 py-0.5 border border-wbk-gold/40 rounded mt-1.5 ml-1">
+                                      🗄️ + {t("cart.cabinetEnclosure", "Cabinet Enclosure")}
+                                    </span>
+                                  )}
                                   <div className="flex items-center gap-2 mt-2 text-[11px] text-wbk-green font-medium">
                                     <IconTruck size={14} />
                                     <span>

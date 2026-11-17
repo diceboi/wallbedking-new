@@ -110,7 +110,10 @@
     "klarnaBadge": "Pago a plazos disponible",
     "frontSofa": "+ Sofá frontal",
     "itemsCount": "artículos en su pedido",
-    "itemCount": "artículo en su pedido"
+    "itemCount": "artículo en su pedido",
+    "cabinetEnclosure": "+ Armario",
+    "includeCabinet": "Con Armario",
+    "bedOnly": "Solo Cama"
   },
   "cart": {
     "title": "Tu Cesta de la Compra",
@@ -140,7 +143,8 @@
     "optionsCol": "Opciones",
     "quantityCol": "Cantidad",
     "priceCol": "Precio",
-    "totalCol": "Total"
+    "totalCol": "Total",
+    "cabinetEnclosure": "Armario Exterior"
   },
   "checkout": {
     "bankWireTransfer": "Transferencia bancaria",

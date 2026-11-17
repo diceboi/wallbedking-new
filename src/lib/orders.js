@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { ALL_PRODUCTS, RAW_CATALOG } from "@/data/products";
-import { calculateSofaPrice } from "@/lib/products";
+import { calculateSofaPrice, calculateCabinetPrice, isCabinetEligibleSize } from "@/lib/products";
 
 export const DELIVERY_OPTIONS = {
   delivery_option_discount: {
@@ -174,7 +174,7 @@ export async function validateOrderTotals(
 
         const { data } = await supabaseAdmin
           .from("products")
-          .select("id, sku, slug, name, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
+          .select("id, sku, slug, name, width, length, orientation, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
           .or(orClauses.join(","))
           .maybeSingle();
 
@@ -260,7 +260,21 @@ export async function validateOrderTotals(
         );
       }
 
-      unitPrice = finalPrice + sofaSurcharge;
+      // Integrated Morphy cabinet surcharge if included (only eligible >= 90cm, doubles active bed price)
+      const isCabinetIncluded =
+        Boolean(item.options?.cabinetIncluded) &&
+        isCabinetEligibleSize(prodSource || item, item.options?.size);
+      let cabinetSurcharge = 0;
+      if (isCabinetIncluded) {
+        cabinetSurcharge = calculateCabinetPrice(
+          prodSource || item,
+          item.options?.orientation,
+          item.options?.size,
+          finalPrice
+        );
+      }
+
+      unitPrice = finalPrice + sofaSurcharge + cabinetSurcharge;
     } else {
       // Check if item is a product bundle
       let bundleSource = null;

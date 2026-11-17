@@ -111,6 +111,7 @@ export function StripeCheckoutButton({
           item.options?.orientation,
           item.options?.type,
           item.options?.sofaIncluded ? "Morphy Sofa Included" : null,
+          item.options?.cabinetIncluded ? "Cabinet Included" : null,
         ]
           .filter(Boolean)
           .join(" | ");

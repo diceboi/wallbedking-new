@@ -311,6 +311,11 @@ function ThanksContent() {
                           🛋️ + Front Sofa Module {item.options.sofaPrice ? `(+${effectiveCurrency === "GBP" ? "£" : effectiveCurrency === "USD" ? "$" : "€"}${Number(item.options.sofaPrice).toFixed(2)})` : ""}
                         </span>
                       )}
+                      {item.options?.cabinetIncluded && (
+                        <span className="inline-flex items-center gap-1 text-[10px] bg-[#FAF5EA] text-wbk-gold font-semibold px-2 py-0.5 border border-wbk-gold/40 rounded mt-1 ml-1">
+                          🗄️ + Cabinet Enclosure {item.options.cabinetPrice ? `(+${effectiveCurrency === "GBP" ? "£" : effectiveCurrency === "USD" ? "$" : "€"}${Number(item.options.cabinetPrice).toFixed(2)})` : ""}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">

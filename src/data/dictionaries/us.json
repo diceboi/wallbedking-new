@@ -71,7 +71,10 @@
     "download": "Download",
     "currency": "$",
     "item": "item",
-    "items": "items"
+    "items": "items",
+    "cabinetEnclosure": "+ Cabinet",
+    "includeCabinet": "With Cabinet",
+    "bedOnly": "Bed Only"
   },
   "cart": {
     "title": "Shopping Cart",
@@ -101,7 +104,8 @@
     "optionsCol": "Options",
     "quantityCol": "Quantity",
     "priceCol": "Price",
-    "totalCol": "Total"
+    "totalCol": "Total",
+    "cabinetEnclosure": "Cabinet Enclosure"
   },
   "checkout": {
     "bankWireTransfer": "Bank Wire Transfer",

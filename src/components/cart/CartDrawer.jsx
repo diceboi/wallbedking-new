@@ -203,6 +203,11 @@ export function CartDrawer() {
                                 + {t("cart.frontSofa", "Front Sofa")}
                               </span>
                             )}
+                            {item.options.cabinetIncluded && (
+                              <span className="text-[10px] bg-[#F4F2F0] text-wbk-gold font-semibold px-1.5 py-0.5 border border-wbk-lightgrey/60">
+                                + {t("cart.cabinetEnclosure", "Cabinet")}
+                              </span>
+                            )}
                             {(item.isOutOfStock ||
                               (item.stock !== undefined &&
                                 item.stock !== null &&

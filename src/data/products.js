@@ -17,9 +17,11 @@ export const SUPABASE_CABINET_IMAGES_BASE =
 export const getMorphyGallery2K = (
   sizeKey = "160x200",
   typeCode = "IV",
-  title = "MORPHY™ Bed"
+  title = "MORPHY™ Bed",
+  withCabinet = false
 ) => {
-  const base = `${SUPABASE_PRODUCT_IMAGES_BASE}/2K/${sizeKey}-${typeCode}-MORPHY`;
+  const cabinetPart = withCabinet ? "-CABINET" : "";
+  const base = `${SUPABASE_PRODUCT_IMAGES_BASE}/2K/${sizeKey}-${typeCode}-MORPHY${cabinetPart}`;
   const gallery = [
     { src: `${base}_1.webp`, alt: `${title} - Front View` },
     { src: `${base}_1-m.webp`, alt: `${title} - With Mattress` },

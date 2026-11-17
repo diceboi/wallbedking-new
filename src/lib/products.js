@@ -544,46 +544,84 @@ export function parseYouTubeVideo(input) {
   };
 }
 
+function isHorizontalBed(itemOrProduct, orientationStr = null) {
+  return (
+    (orientationStr && String(orientationStr).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.options?.orientation && String(itemOrProduct.options.orientation).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.orientation && String(itemOrProduct.orientation).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.sub_category && String(itemOrProduct.sub_category).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.slug && String(itemOrProduct.slug).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.name && String(itemOrProduct.name).toLowerCase().includes("horizontal"))
+  );
+}
+
+/**
+ * Extract sleeping (mattress) width in cm from a bed product/variant or size string.
+ * Handles Horizontal beds where database `width` holds the 1900/2000mm length.
+ */
+export function extractBedSleepingWidthCm(itemOrProduct, sizeStr = null) {
+  const rawW = Number(itemOrProduct?.width || 0);
+  const rawL = Number(itemOrProduct?.length || 0);
+
+  if (rawW > 0 && rawL > 0) {
+    const wCm = rawW > 250 ? Math.round(rawW / 10) : rawW;
+    const lCm = rawL > 250 ? Math.round(rawL / 10) : rawL;
+    return Math.min(wCm, lCm);
+  }
+
+  if (rawW > 0 && !isHorizontalBed(itemOrProduct)) {
+    return rawW > 250 ? Math.round(rawW / 10) : rawW;
+  }
+
+  const text = `${sizeStr || ""} ${itemOrProduct?.options?.size || ""} ${itemOrProduct?.size || ""} ${itemOrProduct?.slug || ""} ${itemOrProduct?.name || ""}`;
+  const match = text.match(/(?:^|[^\d])(\d{2,3})\s*[xX×*]\s*(\d{2,3})/);
+  if (match) {
+    return Math.min(parseInt(match[1], 10), parseInt(match[2], 10));
+  }
+
+  const lower = text.toLowerCase();
+  if (lower.includes("super king") || lower.includes("super-king")) return 180;
+  if (lower.includes("king")) return 150;
+  if (lower.includes("small double") || lower.includes("small-double")) return 120;
+  if (lower.includes("double") || lower.includes("queen") || lower.includes("full")) return 140;
+  if (lower.includes("single") || lower.includes("twin")) return 90;
+  return null;
+}
+
 /**
  * Calculate Morphy Sofa add-on surcharge for a bed.
  * - Vertical beds: width <= 120cm => 499, width >= 135cm => 998 (in all currencies)
  * - Horizontal beds: always 998 (in all currencies)
  */
 export function calculateSofaPrice(itemOrProduct, orientationStr = null, sizeStr = null) {
-  const isHoriz =
-    (orientationStr && String(orientationStr).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.options?.orientation && String(itemOrProduct.options.orientation).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.sub_category && String(itemOrProduct.sub_category).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.slug && String(itemOrProduct.slug).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.name && String(itemOrProduct.name).toLowerCase().includes("horizontal"));
-
-  if (isHoriz) {
+  if (isHorizontalBed(itemOrProduct, orientationStr)) {
     return 998;
   }
 
-  // Determine width in cm
-  let widthCm = null;
-
-  if (itemOrProduct?.width) {
-    const w = Number(itemOrProduct.width);
-    if (!isNaN(w) && w > 0) {
-      widthCm = w > 250 ? Math.round(w / 10) : w;
-    }
-  }
-
-  if (!widthCm) {
-    const text = `${sizeStr || ""} ${itemOrProduct?.options?.size || ""} ${itemOrProduct?.size || ""} ${itemOrProduct?.slug || ""} ${itemOrProduct?.name || ""}`;
-    const match = text.match(/(?:^|[^\d])(\d{2,3})\s*[xX*]\s*(\d{2,3})/);
-    if (match) {
-      widthCm = parseInt(match[1], 10);
-    } else {
-      const lower = text.toLowerCase();
-      if (lower.includes("single") || lower.includes("twin")) widthCm = 90;
-      else if (lower.includes("double") || lower.includes("queen") || lower.includes("king")) widthCm = 140;
-    }
-  }
-
+  const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr);
   return (widthCm && widthCm <= 120) ? 499 : 998;
+}
+
+/**
+ * Cabinet enclosure option is only available for beds >= 90cm sleeping width
+ * (hidden for narrower widths like 76cm / 80cm).
+ */
+export function isCabinetEligibleSize(itemOrProduct, sizeStr = null) {
+  const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr);
+  return Boolean(widthCm && widthCm >= 90);
+}
+
+/**
+ * Calculate Integrated MORPHY™ Cabinet add-on surcharge.
+ * Always matches the bed's active base price so Bed + Cabinet = 2 × bed price
+ * (e.g., 999 bed -> 999 surcharge = 1998 total). Returns 0 when width < 90cm.
+ */
+export function calculateCabinetPrice(itemOrProduct, orientationStr = null, sizeStr = null, baseBedPrice = null) {
+  if (!isCabinetEligibleSize(itemOrProduct, sizeStr)) {
+    return 0;
+  }
+  const base = Number(baseBedPrice);
+  return Number.isFinite(base) && base > 0 ? base : 0;
 }
 
 export function parseTableFinish(variant, index = 0, allVariants = []) {

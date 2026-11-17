@@ -71,7 +71,10 @@
     "download": "Descarregar",
     "currency": "€",
     "item": "artigo",
-    "items": "artigos"
+    "items": "artigos",
+    "cabinetEnclosure": "+ Armário",
+    "includeCabinet": "Com Armário",
+    "bedOnly": "Só Cama"
   },
   "cart": {
     "title": "O Seu Cesto de Compras",
@@ -101,7 +104,8 @@
     "optionsCol": "Opções",
     "quantityCol": "Quantidade",
     "priceCol": "Preço",
-    "totalCol": "Total"
+    "totalCol": "Total",
+    "cabinetEnclosure": "Armário Exterior"
   },
   "checkout": {
     "bankWireTransfer": "Transferência bancária",
