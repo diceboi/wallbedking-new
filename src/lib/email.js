@@ -3014,7 +3014,8 @@ function renderLocalizedOrderItemsRows(order, currencySymbol, sofaLabel) {
     por: "Armário Exterior",
     hu: "Szekrényburkolat",
   };
-  const cabinetLabel = cabLabels[order?.locale] || cabLabels.en;
+  const loc = resolveOrderLocale(order, order?.locale);
+  const cabinetLabel = cabLabels[loc] || cabLabels.en;
 
   return rawItems
     .map((item) => {

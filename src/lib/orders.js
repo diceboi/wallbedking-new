@@ -1,6 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { ALL_PRODUCTS, RAW_CATALOG } from "@/data/products";
-import { calculateSofaPrice, calculateCabinetPrice, isCabinetEligibleSize } from "@/lib/products";
+import {
+  calculateSofaPrice,
+  calculateCabinetPrice,
+  isCabinetEligibleSize,
+} from "@/lib/products";
 
 export const DELIVERY_OPTIONS = {
   delivery_option_discount: {
@@ -44,9 +48,17 @@ export const DELIVERY_OPTIONS = {
 export const PROMO_CODES = {};
 
 const LEGACY_RANDOM_IDS = new Set([
-  "WBK-170692", "WBK-837390", "WBK-289712", "WBK-848749",
-  "WBK-435497", "WBK-435336", "WBK-811614", "WBK-844907",
-  "WBK-665523", "WBK-842190", "WBK-629511"
+  "WBK-170692",
+  "WBK-837390",
+  "WBK-289712",
+  "WBK-848749",
+  "WBK-435497",
+  "WBK-435336",
+  "WBK-811614",
+  "WBK-844907",
+  "WBK-665523",
+  "WBK-842190",
+  "WBK-629511",
 ]);
 
 /**
@@ -69,7 +81,10 @@ export async function generateOrderNumber() {
           if (match) {
             const num = parseInt(match[1], 10);
             // Sequential orders start at 1000. Ignore legacy 6-digit random orders.
-            if (num >= START_NUMBER && (num < 100000 || !LEGACY_RANDOM_IDS.has(row.id))) {
+            if (
+              num >= START_NUMBER &&
+              (num < 100000 || !LEGACY_RANDOM_IDS.has(row.id))
+            ) {
               if (num > maxSequential) {
                 maxSequential = num;
               }
@@ -83,7 +98,10 @@ export async function generateOrderNumber() {
       }
     }
   } catch (err) {
-    console.error("[generateOrderNumber] Error querying sequential orders:", err);
+    console.error(
+      "[generateOrderNumber] Error querying sequential orders:",
+      err,
+    );
   }
 
   return `WBK-${START_NUMBER}`;
@@ -110,7 +128,11 @@ export function resolveProductIdentifiers(item) {
     }
   }
 
-  if (!slug && typeof item.productId === "string" && !/^\d+$/.test(item.productId)) {
+  if (
+    !slug &&
+    typeof item.productId === "string" &&
+    !/^\d+$/.test(item.productId)
+  ) {
     slug = item.productId.replace(/^wbk-/i, "");
   }
 
@@ -118,8 +140,14 @@ export function resolveProductIdentifiers(item) {
     const found = RAW_CATALOG?.find((p) => {
       if (numericId && p.id === numericId) return true;
       if (slug && p.slug === slug) return true;
-      if (typeof item.id === "string" && p.slug && (item.id === p.slug || item.id.startsWith(p.slug + "-"))) return true;
-      if (typeof item.rawId === "string" && p.slug && item.rawId === p.slug) return true;
+      if (
+        typeof item.id === "string" &&
+        p.slug &&
+        (item.id === p.slug || item.id.startsWith(p.slug + "-"))
+      )
+        return true;
+      if (typeof item.rawId === "string" && p.slug && item.rawId === p.slug)
+        return true;
       return false;
     });
     if (found) {
@@ -139,11 +167,14 @@ export async function validateOrderTotals(
   deliveryOptionId = "delivery_option_economy",
   promoCode = "",
   targetCurrency = "GBP",
-  targetLocale = "en"
+  targetLocale = "en",
 ) {
   let subtotal = 0;
   const validatedItems = [];
-  const curr = String(targetCurrency || (targetLocale === "us" ? "USD" : (targetLocale === "en" ? "GBP" : "EUR"))).toUpperCase();
+  const curr = String(
+    targetCurrency ||
+      (targetLocale === "us" ? "USD" : targetLocale === "en" ? "GBP" : "EUR"),
+  ).toUpperCase();
 
   // Load active campaigns for server-side promotional pricing validation
   let activeCampaigns = [];
@@ -153,11 +184,15 @@ export async function validateOrderTotals(
     const now = new Date();
     activeCampaigns = allCampaigns.filter((c) => {
       if (!c || c.status === "inactive") return false;
-      if (c.end_date && new Date(c.end_date).getTime() < now.getTime()) return false;
+      if (c.end_date && new Date(c.end_date).getTime() < now.getTime())
+        return false;
       return isCampaignActive(c, now);
     });
   } catch (campErr) {
-    console.warn("[validateOrderTotals] Could not load promotional campaigns:", campErr?.message);
+    console.warn(
+      "[validateOrderTotals] Could not load promotional campaigns:",
+      campErr?.message,
+    );
   }
 
   for (const item of items) {
@@ -174,7 +209,9 @@ export async function validateOrderTotals(
 
         const { data } = await supabaseAdmin
           .from("products")
-          .select("id, sku, slug, name, width, length, orientation, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility")
+          .select(
+            "id, sku, slug, name, width, length, orientation, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility",
+          )
           .or(orClauses.join(","))
           .maybeSingle();
 
@@ -183,15 +220,24 @@ export async function validateOrderTotals(
         }
       }
     } catch (err) {
-      console.warn("[validateOrderTotals] Supabase query notice:", err?.message);
+      console.warn(
+        "[validateOrderTotals] Supabase query notice:",
+        err?.message,
+      );
     }
 
     // 2. Fallback to local catalog if not found in DB
-    const prodSource = dbProd || RAW_CATALOG?.find(
-      (p) => (numericId && p.id === numericId) || (slug && p.slug === slug)
-    );
+    const prodSource =
+      dbProd ||
+      RAW_CATALOG?.find(
+        (p) => (numericId && p.id === numericId) || (slug && p.slug === slug),
+      );
 
     let unitPrice = 0;
+    const normalizedOptions =
+      item.options && typeof item.options === "object"
+        ? { ...item.options }
+        : {};
 
     if (prodSource) {
       let regularPrice = null;
@@ -199,45 +245,88 @@ export async function validateOrderTotals(
       let fixedDiscount = null;
 
       if (curr === "USD") {
-        regularPrice = prodSource.price_usd != null ? Number(prodSource.price_usd) : null;
-        explicitSalePrice = prodSource.sale_price_usd != null ? Number(prodSource.sale_price_usd) : null;
-        fixedDiscount = prodSource.sale_fix_usd != null ? Number(prodSource.sale_fix_usd) : null;
+        regularPrice =
+          prodSource.price_usd != null ? Number(prodSource.price_usd) : null;
+        explicitSalePrice =
+          prodSource.sale_price_usd != null
+            ? Number(prodSource.sale_price_usd)
+            : null;
+        fixedDiscount =
+          prodSource.sale_fix_usd != null
+            ? Number(prodSource.sale_fix_usd)
+            : null;
       } else if (curr === "EUR") {
-        regularPrice = prodSource.price_euro != null ? Number(prodSource.price_euro) : null;
-        explicitSalePrice = prodSource.sale_price_euro != null ? Number(prodSource.sale_price_euro) : null;
-        fixedDiscount = prodSource.sale_fix_euro != null ? Number(prodSource.sale_fix_euro) : null;
+        regularPrice =
+          prodSource.price_euro != null ? Number(prodSource.price_euro) : null;
+        explicitSalePrice =
+          prodSource.sale_price_euro != null
+            ? Number(prodSource.sale_price_euro)
+            : null;
+        fixedDiscount =
+          prodSource.sale_fix_euro != null
+            ? Number(prodSource.sale_fix_euro)
+            : null;
       } else {
-        regularPrice = prodSource.price_gbp != null ? Number(prodSource.price_gbp) : null;
-        explicitSalePrice = prodSource.sale_price_gbp != null ? Number(prodSource.sale_price_gbp) : null;
-        fixedDiscount = prodSource.sale_fix_gbp != null ? Number(prodSource.sale_fix_gbp) : null;
+        regularPrice =
+          prodSource.price_gbp != null ? Number(prodSource.price_gbp) : null;
+        explicitSalePrice =
+          prodSource.sale_price_gbp != null
+            ? Number(prodSource.sale_price_gbp)
+            : null;
+        fixedDiscount =
+          prodSource.sale_fix_gbp != null
+            ? Number(prodSource.sale_fix_gbp)
+            : null;
       }
 
       // Fallback if price is not populated yet in that currency in DB
       if (regularPrice == null || isNaN(regularPrice) || regularPrice <= 0) {
-        regularPrice = Number(prodSource.price_gbp) || Number(prodSource.numericPrice) || Number(item.price) || 0;
+        regularPrice =
+          Number(prodSource.price_gbp) ||
+          Number(prodSource.numericPrice) ||
+          Number(item.price) ||
+          0;
       }
 
       let finalPrice = regularPrice;
-      const percentDiscount = prodSource.sale_percent != null ? Number(prodSource.sale_percent) : null;
+      const percentDiscount =
+        prodSource.sale_percent != null
+          ? Number(prodSource.sale_percent)
+          : null;
 
-      if (percentDiscount != null && !isNaN(percentDiscount) && percentDiscount > 0 && percentDiscount < 100) {
+      if (
+        percentDiscount != null &&
+        !isNaN(percentDiscount) &&
+        percentDiscount > 0 &&
+        percentDiscount < 100
+      ) {
         finalPrice = Math.round(regularPrice * (1 - percentDiscount / 100));
-      } else if (fixedDiscount != null && !isNaN(fixedDiscount) && fixedDiscount > 0) {
+      } else if (
+        fixedDiscount != null &&
+        !isNaN(fixedDiscount) &&
+        fixedDiscount > 0
+      ) {
         finalPrice = Math.max(0, regularPrice - fixedDiscount);
-      } else if (explicitSalePrice != null && !isNaN(explicitSalePrice) && explicitSalePrice > 0 && explicitSalePrice < regularPrice) {
+      } else if (
+        explicitSalePrice != null &&
+        !isNaN(explicitSalePrice) &&
+        explicitSalePrice > 0 &&
+        explicitSalePrice < regularPrice
+      ) {
         finalPrice = explicitSalePrice;
       }
 
       // Dynamic promotional campaign discount evaluation
       if (activeCampaigns.length > 0) {
         try {
-          const { calculateCampaignDiscount } = await import("@/lib/promotions");
+          const { calculateCampaignDiscount } =
+            await import("@/lib/promotions");
           const promo = calculateCampaignDiscount(
             prodSource,
             regularPrice,
             curr,
             activeCampaigns,
-            targetLocale
+            targetLocale,
           );
           if (promo && promo.isPromotional) {
             if (finalPrice == null || promo.finalPrice < finalPrice) {
@@ -245,7 +334,10 @@ export async function validateOrderTotals(
             }
           }
         } catch (e) {
-          console.warn("[validateOrderTotals] Promo discount calculation error:", e?.message);
+          console.warn(
+            "[validateOrderTotals] Promo discount calculation error:",
+            e?.message,
+          );
         }
       }
 
@@ -256,7 +348,7 @@ export async function validateOrderTotals(
         sofaSurcharge = calculateSofaPrice(
           prodSource || item,
           item.options?.orientation,
-          item.options?.size
+          item.options?.size,
         );
       }
 
@@ -270,8 +362,17 @@ export async function validateOrderTotals(
           prodSource || item,
           item.options?.orientation,
           item.options?.size,
-          finalPrice
+          finalPrice,
         );
+        normalizedOptions.cabinetIncluded = true;
+        normalizedOptions.cabinetPrice = cabinetSurcharge;
+      } else if (normalizedOptions.cabinetIncluded) {
+        normalizedOptions.cabinetIncluded = false;
+        normalizedOptions.cabinetPrice = 0;
+      }
+      if (isSofaIncluded) {
+        normalizedOptions.sofaIncluded = true;
+        normalizedOptions.sofaPrice = sofaSurcharge;
       }
 
       unitPrice = finalPrice + sofaSurcharge + cabinetSurcharge;
@@ -279,10 +380,17 @@ export async function validateOrderTotals(
       // Check if item is a product bundle
       let bundleSource = null;
       try {
-        const { readLocalBundlesFile, enrichBundleWithProducts, fetchProductsForComponents } = await import("@/lib/bundles");
+        const {
+          readLocalBundlesFile,
+          enrichBundleWithProducts,
+          fetchProductsForComponents,
+        } = await import("@/lib/bundles");
         const allBundles = readLocalBundlesFile();
         const found = allBundles.find(
-          (b) => (slug && b.slug === slug) || (numericId && b.id === numericId) || (typeof item.id === "string" && b.slug === item.id)
+          (b) =>
+            (slug && b.slug === slug) ||
+            (numericId && b.id === numericId) ||
+            (typeof item.id === "string" && b.slug === item.id),
         );
         if (found) {
           const compIds = (found.items || []).map((ci) => ci.product_id);
@@ -290,7 +398,10 @@ export async function validateOrderTotals(
           bundleSource = enrichBundleWithProducts(found, pMap);
         }
       } catch (bundleErr) {
-        console.warn("[validateOrderTotals] Bundle check notice:", bundleErr.message);
+        console.warn(
+          "[validateOrderTotals] Bundle check notice:",
+          bundleErr.message,
+        );
       }
 
       if (bundleSource) {
@@ -304,24 +415,32 @@ export async function validateOrderTotals(
 
         if (activeCampaigns.length > 0) {
           try {
-            const { calculateCampaignDiscount } = await import("@/lib/promotions");
+            const { calculateCampaignDiscount } =
+              await import("@/lib/promotions");
             const promo = calculateCampaignDiscount(
               { ...bundleSource, is_bundle: true },
               unitPrice,
               curr,
               activeCampaigns,
-              targetLocale
+              targetLocale,
             );
             if (promo && promo.isPromotional && promo.finalPrice < unitPrice) {
               unitPrice = promo.finalPrice;
             }
           } catch (e) {
-            console.warn("[validateOrderTotals] Bundle promo error:", e?.message);
+            console.warn(
+              "[validateOrderTotals] Bundle promo error:",
+              e?.message,
+            );
           }
         }
 
-        const isHidden = bundleSource.visibility === "Hidden" || bundleSource.has_hidden_component;
-        const isStockZero = bundleSource.calculated_stock <= 0 || bundleSource.has_zero_stock_component;
+        const isHidden =
+          bundleSource.visibility === "Hidden" ||
+          bundleSource.has_hidden_component;
+        const isStockZero =
+          bundleSource.calculated_stock <= 0 ||
+          bundleSource.has_zero_stock_component;
         const isOutOfStock = Boolean(isHidden || isStockZero);
 
         const itemTotal = unitPrice * qty;
@@ -330,7 +449,12 @@ export async function validateOrderTotals(
         validatedItems.push({
           id: item.id || `bundle-${bundleSource.slug}`,
           rawId: bundleSource.id,
-          sku: item.sku || bundleSource.sku || `BDL-${String(bundleSource.slug || "").toUpperCase().slice(0, 20)}`,
+          sku:
+            item.sku ||
+            bundleSource.sku ||
+            `BDL-${String(bundleSource.slug || "")
+              .toUpperCase()
+              .slice(0, 20)}`,
           slug: bundleSource.slug,
           title: item.title || bundleSource.name,
           image: item.image || bundleSource.image,
@@ -363,7 +487,7 @@ export async function validateOrderTotals(
       /test/i.test(prodSource?.slug || "") ||
       /test/i.test(prodSource?.sku || "") ||
       /test/i.test(item?.title || "") ||
-      /test/i.test(item?.slug || "")
+      /test/i.test(item?.slug || ""),
     );
 
     const isHidden =
@@ -383,11 +507,7 @@ export async function validateOrderTotals(
       ? Boolean(isStockZero)
       : Boolean(isStockZero || (isHidden && isStockZero));
 
-    const resolvedSku =
-      item.sku ||
-      prodSource?.sku ||
-      item.options?.sku ||
-      "";
+    const resolvedSku = item.sku || prodSource?.sku || item.options?.sku || "";
 
     validatedItems.push({
       id: item.id || (numericId ? `wbk-${numericId}` : slug),
@@ -398,7 +518,7 @@ export async function validateOrderTotals(
       image: item.image || prodSource?.image || "",
       price: unitPrice,
       quantity: qty,
-      options: item.options || {},
+      options: normalizedOptions,
       itemTotal,
       isOutOfStock,
       stock: prodSource?.stock ?? null,
@@ -406,18 +526,25 @@ export async function validateOrderTotals(
   }
 
   // Calculate delivery (merge with market-specific checkout settings if configured)
-  const baseDelivery = DELIVERY_OPTIONS[deliveryOptionId] || DELIVERY_OPTIONS.delivery_option_economy;
+  const baseDelivery =
+    DELIVERY_OPTIONS[deliveryOptionId] ||
+    DELIVERY_OPTIONS.delivery_option_economy;
   let selectedDelivery = { ...baseDelivery };
   try {
-    const { getCheckoutSettingsForLocale } = await import("@/lib/checkout-settings");
-    const { config: localeCheckoutConfig } = await getCheckoutSettingsForLocale(targetLocale);
+    const { getCheckoutSettingsForLocale } =
+      await import("@/lib/checkout-settings");
+    const { config: localeCheckoutConfig } =
+      await getCheckoutSettingsForLocale(targetLocale);
     const configuredOpt = localeCheckoutConfig?.shipping?.[selectedDelivery.id];
     if (configuredOpt) {
       selectedDelivery = {
         ...selectedDelivery,
         label: configuredOpt.label || selectedDelivery.label,
         message: configuredOpt.message || selectedDelivery.message,
-        cost: configuredOpt.cost !== undefined ? Number(configuredOpt.cost) || 0 : selectedDelivery.cost,
+        cost:
+          configuredOpt.cost !== undefined
+            ? Number(configuredOpt.cost) || 0
+            : selectedDelivery.cost,
         discountPercent:
           configuredOpt.discountPercent !== undefined
             ? Number(configuredOpt.discountPercent) || 0
@@ -436,7 +563,7 @@ export async function validateOrderTotals(
   const promo = PROMO_CODES[normalizedPromo];
   if (promo) {
     if (promo.type === "percent") {
-      discountAmount += Math.round((subtotal * (promo.value / 100)) * 100) / 100;
+      discountAmount += Math.round(subtotal * (promo.value / 100) * 100) / 100;
     } else if (promo.type === "fixed") {
       discountAmount += Math.min(subtotal, promo.value);
     }
@@ -445,21 +572,28 @@ export async function validateOrderTotals(
   const deliveryDiscountPct =
     Number(
       selectedDelivery.discountPercent ??
-        (selectedDelivery.id === "delivery_option_discount" ? 5 : 0)
+        (selectedDelivery.id === "delivery_option_discount" ? 5 : 0),
     ) || 0;
 
   if (deliveryDiscountPct > 0 && subtotal > 0) {
-    const deliveryDiscount = Math.round((subtotal * (deliveryDiscountPct / 100)) * 100) / 100;
-    discountAmount = Math.min(subtotal, Math.round((discountAmount + deliveryDiscount) * 100) / 100);
+    const deliveryDiscount =
+      Math.round(subtotal * (deliveryDiscountPct / 100) * 100) / 100;
+    discountAmount = Math.min(
+      subtotal,
+      Math.round((discountAmount + deliveryDiscount) * 100) / 100,
+    );
   }
 
   const effectivePromoLabel = promo
     ? normalizedPromo
     : deliveryDiscountPct > 0
-    ? `DELIVERY-${deliveryDiscountPct}%`
-    : null;
+      ? `DELIVERY-${deliveryDiscountPct}%`
+      : null;
 
-  const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + shippingAmount) * 100) / 100);
+  const totalAmount = Math.max(
+    0,
+    Math.round((subtotal - discountAmount + shippingAmount) * 100) / 100,
+  );
   const vatAmount = Math.round((totalAmount / 6) * 100) / 100; // 20% included UK VAT is 1/6th of gross
 
   const hasOutOfStockItems = validatedItems.some((it) => it.isOutOfStock);
