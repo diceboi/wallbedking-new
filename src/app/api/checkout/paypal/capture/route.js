@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { generateOrderNumber } from "@/lib/orders";
+import { getPaymentConfig } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,10 @@ export async function POST(request) {
     }
 
     const effectiveLocale = locale || "en";
-    const effectiveCurrency = (currency || (effectiveLocale === "en" ? "GBP" : "EUR")).toUpperCase();
-    console.log(`[PayPal Capture] Finalizing payment for order: ${orderId || "new"} (PayPal TX: ${paypalOrderId}, Entity: ${companyEntity || "N/A"}, Currency: ${effectiveCurrency})`);
+    const paymentConfig = getPaymentConfig(effectiveLocale, currency);
+    const effectiveCurrency = paymentConfig.currency;
+    const effectiveEntity = companyEntity || paymentConfig.entity;
+    console.log(`[PayPal Capture] Finalizing payment for order: ${orderId || "new"} (PayPal TX: ${paypalOrderId}, Entity: ${effectiveEntity}, Currency: ${effectiveCurrency})`);
 
     let finalOrder = null;
 
@@ -60,8 +63,8 @@ export async function POST(request) {
           updated_at: new Date().toISOString(),
         };
         if (effectiveCurrency) updatePayload.currency = effectiveCurrency;
-        if (companyEntity || locale) {
-          updatePayload.admin_notes = `[Entity: ${companyEntity || "N/A"}] [Locale: ${effectiveLocale}]`;
+        if (effectiveEntity || locale) {
+          updatePayload.admin_notes = `[Entity: ${effectiveEntity}] [Locale: ${effectiveLocale}]`;
         }
         if (!order.user_id && customer?.userId) {
           updatePayload.user_id = customer.userId;
@@ -95,9 +98,11 @@ export async function POST(request) {
           address: shipping?.address?.address_line_1 || "PayPal Address",
           city: shipping?.address?.admin_area_2 || shipping?.address?.admin_area_1 || "City",
           postal_code: shipping?.address?.postal_code || "N/A",
-          country: shipping?.address?.country_code || (effectiveLocale === "en" ? "United Kingdom" : "International"),
+          country:
+            shipping?.address?.country_code ||
+            (effectiveLocale === "en" ? "United Kingdom" : effectiveLocale === "us" ? "United States" : "International"),
           locale: effectiveLocale,
-          company_entity: companyEntity || "INTERNATIONAL",
+          company_entity: effectiveEntity,
         };
 
         const newOrderId = orderId || (await generateOrderNumber());
@@ -119,7 +124,7 @@ export async function POST(request) {
           currency: effectiveCurrency,
           subtotal: orderAmount,
           total_amount: orderAmount,
-          admin_notes: `[Entity: ${companyEntity || "INTERNATIONAL"}] [Locale: ${effectiveLocale}]`,
+          admin_notes: `[Entity: ${effectiveEntity}] [Locale: ${effectiveLocale}]`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };

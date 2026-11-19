@@ -53,8 +53,10 @@ export const PAYMENT_ENTITIES = {
  * Returns the appropriate payment configuration depending on the storefront locale / market.
  *
  * Rules:
- * - Locale "en" (or UK domain): UK entity (Wall Bed King Ltd)
- * - All other locales ("us", "de", "fr", "es", "it", "por"): International entity
+ * - Locale "en" (UK) and "us" (USA): UK / IZN entity (Wall Bed King Ltd)
+ *   - "en" uses GBP + wallbedking.co.uk
+ *   - "us" uses USD + wallbedking.com
+ * - All other locales ("de", "fr", "es", "it", "por"): International entity (EUR)
  *
  * @param {string} locale
  * @param {string} [currency]
@@ -62,17 +64,21 @@ export const PAYMENT_ENTITIES = {
  */
 export function getPaymentConfig(locale = "en", currency = null) {
   const normLocale = (locale || "en").toLowerCase();
-  const isUK = normLocale === "en" || normLocale === "en_uk" || normLocale === "gb";
+  const isUS = normLocale === "us" || normLocale === "en_us";
+  const isUKAccount = normLocale === "en" || normLocale === "en_uk" || normLocale === "gb" || isUS;
 
-  if (isUK) {
+  if (isUKAccount) {
+    const targetCurrency = (currency || (isUS ? "USD" : "GBP")).toUpperCase();
+    const targetCurrencyLower = targetCurrency.toLowerCase();
+
     return {
       entity: "UK",
       companyName: PAYMENT_ENTITIES.UK.name,
-      domain: PAYMENT_ENTITIES.UK.domain,
-      currency: "GBP",
-      currencyLower: "gbp",
+      domain: isUS ? PAYMENT_ENTITIES.INTERNATIONAL.domain : PAYMENT_ENTITIES.UK.domain,
+      currency: targetCurrency,
+      currencyLower: targetCurrencyLower,
       paypalClientId: PAYMENT_ENTITIES.UK.paypal.clientId,
-      paypalCurrency: "GBP",
+      paypalCurrency: targetCurrency,
       paypalDescriptor: PAYMENT_ENTITIES.UK.paypal.softDescriptor,
       paypalSecretKey: process.env.PAYPAL_CLIENT_SECRET_UK || null,
       paypalWebhookId: process.env.PAYPAL_WEBHOOK_ID_UK || null,
@@ -80,7 +86,7 @@ export function getPaymentConfig(locale = "en", currency = null) {
       stripeStatusEndpoint: PAYMENT_ENTITIES.UK.stripe.statusEndpoint,
       stripeOrigin: PAYMENT_ENTITIES.UK.stripe.origin,
       stripeReferer: PAYMENT_ENTITIES.UK.stripe.referer,
-      stripeCurrency: "gbp",
+      stripeCurrency: targetCurrencyLower,
       stripeSecretKey: process.env.STRIPE_SECRET_KEY_UK || process.env.STRIPE_SECRET_KEY || null,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET_UK || process.env.STRIPE_WEBHOOK_SECRET || null,
     };

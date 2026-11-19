@@ -78,7 +78,7 @@ function extractOrderMarketMeta(order) {
   ).toUpperCase();
   const entity = String(
     order.shipping_address?.company_entity ||
-      (entMatch ? entMatch[1].trim() : locale === "EN" ? "UK" : "INTERNATIONAL")
+      (entMatch ? entMatch[1].trim() : locale === "EN" || locale === "US" ? "UK" : "INTERNATIONAL")
   );
   const currency = String(order.currency || "GBP").toUpperCase();
   return { locale, entity, currency };

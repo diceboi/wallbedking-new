@@ -4219,7 +4219,7 @@
     "type": "Studio",
     "color": "Black",
     "weight": 63,
-    "stock": 100,
+    "stock": 0,
     "package_dimensions": "Box 1: 130 x 45 x 15 cm | Box 2: 120 x 45 x 10 cm",
     "pack_1": "130 x 45 x 15",
     "pack_2": "120 x 45 x 10",

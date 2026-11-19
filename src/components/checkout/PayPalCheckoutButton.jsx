@@ -430,7 +430,11 @@ useEffect(() => {
                           country:
                             current.customerDetails?.country ||
                             shipping.address?.country_code ||
-                            (current.locale === "en" ? "United Kingdom" : "International"),
+                            (current.locale === "en"
+                              ? "United Kingdom"
+                              : current.locale === "us"
+                              ? "United States"
+                              : "International"),
                           phone: effectivePhone,
                         };
 

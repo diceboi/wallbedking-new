@@ -715,7 +715,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
       : null;
   const companyEntity =
     order.shipping_address?.company_entity ||
-    (entityMatch ? entityMatch[1].trim() : resolvedLocale === "EN" ? "UK" : "INTERNATIONAL");
+    (entityMatch ? entityMatch[1].trim() : resolvedLocale === "EN" || resolvedLocale === "US" ? "UK" : "INTERNATIONAL");
   const orderStatusLabel = String(order.status || (isPaid ? "paid" : "pending")).toUpperCase();
   const txId = String(order.payment_id || order.paymentId || "").trim();
 
@@ -2087,7 +2087,7 @@ export function getProductionNotificationHtml(order = SAMPLE_ORDER, locale = "en
   const loc = resolveOrderLocale(order, locale);
   const t = PRODUCTION_I18N[loc] || PRODUCTION_I18N.en;
   const upd = UPDATE_NOTICE_I18N[loc] || UPDATE_NOTICE_I18N.en;
-  const currencyCode = (order.currency || (loc === "en" ? "GBP" : "EUR")).toUpperCase();
+  const currencyCode = (order.currency || (loc === "us" ? "USD" : loc === "en" ? "GBP" : "EUR")).toUpperCase();
   const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
 
   const itemsList = (order.items || [])

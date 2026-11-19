@@ -31,7 +31,7 @@ export function buildStripeSuccessUrl(baseUrl, { orderId, cartId } = {}) {
  */
 export function getConfiguredStripeClients(preferredLocale = "en") {
   const norm = String(preferredLocale || "en").toLowerCase();
-  const preferUk = norm === "en" || norm === "en_uk" || norm === "gb";
+  const preferUk = norm === "en" || norm === "en_uk" || norm === "gb" || norm === "us" || norm === "en_us";
 
   const ukKey = (process.env.STRIPE_SECRET_KEY_UK || "").trim();
   const euKey = (
@@ -367,7 +367,7 @@ export async function fulfillPaidStripeSession({
   const effectiveLocale = (
     sessionData.locale ||
     fallbackLocale ||
-    (sessionData.currency === "GBP" ? "en" : "de")
+    (sessionData.currency === "GBP" ? "en" : sessionData.currency === "USD" ? "us" : "de")
   ).toLowerCase();
 
   const paymentConfig = getPaymentConfig(effectiveLocale, sessionData.currency);

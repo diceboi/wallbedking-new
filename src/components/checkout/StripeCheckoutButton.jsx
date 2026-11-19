@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IconLock, IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { getPaymentConfig } from "@/lib/payments";
 
 export function StripeCheckoutButton({
   className = "",
@@ -60,9 +61,10 @@ export function StripeCheckoutButton({
 
     try {
       let activeOrderId = null;
-      const currentCurrency = (market?.currency || (locale === "en" ? "GBP" : "EUR")).toUpperCase();
-      const currentCurrencyLower = currentCurrency.toLowerCase();
-      const companyEntity = locale === "en" ? "UK" : "INTERNATIONAL";
+      const paymentConfig = getPaymentConfig(locale, market?.currency);
+      const currentCurrency = paymentConfig.currency;
+      const currentCurrencyLower = paymentConfig.currencyLower;
+      const companyEntity = paymentConfig.entity;
 
       // 1. If customer details are provided, pre-create the order in database
       if (customerDetails?.email && customerDetails?.address1) {
