@@ -1,40 +1,51 @@
-import { supabase } from '@/lib/supabase';
-import { ALL_PRODUCTS, RAW_CATALOG, findProductBySlug, getProductVariants } from '@/data/products';
+import { supabase } from "@/lib/supabase";
+import {
+  ALL_PRODUCTS,
+  RAW_CATALOG,
+  findProductBySlug,
+  getProductVariants,
+} from "@/data/products";
 
 /**
  * Fetch products with optional filtering (Supabase with instant local fallback)
  */
 export async function getProducts({
-  category = 'beds',
-  orientation = 'All',
-  type = 'All',
-  size = 'All',
-  priceRange = 'All',
+  category = "beds",
+  orientation = "All",
+  type = "All",
+  size = "All",
+  priceRange = "All",
 } = {}) {
   try {
-    let query = supabase.from('products').select('*');
+    let query = supabase.from("products").select("*");
 
-    if (category && category !== 'all') {
-      if (category === 'beds') {
-        query = query.in('parent_category', ['beds', 'morphy-beds', 'traditional-beds']);
+    if (category && category !== "all") {
+      if (category === "beds") {
+        query = query.in("parent_category", [
+          "beds",
+          "morphy-beds",
+          "traditional-beds",
+        ]);
       } else {
-        query = query.eq('parent_category', category);
+        query = query.eq("parent_category", category);
       }
     }
-    if (orientation && orientation !== 'All') {
-      query = query.eq('orientation', orientation);
+    if (orientation && orientation !== "All") {
+      query = query.eq("orientation", orientation);
     }
-    if (type && type !== 'All') {
-      query = query.eq('type', type);
+    if (type && type !== "All") {
+      query = query.eq("type", type);
     }
-    if (size && size !== 'All') {
-      query = query.eq('size_category', size);
+    if (size && size !== "All") {
+      query = query.eq("size_category", size);
     }
 
     const { data, error } = await query;
     if (!error && data && data.length > 0) {
       return data.map((item) => {
-        const local = RAW_CATALOG.find((p) => p.id === item.id || p.slug === item.slug) || {};
+        const local =
+          RAW_CATALOG.find((p) => p.id === item.id || p.slug === item.slug) ||
+          {};
         return { ...local, ...item };
       });
     }
@@ -45,14 +56,14 @@ export async function getProducts({
   // Fallback to localized catalog
   const products = ALL_PRODUCTS[category] || RAW_CATALOG;
   return products.filter((prod) => {
-    if (orientation !== 'All' && prod.orientation !== orientation) return false;
-    if (type !== 'All' && prod.type !== type) return false;
-    if (size !== 'All' && prod.size !== size) return false;
-    if (priceRange !== 'All') {
+    if (orientation !== "All" && prod.orientation !== orientation) return false;
+    if (type !== "All" && prod.type !== type) return false;
+    if (size !== "All" && prod.size !== size) return false;
+    if (priceRange !== "All") {
       const p = prod.numericPrice || prod.price_gbp;
-      if (priceRange === 'Under £500' && p >= 500) return false;
-      if (priceRange === '£500 - £800' && (p < 500 || p > 800)) return false;
-      if (priceRange === 'Over £800' && p <= 800) return false;
+      if (priceRange === "Under £500" && p >= 500) return false;
+      if (priceRange === "£500 - £800" && (p < 500 || p > 800)) return false;
+      if (priceRange === "Over £800" && p <= 800) return false;
     }
     return true;
   });
@@ -65,9 +76,9 @@ export async function getProduct(categorySlug, productSlug) {
   const localFallback = findProductBySlug(categorySlug, productSlug);
   try {
     const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('slug', productSlug)
+      .from("products")
+      .select("*")
+      .eq("slug", productSlug)
       .single();
 
     if (!error && data) {
@@ -86,7 +97,10 @@ export async function getProduct(categorySlug, productSlug) {
 export function isProductAvailableInLocale(product, locale) {
   if (!product) return false;
   if (!locale) return true;
-  if (product.available_locales === undefined || product.available_locales === null) {
+  if (
+    product.available_locales === undefined ||
+    product.available_locales === null
+  ) {
     return true; // Default: available everywhere if not explicitly specified
   }
   if (!Array.isArray(product.available_locales)) {
@@ -94,7 +108,7 @@ export function isProductAvailableInLocale(product, locale) {
   }
   const normLocale = String(locale).toLowerCase();
   return product.available_locales.some(
-    (l) => String(l).toLowerCase() === normLocale
+    (l) => String(l).toLowerCase() === normLocale,
   );
 }
 
@@ -192,13 +206,7 @@ export function getLocalizedProductGtin(product, locale = "en") {
   }
 
   // 5. Fallback to master/default ean or gtin
-  return (
-    product.gtin ||
-    product.ean ||
-    product.gtin_en ||
-    product.ean_uk ||
-    ""
-  );
+  return product.gtin || product.ean || product.gtin_en || product.ean_uk || "";
 }
 
 /**
@@ -208,7 +216,8 @@ export function getLocalizedProductGtin(product, locale = "en") {
 export function getLocalizedProductDescription(product, locale = "en") {
   if (!product) return "";
   const normLocale = (locale || "en").toLowerCase();
-  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+  const check = (val) =>
+    val && String(val).trim() ? String(val).trim() : null;
 
   // 1. Direct column on the current product object
   const directDesc = check(product[`description_${normLocale}`]);
@@ -228,27 +237,30 @@ export function getLocalizedProductDescription(product, locale = "en") {
 
   // 4. Fallback to catalog definition if product is from DB and columns are not yet filled
   if (product.slug) {
-    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    const catFallback = findProductBySlug(
+      product.parent_category,
+      product.slug,
+    );
     if (catFallback && catFallback !== product) {
       const fbDirect = check(catFallback[`description_${normLocale}`]);
       if (fbDirect) return fbDirect;
       if (normLocale === "por" || normLocale === "pt") {
-        const fbPor = check(catFallback.description_por) || check(catFallback.description_pt);
+        const fbPor =
+          check(catFallback.description_por) ||
+          check(catFallback.description_pt);
         if (fbPor) return fbPor;
       }
       if (normLocale === "en" || normLocale === "uk") {
-        const fbEn = check(catFallback.description_en) || check(catFallback.description_uk);
+        const fbEn =
+          check(catFallback.description_en) ||
+          check(catFallback.description_uk);
         if (fbEn) return fbEn;
       }
     }
   }
 
   // 5. Default fallback to description_en, then generic description
-  return (
-    check(product.description_en) ||
-    check(product.description) ||
-    ""
-  );
+  return check(product.description_en) || check(product.description) || "";
 }
 
 /**
@@ -261,7 +273,8 @@ export function getLocalizedProductDescription(product, locale = "en") {
 export function getLocalizedProductShortDescription(product, locale = "en") {
   if (!product) return "";
   const normLocale = (locale || "en").toLowerCase();
-  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+  const check = (val) =>
+    val && String(val).trim() ? String(val).trim() : null;
 
   // 1. Direct localized column
   const directShortDesc =
@@ -287,7 +300,10 @@ export function getLocalizedProductShortDescription(product, locale = "en") {
 
   // 4. Fallback to catalog definition if product is from DB and columns are not yet filled
   if (product.slug) {
-    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    const catFallback = findProductBySlug(
+      product.parent_category,
+      product.slug,
+    );
     if (catFallback && catFallback !== product) {
       const fbShort =
         check(catFallback[`short_description_${normLocale}`]) ||
@@ -328,7 +344,8 @@ export function getLocalizedProductShortDescription(product, locale = "en") {
 export function getLocalizedProductExtendedDescription(product, locale = "en") {
   if (!product) return "";
   const normLocale = (locale || "en").toLowerCase();
-  const check = (val) => (val && String(val).trim() ? String(val).trim() : null);
+  const check = (val) =>
+    val && String(val).trim() ? String(val).trim() : null;
 
   // 1. Direct column on current object
   const directExt = check(product[`extended_description_${normLocale}`]);
@@ -336,7 +353,9 @@ export function getLocalizedProductExtendedDescription(product, locale = "en") {
 
   // 2. Portuguese alias
   if (normLocale === "por" || normLocale === "pt") {
-    const val = check(product.extended_description_por) || check(product.extended_description_pt);
+    const val =
+      check(product.extended_description_por) ||
+      check(product.extended_description_pt);
     if (val) return val;
   }
 
@@ -348,12 +367,17 @@ export function getLocalizedProductExtendedDescription(product, locale = "en") {
 
   // 4. Fallback to catalog definition
   if (product.slug) {
-    const catFallback = findProductBySlug(product.parent_category, product.slug);
+    const catFallback = findProductBySlug(
+      product.parent_category,
+      product.slug,
+    );
     if (catFallback && catFallback !== product) {
       const fbDirect = check(catFallback[`extended_description_${normLocale}`]);
       if (fbDirect) return fbDirect;
       if (normLocale === "por" || normLocale === "pt") {
-        const fbPor = check(catFallback.extended_description_por) || check(catFallback.extended_description_pt);
+        const fbPor =
+          check(catFallback.extended_description_por) ||
+          check(catFallback.extended_description_pt);
         if (fbPor) return fbPor;
       }
     }
@@ -377,9 +401,15 @@ export function getStorefrontProductUrl(p, locale = null, options = {}) {
   // If a locale is requested and product is available there, use it.
   // If not available in requested market (e.g. US), fall back to a market where the product exists.
   let targetLocale = locale;
-  if (p && Array.isArray(p.available_locales) && p.available_locales.length > 0) {
+  if (
+    p &&
+    Array.isArray(p.available_locales) &&
+    p.available_locales.length > 0
+  ) {
     if (!targetLocale || !p.available_locales.includes(targetLocale)) {
-      targetLocale = p.available_locales.includes("us") ? "us" : p.available_locales[0];
+      targetLocale = p.available_locales.includes("us")
+        ? "us"
+        : p.available_locales[0];
     }
   } else if (!targetLocale) {
     targetLocale = "en";
@@ -397,19 +427,31 @@ export function getStorefrontProductUrl(p, locale = null, options = {}) {
     const category = (p.parent_category || "beds").toLowerCase();
 
     // Route standalone test products directly to their product page
-    if (String(p.name || "").toUpperCase().includes("TEST") || p.id === 235 || p.id === 236) {
+    if (
+      String(p.name || "")
+        .toUpperCase()
+        .includes("TEST") ||
+      p.id === 235 ||
+      p.id === 236
+    ) {
       targetUrl = `${prefix}/products/beds/${p.slug || `test-product-${p.id}`}`;
-    } else if (category === "beds" || category === "morphy-beds" || category === "traditional-beds") {
+    } else if (
+      category === "beds" ||
+      category === "morphy-beds" ||
+      category === "traditional-beds"
+    ) {
       const isMorphy = Boolean(
         p.isMorphy ??
-        ((p.name || "").includes("MORPHY") || (p.category || "").includes("MORPHY"))
+        ((p.name || "").includes("MORPHY") ||
+          (p.category || "").includes("MORPHY")),
       );
       const o = (p.orientation || "Vertical").toLowerCase();
       const style = (p.sub_category || p.type || "Classic").toLowerCase();
 
       let flagshipSlug = "classic-morphy-bed";
       if (isMorphy) {
-        if (style.includes("integrated")) flagshipSlug = "integrated-morphy-bed";
+        if (style.includes("integrated"))
+          flagshipSlug = "integrated-morphy-bed";
         else if (style.includes("studio")) flagshipSlug = "studio-morphy-bed";
         else flagshipSlug = "classic-morphy-bed";
       } else {
@@ -419,16 +461,18 @@ export function getStorefrontProductUrl(p, locale = null, options = {}) {
 
       const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
       const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
-      const sizeSlug = (minDim && maxDim)
-        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
-        : (p.sizeSlug || null);
+      const sizeSlug =
+        minDim && maxDim
+          ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+          : p.sizeSlug || null;
 
       targetUrl = `${prefix}/products/beds/${flagshipSlug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
     } else if (category === "sofas") {
       const s = (p.sub_category || p.type || "").toLowerCase();
-      const slug = (s.includes("free") || s.includes("standing"))
-        ? "free-standing-modular-sofa"
-        : "bed-front-modular-sofa";
+      const slug =
+        s.includes("free") || s.includes("standing")
+          ? "free-standing-modular-sofa"
+          : "bed-front-modular-sofa";
       targetUrl = `${prefix}/products/sofas/${slug}`;
     } else if (category === "mattresses") {
       const s = (p.sub_category || p.type || "").toLowerCase();
@@ -437,24 +481,34 @@ export function getStorefrontProductUrl(p, locale = null, options = {}) {
       else if (s.includes("luxury")) slug = "luxury-mattress";
       const minDim = Math.min(Number(p.width) || 0, Number(p.length) || 0);
       const maxDim = Math.max(Number(p.width) || 0, Number(p.length) || 0);
-      const sizeSlug = (minDim && maxDim)
-        ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
-        : (p.sizeSlug || null);
+      const sizeSlug =
+        minDim && maxDim
+          ? `${Math.round(minDim / 10)}x${Math.round(maxDim / 10)}`
+          : p.sizeSlug || null;
       targetUrl = `${prefix}/products/mattresses/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
     } else if (category === "cabinets") {
       const s = (p.sub_category || p.type || "").toLowerCase();
       const o = (p.orientation || "").toLowerCase();
       let slug = "vertical-wall-bed-cabinet";
-      if (s.includes("side") || s.includes("wardrobe")) slug = "side-storage-wardrobe-cabinet";
-      else if (s.includes("ext") || s.includes("overhead") || s.includes("bridge")) slug = "overhead-storage-extension-cabinet";
-      else if (s.includes("horiz") || o === "horizontal") slug = "horizontal-wall-bed-cabinet";
+      if (s.includes("side") || s.includes("wardrobe"))
+        slug = "side-storage-wardrobe-cabinet";
+      else if (
+        s.includes("ext") ||
+        s.includes("overhead") ||
+        s.includes("bridge")
+      )
+        slug = "overhead-storage-extension-cabinet";
+      else if (s.includes("horiz") || o === "horizontal")
+        slug = "horizontal-wall-bed-cabinet";
       const sizeSlug = p.sizeSlug || null;
       targetUrl = `${prefix}/products/cabinets/${slug}${sizeSlug ? `?size=${sizeSlug}` : ""}`;
     } else if (category === "tables") {
       const s = (p.sub_category || p.type || "").toLowerCase();
       let slug = "transforming-coffee-dining-table";
-      if (s.includes("mounted") || s.includes("folding")) slug = "wall-mounted-folding-table";
-      else if (s.includes("extending") || s.includes("console")) slug = "extending-console-dining-table";
+      if (s.includes("mounted") || s.includes("folding"))
+        slug = "wall-mounted-folding-table";
+      else if (s.includes("extending") || s.includes("console"))
+        slug = "extending-console-dining-table";
       targetUrl = `${prefix}/products/tables/${slug}`;
     } else {
       targetUrl = `${prefix}/products/${category}/${p.slug || p.id}`;
@@ -526,7 +580,8 @@ export function parseYouTubeVideo(input) {
   if (!str) return null;
 
   let videoId = null;
-  const regExp = /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const regExp =
+    /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = str.match(regExp);
 
   if (match && match[1] && match[1].length === 11) {
@@ -546,12 +601,22 @@ export function parseYouTubeVideo(input) {
 
 function isHorizontalBed(itemOrProduct, orientationStr = null) {
   return (
-    (orientationStr && String(orientationStr).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.options?.orientation && String(itemOrProduct.options.orientation).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.orientation && String(itemOrProduct.orientation).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.sub_category && String(itemOrProduct.sub_category).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.slug && String(itemOrProduct.slug).toLowerCase().includes("horizontal")) ||
-    (itemOrProduct?.name && String(itemOrProduct.name).toLowerCase().includes("horizontal"))
+    (orientationStr &&
+      String(orientationStr).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.options?.orientation &&
+      String(itemOrProduct.options.orientation)
+        .toLowerCase()
+        .includes("horizontal")) ||
+    (itemOrProduct?.orientation &&
+      String(itemOrProduct.orientation).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.sub_category &&
+      String(itemOrProduct.sub_category)
+        .toLowerCase()
+        .includes("horizontal")) ||
+    (itemOrProduct?.slug &&
+      String(itemOrProduct.slug).toLowerCase().includes("horizontal")) ||
+    (itemOrProduct?.name &&
+      String(itemOrProduct.name).toLowerCase().includes("horizontal"))
   );
 }
 
@@ -582,8 +647,14 @@ export function extractBedSleepingWidthCm(itemOrProduct, sizeStr = null) {
   const lower = text.toLowerCase();
   if (lower.includes("super king") || lower.includes("super-king")) return 180;
   if (lower.includes("king")) return 150;
-  if (lower.includes("small double") || lower.includes("small-double")) return 120;
-  if (lower.includes("double") || lower.includes("queen") || lower.includes("full")) return 140;
+  if (lower.includes("small double") || lower.includes("small-double"))
+    return 120;
+  if (
+    lower.includes("double") ||
+    lower.includes("queen") ||
+    lower.includes("full")
+  )
+    return 140;
   if (lower.includes("single") || lower.includes("twin")) return 90;
   return null;
 }
@@ -593,20 +664,34 @@ export function extractBedSleepingWidthCm(itemOrProduct, sizeStr = null) {
  * - Vertical beds: width <= 120cm => 499, width >= 135cm => 998 (in all currencies)
  * - Horizontal beds: always 998 (in all currencies)
  */
-export function calculateSofaPrice(itemOrProduct, orientationStr = null, sizeStr = null) {
+export function calculateSofaPrice(
+  itemOrProduct,
+  orientationStr = null,
+  sizeStr = null,
+) {
   if (isHorizontalBed(itemOrProduct, orientationStr)) {
     return 998;
   }
 
   const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr);
-  return (widthCm && widthCm <= 120) ? 499 : 998;
+  return widthCm && widthCm <= 120 ? 499 : 998;
 }
 
 /**
- * Cabinet enclosure option is only available for beds >= 90cm sleeping width
- * (hidden for narrower widths like 76cm / 80cm).
+ * Cabinet enclosure add-on is only offered on the UK (`en`) storefront,
+ * not on EU (`de`, `fr`, `es`, `it`, `por`, `pt`) or US (`us`) storefronts.
  */
-export function isCabinetEligibleSize(itemOrProduct, sizeStr = null) {
+export function isCabinetSupportedLocale(locale = "en") {
+  const norm = String(locale || "en").toLowerCase().trim();
+  return norm === "en" || norm === "en_uk" || norm === "gb";
+}
+
+/**
+ * Cabinet enclosure option is only available for UK (`en`) beds >= 90cm sleeping width
+ * (hidden for narrower widths like 76cm / 80cm and on EU/US storefronts).
+ */
+export function isCabinetEligibleSize(itemOrProduct, sizeStr = null, locale = "en") {
+  if (!isCabinetSupportedLocale(locale)) return false;
   const widthCm = extractBedSleepingWidthCm(itemOrProduct, sizeStr);
   return Boolean(widthCm && widthCm >= 90);
 }
@@ -614,10 +699,11 @@ export function isCabinetEligibleSize(itemOrProduct, sizeStr = null) {
 /**
  * Calculate Integrated MORPHY™ Cabinet add-on surcharge.
  * Always matches the bed's active base price so Bed + Cabinet = 2 × bed price
- * (e.g., 999 bed -> 999 surcharge = 1998 total). Returns 0 when width < 90cm.
+ * (e.g., 999 bed -> 999 surcharge = 1998 total). Returns 0 when width < 90cm
+ * or on non-UK locales.
  */
-export function calculateCabinetPrice(itemOrProduct, orientationStr = null, sizeStr = null, baseBedPrice = null) {
-  if (!isCabinetEligibleSize(itemOrProduct, sizeStr)) {
+export function calculateCabinetPrice(itemOrProduct, orientationStr = null, sizeStr = null, baseBedPrice = null, locale = "en") {
+  if (!isCabinetEligibleSize(itemOrProduct, sizeStr, locale)) {
     return 0;
   }
   const base = Number(baseBedPrice);
@@ -659,7 +745,9 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
   const duplicates = (allVariants || []).filter(
     (v) =>
       (v.color || v.name || "").toLowerCase().replace(/[^a-z]/g, "") ===
-      (variant.color || variant.name || "").toLowerCase().replace(/[^a-z]/g, "")
+      (variant.color || variant.name || "")
+        .toLowerCase()
+        .replace(/[^a-z]/g, ""),
   );
   if (duplicates.length > 1 && variant.sku) {
     const skuCode = variant.sku.split("-")[0] || variant.sku;
@@ -694,11 +782,7 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
     topHex = "#C19A6B";
   else if (s.includes("dark grey") || s.includes("dark gray"))
     topHex = "#4A4A4A";
-  else if (
-    s.includes("grey") ||
-    s.includes("gray") ||
-    s.includes("light grey")
-  )
+  else if (s.includes("grey") || s.includes("gray") || s.includes("light grey"))
     topHex = "#8A8A8A";
   else if (s.includes("blue")) topHex = "#1E3A8A";
   else if (s.includes("khaki")) topHex = "#BDB76B";
@@ -737,6 +821,3 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
 }
 
 export { findProductBySlug, getProductVariants };
-
-
-

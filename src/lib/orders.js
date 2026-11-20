@@ -352,10 +352,10 @@ export async function validateOrderTotals(
         );
       }
 
-      // Integrated Morphy cabinet surcharge if included (only eligible >= 90cm, doubles active bed price)
+      // Integrated Morphy cabinet surcharge if included (only UK `en` & >= 90cm, doubles active bed price)
       const isCabinetIncluded =
         Boolean(item.options?.cabinetIncluded) &&
-        isCabinetEligibleSize(prodSource || item, item.options?.size);
+        isCabinetEligibleSize(prodSource || item, item.options?.size, targetLocale);
       let cabinetSurcharge = 0;
       if (isCabinetIncluded) {
         cabinetSurcharge = calculateCabinetPrice(
@@ -363,6 +363,7 @@ export async function validateOrderTotals(
           item.options?.orientation,
           item.options?.size,
           finalPrice,
+          targetLocale,
         );
         normalizedOptions.cabinetIncluded = true;
         normalizedOptions.cabinetPrice = cabinetSurcharge;

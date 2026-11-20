@@ -1620,7 +1620,7 @@ export default function ProductDetailPage() {
         (productSlug || "").toLowerCase().includes("integrated")),
   );
   const canSelectCabinet = Boolean(
-    isIntegratedMorphy && isCabinetEligibleSize(displayProduct, productSize),
+    isIntegratedMorphy && isCabinetEligibleSize(displayProduct, productSize, locale),
   );
 
   useEffect(() => {
@@ -1748,6 +1748,7 @@ export default function ProductDetailPage() {
         productFormat,
         productSize,
         currentPrice,
+        locale,
       )
     : 0;
   const sofaSurcharge = isMorphyBed && sofaIncluded ? sofaPriceValue : 0;
