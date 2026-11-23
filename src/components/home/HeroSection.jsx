@@ -6,7 +6,7 @@ import { IconEyeCheck } from "@tabler/icons-react";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/context/LocaleContext";
 import { usePromotions } from "@/context/PromotionsContext";
-import { getLocalizedCampaignField } from "@/lib/promotions";
+import { getLocalizedCampaignField, normalizeHexColor } from "@/lib/promotions";
 
 export function HeroSection() {
   const { t, locale, localizedHref } = useLocale();
@@ -134,6 +134,8 @@ export function HeroSection() {
       : null;
 
   const badge = hasPromo ? getLocalizedCampaignField(activeHero.hero_banner, "badge", locale) : "";
+  const badgeBgColor = normalizeHexColor(activeHero?.hero_banner?.badge_bg_color, "#2D5A27");
+  const badgeTextColor = normalizeHexColor(activeHero?.hero_banner?.badge_text_color, "#FFFFFF");
   const headline = hasPromo
     ? getLocalizedCampaignField(activeHero.hero_banner, "headline", locale)
     : t("home.heroTitle", "Modular Murphy Beds");
@@ -209,7 +211,10 @@ export function HeroSection() {
 
         {/* Promotion Badge (e.g. Weekend Flash Sale • 15% OFF) */}
         {badge && (
-          <div className="mb-4 inline-block px-3.5 py-1 rounded-full bg-[#2D5A27] text-white text-xs sm:text-sm font-semibold tracking-wide backdrop-blur-sm shadow-sm">
+          <div
+            style={{ backgroundColor: badgeBgColor, color: badgeTextColor }}
+            className="mb-4 inline-block px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide backdrop-blur-sm shadow-sm"
+          >
             {badge}
           </div>
         )}

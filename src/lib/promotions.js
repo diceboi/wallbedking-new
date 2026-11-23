@@ -3,6 +3,23 @@ import defaultCampaigns from "@/data/promotional_campaigns.json";
 const SETTINGS_KEY = "promotional_campaigns";
 
 /**
+ * Validates and normalizes a CSS hex color string (#RGB or #RRGGBB) to #RRGGBB.
+ * Returns `fallback` when the input is empty or invalid.
+ */
+export function normalizeHexColor(value, fallback = "#2D5A27") {
+  if (typeof value !== "string") return fallback;
+  const raw = value.trim().replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(raw)) {
+    const expanded = raw.split("").map((ch) => ch + ch).join("");
+    return `#${expanded.toUpperCase()}`;
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(raw)) {
+    return `#${raw.toUpperCase()}`;
+  }
+  return fallback;
+}
+
+/**
  * Checks whether Supabase is configured in the environment.
  */
 function getSupabaseCredentials() {

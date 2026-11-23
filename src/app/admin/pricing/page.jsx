@@ -88,6 +88,8 @@ export default function AdminPricingPage() {
       hero_banner: {
         enabled: true,
         badge: "Flash Sale • 15% OFF",
+        badge_bg_color: "#2D5A27",
+        badge_text_color: "#FFFFFF",
         headline: "Save 15% On Space-Saving Furniture",
         subtitle: "Premium foldaway wall beds, multi-functional tables and modular living solutions at exclusive prices.",
         cta_text: "Explore Deals",

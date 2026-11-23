@@ -5,7 +5,7 @@ import Link from "next/link";
 import { IconX, IconArrowRight, IconEyeCheck } from "@tabler/icons-react";
 import { usePromotions } from "@/context/PromotionsContext";
 import { useLocale } from "@/context/LocaleContext";
-import { getLocalizedCampaignField } from "@/lib/promotions";
+import { getLocalizedCampaignField, normalizeHexColor } from "@/lib/promotions";
 
 export function TopAnnouncementBar() {
   const { topBarCampaign } = usePromotions();
@@ -42,8 +42,8 @@ export function TopAnnouncementBar() {
 
   if (!barText) return null;
 
-  const bgColor = top_bar.bg_color || "#2D5A27";
-  const textColor = top_bar.text_color || "#FFFFFF";
+  const bgColor = normalizeHexColor(top_bar.bg_color, "#2D5A27");
+  const textColor = normalizeHexColor(top_bar.text_color, "#FFFFFF");
   const targetLink = top_bar.link ? localizedHref(top_bar.link) : null;
 
   const handleDismiss = (e) => {
