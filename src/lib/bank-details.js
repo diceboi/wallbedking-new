@@ -1,7 +1,7 @@
 /**
  * Centralized Bank Account Details and Multilingual Reference Instructions
- * - UK (GBP / en): IZN LTD / HSBC BANK PLC
- * - EU (EUR / de, fr, it, es, por): WALL BED KING GmbH / FINOM PAYMENTS
+ * - UK & US (GBP / USD): IZN LTD / HSBC
+ * - All other locales / EU (EUR / de, fr, it, es, por, etc.): WALL BED KING GmbH / Deutsche Bank
  */
 
 export const UK_BANK_DETAILS = {
@@ -22,19 +22,19 @@ export const EU_BANK_DETAILS = {
   region: "EU",
   isUkAccount: false,
   accountName: "WALL BED KING GmbH",
-  bankName: "FINOM PAYMENTS",
-  bic: "FNOMDEB2",
-  iban: "DE96100180000171952161",
-  ibanFormatted: "DE96 1001 8000 0171 9521 61",
+  bankName: "Deutsche Bank",
+  bic: "DEUTDEMM750",
+  iban: "DE38750700130367983400",
+  ibanFormatted: "DE38 7507 0013 0367 9834 00",
   sortCode: null,
-  accountNumber: null,
+  accountNumber: "227 3679834 00",
   bankAddress: "Unterkaining 2, Tiefenbach, 94113, DEUTSCHLAND",
 };
 
 // Backwards-compatible default export (UK account)
 export const BANK_DETAILS = UK_BANK_DETAILS;
 
-const EU_BANK_LOCALES = new Set(["de", "fr", "it", "es", "por", "pt"]);
+const UK_AND_US_BANK_LOCALES = new Set(["en", "en_uk", "gb", "us", "en_us"]);
 
 export function getBankDetails(locale = "en", currency = null) {
   const normLocale = String(locale || "en")
@@ -42,7 +42,7 @@ export function getBankDetails(locale = "en", currency = null) {
     .trim();
   const normCurrency = currency ? String(currency).toUpperCase().trim() : "";
 
-  if (EU_BANK_LOCALES.has(normLocale) || normCurrency === "EUR") {
+  if (normCurrency === "EUR" || !UK_AND_US_BANK_LOCALES.has(normLocale)) {
     return EU_BANK_DETAILS;
   }
   return UK_BANK_DETAILS;

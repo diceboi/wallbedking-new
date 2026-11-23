@@ -6,6 +6,68 @@ import { getPaymentConfig } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
+async function verifyPayPalOrderWithApi(paypalOrderId, paymentConfig) {
+  const clientId = paymentConfig?.paypalClientId;
+  const secretKey = paymentConfig?.paypalSecretKey;
+  if (!paypalOrderId || !clientId || !secretKey) {
+    return { skipped: true };
+  }
+
+  try {
+    const baseUrl =
+      process.env.PAYPAL_MODE === "sandbox"
+        ? "https://api-m.sandbox.paypal.com"
+        : "https://api-m.paypal.com";
+    const auth = Buffer.from(`${clientId}:${secretKey}`).toString("base64");
+    const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+
+    if (!tokenRes.ok) {
+      console.warn(`[PayPal Capture] OAuth token check failed (${tokenRes.status})`);
+      return { skipped: true };
+    }
+    const { access_token: accessToken } = await tokenRes.json();
+    if (!accessToken) return { skipped: true };
+
+    const orderRes = await fetch(
+      `${baseUrl}/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (orderRes.status === 404 || orderRes.status === 422) {
+      return {
+        verified: false,
+        fatal: true,
+        reason: `PayPal order ${paypalOrderId} not found (${orderRes.status})`,
+      };
+    }
+    if (!orderRes.ok) {
+      console.warn(`[PayPal Capture] Order lookup returned ${orderRes.status}`);
+      return { skipped: true };
+    }
+
+    const orderJson = await orderRes.json();
+    const pu = orderJson?.purchase_units?.[0];
+    const capture = pu?.payments?.captures?.[0] || null;
+    return {
+      verified: true,
+      orderStatus: String(orderJson?.status || "").toUpperCase(),
+      capture,
+    };
+  } catch (err) {
+    console.warn("[PayPal Capture] Server-side PayPal API verification error:", err.message);
+    return { skipped: true };
+  }
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -35,7 +97,61 @@ export async function POST(request) {
     const paymentConfig = getPaymentConfig(effectiveLocale, currency);
     const effectiveCurrency = paymentConfig.currency;
     const effectiveEntity = companyEntity || paymentConfig.entity;
-    console.log(`[PayPal Capture] Finalizing payment for order: ${orderId || "new"} (PayPal TX: ${paypalOrderId}, Entity: ${effectiveEntity}, Currency: ${effectiveCurrency})`);
+
+    // Server-side verification when PayPal secret is configured for this entity
+    const apiVerification = await verifyPayPalOrderWithApi(paypalOrderId, paymentConfig);
+    if (apiVerification?.fatal) {
+      console.error(`[PayPal Capture] Rejected unverified order: ${apiVerification.reason}`);
+      return NextResponse.json(
+        { success: false, error: "PayPal transaction could not be verified." },
+        { status: 400 }
+      );
+    }
+
+    const authoritativeCapture = apiVerification?.capture || captureData || null;
+    const captureTxId = authoritativeCapture?.id || null;
+    const captureStatus = String(
+      authoritativeCapture?.status || apiVerification?.orderStatus || ""
+    ).toUpperCase();
+
+    // Never mark declined/failed/voided PayPal captures as paid
+    if (["DECLINED", "FAILED", "VOIDED", "DENIED"].includes(captureStatus)) {
+      console.warn(`[PayPal Capture] Payment declined/failed (${captureStatus}) for order ${orderId || paypalOrderId}`);
+      if (orderId && supabaseAdmin) {
+        await supabaseAdmin
+          .from("orders")
+          .update({
+            payment_status: "failed",
+            admin_notes: `[Entity: ${effectiveEntity}] [Locale: ${effectiveLocale}] [PayPalOrder: ${paypalOrderId || "N/A"}] [CaptureStatus: ${captureStatus}]`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", orderId);
+      }
+      return NextResponse.json(
+        { success: false, error: `PayPal payment was not completed (${captureStatus}).` },
+        { status: 402 }
+      );
+    }
+
+    const hasConfirmedCapture =
+      captureStatus === "COMPLETED" && (Boolean(captureTxId) || Boolean(apiVerification?.verified));
+    const isPendingCapture = captureStatus === "PENDING" || !hasConfirmedCapture;
+    const resolvedOrderStatus = isPendingCapture ? "pending" : "paid";
+    const resolvedPaymentStatus = isPendingCapture ? "pending" : "paid";
+    // Prioritize actual PayPal Capture Transaction ID (shown in PayPal Activity) over Checkout Order ID
+    const paymentTxId = captureTxId || paypalOrderId || null;
+    const notesParts = [
+      `[Entity: ${effectiveEntity}]`,
+      `[Locale: ${effectiveLocale}]`,
+      paypalOrderId ? `[PayPalOrder: ${paypalOrderId}]` : null,
+      captureStatus && captureStatus !== "COMPLETED" ? `[CaptureStatus: ${captureStatus}]` : null,
+      !hasConfirmedCapture && !captureStatus ? `[UnverifiedCapture]` : null,
+    ].filter(Boolean);
+    const builtAdminNotes = notesParts.join(" ");
+
+    console.log(
+      `[PayPal Capture] Finalizing payment for order: ${orderId || "new"} (Capture TX: ${captureTxId || "N/A"}, PayPal Order: ${paypalOrderId || "N/A"}, Status: ${captureStatus || "N/A"}, Entity: ${effectiveEntity}, Currency: ${effectiveCurrency})`
+    );
 
     let finalOrder = null;
 
@@ -51,21 +167,17 @@ export async function POST(request) {
         order = existingOrder;
       }
 
-      const paymentTxId = paypalOrderId || captureData?.id || null;
-
       if (order) {
-        // 2a. Update existing order to paid
+        // 2a. Update existing order with verified capture status
         const updatePayload = {
-          status: "paid",
-          payment_status: "paid",
+          status: resolvedOrderStatus,
+          payment_status: resolvedPaymentStatus,
           payment_method: "paypal",
           payment_id: paymentTxId,
           updated_at: new Date().toISOString(),
         };
         if (effectiveCurrency) updatePayload.currency = effectiveCurrency;
-        if (effectiveEntity || locale) {
-          updatePayload.admin_notes = `[Entity: ${effectiveEntity}] [Locale: ${effectiveLocale}]`;
-        }
+        updatePayload.admin_notes = builtAdminNotes;
         if (!order.user_id && customer?.userId) {
           updatePayload.user_id = customer.userId;
         }
@@ -111,8 +223,8 @@ export async function POST(request) {
         const newOrderRecord = {
           id: newOrderId,
           user_id: customer?.userId || null,
-          status: "paid",
-          payment_status: "paid",
+          status: resolvedOrderStatus,
+          payment_status: resolvedPaymentStatus,
           payment_method: "paypal",
           payment_id: paymentTxId,
           customer_name: customerName,
@@ -124,7 +236,7 @@ export async function POST(request) {
           currency: effectiveCurrency,
           subtotal: orderAmount,
           total_amount: orderAmount,
-          admin_notes: `[Entity: ${effectiveEntity}] [Locale: ${effectiveLocale}]`,
+          admin_notes: builtAdminNotes,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -141,8 +253,8 @@ export async function POST(request) {
         finalOrder = newOrderRecord;
       }
 
-      // 3. Decrement stock for ordered items
-      if (finalOrder && Array.isArray(finalOrder.items)) {
+      // 3. Decrement stock only when capture is confirmed COMPLETED
+      if (hasConfirmedCapture && finalOrder && Array.isArray(finalOrder.items)) {
         for (const it of finalOrder.items) {
           const rawId = it.rawId || it.id;
           const qty = Number(it.quantity) || 1;
@@ -168,9 +280,9 @@ export async function POST(request) {
         }
       }
 
-      // 4. Send email confirmation to customer & alert to admin (support@wallbedking.com)
+      // 4. Send email confirmation to customer & admin when COMPLETED; alert admin only if PENDING/unverified
       if (finalOrder) {
-        if (finalOrder.customer_email) {
+        if (hasConfirmedCapture && finalOrder.customer_email) {
           console.log(`[PayPal Capture] Dispatching order confirmation email to ${finalOrder.customer_email} (${effectiveLocale})...`);
           try {
             await sendOrderConfirmationEmail(finalOrder, effectiveLocale);
@@ -191,7 +303,8 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       orderId: finalOrder?.id || orderId || "WBK-UNKNOWN",
-      status: "paid",
+      paymentId: paymentTxId,
+      status: resolvedPaymentStatus,
     });
   } catch (err) {
     console.error("[PayPal Capture Route Exception]", err);

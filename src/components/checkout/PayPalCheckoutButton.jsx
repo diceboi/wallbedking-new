@@ -358,6 +358,13 @@ useEffect(() => {
                       try {
                         const orderData = await actions.order.capture();
                         const pu = orderData?.purchase_units?.[0] || {};
+                        const captureObj = pu.payments?.captures?.[0] || null;
+                        const captureStatus = String(captureObj?.status || orderData?.status || "").toUpperCase();
+
+                        if (["DECLINED", "FAILED", "VOIDED", "DENIED"].includes(captureStatus)) {
+                          throw new Error(`PayPal payment was declined or not completed (${captureStatus}).`);
+                        }
+
                         const payer = orderData?.payer || {};
                         const shipping = pu.shipping || {};
                         const current = cartRef.current;
@@ -472,14 +479,15 @@ useEffect(() => {
                         }
 
                         // 2. Finalize payment, update DB status, and trigger confirmation email
+                        let fatalVerificationError = null;
                         try {
-                          await fetch("/api/checkout/paypal/capture", {
+                          const captureRes = await fetch("/api/checkout/paypal/capture", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                               orderId: confirmedOrderId,
                               paypalOrderId: orderData.id,
-                              captureData: pu.payments?.captures?.[0],
+                              captureData: captureObj,
                               customer: {
                                 email: effectiveEmail,
                                 name: effectiveFullName,
@@ -498,14 +506,21 @@ useEffect(() => {
                               companyEntity: current.paymentConfig.entity,
                             }),
                           });
+                          const captureJson = await captureRes.json().catch(() => null);
+                          if (captureRes.status === 400 || captureRes.status === 402 || captureJson?.success === false) {
+                            fatalVerificationError = new Error(captureJson?.error || "Payment verification failed.");
+                          }
                         } catch (errCapture) {
                           console.warn("PayPal capture sync notice:", errCapture);
+                        }
+                        if (fatalVerificationError) {
+                          throw fatalVerificationError;
                         }
 
                         // 3. Redirect to thank you page in customer's selected language
                         // Parameters are standard UTF-8 URL encoded via URLSearchParams (NO base64 / btoa)
                         const params = new URLSearchParams({
-                          tx: orderData.id || "",
+                          tx: captureObj?.id || orderData.id || "",
                           order_id: confirmedOrderId || "",
                           cartIdFORM: current.customCartId || "",
                           amtFORM: pu.amount?.value || String(current.total),
