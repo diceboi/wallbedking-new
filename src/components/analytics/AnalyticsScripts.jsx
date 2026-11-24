@@ -1,65 +1,53 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { useLocale } from "@/context/LocaleContext";
 import {
-  GTM_ID_EU,
-  GTM_ID_US,
   META_PIXEL_ID,
   getGtmContainerId,
+  trackPageView,
 } from "@/lib/analytics";
 
 export function AnalyticsScripts() {
   const { locale } = useLocale();
+  const pathname = usePathname();
+  const hasTrackedInitialRef = useRef(false);
   const gtmId = getGtmContainerId(locale);
+
+  // Track client-side SPA route changes (initial PageView is fired by the inline Pixel script)
+  useEffect(() => {
+    if (!hasTrackedInitialRef.current) {
+      hasTrackedInitialRef.current = true;
+      return;
+    }
+    if (pathname) {
+      trackPageView(pathname);
+    }
+  }, [pathname]);
 
   return (
     <>
-      {/* 1. Google Consent Mode v2 & DataLayer Early Initialization */}
-      <Script id="wbk-consent-mode-init" strategy="beforeInteractive">
+      {/* 1. Google Tag Manager (official bootstrap with gtm.start & event: 'gtm.js') */}
+      <Script id={`wbk-gtm-${gtmId}`} strategy="afterInteractive">
         {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-
-          // Check stored consent
-          var storedConsent = null;
-          try {
-            var raw = localStorage.getItem('wbk_cookie_consent_v1');
-            if (raw) storedConsent = JSON.parse(raw);
-          } catch(e) {}
-
-          var isAnalytics = storedConsent && storedConsent.analytics === true;
-          var isMarketing = storedConsent && storedConsent.marketing === true;
-
-          // Google Consent Mode v2 default
-          gtag('consent', 'default', {
-            'ad_storage': isMarketing ? 'granted' : 'denied',
-            'ad_user_data': isMarketing ? 'granted' : 'denied',
-            'ad_personalization': isMarketing ? 'granted' : 'denied',
-            'analytics_storage': isAnalytics ? 'granted' : 'denied',
-            'wait_for_update': 500
-          });
-
-          // Meta Pixel early consent queue
-          window.fbq = window.fbq || function(){
-            (window.fbq.q = window.fbq.q || []).push(arguments);
-          };
-          if (!isMarketing) {
-            window.fbq('consent', 'revoke');
-          } else {
-            window.fbq('consent', 'grant');
-          }
+          (function(w,d,s,l,i){
+            w.__wbkGtmLoaded = w.__wbkGtmLoaded || {};
+            if (w.__wbkGtmLoaded[i]) return;
+            w.__wbkGtmLoaded[i] = true;
+            w[l]=w[l]||[];
+            w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+            var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+            j.async=true;
+            j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+            f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','${gtmId}');
         `}
       </Script>
 
-      {/* 2. Google Tag Manager */}
-      <Script
-        id="wbk-gtm"
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtm.js?id=${gtmId}`}
-      />
-
-      {/* 3. Meta (Facebook) Pixel */}
+      {/* 2. Meta (Facebook) Pixel */}
       <Script id="wbk-meta-pixel" strategy="afterInteractive">
         {`
           !function(f,b,e,v,n,t,s)
@@ -70,12 +58,21 @@ export function AnalyticsScripts() {
           t.src=v;s=b.getElementsByTagName(e)[0];
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
+
+          var storedConsent = null;
+          try {
+            var raw = localStorage.getItem('wbk_cookie_consent_v1');
+            if (raw) storedConsent = JSON.parse(raw);
+          } catch(e) {}
+          var isMarketing = storedConsent && storedConsent.marketing === true;
+
+          fbq('consent', isMarketing ? 'grant' : 'revoke');
           fbq('init', '${META_PIXEL_ID}');
           fbq('track', 'PageView');
         `}
       </Script>
 
-      {/* 4. Noscript Fallbacks */}
+      {/* 3. Noscript Fallbacks */}
       <noscript>
         <iframe
           src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}

@@ -31,7 +31,7 @@ export function buildStripeSuccessUrl(baseUrl, { orderId, cartId } = {}) {
  */
 export function getConfiguredStripeClients(preferredLocale = "en") {
   const norm = String(preferredLocale || "en").toLowerCase();
-  const preferUk = norm === "en" || norm === "en_uk" || norm === "gb" || norm === "us" || norm === "en_us";
+  const preferUk = norm === "en" || norm === "en_uk" || norm === "gb";
 
   const ukKey = (process.env.STRIPE_SECRET_KEY_UK || "").trim();
   const euKey = (
@@ -92,12 +92,12 @@ export function normalizeStripeSession(s, matchedEntity = null) {
     customer_phone: s.customer_details?.phone || "",
     customer_address: addr
       ? {
-          line1: addr.line1 || "",
-          line2: addr.line2 || "",
-          city: addr.city || "",
-          postal_code: addr.postal_code || "",
-          country: addr.country || "",
-        }
+        line1: addr.line1 || "",
+        line2: addr.line2 || "",
+        city: addr.city || "",
+        postal_code: addr.postal_code || "",
+        country: addr.country || "",
+      }
       : null,
     cart_id: s.metadata?.cart_id || s.metadata?.cartId || "",
     order_id: s.metadata?.order_id || "",
@@ -119,9 +119,9 @@ export async function retrieveStripeCheckoutSession({
 } = {}) {
   const cleanSessionId =
     sessionId &&
-    typeof sessionId === "string" &&
-    !sessionId.includes("CHECKOUT_SESSION_ID") &&
-    sessionId.startsWith("cs_")
+      typeof sessionId === "string" &&
+      !sessionId.includes("CHECKOUT_SESSION_ID") &&
+      sessionId.startsWith("cs_")
       ? sessionId.trim()
       : "";
 
@@ -320,8 +320,8 @@ async function decrementOrderStockOnce(items) {
       typeof rawId === "number"
         ? rawId
         : typeof rawId === "string"
-        ? parseInt(rawId.replace(/^wbk-/i, ""), 10)
-        : NaN;
+          ? parseInt(rawId.replace(/^wbk-/i, ""), 10)
+          : NaN;
     const qty = Math.max(1, Number(it.quantity) || 1);
 
     if (Number.isFinite(numericId) && numericId > 0) {
@@ -367,7 +367,7 @@ export async function fulfillPaidStripeSession({
   const effectiveLocale = (
     sessionData.locale ||
     fallbackLocale ||
-    (sessionData.currency === "GBP" ? "en" : sessionData.currency === "USD" ? "us" : "de")
+    (sessionData.currency === "GBP" ? "en" : "de")
   ).toLowerCase();
 
   const paymentConfig = getPaymentConfig(effectiveLocale, sessionData.currency);
@@ -660,18 +660,11 @@ export async function fulfillPaidStripeSession({
   let emailSent = !newlyPaid;
 
   if (newlyPaid) {
-    const isWholesaleOrder =
-      finalOrder.order_type === "wholesale" ||
-      finalOrder.shipping_address?.order_type === "wholesale" ||
-      String(finalOrder.admin_notes || "").includes("[WHOLESALE]");
+    // 1. Decrement product stock
+    await decrementOrderStockOnce(finalOrder.items);
 
-    // 1. Decrement retail product stock (NEVER decrement retail stock for B2B wholesale orders)
-    if (!isWholesaleOrder) {
-      await decrementOrderStockOnce(finalOrder.items);
-    }
-
-    // 2. Meta Conversions API (CAPI) server-side purchase event (retail storefront only)
-    if (!isWholesaleOrder) try {
+    // 2. Meta Conversions API (CAPI) server-side purchase event
+    try {
       const nameParts = (finalOrder.customer_name || "").trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";

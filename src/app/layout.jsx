@@ -1,4 +1,5 @@
 import { Poppins } from "next/font/google";
+import Script from "next/script";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
@@ -87,6 +88,31 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
       <body className="min-h-screen flex flex-col bg-wbk-white">
+        {/* Google Consent Mode v2 & DataLayer Early Initialization (must live in RootLayout for beforeInteractive) */}
+        <Script id="wbk-consent-mode-init" strategy="beforeInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+            var gtag = window.gtag;
+
+            var storedConsent = null;
+            try {
+              var raw = localStorage.getItem('wbk_cookie_consent_v1');
+              if (raw) storedConsent = JSON.parse(raw);
+            } catch(e) {}
+
+            var isAnalytics = storedConsent && storedConsent.analytics === true;
+            var isMarketing = storedConsent && storedConsent.marketing === true;
+
+            gtag('consent', 'default', {
+              'ad_storage': isMarketing ? 'granted' : 'denied',
+              'ad_user_data': isMarketing ? 'granted' : 'denied',
+              'ad_personalization': isMarketing ? 'granted' : 'denied',
+              'analytics_storage': isAnalytics ? 'granted' : 'denied',
+              'wait_for_update': 500
+            });
+          `}
+        </Script>
         <ScrollToTop />
         <AuthProvider>
           <PostHogProvider>
