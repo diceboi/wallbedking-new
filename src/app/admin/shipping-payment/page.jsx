@@ -45,6 +45,44 @@ export default function AdminShippingPaymentPage() {
   const [fromSupabase, setFromSupabase] = useState(false);
   const [dbTableMissing, setDbTableMissing] = useState(false);
   const [syncingToSupabase, setSyncingToSupabase] = useState(false);
+  const [wholesalePayments, setWholesalePayments] = useState({
+    bankTransfer: { enabled: true },
+    paypal: { enabled: false },
+    stripe: { enabled: false },
+  });
+  const [savingWholesalePay, setSavingWholesalePay] = useState(false);
+
+  const loadWholesalePayments = async () => {
+    try {
+      const res = await fetch(`/api/admin/wholesale/tiers?_t=${Date.now()}`, { cache: "no-store" });
+      const data = await res.json();
+      if (data?.success && data.paymentSettings) {
+        setWholesalePayments(data.paymentSettings);
+      }
+    } catch {}
+  };
+
+  const handleSaveWholesalePayments = async (nextPayments) => {
+    setWholesalePayments(nextPayments);
+    setSavingWholesalePay(true);
+    try {
+      const res = await fetch("/api/admin/wholesale/tiers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentSettings: nextPayments }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Wholesale (B2B) payment methods updated!");
+      } else {
+        showToast("error", data.error || "Failed to save wholesale payment settings.");
+      }
+    } catch {
+      showToast("error", "Network error saving wholesale payment settings.");
+    } finally {
+      setSavingWholesalePay(false);
+    }
+  };
 
   const showToast = (type, text) => {
     setToast({ type, text });
@@ -54,6 +92,7 @@ export default function AdminShippingPaymentPage() {
   // Load settings on mount
   useEffect(() => {
     fetchSettings();
+    loadWholesalePayments();
   }, []);
 
   const fetchSettings = async () => {
@@ -1446,6 +1485,71 @@ export default function AdminShippingPaymentPage() {
               <span>Symbol: {currencySymbol}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Wholesale (B2B) Payment Methods Section */}
+      <div className="bg-white border border-wbk-lightgrey p-6 space-y-4 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wbk-lightgrey/60 pb-3">
+          <div>
+            <h2 className="text-sm font-bold text-wbk-black uppercase tracking-wider">
+              Wholesale (B2B) Payment Methods
+            </h2>
+            <p className="text-xs text-wbk-brown mt-0.5">
+              Independent payment gateway switches for all <strong>/wholesale</strong> orders (net prices excl. VAT; shipping arranged separately).
+            </p>
+          </div>
+          <a
+            href="/admin/wholesale"
+            className="text-xs font-semibold text-wbk-green hover:underline shrink-0"
+          >
+            Manage Partner Tiers & Net Prices →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { key: "bankTransfer", label: "Bank Transfer / Proforma", desc: "Net B2B invoice & wire coordinates", icon: IconBuildingBank },
+            { key: "paypal", label: "PayPal Business", desc: "PayPal settlement for B2B orders", icon: IconBrandPaypal },
+            { key: "stripe", label: "Stripe / Corporate Card", desc: "Online card checkout for B2B orders", icon: IconCreditCard },
+          ].map((item) => {
+            const Icon = item.icon;
+            const enabled = Boolean(wholesalePayments?.[item.key]?.enabled);
+            return (
+              <div
+                key={item.key}
+                className={`p-4 border flex items-start justify-between gap-3 transition-all ${
+                  enabled ? "border-wbk-black bg-[#FBF9F8]" : "border-wbk-lightgrey bg-white opacity-75"
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <Icon size={18} className="text-wbk-black shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-wbk-black">{item.label}</div>
+                    <p className="text-[11px] text-wbk-brown mt-0.5">{item.desc}</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    disabled={savingWholesalePay}
+                    checked={enabled}
+                    onChange={() =>
+                      handleSaveWholesalePayments({
+                        ...wholesalePayments,
+                        [item.key]: {
+                          ...(wholesalePayments?.[item.key] || {}),
+                          enabled: !enabled,
+                        },
+                      })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-wbk-black" />
+                </label>
+              </div>
+            );
+          })}
         </div>
       </div>
 

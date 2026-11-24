@@ -109,6 +109,7 @@ export default function AdminOrdersPage() {
   const [stats, setStats] = useState({ total: 0, revenue: 0, pending: 0, paid: 0, shipped: 0 });
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterOrderType, setFilterOrderType] = useState("all"); // "all" | "retail" | "wholesale"
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -399,21 +400,45 @@ export default function AdminOrdersPage() {
       {/* Filter & Search Controls */}
       <div className="bg-white p-4 sm:p-5 border border-wbk-lightgrey/60 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Status Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
-          {["all", "paid", "processing", "shipped", "completed", "pending", "cancelled", "refunded"].map((st) => (
-            <button
-              key={st}
-              type="button"
-              onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-full capitalize font-medium transition-colors shrink-0 ${
-                filterStatus === st
-                  ? "bg-wbk-black text-white"
-                  : "bg-[#F4F2F0] text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/80"
-              }`}
-            >
-              {st}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-[#F4F2F0] p-1 rounded-full text-xs">
+            {[
+              { id: "all", label: "All Types" },
+              { id: "retail", label: "Retail" },
+              { id: "wholesale", label: "B2B Wholesale" },
+            ].map((ot) => (
+              <button
+                key={ot.id}
+                type="button"
+                onClick={() => setFilterOrderType(ot.id)}
+                className={`px-2.5 py-1 rounded-full font-semibold transition-colors cursor-pointer ${
+                  filterOrderType === ot.id
+                    ? ot.id === "wholesale"
+                      ? "bg-emerald-700 text-white"
+                      : "bg-wbk-black text-white"
+                    : "text-wbk-brown hover:text-wbk-black"
+                }`}
+              >
+                {ot.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
+            {["all", "paid", "processing", "shipped", "completed", "pending", "cancelled", "refunded"].map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() => setFilterStatus(st)}
+                className={`px-3 py-1.5 rounded-full capitalize font-medium transition-colors shrink-0 ${
+                  filterStatus === st
+                    ? "bg-wbk-black text-white"
+                    : "bg-[#F4F2F0] text-wbk-brown hover:text-wbk-black hover:bg-wbk-lightgrey/80"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -468,19 +493,40 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-wbk-lightgrey/60">
-                {orders.map((ord) => {
+                {orders
+                  .filter((ord) => {
+                    const isWholesaleOrder =
+                      ord.order_type === "wholesale" ||
+                      ord.shipping_address?.order_type === "wholesale" ||
+                      String(ord.admin_notes || "").includes("[WHOLESALE]");
+                    if (filterOrderType === "wholesale") return isWholesaleOrder;
+                    if (filterOrderType === "retail") return !isWholesaleOrder;
+                    return true;
+                  })
+                  .map((ord) => {
                   const badge = STATUS_BADGES[ord.status] || STATUS_BADGES.pending;
                   const firstItem = ord.items?.[0];
                   const dateParts = formatOrderDateParts(ord.created_at);
                   const ordSymbol = getCurrencySymbol(ord.currency);
                   const ordMarket = extractOrderMarketMeta(ord);
+                  const isWholesaleOrder =
+                    ord.order_type === "wholesale" ||
+                    ord.shipping_address?.order_type === "wholesale" ||
+                    String(ord.admin_notes || "").includes("[WHOLESALE]");
 
                   return (
                     <tr key={ord.id} className="hover:bg-[#FAF8F5] transition-colors">
                       <td className="p-4 font-mono font-bold text-wbk-black whitespace-nowrap">
-                        <span className="block">{ord.id}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span>{ord.id}</span>
+                          {isWholesaleOrder && (
+                            <span className="inline-block px-1.5 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300 rounded">
+                              B2B
+                            </span>
+                          )}
+                        </div>
                         <span className="inline-block text-[10px] font-sans font-normal text-wbk-brown">
-                          {ordMarket.locale} • {ordMarket.currency}
+                          {ordMarket.locale} • {ordMarket.currency}{isWholesaleOrder ? " • Net (Excl. VAT)" : ""}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">

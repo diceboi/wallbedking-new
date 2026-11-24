@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { triggerRestockNotification } from "@/lib/restock";
 import { revalidateProductsCache } from "@/lib/products-db";
+import { saveWholesaleProductPrice } from "@/lib/wholesale-server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,7 +31,9 @@ const ALLOWED_SUPABASE_COLUMNS = new Set([
   "extended_description_en", "extended_description_us", "extended_description_de", "extended_description_fr", "extended_description_es", "extended_description_por", "extended_description_pt", "extended_description_it",
   "installation_manual", "installation_video",
   "width_us", "length_us", "size_us",
-  "is_unlisted"
+  "is_unlisted",
+  "wholesale_hk_usd", "wholesale_uk_gbp", "wholesale_eu_eur", "wholesale_us_usd",
+  "container_qty", "wholesale_visible"
 ]);
 
 const NUMERIC_COLUMNS = new Set([
@@ -41,6 +44,8 @@ const NUMERIC_COLUMNS = new Set([
   "price_gbp", "price_euro", "price_usd", "sale_percent",
   "sale_fix_gbp", "sale_fix_euro", "sale_fix_usd",
   "sale_price_gbp", "sale_price_euro", "sale_price_usd",
+  "wholesale_hk_usd", "wholesale_uk_gbp", "wholesale_eu_eur", "wholesale_us_usd",
+  "container_qty",
 ]);
 
 export async function PATCH(request, { params }) {
@@ -190,7 +195,24 @@ export async function PATCH(request, { params }) {
     const updated = await res.json();
     const finalProduct = { ...body, ...(updated[0] || updated), id: Number(id) };
 
-    // Sync changes to local products-catalog.json fallback
+    // Persist confidential wholesale fields via wholesale store (and native columns when present)
+    const hasWholesaleUpdate = [
+      "wholesale_hk_usd",
+      "wholesale_uk_gbp",
+      "wholesale_eu_eur",
+      "wholesale_us_usd",
+      "container_qty",
+      "wholesale_visible",
+    ].some((k) => body[k] !== undefined);
+    if (hasWholesaleUpdate) {
+      try {
+        await saveWholesaleProductPrice(id, body);
+      } catch (wErr) {
+        console.warn("[Admin PATCH] Wholesale price sync notice:", wErr.message);
+      }
+    }
+
+    // Sync public changes to local products-catalog.json fallback (NEVER write confidential wholesale prices to public JSON)
     try {
       const fs = await import("fs/promises");
       const path = await import("path");
@@ -198,7 +220,14 @@ export async function PATCH(request, { params }) {
       const rawCatalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
       const pIdx = rawCatalog.findIndex((p) => p.id === Number(id));
       if (pIdx !== -1) {
-        rawCatalog[pIdx] = { ...rawCatalog[pIdx], ...finalProduct };
+        const {
+          wholesale_hk_usd: _hk,
+          wholesale_uk_gbp: _uk,
+          wholesale_eu_eur: _eu,
+          wholesale_us_usd: _us,
+          ...publicFinalProduct
+        } = finalProduct;
+        rawCatalog[pIdx] = { ...rawCatalog[pIdx], ...publicFinalProduct };
         await fs.writeFile(catalogPath, JSON.stringify(rawCatalog, null, 2), "utf8");
       }
     } catch (catalogErr) {

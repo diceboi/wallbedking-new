@@ -35,6 +35,12 @@ import {
   IconAlertCircle,
   IconArrowRight,
   IconEyeCheck,
+  IconLock,
+  IconLogin,
+  IconBox,
+  IconPlus,
+  IconMinus,
+  IconBuildingStore,
 } from "@tabler/icons-react";
 import {
   findProductBySlug,
@@ -45,6 +51,9 @@ import {
   isProductVisible,
 } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import { useWholesale } from "@/context/WholesaleContext";
+import { formatWholesaleMoney } from "@/lib/wholesale-constants";
 import { useLocale } from "@/context/LocaleContext";
 import { usePromotions } from "@/context/PromotionsContext";
 import { useProductCatalog } from "@/context/ProductCatalogContext";
@@ -212,10 +221,23 @@ export function parseTableFinish(variant, index = 0, allVariants = []) {
   };
 }
 
-export default function ProductDetailPage() {
+export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
   const { locale, t, localizedHref } = useLocale();
   const { campaigns } = usePromotions();
+  const { user, openUserDrawer } = useAuth();
   const {
+    isWholesaleRoute,
+    authorized: wholesaleAuthorized,
+    partner: wholesalePartner,
+    prices: wholesalePrices,
+    addWholesaleItem,
+  } = useWholesale();
+  const isWholesale = Boolean(isWholesaleMode || isWholesaleRoute);
+  const [wholesaleUnitQty, setWholesaleUnitQty] = useState(1);
+  const [wholesaleContainerQty, setWholesaleContainerQty] = useState(1);
+  const [wholesaleAddedType, setWholesaleAddedType] = useState(null);
+  const {
+    rawCatalog,
     findProductBySlug: catalogFindBySlug,
     getProductVariants: catalogGetVariants,
   } = useProductCatalog();
@@ -597,18 +619,28 @@ export default function ProductDetailPage() {
     return null;
   }, []);
 
-  // Lookup active product (flagship or specific)
+  // Lookup active product (flagship or specific; in wholesale mode also allow direct rawCatalog ID/SKU/slug match)
   const activeProduct = useMemo(() => {
     const lookup = catalogFindBySlug || findProductBySlug;
+    if (isWholesale && Array.isArray(rawCatalog) && rawCatalog.length > 0) {
+      const exactRaw = rawCatalog.find(
+        (p) =>
+          String(p.slug || "") === String(productSlug) ||
+          String(p.id) === String(productSlug) ||
+          String(p.sku || "").toLowerCase() === String(productSlug).toLowerCase(),
+      );
+      if (exactRaw) return exactRaw;
+    }
     return (
       lookup(categorySlug, productSlug) ||
       findProductBySlug(categorySlug, productSlug) ||
       getFallbackProduct(categorySlug, productSlug)
     );
-  }, [catalogFindBySlug, categorySlug, productSlug]);
+  }, [isWholesale, rawCatalog, catalogFindBySlug, categorySlug, productSlug]);
 
-  // Track Product View (GA4 view_item + Meta ViewContent)
+  // Track Product View (GA4 view_item + Meta ViewContent — retail only)
   useEffect(() => {
+    if (isWholesale) return;
     if (activeProduct && activeProduct.id) {
       const price = getProductPrice(activeProduct, locale, campaigns) || 0;
       const currency =
@@ -627,15 +659,16 @@ export default function ProductDetailPage() {
         currency,
       });
     }
-  }, [activeProduct?.id, locale]);
+  }, [isWholesale, activeProduct?.id, locale]);
 
   // Available variants for the family / category (all sizes for this flagship model)
   const familyVariants = useMemo(() => {
     const getVariants = catalogGetVariants || getProductVariants;
     const variants = getVariants(activeProduct);
-    let filtered = !locale
-      ? variants
-      : variants.filter((v) => isProductAvailableInLocale(v, locale));
+    let filtered =
+      isWholesale || !locale
+        ? variants
+        : variants.filter((v) => isProductAvailableInLocale(v, locale));
     if (
       activeProduct?.parent_category === "tables" ||
       activeProduct?.is_space_saving_table
@@ -646,7 +679,7 @@ export default function ProductDetailPage() {
       }
     }
     return filtered;
-  }, [catalogGetVariants, activeProduct, locale]);
+  }, [isWholesale, catalogGetVariants, activeProduct, locale]);
 
   // Derived options for dropdowns based on actual products in the family
   const isBedProduct =
@@ -1464,16 +1497,50 @@ export default function ProductDetailPage() {
 
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
-  const isAvailableInRegion = isProductAvailableInLocale(
-    displayProduct,
-    locale,
+  const currentWholesalePricing = useMemo(() => {
+    if (!isWholesale || !wholesaleAuthorized) return null;
+    return (
+      wholesalePrices[String(displayProduct?.id)] ||
+      wholesalePrices[String(activeProduct?.id)] ||
+      null
+    );
+  }, [isWholesale, wholesaleAuthorized, wholesalePrices, displayProduct?.id, activeProduct?.id]);
+
+  const handleWholesaleAdd = useCallback(
+    (orderUnit) => {
+      if (!currentWholesalePricing?.hasPrice) return;
+      const targetProd = displayProduct || activeProduct;
+      const qty = orderUnit === "container" ? wholesaleContainerQty : wholesaleUnitQty;
+      addWholesaleItem(targetProd, currentWholesalePricing, {
+        orderUnit,
+        quantity: qty,
+      });
+      setWholesaleAddedType(orderUnit);
+      setTimeout(
+        () => setWholesaleAddedType((prev) => (prev === orderUnit ? null : prev)),
+        1800,
+      );
+    },
+    [
+      currentWholesalePricing,
+      displayProduct,
+      activeProduct,
+      wholesaleContainerQty,
+      wholesaleUnitQty,
+      addWholesaleItem,
+    ],
   );
+
+  const isAvailableInRegion = isWholesale
+    ? true
+    : isProductAvailableInLocale(displayProduct, locale);
   const isPreview = Boolean(
     searchParams?.get("preview") === "1" ||
     searchParams?.get("preview") === "true" ||
     searchParams?.get("admin") === "1",
   );
   const isRegionallyUnavailable = Boolean(
+    !isWholesale &&
     !isPreview &&
     locale &&
     !isAvailableInRegion &&
@@ -1509,6 +1576,7 @@ export default function ProductDetailPage() {
   ]);
 
   const isOutOfStock = useMemo(() => {
+    if (isWholesale) return false;
     if (!isAvailableInRegion) return true;
     if (displayProduct?.isFallback || activeProduct?.isFallback) return true;
 
@@ -2710,17 +2778,25 @@ export default function ProductDetailPage() {
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
               <Link
-                href={localizedHref ? localizedHref("/products") : "/products"}
+                href={
+                  isWholesale
+                    ? localizedHref("/wholesale")
+                    : localizedHref
+                      ? localizedHref("/products")
+                      : "/products"
+                }
                 className="hover:text-wbk-black transition-colors"
               >
-                {t("nav.allWallBeds", "Products")}
+                {isWholesale ? "Wholesale" : t("nav.allWallBeds", "Products")}
               </Link>
               <span>/</span>
               <Link
                 href={
-                  localizedHref
-                    ? localizedHref(categoryBreadcrumbHref)
-                    : categoryBreadcrumbHref
+                  isWholesale
+                    ? localizedHref(`/wholesale?category=${categorySlug}`)
+                    : localizedHref
+                      ? localizedHref(categoryBreadcrumbHref)
+                      : categoryBreadcrumbHref
                 }
                 className="capitalize hover:text-wbk-black transition-colors"
               >
@@ -2765,7 +2841,14 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                 )}
-              {!isAvailableInRegion ? (
+              {isWholesale ? (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-wbk-black text-wbk-gold text-[11px] font-bold uppercase tracking-wider">
+                    <IconBuildingStore size={13} />
+                    <span>B2B Wholesale • Net (Excl. VAT)</span>
+                  </span>
+                </div>
+              ) : !isAvailableInRegion ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
@@ -2814,18 +2897,24 @@ export default function ProductDetailPage() {
                 <nav className="flex items-center gap-1.5 text-[11px] font-poppins text-wbk-brown/80">
                   <Link
                     href={
-                      localizedHref ? localizedHref("/products") : "/products"
+                      isWholesale
+                        ? localizedHref("/wholesale")
+                        : localizedHref
+                          ? localizedHref("/products")
+                          : "/products"
                     }
                     className="hover:text-wbk-black transition-colors"
                   >
-                    {t("nav.allWallBeds", "Products")}
+                    {isWholesale ? "Wholesale" : t("nav.allWallBeds", "Products")}
                   </Link>
                   <span>/</span>
                   <Link
                     href={
-                      localizedHref
-                        ? localizedHref(categoryBreadcrumbHref)
-                        : categoryBreadcrumbHref
+                      isWholesale
+                        ? localizedHref(`/wholesale?category=${categorySlug}`)
+                        : localizedHref
+                          ? localizedHref(categoryBreadcrumbHref)
+                          : categoryBreadcrumbHref
                     }
                     className="capitalize hover:text-wbk-black transition-colors"
                   >
@@ -2947,9 +3036,21 @@ export default function ProductDetailPage() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="font-mono font-bold text-xs text-wbk-black">
-                                  {activePricing.display}
-                                </span>
+                                {!isWholesale ? (
+                                  <span className="font-mono font-bold text-xs text-wbk-black">
+                                    {activePricing.display}
+                                  </span>
+                                ) : currentWholesalePricing?.hasPrice ? (
+                                  <span className="font-mono font-bold text-xs text-wbk-black">
+                                    {formatWholesaleMoney(
+                                      currentWholesalePricing.unitPrice,
+                                      currentWholesalePricing.currency,
+                                    )}{" "}
+                                    <span className="text-[9px] font-normal text-wbk-green">
+                                      net
+                                    </span>
+                                  </span>
+                                ) : null}
                                 {familyVariants.length > 1 && (
                                   <IconChevronDown
                                     size={14}
@@ -3022,9 +3123,25 @@ export default function ProductDetailPage() {
                                           {parsed.label}
                                         </span>
                                       </div>
-                                      <span className="font-mono text-xs font-bold text-wbk-brown shrink-0 pl-2">
-                                        {varPricing.display}
-                                      </span>
+                                      {!isWholesale ? (
+                                        <span className="font-mono text-xs font-bold text-wbk-brown shrink-0 pl-2">
+                                          {varPricing.display}
+                                        </span>
+                                      ) : wholesaleAuthorized &&
+                                        wholesalePrices[String(variant.id)]
+                                          ?.hasPrice ? (
+                                        <span className="font-mono text-xs font-bold text-wbk-brown shrink-0 pl-2">
+                                          {formatWholesaleMoney(
+                                            wholesalePrices[String(variant.id)]
+                                              .unitPrice,
+                                            wholesalePrices[String(variant.id)]
+                                              .currency,
+                                          )}{" "}
+                                          <span className="text-[9px] font-normal">
+                                            net
+                                          </span>
+                                        </span>
+                                      ) : null}
                                     </button>
                                   );
                                 })}
@@ -3386,16 +3503,17 @@ export default function ProductDetailPage() {
                             >
                               <span className="flex items-center gap-1.5">
                                 <span>{item.label}</span>
-                                {((item.product?.stock !== undefined &&
-                                  item.product?.stock !== null &&
-                                  Number(item.product.stock) <= 0) ||
-                                  item.product?.in_stock === false) && (
+                                {!isWholesale &&
+                                  ((item.product?.stock !== undefined &&
+                                    item.product?.stock !== null &&
+                                    Number(item.product.stock) <= 0) ||
+                                    item.product?.in_stock === false) && (
                                   <span className="text-[10px] text-[#B85A53] font-normal">
                                     ({t("waitlist.outOfStock", "Out of Stock")})
                                   </span>
                                 )}
                               </span>
-                              {item.product && (
+                              {item.product && !isWholesale && (
                                 <span className="text-[11px] text-wbk-brown font-poppins">
                                   {
                                     getProductPrice(
@@ -3406,6 +3524,21 @@ export default function ProductDetailPage() {
                                   }
                                 </span>
                               )}
+                              {item.product &&
+                                isWholesale &&
+                                wholesaleAuthorized &&
+                                wholesalePrices[String(item.product.id)]
+                                  ?.hasPrice && (
+                                  <span className="text-[11px] text-wbk-brown font-poppins">
+                                    {formatWholesaleMoney(
+                                      wholesalePrices[String(item.product.id)]
+                                        .unitPrice,
+                                      wholesalePrices[String(item.product.id)]
+                                        .currency,
+                                    )}{" "}
+                                    net
+                                  </span>
+                                )}
                             </button>
                           ))}
                         </div>
@@ -3420,9 +3553,11 @@ export default function ProductDetailPage() {
                         <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
                           {t("common.frontSofa", "+ Front Sofa")}:
                         </label>
-                        <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
-                          +{formatPrice(sofaPriceValue, locale)}
-                        </span>
+                        {!isWholesale && (
+                          <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
+                            +{formatPrice(sofaPriceValue, locale)}
+                          </span>
+                        )}
                       </div>
                       <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
                         <button
@@ -3540,9 +3675,11 @@ export default function ProductDetailPage() {
                         <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
                           {t("common.cabinetEnclosure", "+ Cabinet")}:
                         </label>
-                        <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
-                          +{formatPrice(cabinetPriceValue, locale)}
-                        </span>
+                        {!isWholesale && (
+                          <span className="text-[11px] font-semibold text-wbk-gold font-poppins">
+                            +{formatPrice(cabinetPriceValue, locale)}
+                          </span>
+                        )}
                       </div>
                       <div className="relative flex p-1 border border-wbk-black/30 rounded-full bg-[#F4F2F0] w-full">
                         <button
@@ -3599,11 +3736,249 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* ── DESKTOP ADD TO CART & PRICING BLOCK (Desktop only, hidden on mobile) ── */}
+              {/* ── DESKTOP ADD TO CART & PRICING BLOCK (in Wholesale mode also shown on mobile) ── */}
               <div
                 ref={desktopAddToCartRef}
-                className="hidden lg:block pt-3 pb-2 border-y border-wbk-lightgrey/50 space-y-3 font-poppins"
+                className={`${isWholesale ? "block" : "hidden lg:block"} pt-3 pb-2 border-y border-wbk-lightgrey/50 space-y-3 font-poppins`}
               >
+                {isWholesale ? (
+                  /* ── WHOLESALE B2B PRICING & TWO-OPTION ADD TO CART (Unit + Full Container) ── */
+                  <div className="space-y-3.5">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-wbk-black text-wbk-gold text-[11px] font-bold uppercase tracking-wider">
+                      <IconBuildingStore size={13} />
+                      <span>
+                        B2B Wholesale • Net (Excl. VAT)
+                        {wholesaleAuthorized && wholesalePartner?.roleKey
+                          ? ` • ${wholesalePartner.roleKey}`
+                          : ""}
+                      </span>
+                    </div>
+
+                    {!wholesaleAuthorized ? (
+                      <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey space-y-3">
+                        <div className="flex items-start gap-2">
+                          <IconLock
+                            size={16}
+                            className="text-wbk-gold shrink-0 mt-0.5"
+                          />
+                          <p className="text-xs text-wbk-black leading-relaxed">
+                            {user
+                              ? "Your account does not currently have wholesale partner permissions. Contact our B2B team to activate wholesale pricing."
+                              : "Log in to your wholesale account to view net wholesale prices (Excl. VAT) and full-container rates."}
+                          </p>
+                        </div>
+                        {!user && (
+                          <button
+                            type="button"
+                            onClick={() => openUserDrawer("login")}
+                            className="w-full py-3 px-5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-xs font-semibold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <IconLogin size={16} />
+                            <span>Log In for Wholesale Prices</span>
+                          </button>
+                        )}
+                      </div>
+                    ) : currentWholesalePricing?.hasPrice ? (
+                      <div className="space-y-3">
+                        {/* Option 1: Single Unit (Net, Excl. VAT) */}
+                        <div className="p-3.5 bg-[#FBF9F8] border border-wbk-lightgrey/80 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold">
+                              Option 1 • Unit Price (Net)
+                            </span>
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[9px] font-bold uppercase tracking-wider">
+                              Excl. VAT
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-2xl font-bold tracking-tight text-wbk-black">
+                              {formatWholesaleMoney(
+                                currentWholesalePricing.unitPrice,
+                                currentWholesalePricing.currency,
+                              )}
+                            </span>
+                            <span className="text-[11px] text-wbk-brown">
+                              / pc
+                              {currentWholesalePricing.discountPercent > 0
+                                ? ` (-${currentWholesalePricing.discountPercent}%)`
+                                : ""}
+                              {currentWholesalePricing.isFallbackUsd
+                                ? " • HK USD"
+                                : ""}
+                            </span>
+                          </div>
+
+                          {wholesalePartner?.allowSingleUnit !== false && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <div className="inline-flex items-center border border-wbk-lightgrey bg-white rounded-full overflow-hidden h-10 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setWholesaleUnitQty((q) => Math.max(1, q - 1))
+                                  }
+                                  className="px-2.5 h-full hover:bg-[#F4F2F0] cursor-pointer"
+                                  aria-label="Decrease unit quantity"
+                                >
+                                  <IconMinus size={13} />
+                                </button>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={wholesaleUnitQty}
+                                  onChange={(e) =>
+                                    setWholesaleUnitQty(
+                                      Math.max(1, parseInt(e.target.value, 10) || 1),
+                                    )
+                                  }
+                                  className="w-11 text-center text-xs font-mono font-bold text-wbk-black outline-none bg-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setWholesaleUnitQty((q) => q + 1)
+                                  }
+                                  className="px-2.5 h-full hover:bg-[#F4F2F0] cursor-pointer"
+                                  aria-label="Increase unit quantity"
+                                >
+                                  <IconPlus size={13} />
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleWholesaleAdd("unit")}
+                                className={`flex-1 h-10 px-4 border text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                  wholesaleAddedType === "unit"
+                                    ? "bg-emerald-600 border-emerald-600 text-white"
+                                    : "bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white border-wbk-black hover:border-wbk-green"
+                                }`}
+                              >
+                                {wholesaleAddedType === "unit" ? (
+                                  <>
+                                    <IconCheck size={15} />
+                                    <span>Added!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <IconShoppingCart size={15} />
+                                    <span>
+                                      Add {wholesaleUnitQty} pc
+                                      {wholesaleUnitQty > 1 ? "s" : ""}
+                                    </span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Option 2: Full Container (Net, Excl. VAT) */}
+                        {currentWholesalePricing.containerQty > 0 &&
+                          wholesalePartner?.allowContainer !== false && (
+                            <div className="p-3.5 bg-[#FAF5EA] border border-wbk-gold/60 space-y-2.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] uppercase tracking-wider text-wbk-black font-bold inline-flex items-center gap-1">
+                                  <IconBox size={13} />
+                                  <span>
+                                    Option 2 • Full Container (
+                                    {currentWholesalePricing.containerQty} pcs)
+                                  </span>
+                                </span>
+                                <span className="px-2 py-0.5 bg-wbk-black text-wbk-gold text-[9px] font-bold uppercase tracking-wider">
+                                  Excl. VAT
+                                </span>
+                              </div>
+                              <div className="flex items-baseline gap-2 flex-wrap">
+                                <span className="text-xl font-bold tracking-tight text-wbk-black">
+                                  {formatWholesaleMoney(
+                                    currentWholesalePricing.containerTotal,
+                                    currentWholesalePricing.currency,
+                                  )}
+                                </span>
+                                <span className="text-[11px] text-wbk-brown">
+                                  / container ({currentWholesalePricing.containerQty} ×{" "}
+                                  {formatWholesaleMoney(
+                                    currentWholesalePricing.unitPrice,
+                                    currentWholesalePricing.currency,
+                                  )}
+                                  )
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1">
+                                <div className="inline-flex items-center border border-wbk-gold/60 bg-white rounded-full overflow-hidden h-10 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setWholesaleContainerQty((q) =>
+                                        Math.max(1, q - 1),
+                                      )
+                                    }
+                                    className="px-2.5 h-full hover:bg-[#FAF5EA] cursor-pointer"
+                                    aria-label="Decrease container quantity"
+                                  >
+                                    <IconMinus size={13} />
+                                  </button>
+                                  <span className="px-2.5 text-xs font-mono font-bold text-wbk-black">
+                                    {wholesaleContainerQty} ctn
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setWholesaleContainerQty((q) => q + 1)
+                                    }
+                                    className="px-2.5 h-full hover:bg-[#FAF5EA] cursor-pointer"
+                                    aria-label="Increase container quantity"
+                                  >
+                                    <IconPlus size={13} />
+                                  </button>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleWholesaleAdd("container")}
+                                  className={`flex-1 h-10 px-4 border text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    wholesaleAddedType === "container"
+                                      ? "bg-emerald-600 border-emerald-600 text-white"
+                                      : "bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border-wbk-gold hover:border-wbk-black"
+                                  }`}
+                                >
+                                  {wholesaleAddedType === "container" ? (
+                                    <>
+                                      <IconCheck size={15} />
+                                      <span>Container Added!</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <IconBox size={15} />
+                                      <span>
+                                        Add Container (
+                                        {wholesaleContainerQty *
+                                          currentWholesalePricing.containerQty}{" "}
+                                        pcs)
+                                      </span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                        <div className="text-[11px] text-wbk-brown leading-snug pt-0.5">
+                          All wholesale prices are{" "}
+                          <strong className="text-wbk-black">Net (Excl. VAT)</strong>.
+                          Freight / shipping arranged separately.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-[#FBF9F8] border border-wbk-lightgrey text-xs text-wbk-brown">
+                        Wholesale pricing is on request for this item. Please
+                        contact our B2B trade desk for a quote.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
                 {/* Stock Status Indicator - Positioned directly above Price with eye-catching basic green / red colors */}
                 {!isAvailableInRegion ? (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs font-semibold">
@@ -3798,6 +4173,8 @@ export default function ProductDetailPage() {
                     </span>
                   )}
                 </div>
+                  </>
+                )}
               </div>
 
               {/* Spec description - Shortened brief under price */}
@@ -5993,6 +6370,67 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Right: Total Price & Add to Cart Button */}
+              {isWholesale ? (
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                  {!wholesaleAuthorized ? (
+                    <>
+                      <span className="text-xs font-semibold text-wbk-black hidden sm:inline">
+                        Wholesale Price Hidden
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openUserDrawer("login")}
+                        className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 bg-wbk-black hover:bg-white text-white hover:text-wbk-black border border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all cursor-pointer shrink-0"
+                      >
+                        <IconLock size={14} />
+                        <span>Log In</span>
+                      </button>
+                    </>
+                  ) : currentWholesalePricing?.hasPrice ? (
+                    <>
+                      <div className="flex flex-col items-end font-poppins">
+                        <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold">
+                          Net • Excl. VAT
+                        </span>
+                        <span className="font-bold text-sm sm:text-xl leading-none text-wbk-black">
+                          {formatWholesaleMoney(
+                            currentWholesalePricing.unitPrice,
+                            currentWholesalePricing.currency,
+                          )}
+                        </span>
+                      </div>
+                      {wholesalePartner?.allowSingleUnit !== false && (
+                        <button
+                          type="button"
+                          onClick={() => handleWholesaleAdd("unit")}
+                          className="flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-2.5 bg-wbk-black hover:bg-white text-white hover:text-wbk-black border border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer shrink-0"
+                        >
+                          <IconShoppingCart size={15} />
+                          <span>+1 pc</span>
+                        </button>
+                      )}
+                      {wholesalePartner?.allowContainer !== false &&
+                        currentWholesalePricing.containerQty > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleWholesaleAdd("container")}
+                            className="flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-2.5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer shrink-0"
+                          >
+                            <IconBox size={15} />
+                            <span className="hidden sm:inline">
+                              Container ({currentWholesalePricing.containerQty})
+                            </span>
+                            <span className="sm:hidden">+1 Ctn</span>
+                          </button>
+                        )}
+                    </>
+                  ) : (
+                    <span className="text-xs font-semibold text-wbk-black">
+                      Price on request
+                    </span>
+                  )}
+                </div>
+              ) : (
               <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                 <div className="flex flex-col items-end font-poppins">
                   <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold flex items-center gap-1">
@@ -6103,6 +6541,7 @@ export default function ProductDetailPage() {
                   </button>
                 )}
               </div>
+              )}
             </Container>
           </motion.div>
         )}

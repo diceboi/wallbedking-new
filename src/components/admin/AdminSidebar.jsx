@@ -71,6 +71,13 @@ export const ADMIN_NAV_ITEMS = [
     icon: IconTag,
   },
   {
+    id: "wholesale",
+    label: "Wholesale (B2B)",
+    href: "/admin/wholesale",
+    icon: IconBuildingStore,
+    badge: "B2B",
+  },
+  {
     id: "shipping-payment",
     label: "Shipping & Payment",
     href: "/admin/shipping-payment",

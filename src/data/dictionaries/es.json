@@ -922,7 +922,7 @@
     "sec3ConditionLabel": "Estado:",
     "sec3Condition": "Los artículos deben devolverse en buen estado para su venta. El embalaje faltante o abierto no es un problema.",
     "sec3ArrangeLabel": "Organizar una devolución:",
-    "sec3Arrange": "Póngase en contacto con nuestro equipo de asistencia en support@wallbedking.com antes de enviar cualquier devolución.",
+    "sec3Arrange": "Póngase en contacto con nuestro equipo de asistencia en {{EMAIL}} antes de enviar cualquier devolución.",
     "sec4Title": "4. Garantía de mecanismo de por vida",
     "sec4P1": "Wall Bed King ofrece una garantía de por vida sin precedentes en todos los mecanismos de estructura de cama, incluidos el chasis de acero de gran calibre, los soportes pivotantes y los pistones de gas, contra defectos de material o fabricación.",
     "sec4P2": "Esta garantía no cubre el desgaste normal de los acabados de madera, los daños causados por una instalación incorrecta, la superación de las capacidades de carga estructural o las modificaciones no autorizadas de la estructura.",

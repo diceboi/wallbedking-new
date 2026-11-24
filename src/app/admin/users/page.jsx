@@ -25,8 +25,14 @@ import {
   IconTrash,
   IconEdit,
   IconExternalLink,
+  IconBuildingStore,
 } from "@tabler/icons-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import {
+  WHOLESALE_MARKETS,
+  WHOLESALE_TIER_TYPES,
+  formatWholesaleRoleKey,
+} from "@/lib/wholesale-constants";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -59,6 +65,83 @@ export default function AdminUsersPage() {
 
   // 3D Designs modal state for admin
   const [selectedUserForConfigs, setSelectedUserForConfigs] = useState(null);
+
+  // Wholesale partner modal state
+  const [selectedUserForWholesale, setSelectedUserForWholesale] = useState(null);
+  const [wholesaleForm, setWholesaleForm] = useState({
+    wholesaleMarket: "en",
+    wholesaleTier: "",
+    wholesaleDiscountOverride: "",
+    companyName: "",
+    vatNumber: "",
+  });
+  const [wholesaleSaving, setWholesaleSaving] = useState(false);
+
+  const handleOpenWholesaleModal = (u) => {
+    setSelectedUserForWholesale(u);
+    setWholesaleForm({
+      wholesaleMarket: u.wholesaleMarket || "en",
+      wholesaleTier: u.wholesaleTier || "",
+      wholesaleDiscountOverride:
+        u.wholesaleDiscountOverride !== null && u.wholesaleDiscountOverride !== undefined
+          ? String(u.wholesaleDiscountOverride)
+          : "",
+      companyName: u.companyName || "",
+      vatNumber: u.vatNumber || "",
+    });
+  };
+
+  const handleSaveWholesale = async (e) => {
+    e.preventDefault();
+    if (!selectedUserForWholesale) return;
+    setWholesaleSaving(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: selectedUserForWholesale.id,
+          wholesaleMarket: wholesaleForm.wholesaleTier ? wholesaleForm.wholesaleMarket : null,
+          wholesaleTier: wholesaleForm.wholesaleTier || null,
+          wholesaleDiscountOverride:
+            wholesaleForm.wholesaleDiscountOverride === ""
+              ? null
+              : Number(wholesaleForm.wholesaleDiscountOverride),
+          companyName: wholesaleForm.companyName,
+          vatNumber: wholesaleForm.vatNumber,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUsers((prev) =>
+          prev.map((item) =>
+            item.id === selectedUserForWholesale.id
+              ? {
+                  ...item,
+                  role: data.user.role || item.role,
+                  wholesaleTier: data.user.wholesaleTier,
+                  wholesaleMarket: data.user.wholesaleMarket,
+                  wholesaleDiscountOverride: data.user.wholesaleDiscountOverride,
+                  companyName: data.user.companyName,
+                  vatNumber: data.user.vatNumber,
+                }
+              : item
+          )
+        );
+        setMessage({
+          type: "success",
+          text: `Wholesale access updated for ${selectedUserForWholesale.email}.`,
+        });
+        setSelectedUserForWholesale(null);
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to update wholesale access." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Network error updating wholesale access." });
+    } finally {
+      setWholesaleSaving(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -291,7 +374,8 @@ export default function AdminUsersPage() {
       const matchesRole =
         roleFilter === "all" ||
         (roleFilter === "admin" && u.role === "admin") ||
-        (roleFilter === "customer" && u.role === "customer");
+        (roleFilter === "wholesale" && (u.role === "wholesale" || Boolean(u.wholesaleTier))) ||
+        (roleFilter === "customer" && u.role === "customer" && !u.wholesaleTier);
 
       return matchesSearch && matchesRole;
     });
@@ -300,7 +384,8 @@ export default function AdminUsersPage() {
   // Summary counts
   const totalCount = users.length;
   const adminCount = users.filter((u) => u.role === "admin").length;
-  const customerCount = users.filter((u) => u.role === "customer").length;
+  const wholesaleCount = users.filter((u) => u.role === "wholesale" || Boolean(u.wholesaleTier)).length;
+  const customerCount = users.filter((u) => u.role === "customer" && !u.wholesaleTier).length;
   const verifiedCount = users.filter((u) => u.emailConfirmed).length;
 
   const sqlSchema = `-- ============================================================
@@ -559,6 +644,17 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
           </button>
           <button
             type="button"
+            onClick={() => setRoleFilter("wholesale")}
+            className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+              roleFilter === "wholesale"
+                ? "bg-white text-wbk-black shadow-2xs"
+                : "text-wbk-brown hover:text-wbk-black"
+            }`}
+          >
+            Wholesale ({wholesaleCount})
+          </button>
+          <button
+            type="button"
             onClick={() => setRoleFilter("customer")}
             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               roleFilter === "customer"
@@ -653,17 +749,32 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
 
                       {/* Role Badge */}
                       <td className="py-3.5 px-4">
-                        {isAdmin ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wbk-black text-wbk-gold font-semibold text-[10px] uppercase tracking-wider border border-wbk-gold/40 shadow-2xs">
-                            <IconShield size={12} className="text-wbk-gold" />
-                            <span>Admin</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F4F2F0] text-wbk-black text-[10px] uppercase tracking-wider border border-wbk-lightgrey font-medium">
-                            <IconShoppingBag size={12} className="text-wbk-brown" />
-                            <span>Customer</span>
-                          </span>
-                        )}
+                        <div className="flex flex-col items-start gap-1">
+                          {isAdmin ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wbk-black text-wbk-gold font-semibold text-[10px] uppercase tracking-wider border border-wbk-gold/40 shadow-2xs">
+                              <IconShield size={12} className="text-wbk-gold" />
+                              <span>Admin</span>
+                            </span>
+                          ) : u.wholesaleTier ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-900 font-semibold text-[10px] uppercase tracking-wider border border-emerald-200">
+                              <IconBuildingStore size={12} className="text-emerald-700" />
+                              <span>{formatWholesaleRoleKey(u.wholesaleMarket || "en", u.wholesaleTier)}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F4F2F0] text-wbk-black text-[10px] uppercase tracking-wider border border-wbk-lightgrey font-medium">
+                              <IconShoppingBag size={12} className="text-wbk-brown" />
+                              <span>Customer</span>
+                            </span>
+                          )}
+                          {u.companyName && (
+                            <span className="text-[10px] text-wbk-brown truncate max-w-[160px]">
+                              {u.companyName}
+                              {u.wholesaleDiscountOverride !== null && u.wholesaleDiscountOverride !== undefined
+                                ? ` (-${u.wholesaleDiscountOverride}%)`
+                                : ""}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Data Assets (Addresses & 3D Configs) */}
@@ -716,16 +827,29 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleRole(u)}
-                          disabled={isUpdating}
-                          className={`px-3 py-1.5 rounded-full text-[11px] font-medium tracking-wide transition-colors cursor-pointer disabled:opacity-50 ${
-                            isAdmin
-                              ? "border border-red-200 text-red-700 hover:bg-red-50"
-                              : "bg-wbk-black text-white hover:bg-wbk-green"
-                          }`}
-                        >
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenWholesaleModal(u)}
+                            className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium tracking-wide transition-colors cursor-pointer border ${
+                              u.wholesaleTier
+                                ? "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                                : "border-wbk-lightgrey bg-white text-wbk-black hover:border-wbk-black"
+                            }`}
+                            title="Configure B2B Wholesale tier, market, and discount"
+                          >
+                            {u.wholesaleTier ? "Edit B2B" : "B2B"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleRole(u)}
+                            disabled={isUpdating}
+                            className={`px-3 py-1.5 rounded-full text-[11px] font-medium tracking-wide transition-colors cursor-pointer disabled:opacity-50 ${
+                              isAdmin
+                                ? "border border-red-200 text-red-700 hover:bg-red-50"
+                                : "bg-wbk-black text-white hover:bg-wbk-green"
+                            }`}
+                          >
                           {isUpdating ? (
                             <span className="inline-flex items-center gap-1">
                               <IconLoader2 size={12} className="animate-spin" />
@@ -736,7 +860,8 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
                           ) : (
                             <span>Make Admin</span>
                           )}
-                        </button>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1215,6 +1340,155 @@ SET email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW();`;
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Wholesale B2B Partner Access Modal */}
+      {selectedUserForWholesale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <form
+            onSubmit={handleSaveWholesale}
+            className="bg-white border border-wbk-lightgrey max-w-lg w-full p-6 shadow-2xl space-y-4 font-poppins"
+          >
+            <div className="flex items-center justify-between border-b border-wbk-lightgrey pb-3">
+              <div>
+                <h3 className="text-base font-bold text-wbk-black flex items-center gap-2">
+                  <IconBuildingStore size={18} className="text-wbk-green" />
+                  <span>Wholesale Partner Access</span>
+                </h3>
+                <p className="text-[11px] text-wbk-brown mt-0.5">
+                  {selectedUserForWholesale.fullName} ({selectedUserForWholesale.email})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUserForWholesale(null)}
+                className="text-wbk-brown hover:text-wbk-black p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-wbk-black uppercase tracking-wider mb-1">
+                  Partner Country / Market
+                </label>
+                <select
+                  value={wholesaleForm.wholesaleMarket}
+                  onChange={(e) =>
+                    setWholesaleForm((prev) => ({ ...prev, wholesaleMarket: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-wbk-lightgrey bg-white"
+                >
+                  {WHOLESALE_MARKETS.map((m) => (
+                    <option key={m.code} value={m.code}>
+                      {m.flag} {m.name} ({m.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-wbk-black uppercase tracking-wider mb-1">
+                  Partner Role / Tier
+                </label>
+                <select
+                  value={wholesaleForm.wholesaleTier}
+                  onChange={(e) =>
+                    setWholesaleForm((prev) => ({ ...prev, wholesaleTier: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-wbk-lightgrey bg-white"
+                >
+                  <option value="">None (No Wholesale Access)</option>
+                  {WHOLESALE_TIER_TYPES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {wholesaleForm.wholesaleTier && (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+                Assigned Role Key:{" "}
+                <strong className="font-mono">
+                  {formatWholesaleRoleKey(wholesaleForm.wholesaleMarket, wholesaleForm.wholesaleTier)}
+                </strong>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-wbk-black uppercase tracking-wider mb-1">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={wholesaleForm.companyName}
+                  onChange={(e) =>
+                    setWholesaleForm((prev) => ({ ...prev, companyName: e.target.value }))
+                  }
+                  placeholder="e.g. Acme Interiors Ltd"
+                  className="w-full px-3 py-2 text-xs border border-wbk-lightgrey"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-wbk-black uppercase tracking-wider mb-1">
+                  VAT / Tax ID
+                </label>
+                <input
+                  type="text"
+                  value={wholesaleForm.vatNumber}
+                  onChange={(e) =>
+                    setWholesaleForm((prev) => ({ ...prev, vatNumber: e.target.value }))
+                  }
+                  placeholder="e.g. FR12345678901"
+                  className="w-full px-3 py-2 text-xs border border-wbk-lightgrey font-mono"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-wbk-black uppercase tracking-wider mb-1">
+                Individual Discount Override (%) — Optional
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="90"
+                step="0.5"
+                value={wholesaleForm.wholesaleDiscountOverride}
+                onChange={(e) =>
+                  setWholesaleForm((prev) => ({
+                    ...prev,
+                    wholesaleDiscountOverride: e.target.value,
+                  }))
+                }
+                placeholder="Leave blank to use tier default"
+                className="w-full px-3 py-2 text-xs border border-wbk-lightgrey font-mono"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-wbk-lightgrey">
+              <button
+                type="button"
+                onClick={() => setSelectedUserForWholesale(null)}
+                className="px-4 py-2 text-xs font-medium text-wbk-brown hover:text-wbk-black cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={wholesaleSaving}
+                className="px-5 py-2 bg-wbk-black hover:bg-wbk-green text-white text-xs font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {wholesaleSaving ? "Saving..." : "Save Wholesale Access"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

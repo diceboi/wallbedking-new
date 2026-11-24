@@ -137,18 +137,36 @@ export async function GET() {
         profile?.saved_configs ||
         [];
 
+      const meta = u.user_metadata || {};
+      const wholesaleTier = profile?.wholesale_tier || meta.wholesale_tier || null;
+      const wholesaleMarket = profile?.wholesale_market || meta.wholesale_market || null;
+      const wholesaleDiscountOverride =
+        profile?.wholesale_discount_override ?? meta.wholesale_discount_override ?? null;
+      const companyName = profile?.company_name || meta.company_name || "";
+      const vatNumber = profile?.vat_number || meta.vat_number || "";
+
       return {
         id: u.id,
         email: u.email,
         fullName,
-        role: role.toLowerCase() === "admin" ? "admin" : "customer",
+        role:
+          role.toLowerCase() === "admin"
+            ? "admin"
+            : role.toLowerCase() === "wholesale" || wholesaleTier
+            ? "wholesale"
+            : "customer",
+        wholesaleTier,
+        wholesaleMarket,
+        wholesaleDiscountOverride,
+        companyName,
+        vatNumber,
         phone,
         addresses,
         savedConfigs,
         emailConfirmed: !!u.email_confirmed_at,
         createdAt: u.created_at,
         lastSignInAt: u.last_sign_in_at,
-        metadata: u.user_metadata || {},
+        metadata: meta,
       };
     });
 
@@ -181,7 +199,16 @@ export async function GET() {
 export async function PATCH(request) {
   try {
     const body = await request.json();
-    const { userId, role, addresses } = body || {};
+    const {
+      userId,
+      role,
+      addresses,
+      wholesaleTier,
+      wholesaleMarket,
+      wholesaleDiscountOverride,
+      companyName,
+      vatNumber,
+    } = body || {};
 
     if (!userId) {
       return NextResponse.json(
@@ -211,17 +238,50 @@ export async function PATCH(request) {
     // 1. If role is being updated
     if (role !== undefined) {
       const normalizedRole = (role || "").toLowerCase();
-      if (!["admin", "customer"].includes(normalizedRole)) {
+      if (!["admin", "customer", "wholesale"].includes(normalizedRole)) {
         return NextResponse.json(
-          { success: false, error: "Role must be 'admin' or 'customer'" },
+          { success: false, error: "Role must be 'admin', 'wholesale', or 'customer'" },
           { status: 400 }
         );
       }
       updatedMeta.role = normalizedRole;
-      profileUpdates.role = normalizedRole;
+      profileUpdates.role = normalizedRole === "wholesale" ? "customer" : normalizedRole;
     }
 
-    // 2. If addresses are being updated
+    // 2. If wholesale partner fields are being updated
+    const extraProfileFields = {};
+    if (wholesaleTier !== undefined) {
+      updatedMeta.wholesale_tier = wholesaleTier || null;
+      extraProfileFields.wholesale_tier = wholesaleTier || null;
+      if (!wholesaleTier && updatedMeta.role === "wholesale") {
+        updatedMeta.role = "customer";
+        profileUpdates.role = "customer";
+      } else if (wholesaleTier && updatedMeta.role !== "admin") {
+        updatedMeta.role = "wholesale";
+      }
+    }
+    if (wholesaleMarket !== undefined) {
+      updatedMeta.wholesale_market = wholesaleMarket || null;
+      extraProfileFields.wholesale_market = wholesaleMarket || null;
+    }
+    if (wholesaleDiscountOverride !== undefined) {
+      const parsed =
+        wholesaleDiscountOverride === "" || wholesaleDiscountOverride === null
+          ? null
+          : Number(wholesaleDiscountOverride);
+      updatedMeta.wholesale_discount_override = Number.isFinite(parsed) ? parsed : null;
+      extraProfileFields.wholesale_discount_override = updatedMeta.wholesale_discount_override;
+    }
+    if (companyName !== undefined) {
+      updatedMeta.company_name = String(companyName || "").trim();
+      extraProfileFields.company_name = updatedMeta.company_name;
+    }
+    if (vatNumber !== undefined) {
+      updatedMeta.vat_number = String(vatNumber || "").trim();
+      extraProfileFields.vat_number = updatedMeta.vat_number;
+    }
+
+    // 3. If addresses are being updated
     if (addresses !== undefined) {
       if (!Array.isArray(addresses)) {
         return NextResponse.json(
@@ -249,11 +309,18 @@ export async function PATCH(request) {
       );
     }
 
-    // Also try updating profiles table if it exists
+    // Also try updating profiles table (fallback cleanly if wholesale columns aren't migrated yet)
     try {
-      await supabaseAdmin
+      const { error: richErr } = await supabaseAdmin
         .from("profiles")
-        .upsert(profileUpdates);
+        .upsert({
+          ...profileUpdates,
+          ...extraProfileFields,
+          ...(updatedMeta.role === "wholesale" ? { role: "wholesale" } : {}),
+        });
+      if (richErr) {
+        await supabaseAdmin.from("profiles").upsert(profileUpdates);
+      }
     } catch {
       // Ignored if table doesn't exist
     }
@@ -264,6 +331,11 @@ export async function PATCH(request) {
       user: {
         id: userId,
         role: updatedMeta.role,
+        wholesaleTier: updatedMeta.wholesale_tier || null,
+        wholesaleMarket: updatedMeta.wholesale_market || null,
+        wholesaleDiscountOverride: updatedMeta.wholesale_discount_override ?? null,
+        companyName: updatedMeta.company_name || "",
+        vatNumber: updatedMeta.vat_number || "",
         addresses: updatedMeta.addresses,
       },
     });

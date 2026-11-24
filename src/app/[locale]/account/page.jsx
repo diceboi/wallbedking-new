@@ -712,6 +712,11 @@ export default function AccountPage() {
                           ? "bg-gray-100 text-gray-800 border-gray-200"
                           : "bg-amber-100 text-amber-800 border-amber-200";
 
+                      const isWholesaleOrder =
+                        order.order_type === "wholesale" ||
+                        order.shipping_address?.order_type === "wholesale" ||
+                        String(order.admin_notes || "").includes("[WHOLESALE]");
+
                       return (
                         <div
                           key={order.id}
@@ -724,9 +729,16 @@ export default function AccountPage() {
                                 <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
                                   Order ID
                                 </span>
-                                <span className="text-xs font-bold text-wbk-black">
-                                  #{order.id}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-wbk-black">
+                                    #{order.id}
+                                  </span>
+                                  {isWholesaleOrder && (
+                                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-200 rounded">
+                                      B2B Wholesale
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
                               <div>
@@ -738,10 +750,13 @@ export default function AccountPage() {
                               <div className="hidden sm:block h-6 w-px bg-wbk-lightgrey" />
                               <div>
                                 <span className="text-[10px] uppercase font-semibold text-wbk-brown block">
-                                  Total Amount
+                                  {isWholesaleOrder ? "Net Total (Excl. VAT)" : "Total Amount"}
                                 </span>
                                 <span className="text-xs font-bold text-wbk-black">
                                   {currSym}{Number(order.total_amount).toFixed(2)}
+                                  {isWholesaleOrder && (
+                                    <span className="ml-1 text-[10px] font-normal text-emerald-700">Excl. VAT</span>
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -774,6 +789,11 @@ export default function AccountPage() {
                                   <p className="text-xs text-wbk-brown mt-0.5">
                                     {item.options?.size ? formatSizeLabel(item.options.size, locale) : ""} {item.options?.orientation && `• ${item.options.orientation}`}
                                   </p>
+                                  {item.options?.orderUnit === "container" && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] bg-amber-50 text-amber-900 font-semibold px-2 py-0.5 border border-amber-200 rounded mt-1">
+                                      📦 {item.quantity || 1} Full Container ({item.options.totalPieces || (item.options.unitsPerContainer || 1) * (item.quantity || 1)} pcs) • Excl. VAT
+                                    </span>
+                                  )}
                                   {item.options?.sofaIncluded && (
                                     <span className="inline-flex items-center gap-1 text-[11px] bg-[#FAF5EA] text-wbk-gold font-semibold px-2 py-0.5 border border-wbk-gold/40 rounded mt-1.5">
                                       🛋️ + {t("cart.frontSofa", "Front Sofa Module")}

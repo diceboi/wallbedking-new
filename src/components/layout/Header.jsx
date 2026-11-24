@@ -9,6 +9,8 @@ import {
   IconShoppingBag,
   IconUser,
   IconChevronDown,
+  IconBuildingStore,
+  IconX,
 } from "@tabler/icons-react";
 import { ContactInfo } from "./ContactInfo";
 import { SearchBar } from "./SearchBar";
@@ -20,6 +22,7 @@ import { MobileToggle } from "./MobileToggle";
 import { MobileMenuDrawer } from "./MobileMenuDrawer";
 import { MenuContext } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
+import { useWholesale } from "@/context/WholesaleContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { FlagIcon } from "@/components/ui/FlagIcon";
@@ -44,7 +47,57 @@ export function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const { locale, market, switchLocale, localizedHref } = useLocale();
   const { totalItems, openCart } = useCart();
+  const {
+    isWholesaleRoute,
+    wholesaleTotalCount,
+    setIsWholesaleCartOpen,
+  } = useWholesale();
   const { user, openUserDrawer } = useAuth();
+
+  // Cart mode switch info bubble ("Wholesale Cart" vs "Standard Retail Cart")
+  const [cartNotice, setCartNotice] = useState(null); // "wholesale" | "retail" | null
+  const prevWholesaleRef = useRef(null);
+  const cartNoticeTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (isAdminRoute) return;
+
+    const triggerNotice = (mode, durationMs) => {
+      setCartNotice(mode);
+      if (cartNoticeTimerRef.current) clearTimeout(cartNoticeTimerRef.current);
+      cartNoticeTimerRef.current = setTimeout(() => {
+        setCartNotice(null);
+      }, durationMs);
+    };
+
+    if (isWholesaleRoute) {
+      if (prevWholesaleRef.current !== true) {
+        try {
+          sessionStorage.setItem("wbk_visited_wholesale", "1");
+        } catch {}
+        triggerNotice("wholesale", 6500);
+      }
+      prevWholesaleRef.current = true;
+    } else {
+      let cameFromWholesale = prevWholesaleRef.current === true;
+      if (!cameFromWholesale) {
+        try {
+          cameFromWholesale = sessionStorage.getItem("wbk_visited_wholesale") === "1";
+        } catch {}
+      }
+      if (cameFromWholesale) {
+        try {
+          sessionStorage.removeItem("wbk_visited_wholesale");
+        } catch {}
+        triggerNotice("retail", 5500);
+      }
+      prevWholesaleRef.current = false;
+    }
+
+    return () => {
+      if (cartNoticeTimerRef.current) clearTimeout(cartNoticeTimerRef.current);
+    };
+  }, [isWholesaleRoute, isAdminRoute]);
   const {
     subMenu,
     setSubMenu,
@@ -383,20 +436,121 @@ export function Header() {
               )}
             </button>
 
-            {/* Cart Button */}
-            <button
-              type="button"
-              onClick={openCart}
-              aria-label={`Shopping cart with ${totalItems} items`}
-              className="relative p-1.5 text-wbk-black hover:text-wbk-green transition-colors cursor-pointer"
-            >
-              <IconShoppingBag size={21} strokeWidth={1.5} />
-              {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center bg-wbk-gold text-[9px] font-bold text-wbk-black rounded-full shadow-xs animate-in zoom-in-50 duration-200">
-                  {totalItems}
-                </span>
-              )}
-            </button>
+            {/* Cart Button — automatically switches to B2B Wholesale Cart on /wholesale routes */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setCartNotice(null);
+                  if (isWholesaleRoute) {
+                    setIsWholesaleCartOpen(true);
+                  } else {
+                    openCart();
+                  }
+                }}
+                aria-label={
+                  isWholesaleRoute
+                    ? `Wholesale cart with ${wholesaleTotalCount} items`
+                    : `Shopping cart with ${totalItems} items`
+                }
+                className={`relative p-1.5 transition-colors cursor-pointer flex items-center gap-1 ${
+                  isWholesaleRoute
+                    ? "text-wbk-black hover:text-wbk-green"
+                    : "text-wbk-black hover:text-wbk-green"
+                }`}
+              >
+                {isWholesaleRoute && (
+                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-wbk-black text-wbk-gold text-[9px] font-bold uppercase tracking-wider leading-none">
+                    B2B
+                  </span>
+                )}
+                <IconShoppingBag size={21} strokeWidth={1.5} />
+                {(isWholesaleRoute ? wholesaleTotalCount : totalItems) > 0 && (
+                  <span
+                    className={`absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center text-[9px] font-bold rounded-full shadow-xs animate-in zoom-in-50 duration-200 ${
+                      isWholesaleRoute
+                        ? "bg-wbk-black text-wbk-gold border border-wbk-gold/60"
+                        : "bg-wbk-gold text-wbk-black"
+                    }`}
+                  >
+                    {isWholesaleRoute ? wholesaleTotalCount : totalItems}
+                  </span>
+                )}
+              </button>
+
+              {/* Floating Info Bubble notifying user which cart is currently active */}
+              <AnimatePresence>
+                {cartNotice && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                    transition={{ duration: 0.2 }}
+                    className={`absolute right-0 top-full mt-2.5 w-64 sm:w-72 p-3 shadow-xl border z-[70] text-left ${
+                      cartNotice === "wholesale"
+                        ? "bg-wbk-black text-white border-wbk-gold/50"
+                        : "bg-white text-wbk-black border-wbk-lightgrey"
+                    }`}
+                  >
+                    {/* Upward pointer arrow */}
+                    <div
+                      className={`absolute -top-1.5 right-3 w-3 h-3 rotate-45 border-l border-t ${
+                        cartNotice === "wholesale"
+                          ? "bg-wbk-black border-wbk-gold/50"
+                          : "bg-white border-wbk-lightgrey"
+                      }`}
+                    />
+                    <div className="relative flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2">
+                        <div
+                          className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                            cartNotice === "wholesale"
+                              ? "bg-wbk-gold/20 text-wbk-gold"
+                              : "bg-wbk-green/15 text-wbk-green"
+                          }`}
+                        >
+                          {cartNotice === "wholesale" ? (
+                            <IconBuildingStore size={14} />
+                          ) : (
+                            <IconShoppingBag size={14} />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-wider leading-tight">
+                            {cartNotice === "wholesale"
+                              ? "Wholesale Cart Active"
+                              : "Standard Retail Cart"}
+                          </div>
+                          <p
+                            className={`text-[11px] mt-0.5 leading-snug ${
+                              cartNotice === "wholesale"
+                                ? "text-white/80"
+                                : "text-wbk-brown"
+                            }`}
+                          >
+                            {cartNotice === "wholesale"
+                              ? "You are currently in the B2B Wholesale cart (Net prices, excl. VAT)."
+                              : "Switched back to your regular retail shopping cart."}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCartNotice(null)}
+                        aria-label="Dismiss cart notice"
+                        className={`p-0.5 cursor-pointer shrink-0 ${
+                          cartNotice === "wholesale"
+                            ? "text-white/60 hover:text-white"
+                            : "text-wbk-brown hover:text-wbk-black"
+                        }`}
+                      >
+                        <IconX size={13} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Mobile Navigation Toggle */}
             <MobileToggle />

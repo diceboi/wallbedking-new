@@ -660,11 +660,18 @@ export async function fulfillPaidStripeSession({
   let emailSent = !newlyPaid;
 
   if (newlyPaid) {
-    // 1. Decrement product stock
-    await decrementOrderStockOnce(finalOrder.items);
+    const isWholesaleOrder =
+      finalOrder.order_type === "wholesale" ||
+      finalOrder.shipping_address?.order_type === "wholesale" ||
+      String(finalOrder.admin_notes || "").includes("[WHOLESALE]");
 
-    // 2. Meta Conversions API (CAPI) server-side purchase event
-    try {
+    // 1. Decrement retail product stock (NEVER decrement retail stock for B2B wholesale orders)
+    if (!isWholesaleOrder) {
+      await decrementOrderStockOnce(finalOrder.items);
+    }
+
+    // 2. Meta Conversions API (CAPI) server-side purchase event (retail storefront only)
+    if (!isWholesaleOrder) try {
       const nameParts = (finalOrder.customer_name || "").trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";

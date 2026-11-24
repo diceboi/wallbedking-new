@@ -455,6 +455,13 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
 
   const isBankTransfer = (order.payment_method || "").toLowerCase().includes("bank");
   const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+  const isWholesaleOrder =
+    order.order_type === "wholesale" ||
+    order.shipping_address?.order_type === "wholesale" ||
+    String(order.admin_notes || "").includes("[WHOLESALE]");
+  const wholesaleCompany = order.company_name || order.shipping_address?.company_name || "";
+  const wholesaleVat = order.vat_number || order.shipping_address?.vat_number || "";
+  const wholesaleTier = order.wholesale_tier || order.shipping_address?.wholesale_tier || "";
   const bankI18n = getBankI18n(loc);
   const bankDetails = getBankDetails(loc, currencyCode);
   const isUk = bankDetails.isUkAccount;
@@ -466,6 +473,10 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
         (opts && typeof opts === "object"
           ? [opts.size, opts.orientation, opts.type, opts.color].filter(Boolean).join(" • ")
           : "") || item.variant || "";
+
+      const isContainerLine = opts.orderUnit === "container";
+      const unitsPerContainer = Number(opts.unitsPerContainer || 0);
+      const totalPieces = Number(opts.totalPieces || (isContainerLine && unitsPerContainer ? unitsPerContainer * (item.quantity || 1) : item.quantity || 1));
 
       const hasSofa = Boolean(opts.sofaIncluded);
       const sofaPriceText = opts.sofaPrice ? ` (+${currencySymbol}${Number(opts.sofaPrice).toFixed(2)})` : "";
@@ -498,14 +509,16 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111;">
           <strong style="font-size: 14px;">${item.name || item.title || "Wall Bed Item"}</strong>
           ${optionsText ? `<br><span style="color:#666; font-size:12px; display:inline-block; margin-top:3px;">${optionsText}</span>` : ""}
+          ${isContainerLine ? `<br><span style="display:inline-block; margin-top:5px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px;">📦 Full Container (${unitsPerContainer || "?"} pcs/container • ${totalPieces} pcs total)</span>` : ""}
           ${hasSofa ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + ${sofaLabel}${sofaPriceText}</span>` : ""}
           ${hasCabinet ? `<br><span style="display:inline-block; margin-top:5px; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.3px;">🗄️ + ${cabinetLabel}${cabinetPriceText}</span>` : ""}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: center;">
-          ${item.quantity || 1}
+          ${isContainerLine ? `${item.quantity || 1} ctr` : (item.quantity || 1)}
         </td>
         <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #111; text-align: right; font-weight: 500;">
           ${currencySymbol}${Number(item.price || 0).toFixed(2)}
+          ${isWholesaleOrder ? `<br><span style="font-size:10px; color:#047857; font-weight:600;">Excl. VAT (Net)</span>` : ""}
         </td>
       </tr>
     `;
@@ -539,9 +552,12 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
     </div>
   ` : "";
 
-  const badgeHtml = isBankTransfer && !isPaid
+  const badgeHtml = (isBankTransfer && !isPaid
     ? `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">⏳ ${bankI18n.statusBadge}</span>`
-    : `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">✓ ${t.badge}</span>`;
+    : `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">✓ ${t.badge}</span>`) +
+    (isWholesaleOrder
+      ? ` <span class="badge" style="background:#eef2ff; color:#312e81; border:1px solid #c7d2fe;">🏢 B2B WHOLESALE • NET (EXCL. VAT)</span>`
+      : "");
 
   const bankDetailsBoxHtml = isBankTransfer && !isPaid ? `
     <div style="background: #faf8f5; border: 1px solid #d4b26f; border-left: 5px solid #b4832c; padding: 20px 22px; border-radius: 6px; margin: 24px 0;">
@@ -660,6 +676,30 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
                   <td style="padding: 4px 0; color: #666;"><strong>${t.paymentMethod}</strong></td>
                   <td style="padding: 4px 0; text-align: right; color: #111;">${isBankTransfer ? bankI18n.methodLabel : (order.payment_method || "Online Card")}</td>
                 </tr>
+                ${isWholesaleOrder && wholesaleCompany ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>Company</strong></td>
+                  <td style="padding: 4px 0; text-align: right; color: #111; font-weight: 600;">${wholesaleCompany}</td>
+                </tr>
+                ` : ""}
+                ${isWholesaleOrder && wholesaleVat ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>VAT / Tax ID</strong></td>
+                  <td style="padding: 4px 0; text-align: right; color: #111; font-family: monospace;">${wholesaleVat}</td>
+                </tr>
+                ` : ""}
+                ${isWholesaleOrder && wholesaleTier ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>Partner Role</strong></td>
+                  <td style="padding: 4px 0; text-align: right; color: #312e81; font-family: monospace; font-weight: 700; text-transform: uppercase;">${wholesaleTier}</td>
+                </tr>
+                ` : ""}
+                ${isWholesaleOrder ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>Shipping / Freight</strong></td>
+                  <td style="padding: 4px 0; text-align: right; color: #111; font-weight: 600;">Arranged Separately</td>
+                </tr>
+                ` : ""}
               </table>
             </div>
 
@@ -678,8 +718,9 @@ export function getOrderConfirmationHtml(order = SAMPLE_ORDER, requestedLocale =
             </table>
 
             <div style="text-align: right; margin-top: 20px; font-size: 14px; border-top: 2px solid #111; padding-top: 16px;">
-              <span style="color: #666; margin-right: 12px;">${totalLabel}</span>
+              <span style="color: #666; margin-right: 12px;">${totalLabel}${isWholesaleOrder ? " (Excl. VAT / Net)" : ""}</span>
               <strong style="font-size: 20px; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</strong>
+              ${isWholesaleOrder ? `<div style="font-size: 11px; color: #047857; font-weight: 600; margin-top: 6px;">VAT: 0% — All B2B wholesale prices are Net (Excl. VAT). Freight / shipping arranged separately.</div>` : ""}
             </div>
 
             <div style="margin-top: 32px; padding: 16px; background: #fafafa; border-radius: 6px; border-left: 3px solid #d4b26f;">
@@ -703,6 +744,13 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
   const currencySymbol = currencyCode === "EUR" ? "€" : currencyCode === "USD" ? "$" : "£";
   const isBank = (order.payment_method || "").toLowerCase().includes("bank");
   const isPaid = (order.payment_status || "").toLowerCase() === "paid";
+  const isWholesaleOrder =
+    order.order_type === "wholesale" ||
+    order.shipping_address?.order_type === "wholesale" ||
+    String(order.admin_notes || "").includes("[WHOLESALE]");
+  const wholesaleCompany = order.company_name || order.shipping_address?.company_name || "";
+  const wholesaleVat = order.vat_number || order.shipping_address?.vat_number || "";
+  const wholesaleTier = order.wholesale_tier || order.shipping_address?.wholesale_tier || "";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
   const adminOrderUrl = `${siteUrl}/admin/orders?search=${encodeURIComponent(order.id)}`;
   const paymentMethodLabel = formatPaymentMethod(order);
@@ -754,6 +802,9 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
       }
     }
     const qty = parseInt(item.quantity, 10) || 1;
+    const isContainerLine = opts.orderUnit === "container";
+    const unitsPerContainer = Number(opts.unitsPerContainer || 0);
+    const totalPieces = Number(opts.totalPieces || (isContainerLine && unitsPerContainer ? unitsPerContainer * qty : qty));
     const unitPrice = Number(item.price || item.unitPrice || 0);
     const lineTotal = Number(item.itemTotal || (unitPrice * qty));
 
@@ -762,12 +813,13 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
         <td style="padding: 12px 14px; vertical-align: top;">
           <strong style="color: #111; font-size: 14px; display: block;">${title}</strong>
           ${variantText ? `<div style="color: #666; font-size: 12px; margin-top: 3px;"><strong>Option:</strong> ${variantText}</div>` : ""}
+          ${isContainerLine ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px;">📦 Full Container (${unitsPerContainer || "?"} pcs/ctr • ${totalPieces} pcs total)</span></div>` : ""}
           ${hasSofa ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">🛋️ + Front Sofa Included${sofaPriceText}</span></div>` : ""}
           ${hasCabinet ? `<div style="margin-top: 5px;"><span style="display:inline-block; background:#faf5ea; color:#9f7d3d; border:1px solid #e9d8a6; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">🗄️ + Cabinet Included${cabinetPriceText}</span></div>` : ""}
           ${sku ? `<div style="color: #888; font-size: 11px; font-family: monospace; margin-top: 2px;">SKU: ${sku}</div>` : ""}
         </td>
         <td style="padding: 12px 14px; text-align: center; vertical-align: top; font-weight: 600; color: #111;">
-          ${qty}
+          ${isContainerLine ? `${qty} ctr` : qty}
         </td>
         <td style="padding: 12px 14px; text-align: right; vertical-align: top; color: #555;">
           ${currencySymbol}${unitPrice.toFixed(2)}
@@ -809,10 +861,10 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
           <!-- Header Banner -->
           <div style="background: ${isBank && !isPaid ? "#b4832c" : "#111111"}; color: #ffffff; padding: 20px 24px;">
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #d4b26f; margin-bottom: 4px;">
-              Wall Bed King • Internal Support Alert
+              Wall Bed King • ${isWholesaleOrder ? "B2B WHOLESALE ORDER (NET / EXCL. VAT)" : "Internal Support Alert"}
             </div>
             <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">
-              ${isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: ${order.id}
+              ${isWholesaleOrder ? "🏢 B2B Wholesale Order" : isBank && !isPaid ? "🏦 Bank Transfer Request" : "🚨 New Order Received"}: ${order.id}
             </h2>
             <div style="margin-top: 8px; font-size: 12px; color: #e5e5e5; font-family: monospace;">
               🕒 Placed: <strong>${orderTime.datePart}</strong> at <strong>${orderTime.ukTime}</strong> (${orderTime.cetTime}) &nbsp;•&nbsp; 🌍 ${resolvedLocale} (${companyEntity} / ${currencyCode})
@@ -893,9 +945,15 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   <tr>
                     <td colspan="3" style="padding: 4px 14px; text-align: right; color: #666;">Delivery (${deliveryLabel}):</td>
                     <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: ${shippingAmount > 0 ? "#111" : "#047857"};">
-                      ${shippingAmount > 0 ? `${currencySymbol}${shippingAmount.toFixed(2)}` : "FREE"}
+                      ${isWholesaleOrder ? "Arranged Separately" : shippingAmount > 0 ? `${currencySymbol}${shippingAmount.toFixed(2)}` : "FREE"}
                     </td>
                   </tr>
+                  ${isWholesaleOrder ? `
+                  <tr>
+                    <td colspan="3" style="padding: 4px 14px; text-align: right; color: #047857;">VAT:</td>
+                    <td style="padding: 4px 14px; text-align: right; font-weight: 600; color: #047857;">0% (Net B2B — Excl. VAT)</td>
+                  </tr>
+                  ` : ""}
                   ${discountAmount > 0 ? `
                   <tr>
                     <td colspan="3" style="padding: 4px 14px; text-align: right; color: #b45309;">Discount (${order.promo_code || "Promo"}):</td>
@@ -903,7 +961,7 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   </tr>
                   ` : ""}
                   <tr style="background: #faf9f7; border-top: 2px solid #111; font-size: 15px;">
-                    <td colspan="3" style="padding: 12px 14px; text-align: right; font-weight: 700; color: #111;">Total (${currencyCode}):</td>
+                    <td colspan="3" style="padding: 12px 14px; text-align: right; font-weight: 700; color: #111;">${isWholesaleOrder ? `Net Total (${currencyCode}, Excl. VAT):` : `Total (${currencyCode}):`}</td>
                     <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #111;">${currencySymbol}${Number(order.total_amount || 0).toFixed(2)}</td>
                   </tr>
                 </tfoot>
@@ -928,6 +986,24 @@ export function getAdminOrderAlertHtml(order = SAMPLE_ORDER) {
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Customer Name:</strong></td>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: 600;">${order.customer_name || "N/A"}</td>
                 </tr>
+                ${isWholesaleOrder && wholesaleCompany ? `
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Company Name:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-weight: 700; color: #312e81;">${wholesaleCompany}</td>
+                </tr>
+                ` : ""}
+                ${isWholesaleOrder && wholesaleVat ? `
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>VAT / Tax ID:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-family: monospace; font-weight: 600;">${wholesaleVat}</td>
+                </tr>
+                ` : ""}
+                ${isWholesaleOrder && wholesaleTier ? `
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Wholesale Role:</strong></td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #eee; font-family: monospace; font-weight: 700; text-transform: uppercase; color: #312e81;">${wholesaleTier}</td>
+                </tr>
+                ` : ""}
                 <tr>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee; color: #666;"><strong>Email:</strong></td>
                   <td style="padding: 10px 14px; border-bottom: 1px solid #eee;">

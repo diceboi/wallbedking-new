@@ -4,9 +4,11 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { MenuContextProvider } from "@/context/MenuContext";
 import { CartProvider } from "@/context/CartContext";
+import { WholesaleProvider } from "@/context/WholesaleContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { WholesaleCartDrawer } from "@/components/wholesale/WholesaleCartDrawer";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import { PasswordResetModal } from "@/components/auth/PasswordResetModal";
 import { CookieConsent } from "@/components/ui/CookieConsent";
@@ -94,16 +96,19 @@ export default async function RootLayout({ children }) {
                 <CategoriesProvider initialCategories={initialCategories}>
                   <PromotionsProvider initialCampaigns={initialActiveCampaigns}>
                     <CartProvider>
-                      <MenuContextProvider>
-                        <Header />
-                        <main className="flex-1">{children}</main>
-                        <Footer />
-                        <CartDrawer />
-                        <UserDrawer />
-                        <PasswordResetModal />
-                        <CookieConsent />
-                        <ZendeskChat />
-                      </MenuContextProvider>
+                      <WholesaleProvider>
+                        <MenuContextProvider>
+                          <Header />
+                          <main className="flex-1">{children}</main>
+                          <Footer />
+                          <CartDrawer />
+                          <WholesaleCartDrawer />
+                          <UserDrawer />
+                          <PasswordResetModal />
+                          <CookieConsent />
+                          <ZendeskChat />
+                        </MenuContextProvider>
+                      </WholesaleProvider>
                     </CartProvider>
                   </PromotionsProvider>
                 </CategoriesProvider>

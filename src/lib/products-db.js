@@ -49,18 +49,27 @@ export const getStorefrontProducts = cache(async () => {
       return vis !== "hidden" && p.visibility !== false && p.is_visible !== false;
     });
 
-    // Normalize fields for storefront compatibility
-    return visibleRows.map((p) => ({
-      ...p,
-      installation_manual: p.installation_manual || null,
-      installation_video: p.installation_video || null,
-      hoverImage: p.hoverImage || p.hover_image,
-      available_locales:
-        Array.isArray(p.available_locales) && p.available_locales.length > 0
-          ? p.available_locales
-          : ["en", "us", "de", "fr", "es", "por", "it"],
-      tags: Array.isArray(p.tags) ? p.tags : [],
-    }));
+    // Normalize fields for storefront compatibility (explicitly strip confidential wholesale prices)
+    return visibleRows.map((p) => {
+      const {
+        wholesale_hk_usd: _hk,
+        wholesale_uk_gbp: _uk,
+        wholesale_eu_eur: _eu,
+        wholesale_us_usd: _us,
+        ...publicFields
+      } = p;
+      return {
+        ...publicFields,
+        installation_manual: p.installation_manual || null,
+        installation_video: p.installation_video || null,
+        hoverImage: p.hoverImage || p.hover_image,
+        available_locales:
+          Array.isArray(p.available_locales) && p.available_locales.length > 0
+            ? p.available_locales
+            : ["en", "us", "de", "fr", "es", "por", "it"],
+        tags: Array.isArray(p.tags) ? p.tags : [],
+      };
+    });
   } catch (err) {
     if (err?.digest === "DYNAMIC_SERVER_USAGE") throw err;
     console.error("[products-db] Exception fetching products:", err.message);
