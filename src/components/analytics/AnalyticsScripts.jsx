@@ -8,6 +8,7 @@ import {
   META_PIXEL_ID,
   getGtmContainerId,
   trackPageView,
+  updateConsent,
 } from "@/lib/analytics";
 
 export function AnalyticsScripts() {
@@ -16,7 +17,36 @@ export function AnalyticsScripts() {
   const hasTrackedInitialRef = useRef(false);
   const gtmId = getGtmContainerId(locale);
 
-  // Track client-side SPA route changes (initial PageView is fired by the inline Pixel script)
+  // Ensure the active market's GTM container is always loaded (including after SPA locale transitions)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (/^\/admin(\/|$)/i.test(pathname || "")) return;
+
+    window.__wbkGtmLoaded = window.__wbkGtmLoaded || {};
+    if (!window.__wbkGtmLoaded[gtmId]) {
+      window.__wbkGtmLoaded[gtmId] = true;
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+      const scriptEl = document.createElement("script");
+      scriptEl.async = true;
+      scriptEl.src = `https://www.googletagmanager.com/gtm.js?id=${gtmId}`;
+      (document.head || document.body).appendChild(scriptEl);
+    }
+
+    // If navigating client-side onto /us without an explicit stored opt-out, grant US default consent
+    if (locale === "us") {
+      try {
+        const raw = localStorage.getItem("wbk_cookie_consent_v1");
+        if (!raw) {
+          updateConsent({ analytics: true, marketing: true });
+        }
+      } catch {
+        // ignore storage restrictions
+      }
+    }
+  }, [gtmId, locale, pathname]);
+
+  // Track client-side SPA route changes (initial PageView is fired by the inline Pixel script & GTM)
   useEffect(() => {
     if (!hasTrackedInitialRef.current) {
       hasTrackedInitialRef.current = true;
@@ -29,25 +59,7 @@ export function AnalyticsScripts() {
 
   return (
     <>
-      {/* 1. Google Tag Manager (official bootstrap with gtm.start & event: 'gtm.js') */}
-      <Script id={`wbk-gtm-${gtmId}`} strategy="afterInteractive">
-        {`
-          (function(w,d,s,l,i){
-            w.__wbkGtmLoaded = w.__wbkGtmLoaded || {};
-            if (w.__wbkGtmLoaded[i]) return;
-            w.__wbkGtmLoaded[i] = true;
-            w[l]=w[l]||[];
-            w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
-            var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-            j.async=true;
-            j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-            f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','${gtmId}');
-        `}
-      </Script>
-
-      {/* 2. Meta (Facebook) Pixel */}
+      {/* 1. Meta (Facebook) Pixel */}
       <Script id="wbk-meta-pixel" strategy="afterInteractive">
         {`
           !function(f,b,e,v,n,t,s)
@@ -59,12 +71,13 @@ export function AnalyticsScripts() {
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
 
+          var isUsPath = /^\\/us(\\/|$)/i.test((window.location && window.location.pathname) || '');
           var storedConsent = null;
           try {
             var raw = localStorage.getItem('wbk_cookie_consent_v1');
             if (raw) storedConsent = JSON.parse(raw);
           } catch(e) {}
-          var isMarketing = storedConsent && storedConsent.marketing === true;
+          var isMarketing = storedConsent ? storedConsent.marketing === true : isUsPath;
 
           fbq('consent', isMarketing ? 'grant' : 'revoke');
           fbq('init', '${META_PIXEL_ID}');
@@ -72,7 +85,7 @@ export function AnalyticsScripts() {
         `}
       </Script>
 
-      {/* 3. Noscript Fallbacks */}
+      {/* 2. Noscript Fallbacks */}
       <noscript>
         <iframe
           src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}

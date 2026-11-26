@@ -104,6 +104,12 @@ export function LocaleProvider({ children, initialLocale = DEFAULT_LOCALE }) {
 
         if (normTarget === currentLocale) return;
 
+        // Switching to/from US changes the GTM container (EU <-> US); do a clean reload so containers never overlap
+        if (normTarget === "us" || currentLocale === "us") {
+          window.location.href = newPath;
+          return;
+        }
+
         router.push(newPath);
       }
     },

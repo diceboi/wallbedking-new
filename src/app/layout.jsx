@@ -85,15 +85,24 @@ export default async function RootLayout({ children }) {
       isPreview: c.status === "preview",
     }));
 
+  const gtmIdUk = process.env.NEXT_PUBLIC_GTM_ID_UK || "GTM-NF5VPKX";
+  const gtmIdEu = process.env.NEXT_PUBLIC_GTM_ID_EU || "GTM-WBV7QDZL";
+  const gtmIdUs = process.env.NEXT_PUBLIC_GTM_ID_US || "GTM-NFQT94XD";
+
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
       <body className="min-h-screen flex flex-col bg-wbk-white">
-        {/* Google Consent Mode v2 & DataLayer Early Initialization (must live in RootLayout for beforeInteractive) */}
+        {/* Google Consent Mode v2 + Early GTM Bootstrap (runs beforeInteractive in initial HTML for all detectors & Tag Assistant) */}
         <Script id="wbk-consent-mode-init" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
             var gtag = window.gtag;
+
+            var pathname = (window.location && window.location.pathname) || '';
+            var hostname = (window.location && window.location.hostname) || '';
+            var isUsPath = /^\\/us(\\/|$)/i.test(pathname);
+            var isUkPath = /^\\/en(\\/|$)/i.test(pathname) || (hostname.indexOf('wallbedking.co.uk') !== -1 && !/^\\/(de|fr|es|it|por|pt|us)(\\/|$)/i.test(pathname));
 
             var storedConsent = null;
             try {
@@ -101,8 +110,9 @@ export default async function RootLayout({ children }) {
               if (raw) storedConsent = JSON.parse(raw);
             } catch(e) {}
 
-            var isAnalytics = storedConsent && storedConsent.analytics === true;
-            var isMarketing = storedConsent && storedConsent.marketing === true;
+            // US does not require GDPR opt-in before firing tags; respect explicit stored choice if user opted out
+            var isAnalytics = storedConsent ? storedConsent.analytics === true : isUsPath;
+            var isMarketing = storedConsent ? storedConsent.marketing === true : isUsPath;
 
             gtag('consent', 'default', {
               'ad_storage': isMarketing ? 'granted' : 'denied',
@@ -111,6 +121,21 @@ export default async function RootLayout({ children }) {
               'analytics_storage': isAnalytics ? 'granted' : 'denied',
               'wait_for_update': 500
             });
+
+            // Immediately bootstrap the exact market GTM container (skips /admin routes)
+            if (!/^\\/admin(\\/|$)/i.test(pathname)) {
+              var activeGtmId = isUsPath ? '${gtmIdUs}' : (isUkPath ? '${gtmIdUk}' : '${gtmIdEu}');
+              window.__wbkGtmLoaded = window.__wbkGtmLoaded || {};
+              if (!window.__wbkGtmLoaded[activeGtmId]) {
+                window.__wbkGtmLoaded[activeGtmId] = true;
+                window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+                var j = document.createElement('script');
+                j.async = true;
+                j.src = 'https://www.googletagmanager.com/gtm.js?id=' + activeGtmId;
+                var target = document.head || document.getElementsByTagName('script')[0].parentNode;
+                target.appendChild(j);
+              }
+            }
           `}
         </Script>
         <ScrollToTop />

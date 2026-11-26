@@ -149,12 +149,14 @@ export function trackAddToCart({
   const itemQty = Number(quantity) || 1;
   const sku = id.startsWith("SKU_") ? id : `SKU_${id}`;
 
+  const lineValue = Math.round(itemPrice * itemQty * 100) / 100;
+
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: "add_to_cart",
     ecommerce: {
       currency: currency.toUpperCase(),
-      value: itemPrice * itemQty,
+      value: lineValue,
       items: [
         {
           item_id: sku,
@@ -166,6 +168,9 @@ export function trackAddToCart({
         },
       ],
     },
+    // Backwards-compatibility keys for US GTM (GTM-NFQT94XD) DLV macros
+    "DLV - ecommerce": { value: lineValue },
+    "DLV - ecommerce.value": lineValue,
   });
 
   if (typeof window.fbq === "function") {
@@ -255,6 +260,10 @@ export async function trackPurchase({
       items: formattedItems,
     },
     sha256ConversionMail: hashedEmail || undefined,
+    // Backwards-compatibility keys for US GTM (GTM-NFQT94XD) DLV macros
+    "DLV - ecommerce": { value: numTotal },
+    "DLV - ecommerce.value": numTotal,
+    "DLV - sha256ConversionMail": hashedEmail || undefined,
   });
 
   // 2. Meta Pixel Purchase (deduplicated via eventID)
