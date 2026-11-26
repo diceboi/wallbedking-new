@@ -30,7 +30,9 @@
     "allTraditionalTagline": "Modelli classici di letti a scomparsa in liquidazione fino a esaurimento scorte",
     "trade": "Clienti Business",
     "caseStudies": "Casi studio",
-    "more": "Altro"
+    "more": "Altro",
+    "acousticBooths": "Cabine Acustiche",
+    "moonchair": "Moonchair"
   },
   "header": {
     "searchPlaceholder": "Cerca letti a scomparsa, divani, materassi...",
@@ -245,7 +247,10 @@
     "allSofas": "Tutti i divani",
     "allMattresses": "Tutti i materassi",
     "allTables": "Tutti i tavoli",
-    "allBeds": "Tutti i letti a scomparsa"
+    "allBeds": "Tutti i letti a scomparsa",
+    "acousticBooths": "Cabine Acustiche",
+    "allAcousticBooths": "Tutte le Cabine Acustiche",
+    "moonchair": "Moonchair"
   },
   "product": {
     "regionUnavailableBadge": "Disponibilità regionale",
@@ -263,7 +268,18 @@
     "design": "Design",
     "spaceSavingTransforming": "Salvaspazio trasformabile",
     "colors": "Colori",
-    "orientation": "Orientamento"
+    "orientation": "Orientamento",
+    "seriesLabel": "Serie:",
+    "exteriorColorLabel": "Colore esterno (RAL):",
+    "fabricColorLabel": "Colore tessuto:",
+    "fabricNote": "Conferma il campione di tessuto scelto prima di ordinare. Le fotografie mostrano finiture di riferimento.",
+    "acousticSpecs": "Acustica e specifiche tecniche",
+    "comingSoonStatus": "Anteprima • Disponibile a gennaio",
+    "comingSoonPriceLabel": "Disponibile a gennaio",
+    "comingSoonPriceSub": "Prezzi e ordini aperti a gennaio",
+    "notifyLaunchBtn": "Avvisami quando disponibile",
+    "requestCommercialQuote": "Richiedi preventivo B2B / anticipato",
+    "comingSoonNote": "Lancio a gennaio • Registrati per la notifica prioritaria"
   },
   "reviews": {
     "title": "Recensioni",
@@ -556,7 +572,14 @@
     "exploreProducts": "Esplora i prodotti",
     "backToProfile": "Torna al menu profilo",
     "items": "articoli",
-    "item": "articolo"
+    "item": "articolo",
+    "comingSoonBadge": "Disponibile a gennaio",
+    "comingSoonTitle": "Ricevi avviso al lancio",
+    "comingSoonSubtitle": "Lancio a gennaio",
+    "comingSoonDescription": "Questo modello arriva a gennaio. Lascia la tua email e ti avviseremo appena prezzi e ordini saranno attivi, con accesso prioritario.",
+    "comingSoonSubmitBtn": "Avvisami a gennaio",
+    "comingSoonSuccessMsg": "Sei in lista! Ti avviseremo appena questo modello sarà disponibile a gennaio.",
+    "variant": "Configurazione selezionata"
   },
   "tradePage": {
     "heroBadge": "Ingegneria europea e soluzioni professionali",

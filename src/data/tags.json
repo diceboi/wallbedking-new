@@ -46,5 +46,13 @@
     "icon": "truck",
     "color": "#090A0A",
     "description": "In stock with rapid delivery dispatch"
+  },
+  {
+    "id": "coming-in-january",
+    "name": "Coming in January",
+    "slug": "coming-in-january",
+    "icon": "sparkles",
+    "color": "#8E735B",
+    "description": "Launching in January — register for priority launch alert"
   }
 ]

@@ -30,7 +30,9 @@
     "allTraditionalTagline": "Modèles classiques de lits escamotables en déstockage – jusqu'à épuisement des stocks",
     "trade": "Professionnels",
     "caseStudies": "Études de cas",
-    "more": "Plus"
+    "more": "Plus",
+    "acousticBooths": "Cabines Acoustiques",
+    "moonchair": "Moonchair"
   },
   "header": {
     "searchPlaceholder": "Rechercher lits escamotables, canapés, matelas...",
@@ -294,7 +296,10 @@
     "resetFilters": "Réinitialiser les filtres",
     "allTags": "Toutes les étiquettes",
     "notAvailableInRegion": "Cette catégorie n'est actuellement pas disponible dans votre région",
-    "exploreOtherCategories": "Découvrez nos autres catégories disponibles."
+    "exploreOtherCategories": "Découvrez nos autres catégories disponibles.",
+    "acousticBooths": "Cabines Acoustiques",
+    "allAcousticBooths": "Toutes les Cabines Acoustiques",
+    "moonchair": "Moonchair"
   },
   "search": {
     "title": "Recherche",
@@ -411,7 +416,18 @@
     "tableClosedSize": "Dimensions replié",
     "tableOpenSize": "Dimensions ouvert",
     "tableSeats": "Capacité d'accueil",
-    "tableMechanism": "Système de transformation"
+    "tableMechanism": "Système de transformation",
+    "seriesLabel": "Série :",
+    "exteriorColorLabel": "Couleur extérieure (RAL) :",
+    "fabricColorLabel": "Couleur du tissu :",
+    "fabricNote": "Veuillez confirmer votre échantillon de tissu avant de commander. Les photos sont des références du modèle.",
+    "acousticSpecs": "Acoustique et caractéristiques techniques",
+    "comingSoonStatus": "Avant-première • Disponible en janvier",
+    "comingSoonPriceLabel": "Disponible en janvier",
+    "comingSoonPriceSub": "Tarifs et commandes ouverts en janvier",
+    "notifyLaunchBtn": "Me prévenir dès disponibilité",
+    "requestCommercialQuote": "Demander un devis B2B / anticipé",
+    "comingSoonNote": "Lancement en janvier • Inscrivez-vous pour être prévenu en priorité"
   },
   "reviews": {
     "title": "Avis",
@@ -904,7 +920,14 @@
     "backToProfile": "Retour au menu profil",
     "items": "articles",
     "item": "article",
-    "outOfStockShort": "En rupture"
+    "outOfStockShort": "En rupture",
+    "comingSoonBadge": "Disponible en janvier",
+    "comingSoonTitle": "Être prévenu au lancement",
+    "comingSoonSubtitle": "Lancement en janvier",
+    "comingSoonDescription": "Ce modèle arrive en janvier. Laissez votre e-mail pour être averti dès l'ouverture des tarifs et des commandes, avec accès prioritaire.",
+    "comingSoonSubmitBtn": "Me prévenir en janvier",
+    "comingSoonSuccessMsg": "Vous êtes inscrit ! Nous vous préviendrons dès le lancement en janvier.",
+    "variant": "Configuration sélectionnée"
   },
   "tradePage": {
     "heroBadge": "Ingénierie européenne & partenariats professionnels",

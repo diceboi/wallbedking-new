@@ -139,7 +139,13 @@ export function ProductCard({ product, className = "" }) {
   const priceDisplay = pricing.display;
   const isFrom = !String(priceDisplay).toLowerCase().includes("from");
 
+  const isComingSoon = Boolean(
+    product.is_coming_soon ||
+      (Array.isArray(product.tags) && product.tags.includes("coming-in-january"))
+  );
+
   const isOutOfStock =
+    isComingSoon ||
     (product.stock !== undefined &&
       product.stock !== null &&
       Number(product.stock) <= 0) ||
@@ -266,7 +272,9 @@ export function ProductCard({ product, className = "" }) {
               orientation !== "Universal" &&
               !isMattress &&
               !isTable &&
-              product.parent_category !== "sofas" && (
+              product.parent_category !== "sofas" &&
+              product.parent_category !== "acoustic-booths" &&
+              product.parent_category !== "moonchair" && (
                 <div>
                   <span className="text-wbk-brown">{t("product.orientation", "Orientation")}:</span>{" "}
                   <span className="font-medium text-wbk-black">{formatOrientation(orientation, locale)}</span>
@@ -310,7 +318,8 @@ export function ProductCard({ product, className = "" }) {
               </div>
             )}
 
-            {/* Stock status indicator under colors */}
+            {/* Stock status indicator under colors (hidden for Coming Soon since price row already displays launch month) */}
+            {!isComingSoon && (
             <div className="flex items-center gap-1.5 pt-1.5">
               <span
                 className={`w-2 h-2 rounded-full shrink-0 ${
@@ -327,28 +336,37 @@ export function ProductCard({ product, className = "" }) {
                   : t("common.inStock", "In Stock")}
               </span>
             </div>
+            )}
           </div>
 
           {/* Price */}
           <div className="pt-1 text-sm text-wbk-black font-poppins flex items-baseline gap-2 flex-wrap">
-            <div>
-              {isFrom ? `${t("common.from", "from")} ` : ""}
-              <span
-                className={`font-semibold text-base ${
-                  pricing.isOnSale ? "text-[#2D5A27]" : "text-wbk-black"
-                }`}
-              >
-                {priceDisplay}
+            {isComingSoon ? (
+              <span className="font-semibold text-sm uppercase tracking-wider text-wbk-gold">
+                {t("product.comingSoonPriceLabel", "Coming in January")}
               </span>
-            </div>
-            {pricing.isOnSale && (
-              <span className="text-xs text-black line-through font-normal">
-                {pricing.regularDisplay}
-              </span>
+            ) : (
+              <>
+                <div>
+                  {isFrom ? `${t("common.from", "from")} ` : ""}
+                  <span
+                    className={`font-semibold text-base ${
+                      pricing.isOnSale ? "text-[#2D5A27]" : "text-wbk-black"
+                    }`}
+                  >
+                    {priceDisplay}
+                  </span>
+                </div>
+                {pricing.isOnSale && (
+                  <span className="text-xs text-black line-through font-normal">
+                    {pricing.regularDisplay}
+                  </span>
+                )}
+              </>
             )}
           </div>
 
-          {/* Action Button below price, left-aligned: Cart if in stock, WBK Gold Wishlist if out of stock */}
+          {/* Action Button below price, left-aligned: Cart if in stock, Notify Me if coming soon/out of stock */}
           <div className="pt-2 flex items-center justify-start">
             {!isOutOfStock ? (
               <button
@@ -366,6 +384,18 @@ export function ProductCard({ product, className = "" }) {
                   size={18}
                   className="transition-transform duration-200 group-hover/btn:scale-110"
                 />
+              </button>
+            ) : isComingSoon ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsWishlistOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-wbk-gold bg-wbk-gold hover:bg-wbk-black hover:border-wbk-black text-wbk-black hover:text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <span>{t("product.notifyLaunchBtn", "Notify Me When Available")}</span>
               </button>
             ) : (
               <button
@@ -407,6 +437,7 @@ export function ProductCard({ product, className = "" }) {
         isOpen={isWishlistOpen}
         onClose={() => setIsWishlistOpen(false)}
         product={product}
+        comingSoon={isComingSoon}
       />
     </>
   );

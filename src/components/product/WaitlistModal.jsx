@@ -24,6 +24,7 @@ export function WaitlistModal({
   product,
   selectedVariant = null,
   productSize = "",
+  comingSoon = false,
 }) {
   const { user } = useAuth();
   const { locale, t } = useLocale();
@@ -84,41 +85,72 @@ export function WaitlistModal({
 
   if (!isOpen || !mounted || typeof document === "undefined") return null;
 
+  const isComingSoon = Boolean(
+    comingSoon ||
+      product?.is_coming_soon ||
+      selectedVariant?.is_coming_soon ||
+      (Array.isArray(product?.tags) && product.tags.includes("coming-in-january"))
+  );
   const productName =
     product?.title || product?.name || "Wall Bed King Murphy Bed";
-  const productSlug = product?.slug || "";
-  const productId = product?.id || selectedVariant?.id || null;
+  const productSlug = selectedVariant?.slug || product?.slug || "";
+  const productId =
+    (typeof selectedVariant?.id === "number" ? selectedVariant.id : null) ||
+    (typeof product?.id === "number" ? product.id : null);
   const productImage =
-    product?.image || selectedVariant?.image || "/sofa1.webp";
+    selectedVariant?.image || product?.image || "/sofa1.webp";
+  const variantParts = [
+    selectedVariant?.manufacturer_sku || selectedVariant?.sizeLabel || productSize || "",
+    selectedVariant?.color || "",
+  ].filter(Boolean);
   const variantLabel =
-    selectedVariant?.sizeLabel || productSize || selectedVariant?.name || "";
+    variantParts.length > 0
+      ? variantParts.join(" • ")
+      : selectedVariant?.name || "";
 
   // Translated strings via t() helper with fallback
-  const txtOutOfStock = t("waitlist.outOfStock", "Out of Stock");
-  const txtJoinWaitlist = t("waitlist.joinWaitlist", "Join the Waitlist");
-  const txtReplenishing = t(
-    "waitlist.replenishing",
-    "Replenishment in progress"
-  );
-  const txtSize = t("waitlist.size", "Size");
-  const txtDescription = t(
-    "waitlist.description",
-    "Be the first to know when this item is back in stock. We'll send an instant email notification directly to your inbox with a priority reservation link."
-  );
+  const txtOutOfStock = isComingSoon
+    ? t("waitlist.comingSoonBadge", "Coming in January")
+    : t("waitlist.outOfStock", "Out of Stock");
+  const txtJoinWaitlist = isComingSoon
+    ? t("waitlist.comingSoonTitle", "Get Notified at Launch")
+    : t("waitlist.joinWaitlist", "Join the Waitlist");
+  const txtReplenishing = isComingSoon
+    ? t("waitlist.comingSoonSubtitle", "Launching in January")
+    : t("waitlist.replenishing", "Replenishment in progress");
+  const txtSize = isComingSoon
+    ? t("waitlist.variant", "Selected Configuration")
+    : t("waitlist.size", "Size");
+  const txtDescription = isComingSoon
+    ? t(
+        "waitlist.comingSoonDescription",
+        "This model arrives in January. Leave your email and we will notify you the moment pricing and ordering go live — with priority access."
+      )
+    : t(
+        "waitlist.description",
+        "Be the first to know when this item is back in stock. We'll send an instant email notification directly to your inbox with a priority reservation link."
+      );
   const txtEmailLabel = t("waitlist.emailLabel", "Your Email Address *");
   const txtNameLabel = t("waitlist.nameLabel", "Your Name (Optional)");
   const txtNamePlaceholder = t("waitlist.namePlaceholder", "e.g. John Smith");
   const txtSubmitting = t("waitlist.submitting", "Adding to Waitlist...");
-  const txtSubmitBtn = t("waitlist.notifyMe", "Notify Me When In Stock");
+  const txtSubmitBtn = isComingSoon
+    ? t("waitlist.comingSoonSubmitBtn", "Notify Me in January")
+    : t("waitlist.notifyMe", "Notify Me When In Stock");
   const txtNoSpam = t(
     "waitlist.noSpam",
     "No spam. We will only email you when this specific model is available."
   );
   const txtSuccessTitle = t("waitlist.successTitle", "You're on the list!");
-  const txtSuccessMsg = t(
-    "waitlist.successMsg",
-    "You're on the waitlist! We will notify you the moment stock arrives."
-  );
+  const txtSuccessMsg = isComingSoon
+    ? t(
+        "waitlist.comingSoonSuccessMsg",
+        "You are on the launch list! We will notify you as soon as this model goes live in January."
+      )
+    : t(
+        "waitlist.successMsg",
+        "You're on the waitlist! We will notify you the moment stock arrives."
+      );
   const txtDone = t("waitlist.done", "Done");
   const txtEmailInvalid = t(
     "waitlist.emailInvalid",
@@ -163,8 +195,12 @@ export function WaitlistModal({
           productImage,
           variantName: variantLabel,
           options: {
-            size: productSize,
-            format: product?.format || "Vertical",
+            size: selectedVariant?.sizeLabel || productSize,
+            color: selectedVariant?.color || "",
+            sku: selectedVariant?.sku || "",
+            manufacturer_sku: selectedVariant?.manufacturer_sku || "",
+            comingSoon: isComingSoon,
+            format: product?.format || "",
           },
           locale: locale || "en",
           ...security.getSecurityPayload(),

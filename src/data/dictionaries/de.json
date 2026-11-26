@@ -30,7 +30,9 @@
     "allTraditionalTagline": "Klassische Schrankbett-Modelle im Ausverkauf – solange der Vorrat reicht",
     "trade": "Gewerbekunden",
     "caseStudies": "Fallbeispiele",
-    "more": "Mehr"
+    "more": "Mehr",
+    "acousticBooths": "Akustikkabinen",
+    "moonchair": "Moonchair"
   },
   "header": {
     "searchPlaceholder": "Schrankbetten, Sofas, Matratzen suchen...",
@@ -245,7 +247,10 @@
     "allSofas": "Alle Sofas",
     "allMattresses": "Alle Matratzen",
     "allTables": "Alle Tische",
-    "allBeds": "Alle Schrankbetten"
+    "allBeds": "Alle Schrankbetten",
+    "acousticBooths": "Akustikkabinen",
+    "allAcousticBooths": "Alle Akustikkabinen",
+    "moonchair": "Moonchair"
   },
   "product": {
     "regionUnavailableBadge": "Regionale Verfügbarkeit",
@@ -263,7 +268,18 @@
     "design": "Design",
     "spaceSavingTransforming": "Platzsparend transformierbar",
     "colors": "Farben",
-    "orientation": "Ausrichtung"
+    "orientation": "Ausrichtung",
+    "seriesLabel": "Serie:",
+    "exteriorColorLabel": "Außenfarbe (RAL):",
+    "fabricColorLabel": "Stofffarbe:",
+    "fabricNote": "Bitte bestätigen Sie Ihr gewähltes Stoffmuster vor der Bestellung. Fotos dienen als Modellreferenz.",
+    "acousticSpecs": "Akustik & Technische Daten",
+    "comingSoonStatus": "Vorankündigung • Verfügbar ab Januar",
+    "comingSoonPriceLabel": "Verfügbar ab Januar",
+    "comingSoonPriceSub": "Preise & Bestellungen ab Januar",
+    "notifyLaunchBtn": "Benachrichtigen bei Verfügbarkeit",
+    "requestCommercialQuote": "Vorab- / B2B-Angebot anfordern",
+    "comingSoonNote": "Start im Januar • Für bevorzugte Benachrichtigung anmelden"
   },
   "reviews": {
     "title": "Bewertungen",
@@ -556,7 +572,14 @@
     "exploreProducts": "Produkte entdecken",
     "backToProfile": "Zurück zum Profilmenü",
     "items": "Artikel",
-    "item": "Artikel"
+    "item": "Artikel",
+    "comingSoonBadge": "Verfügbar ab Januar",
+    "comingSoonTitle": "Zum Verkaufsstart benachrichtigen",
+    "comingSoonSubtitle": "Marktstart im Januar",
+    "comingSoonDescription": "Dieses Modell erscheint im Januar. Hinterlassen Sie Ihre E-Mail-Adresse, und wir informieren Sie sofort, sobald Preise und Bestellung freigeschaltet sind.",
+    "comingSoonSubmitBtn": "Im Januar benachrichtigen",
+    "comingSoonSuccessMsg": "Sie stehen auf der Vormerkliste! Wir benachrichtigen Sie, sobald das Modell im Januar verfügbar ist.",
+    "variant": "Gewählte Konfiguration"
   },
   "tradePage": {
     "heroBadge": "Deutsche & Europäische Ingenieurskunst für Gewerbepartner",

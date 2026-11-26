@@ -552,6 +552,16 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
       return "vertical-wall-bed-cabinet";
     }
 
+    if (cat === "acoustic-booths") {
+      if (s === "v4") return "sileopod-v4-acoustic-booth";
+      if (s === "ui1") return "sileopod-ui1-acoustic-booth";
+      return "sileopod-v5-acoustic-booth";
+    }
+
+    if (cat === "moonchair") {
+      return "moonchair-bluetooth-lounge-chair";
+    }
+
     return null;
   }, []);
 
@@ -689,6 +699,9 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
   const isTableProduct =
     activeProduct.parent_category === "tables" ||
     Boolean(activeProduct.is_space_saving_table);
+  const isAcousticBooth = activeProduct.parent_category === "acoustic-booths";
+  const isMoonchair = activeProduct.parent_category === "moonchair";
+  const isSpecialtyProduct = isAcousticBooth || isMoonchair;
 
   const availableFormats = useMemo(() => {
     if (isBedProduct) {
@@ -718,6 +731,9 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
     if (activeProduct.parent_category === "cabinets") {
       return ["Vertical", "Horizontal", "Side Units", "Extensions"];
     }
+    if (activeProduct.parent_category === "acoustic-booths") {
+      return ["V5", "V4", "UI1"];
+    }
     return [];
   }, [
     isBedProduct,
@@ -728,7 +744,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
   ]);
 
   const availableSizes = useMemo(() => {
-    if (isTableProduct) {
+    if (isTableProduct || isMoonchair) {
       return [];
     }
     if (!familyVariants || familyVariants.length === 0) {
@@ -761,7 +777,11 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
           (v.orientation || "Vertical").toLowerCase() ===
           (productFormat || "Vertical").toLowerCase(),
       );
-    } else if (activeProduct.parent_category === "cabinets" && targetColor) {
+    } else if (
+      (activeProduct.parent_category === "cabinets" ||
+        activeProduct.parent_category === "acoustic-booths") &&
+      targetColor
+    ) {
       variantsList = familyVariants.filter(
         (v) => !v.color || v.color === targetColor,
       );
@@ -896,7 +916,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
     const colors = Array.from(
       new Set(visibleVariants.map((v) => v.color).filter(Boolean)),
     );
-    if (isTableProduct) {
+    if (isTableProduct || isSpecialtyProduct) {
       return colors;
     }
     const order = ["Oak", "Beech", "Pine", "White", "Black", "Grey", "Beige"];
@@ -1070,6 +1090,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
     findMatchingVariant,
     isBedProduct,
     isTableProduct,
+    isSpecialtyProduct,
   ]);
 
   // Canonical bed URL normalization:
@@ -1274,12 +1295,19 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
             currentSizeSlug = "50x52-door";
           }
         }
+        if (categorySlug === "acoustic-booths" && sty) {
+          const sizeCode = (selectedVariant?.model_size || "S").toLowerCase();
+          currentSizeSlug = `${sty.toLowerCase()}-${sizeCode}`;
+        }
 
         const params = new URLSearchParams();
         if (currentSizeSlug) params.set("size", currentSizeSlug);
         if (currentColor) params.set("color", currentColor);
         const query = params.toString() ? `?${params.toString()}` : "";
-        router.push(`/products/${categorySlug}/${targetSlug}${query}`);
+        const nextUrl = localizedHref
+          ? localizedHref(`/products/${categorySlug}/${targetSlug}${query}`)
+          : `/products/${categorySlug}/${targetSlug}${query}`;
+        router.push(nextUrl);
         return;
       }
     }
@@ -1497,6 +1525,15 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
 
   // Current display product is selectedVariant or activeProduct
   const displayProduct = selectedVariant || activeProduct;
+  const isComingSoon = Boolean(
+    !isWholesale &&
+      (displayProduct?.is_coming_soon ||
+        activeProduct?.is_coming_soon ||
+        (Array.isArray(displayProduct?.tags) &&
+          displayProduct.tags.includes("coming-in-january")) ||
+        (Array.isArray(activeProduct?.tags) &&
+          activeProduct.tags.includes("coming-in-january"))),
+  );
   const currentWholesalePricing = useMemo(() => {
     if (!isWholesale || !wholesaleAuthorized) return null;
     return (
@@ -2513,18 +2550,18 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
     ? integratedCabinetGallery
     : displayProduct.gallery && displayProduct.gallery.length > 0
       ? displayProduct.gallery
-      : isTableProduct
+      : isTableProduct || isSpecialtyProduct
         ? [
             {
               src: displayProduct.image,
-              alt: `${displayProduct.name || "Table"} Primary View`,
+              alt: `${displayProduct.name || "Product"} Primary View`,
             },
             ...(displayProduct.hover_image || displayProduct.hoverImage
               ? [
                   {
                     src:
                       displayProduct.hover_image || displayProduct.hoverImage,
-                    alt: `${displayProduct.name || "Table"} View 2`,
+                    alt: `${displayProduct.name || "Product"} View 2`,
                   },
                 ]
               : []),
@@ -2827,18 +2864,21 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                 )}
               </div>
 
-              {/* Product Tags */}
+              {/* Product Tags (hide coming-in-january tag under SKU to avoid duplication) */}
               {Array.isArray(displayProduct?.tags) &&
-                displayProduct.tags.length > 0 && (
+                displayProduct.tags.filter((tId) => tId !== "coming-in-january")
+                  .length > 0 && (
                   <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
-                    {displayProduct.tags.map((tId) => (
-                      <TagBadge
-                        key={tId}
-                        tagIdOrSlug={tId}
-                        locale={locale}
-                        variant="micro"
-                      />
-                    ))}
+                    {displayProduct.tags
+                      .filter((tId) => tId !== "coming-in-january")
+                      .map((tId) => (
+                        <TagBadge
+                          key={tId}
+                          tagIdOrSlug={tId}
+                          locale={locale}
+                          variant="micro"
+                        />
+                      ))}
                   </div>
                 )}
               {isWholesale ? (
@@ -2858,7 +2898,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                     )}
                   </span>
                 </div>
-              ) : isOutOfStock ? (
+              ) : isComingSoon ? null : isOutOfStock ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-red-50 border border-red-300 text-red-700 text-xs font-bold shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-red-600 ring-2 ring-red-200" />
@@ -2944,18 +2984,21 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                     )}
                   </div>
 
-                  {/* Product Tags (Desktop) */}
+                  {/* Product Tags (Desktop — hide coming-in-january under SKU) */}
                   {Array.isArray(displayProduct?.tags) &&
-                    displayProduct.tags.length > 0 && (
+                    displayProduct.tags.filter((tId) => tId !== "coming-in-january")
+                      .length > 0 && (
                       <div className="flex items-center gap-2 pt-2 flex-wrap">
-                        {displayProduct.tags.map((tId) => (
-                          <TagBadge
-                            key={tId}
-                            tagIdOrSlug={tId}
-                            locale={locale}
-                            variant="pdp"
-                          />
-                        ))}
+                        {displayProduct.tags
+                          .filter((tId) => tId !== "coming-in-january")
+                          .map((tId) => (
+                            <TagBadge
+                              key={tId}
+                              tagIdOrSlug={tId}
+                              locale={locale}
+                              variant="pdp"
+                            />
+                          ))}
                       </div>
                     )}
                 </div>
@@ -3205,7 +3248,9 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                       <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                         {activeProduct?.parent_category === "cabinets"
                           ? t("product.cabinetType", "Cabinet Type:")
-                          : t("product.styleLabel", "Style:")}
+                          : isAcousticBooth
+                            ? t("product.seriesLabel", "Series:")
+                            : t("product.styleLabel", "Style:")}
                       </label>
                       <button
                         type="button"
@@ -3246,7 +3291,59 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                   )}
 
                   {/* Color / Finish Selector */}
-                  {availableColors.length > 1 && (
+                  {availableColors.length > 1 && isSpecialtyProduct && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown font-poppins">
+                          {isAcousticBooth
+                            ? t("product.exteriorColorLabel", "Exterior Colour (RAL):")
+                            : t("product.fabricColorLabel", "Fabric Colour:")}
+                        </label>
+                        <span className="text-[11px] font-semibold text-wbk-black truncate max-w-[60%] text-right">
+                          {selectedVariant?.color || activeProduct?.color || availableColors[0]}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {availableColors.map((colorName) => {
+                          const currentColor =
+                            selectedVariant?.color ||
+                            activeProduct?.color ||
+                            availableColors[0];
+                          const isSelected =
+                            currentColor?.toLowerCase() === colorName.toLowerCase();
+                          const matchingVar = familyVariants.find(
+                            (v) => (v.color || "").toLowerCase() === colorName.toLowerCase(),
+                          );
+                          const hex = matchingVar?.color_hex || "#BCA37F";
+                          return (
+                            <button
+                              key={colorName}
+                              type="button"
+                              title={colorName}
+                              aria-label={colorName}
+                              onClick={() => handleColorChange(colorName)}
+                              className={`w-7 h-7 rounded-full transition-all cursor-pointer flex items-center justify-center ${
+                                isSelected
+                                  ? "ring-2 ring-offset-2 ring-wbk-black scale-110"
+                                  : "ring-1 ring-black/20 hover:scale-105"
+                              }`}
+                              style={{ backgroundColor: hex }}
+                            />
+                          );
+                        })}
+                      </div>
+                      {isMoonchair && (
+                        <p className="text-[10px] text-wbk-brown/90 leading-snug pt-0.5">
+                          {t(
+                            "product.fabricNote",
+                            "Please confirm your chosen fabric swatch before ordering. Photographs show model references.",
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {availableColors.length > 1 && !isSpecialtyProduct && (
                     <div className="relative">
                       <label className="block text-[10px] uppercase tracking-wider font-semibold text-wbk-brown mb-1 font-poppins">
                         {isTableProduct
@@ -3990,7 +4087,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                       )}
                     </span>
                   </div>
-                ) : isOutOfStock ? (
+                ) : isComingSoon ? null : isOutOfStock ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-red-50 border border-red-300 text-red-700 text-xs font-bold shadow-2xs">
                       <span className="w-2 h-2 rounded-full bg-red-600 ring-2 ring-red-200" />
@@ -4022,6 +4119,22 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                 )}
 
                 {/* Total Price Display */}
+                {isComingSoon ? (
+                  <div className="space-y-1 pt-1 pb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold block">
+                      {t("common.availability", "Availability")}
+                    </span>
+                    <div className="text-xl xl:text-2xl font-bold tracking-tight text-wbk-black font-new-york">
+                      {t("product.comingSoonPriceLabel", "Coming in January")}
+                    </div>
+                    <p className="text-[11px] text-wbk-brown">
+                      {t(
+                        "product.comingSoonPriceSub",
+                        "Pricing & ordering open in January",
+                      )}
+                    </p>
+                  </div>
+                ) : (
                 <div className="space-y-2 pt-1 pb-1">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-[10px] uppercase tracking-wider text-wbk-brown font-semibold">
@@ -4080,9 +4193,43 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                     )}
                   </div>
                 </div>
+                )}
 
                 {/* Desktop CTA Button */}
-                {isOutOfStock ? (
+                {isComingSoon ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsWaitlistModalOpen(true)}
+                      className="w-full py-3.5 px-5 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-xs font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer group"
+                    >
+                      <IconBell
+                        size={16}
+                        className="text-wbk-black group-hover:text-white transition-colors"
+                      />
+                      <span>
+                        {t(
+                          "product.notifyLaunchBtn",
+                          "Notify Me When Available",
+                        )}
+                      </span>
+                    </button>
+                    {isAcousticBooth && (
+                      <Link
+                        href={localizedHref("/contact")}
+                        className="w-full py-2.5 px-5 bg-white hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-black/40 hover:border-wbk-black text-[11px] font-semibold uppercase tracking-wider rounded-full transition-all duration-200 flex items-center justify-center gap-2"
+                      >
+                        <span>
+                          {t(
+                            "product.requestCommercialQuote",
+                            "Request Early / B2B Quote",
+                          )}
+                        </span>
+                        <IconArrowRight size={14} />
+                      </Link>
+                    )}
+                  </div>
+                ) : isOutOfStock ? (
                   isTraditionalBed && morphyHref ? (
                     <Link
                       href={morphyHref}
@@ -4146,7 +4293,8 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                   </button>
                 )}
 
-                {/* Micro Guarantee / Delivery Note */}
+                {/* Micro Guarantee / Delivery Note (hidden for Coming Soon to keep layout clean) */}
+                {!isComingSoon && (
                 <div className="flex items-center justify-between text-[11px] text-wbk-brown pt-0.5">
                   <span className="flex items-center gap-1.5">
                     <span
@@ -4173,6 +4321,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
                     </span>
                   )}
                 </div>
+                )}
                   </>
                 )}
               </div>
@@ -6433,42 +6582,65 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
               ) : (
               <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                 <div className="flex flex-col items-end font-poppins">
-                  <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold flex items-center gap-1">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-600" : "bg-green-600"}`}
-                    />
-                    <span>{t("common.total", "Total")}</span>
-                  </span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span
-                      className={`font-bold text-sm sm:text-xl md:text-2xl leading-none ${
-                        productPricing.isOnSale
-                          ? "text-[#2D5A27]"
-                          : "text-wbk-black"
-                      }`}
-                    >
-                      {formatPrice(totalDecimal, locale)}
+                  {isComingSoon ? (
+                    <span className="font-bold text-xs sm:text-base text-wbk-black leading-none">
+                      {t("product.comingSoonPriceLabel", "Coming in January")}
                     </span>
-                    {productPricing.isOnSale && (
-                      <span className="text-[10px] sm:text-xs text-black line-through font-normal hidden sm:inline">
-                        {formatPrice(
-                          productPricing.regularRaw +
-                            sofaSurcharge +
-                            regularCabinetSurcharge,
-                          locale,
+                  ) : (
+                    <>
+                      <span className="text-[9px] uppercase tracking-widest text-wbk-black/80 font-semibold flex items-center gap-1">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-600" : "bg-green-600"}`}
+                        />
+                        <span>{t("common.total", "Total")}</span>
+                      </span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span
+                          className={`font-bold text-sm sm:text-xl md:text-2xl leading-none ${
+                            productPricing.isOnSale
+                              ? "text-[#2D5A27]"
+                              : "text-wbk-black"
+                          }`}
+                        >
+                          {formatPrice(totalDecimal, locale)}
+                        </span>
+                        {productPricing.isOnSale && (
+                          <span className="text-[10px] sm:text-xs text-black line-through font-normal hidden sm:inline">
+                            {formatPrice(
+                              productPricing.regularRaw +
+                                sofaSurcharge +
+                                regularCabinetSurcharge,
+                              locale,
+                            )}
+                          </span>
                         )}
-                      </span>
-                    )}
-                    {productPricing.isOnSale && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-wbk-black text-white px-1.5 py-0.5 rounded-none hidden xs:inline-block">
-                        {productPricing.discountLabel ||
-                          t("product.sale", "Sale")}
-                      </span>
-                    )}
-                  </div>
+                        {productPricing.isOnSale && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-wbk-black text-white px-1.5 py-0.5 rounded-none hidden xs:inline-block">
+                            {productPricing.discountLabel ||
+                              t("product.sale", "Sale")}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {isOutOfStock ? (
+                {isComingSoon ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsWaitlistModalOpen(true)}
+                    title={t("product.notifyLaunchBtn", "Notify Me When Available")}
+                    className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:gap-2 sm:px-6 sm:py-3 bg-wbk-gold hover:bg-wbk-black text-wbk-black hover:text-white border border-wbk-gold hover:border-wbk-black text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest rounded-full transition-all duration-300 shadow-md hover:shadow-lg group cursor-pointer shrink-0"
+                  >
+                    <IconBell
+                      size={16}
+                      className="text-wbk-black group-hover:text-white transition-colors"
+                    />
+                    <span className="hidden sm:inline">
+                      {t("product.notifyLaunchBtn", "Notify Me When Available")}
+                    </span>
+                  </button>
+                ) : isOutOfStock ? (
                   isTraditionalBed && morphyHref ? (
                     <Link
                       href={morphyHref}
@@ -6553,6 +6725,7 @@ export default function ProductDetailPage({ isWholesaleMode = false } = {}) {
         onClose={() => setIsWaitlistModalOpen(false)}
         product={displayProduct}
         selectedVariant={selectedVariant}
+        comingSoon={isComingSoon}
         productSize={productSize}
       />
     </div>

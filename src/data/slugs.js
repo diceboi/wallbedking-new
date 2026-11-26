@@ -68,6 +68,22 @@ export const CATEGORY_SLUGS = {
     por: "pacotes",
     it: "pacchetti",
   },
+  "acoustic-booths": {
+    en: "acoustic-booths",
+    de: "akustikkabinen",
+    fr: "cabines-acoustiques",
+    es: "cabinas-acusticas",
+    por: "cabines-acusticas",
+    it: "cabine-acustiche",
+  },
+  moonchair: {
+    en: "moonchair",
+    de: "moonchair",
+    fr: "moonchair",
+    es: "moonchair",
+    por: "moonchair",
+    it: "moonchair",
+  },
 };
 
 /**

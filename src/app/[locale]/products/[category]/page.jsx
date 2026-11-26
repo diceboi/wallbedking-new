@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useState,
   useRef,
@@ -45,11 +45,19 @@ import {
 
 export default function CategoryArchivePage() {
   const params = useParams();
+  const router = useRouter();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const { allProducts } = useProductCatalog();
   const { categories: allDbCategories } = useCategories();
   const rawCategory = params?.category || "beds";
   const currentCategory = resolveCategory(rawCategory, params?.locale);
+
+  // Moonchair direct category route redirects straight to the Moonchair flagship product page
+  useEffect(() => {
+    if (currentCategory === "moonchair") {
+      router.replace(localizedHref("/products/moonchair/moonchair-bluetooth-lounge-chair"));
+    }
+  }, [currentCategory, router, localizedHref]);
 
   const catInfo = CATEGORIES_INFO[currentCategory] || {
     label: currentCategory.replace("-", " "),

@@ -2,9 +2,13 @@
 import catalog from './products-catalog.json';
 import bundlesCatalog from './bundles.json';
 import tablesCatalogData from './tables-catalog.json';
+import specialtyCatalogData from './specialty-catalog.json';
 
 export const TABLES_CATALOG_VARIANTS = tablesCatalogData?.variants || [];
 export const TABLES_FLAGSHIP_LIST = tablesCatalogData?.flagships || [];
+export const SPECIALTY_CATALOG_VARIANTS = specialtyCatalogData?.variants || [];
+export const SPECIALTY_FLAGSHIP_LIST = specialtyCatalogData?.flagships || [];
+export const SPECIALTY_COLOR_PALETTES = specialtyCatalogData?.colorPalettes || {};
 
 export const RAW_CATALOG = [...catalog, ...TABLES_CATALOG_VARIANTS];
 
@@ -188,6 +192,54 @@ export const CATEGORIES_INFO = {
     description_es: "Packs completos de cama abatible y armario a juego con ajuste garantizado y ahorro directo.",
     image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/cabinets/1K/90x200-SV-WHITE-CABINET_ANGLE_1.webp",
     subcategories: ["Classic+ Packages", "Morphy Sets"]
+  },
+  "acoustic-booths": {
+    label: "Acoustic Pods",
+    title: "Acoustic Pods & Soundproof Booths",
+    label_de: "Akustikkabinen",
+    title_de: "Akustikkabinen & Schallschutzkabinen",
+    label_fr: "Cabines Acoustiques",
+    title_fr: "Cabines Acoustiques & Insonorisées",
+    label_es: "Cabinas Acústicas",
+    title_es: "Cabinas Acústicas Insonorizadas",
+    label_it: "Cabine Acustiche",
+    title_it: "Cabine Acustiche Insonorizzate",
+    label_por: "Cabines Acústicas",
+    title_por: "Cabines Acústicas Insonorizadas",
+    slug: "acoustic-booths",
+    description: "Italian-designed soundproof acoustic booths for focused work, calls and meetings in offices, airports, lounges and public spaces. Launching in January.",
+    description_de: "Italienisch gestaltete schallisolierte Akustikkabinen für konzentriertes Arbeiten, Telefonate und Meetings in Büros, Flughäfen und öffentlichen Bereichen. Verfügbar ab Januar.",
+    description_fr: "Cabines acoustiques insonorisées au design italien pour appels, réunions et travail concentré dans les bureaux, aéroports et espaces publics. Disponibles en janvier.",
+    description_es: "Cabinas acústicas insonorizadas de diseño italiano para llamadas, reuniones y trabajo concentrado en oficinas, aeropuertos y espacios públicos. Disponibles en enero.",
+    description_it: "Cabine acustiche insonorizzate di design italiano per chiamate, riunioni e lavoro concentrato in uffici, aeroporti e spazi pubblici. Disponibili a gennaio.",
+    description_por: "Cabines acústicas insonorizadas de design italiano para chamadas, reuniões e trabalho focado em escritórios, aeroportos e espaços públicos. Disponíveis em janeiro.",
+    image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-s.webp",
+    hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-m.webp",
+    subcategories: ["V5", "V4", "UI1"]
+  },
+  moonchair: {
+    label: "Moonchair",
+    title: "Moonchair – Bluetooth Swivel Lounge Chair & Ottoman",
+    label_de: "Moonchair",
+    title_de: "Moonchair – Bluetooth-Drehsessel mit Hocker",
+    label_fr: "Moonchair",
+    title_fr: "Moonchair – Fauteuil Lounge Pivotant Bluetooth & Pouf",
+    label_es: "Moonchair",
+    title_es: "Moonchair – Sillón Giratorio Bluetooth con Otomana",
+    label_it: "Moonchair",
+    title_it: "Moonchair – Poltrona Lounge Girevole Bluetooth con Pouf",
+    label_por: "Moonchair",
+    title_por: "Moonchair – Poltrona Giratória Bluetooth com Pufe",
+    slug: "moonchair",
+    description: "Sculptural 360° swivel lounge chair and matching ottoman by Parisian designer JF Rolet with integrated Bluetooth HiFi audio. Launching in January.",
+    description_de: "Skulpturaler 360°-Drehsessel mit passendem Hocker vom Pariser Designer JF Rolet und integriertem Bluetooth-HiFi-Soundsystem. Verfügbar ab Januar.",
+    description_fr: "Fauteuil lounge sculptural pivotant à 360° avec pouf assorti par le designer parisien JF Rolet et système HiFi Bluetooth intégré. Disponible en janvier.",
+    description_es: "Sillón lounge escultural giratorio 360° con otomana a juego del diseñador parisino JF Rolet y sonido HiFi Bluetooth integrado. Disponible en enero.",
+    description_it: "Poltrona lounge scultorea girevole a 360° con pouf coordinato firmata dal designer parigino JF Rolet con audio HiFi Bluetooth integrato. Disponibile a gennaio.",
+    description_por: "Poltrona lounge escultural giratória 360° com pufe a condizer pelo designer parisiense JF Rolet e áudio HiFi Bluetooth integrado. Disponível em janeiro.",
+    image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/moonchair/1K/moonchair-1.webp",
+    hoverImage: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/moonchair/1K/moonchair-2.webp",
+    subcategories: ["Bluetooth Lounge Chair"]
   },
 };
 
@@ -1661,6 +1713,13 @@ export const DYNAMIC_FLAGSHIP_BUNDLES = (bundlesCatalog || [])
   .filter(isProductVisible)
   .map((b) => formatBundleItem(b, RAW_CATALOG));
 
+export const DYNAMIC_FLAGSHIP_ACOUSTIC_BOOTHS = SPECIALTY_FLAGSHIP_LIST.filter(
+  (f) => f.parent_category === "acoustic-booths" && isProductVisible(f)
+);
+export const DYNAMIC_FLAGSHIP_MOONCHAIR = SPECIALTY_FLAGSHIP_LIST.filter(
+  (f) => f.parent_category === "moonchair" && isProductVisible(f)
+);
+
 export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_BEDS,
   ...DYNAMIC_FLAGSHIP_SOFAS,
@@ -1690,6 +1749,8 @@ export const ALL_PRODUCTS = {
   cabinets: DYNAMIC_FLAGSHIP_CABINETS,
   extras: DYNAMIC_FLAGSHIP_EXTRAS,
   bundles: DYNAMIC_FLAGSHIP_BUNDLES,
+  "acoustic-booths": DYNAMIC_FLAGSHIP_ACOUSTIC_BOOTHS,
+  moonchair: DYNAMIC_FLAGSHIP_MOONCHAIR,
 };
 
 /**
@@ -1824,6 +1885,8 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
     cabinets: dynamicFlagshipCabinets,
     extras: dynamicFlagshipExtras,
     bundles: dynamicBundles,
+    "acoustic-booths": DYNAMIC_FLAGSHIP_ACOUSTIC_BOOTHS,
+    moonchair: DYNAMIC_FLAGSHIP_MOONCHAIR,
   };
 
   const allBedVariants = visibleItems
@@ -1973,8 +2036,14 @@ export const findProductBySlug = (
 ) => {
   if (!productSlug) return null;
   const cleanSlug = productSlug.toLowerCase();
-  const allFlagshipsList = allFlagships || ALL_FLAGSHIP_PRODUCTS;
-  const allCatalogList = rawCatalog || RAW_CATALOG;
+  const allFlagshipsList = [
+    ...(allFlagships || ALL_FLAGSHIP_PRODUCTS),
+    ...SPECIALTY_FLAGSHIP_LIST,
+  ];
+  const allCatalogList = [
+    ...(rawCatalog || RAW_CATALOG),
+    ...SPECIALTY_CATALOG_VARIANTS,
+  ];
 
   // 0. Check Bundles if category is bundles or slug matches a bundle
   const bundleMatch =
@@ -2194,6 +2263,32 @@ export const getProductVariants = (currentProduct, rawCatalog = RAW_CATALOG) => 
     }
     matching.sort((a, b) => (Number(a.price_gbp) || 0) - (Number(b.price_gbp) || 0));
     return matching.length > 0 ? matching.map(formatCatalogItem) : [formatCatalogItem(currentProduct)];
+  }
+
+  if (parentCat === "acoustic-booths") {
+    const targetSeries = (currentProduct.sub_category || currentProduct.type || "V5").toLowerCase();
+    const sizeOrder = { S: 1, M: 2, L: 3, XL: 4 };
+    const sourceList = SPECIALTY_CATALOG_VARIANTS.filter(
+      (p) =>
+        isProductVisible(p) &&
+        p.parent_category === "acoustic-booths" &&
+        (p.type || p.sub_category || "").toLowerCase() === targetSeries
+    );
+    sourceList.sort((a, b) => {
+      const sa = sizeOrder[a.model_size] || 99;
+      const sb = sizeOrder[b.model_size] || 99;
+      if (sa !== sb) return sa - sb;
+      return (a.id || 0) - (b.id || 0);
+    });
+    return sourceList.length > 0 ? sourceList : [currentProduct];
+  }
+
+  if (parentCat === "moonchair") {
+    const sourceList = SPECIALTY_CATALOG_VARIANTS.filter(
+      (p) => isProductVisible(p) && p.parent_category === "moonchair"
+    );
+    sourceList.sort((a, b) => (a.id || 0) - (b.id || 0));
+    return sourceList.length > 0 ? sourceList : [currentProduct];
   }
 
   return catalog

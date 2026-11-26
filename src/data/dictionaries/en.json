@@ -45,7 +45,9 @@
     "from": "from",
     "trade": "Trade Customers",
     "caseStudies": "Case Studies",
-    "more": "More"
+    "more": "More",
+    "acousticBooths": "Acoustic Pods",
+    "moonchair": "Moonchair"
   },
   "header": {
     "searchPlaceholder": "Search wall beds, sofas, mattresses...",
@@ -284,7 +286,10 @@
     "allMattresses": "All Mattresses",
     "allTables": "All Smart Tables",
     "allBeds": "All Murphy Beds",
-    "allTags": "All Tags"
+    "allTags": "All Tags",
+    "acousticBooths": "Acoustic Pods",
+    "allAcousticBooths": "All Acoustic Pods",
+    "moonchair": "Moonchair"
   },
   "product": {
     "regionUnavailableBadge": "Regional Availability",
@@ -379,7 +384,18 @@
     "tableClosedSize": "Closed Dimensions",
     "tableOpenSize": "Open Dimensions",
     "tableSeats": "Seating Capacity",
-    "tableMechanism": "Transforming Mechanism"
+    "tableMechanism": "Transforming Mechanism",
+    "seriesLabel": "Series:",
+    "exteriorColorLabel": "Exterior Colour (RAL):",
+    "fabricColorLabel": "Fabric Colour:",
+    "fabricNote": "Please confirm your chosen fabric swatch before ordering. Photographs show model references.",
+    "acousticSpecs": "Acoustic & Technical Details",
+    "comingSoonStatus": "Pre-Launch • Coming in January",
+    "comingSoonPriceLabel": "Coming in January",
+    "comingSoonPriceSub": "Pricing & ordering open in January",
+    "notifyLaunchBtn": "Notify Me When Available",
+    "requestCommercialQuote": "Request Early / B2B Quote",
+    "comingSoonNote": "Launching in January • Register for priority notification"
   },
   "auth": {
     "recoveryBadge": "Password Recovery",
@@ -785,7 +801,14 @@
     "exploreProducts": "Explore Products",
     "backToProfile": "Back to Profile Menu",
     "items": "items",
-    "item": "item"
+    "item": "item",
+    "comingSoonBadge": "Coming in January",
+    "comingSoonTitle": "Get Notified at Launch",
+    "comingSoonSubtitle": "Launching in January",
+    "comingSoonDescription": "This model arrives in January. Leave your email and we will notify you the moment pricing and ordering go live — with priority access.",
+    "comingSoonSubmitBtn": "Notify Me in January",
+    "comingSoonSuccessMsg": "You are on the launch list! We will notify you as soon as this model goes live in January.",
+    "variant": "Selected Configuration"
   },
   "terms": {
     "breadcrumb": "Terms & Conditions",

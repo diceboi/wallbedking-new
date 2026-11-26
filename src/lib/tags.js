@@ -138,6 +138,17 @@ export function getLocalizedTagName(tagIdOrSlug, locale = "en") {
       it: "Spedizione Rapida",
       por: "Envio Rápido",
     },
+    "coming-in-january": {
+      en: "Coming in January",
+      us: "Coming in January",
+      hu: "Januárban érkezik",
+      de: "Verfügbar ab Januar",
+      fr: "Disponible en janvier",
+      es: "Disponible en enero",
+      it: "Disponibile a gennaio",
+      por: "Disponível em janeiro",
+      pt: "Disponível em janeiro",
+    },
   };
 
   const loc = (locale || "en").toLowerCase();

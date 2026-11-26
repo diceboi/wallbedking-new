@@ -30,7 +30,9 @@
     "allTraditionalTagline": "Modelos clássicos de camas rebatíveis em liquidação até ao fim do stock",
     "trade": "Clientes Comerciais",
     "caseStudies": "Estudos de caso",
-    "more": "Mais"
+    "more": "Mais",
+    "acousticBooths": "Cabines Acústicas",
+    "moonchair": "Moonchair"
   },
   "header": {
     "searchPlaceholder": "Pesquisar camas rebatíveis, sofás, colchões...",
@@ -245,7 +247,10 @@
     "allSofas": "Todos os sofás",
     "allMattresses": "Todos os colchões",
     "allTables": "Todas as mesas",
-    "allBeds": "Todas as camas rebatíveis"
+    "allBeds": "Todas as camas rebatíveis",
+    "acousticBooths": "Cabines Acústicas",
+    "allAcousticBooths": "Todas as Cabines Acústicas",
+    "moonchair": "Moonchair"
   },
   "product": {
     "regionUnavailableBadge": "Disponibilidade regional",
@@ -263,7 +268,18 @@
     "design": "Design",
     "spaceSavingTransforming": "Transformável economia de espaço",
     "colors": "Cores",
-    "orientation": "Orientação"
+    "orientation": "Orientação",
+    "seriesLabel": "Série:",
+    "exteriorColorLabel": "Cor exterior (RAL):",
+    "fabricColorLabel": "Cor do tecido:",
+    "fabricNote": "Confirme a amostra de tecido escolhida antes de encomendar. As fotografias são referências do modelo.",
+    "acousticSpecs": "Acústica e detalhes técnicos",
+    "comingSoonStatus": "Pré-lançamento • Disponível em janeiro",
+    "comingSoonPriceLabel": "Disponível em janeiro",
+    "comingSoonPriceSub": "Preços e encomendas abertos em janeiro",
+    "notifyLaunchBtn": "Avisar-me quando disponível",
+    "requestCommercialQuote": "Pedir orçamento B2B / antecipado",
+    "comingSoonNote": "Lançamento em janeiro • Registe-se para notificação prioritária"
   },
   "reviews": {
     "title": "Avaliações",
@@ -556,7 +572,14 @@
     "exploreProducts": "Explorar produtos",
     "backToProfile": "Voltar ao menu de perfil",
     "items": "artigos",
-    "item": "artigo"
+    "item": "artigo",
+    "comingSoonBadge": "Disponível em janeiro",
+    "comingSoonTitle": "Receber aviso no lançamento",
+    "comingSoonSubtitle": "Lançamento em janeiro",
+    "comingSoonDescription": "Este modelo chega em janeiro. Deixe o seu email e avisá-lo-emos assim que os preços e encomendas ficarem disponíveis.",
+    "comingSoonSubmitBtn": "Avisar-me em janeiro",
+    "comingSoonSuccessMsg": "Está na lista de lançamento! Avisaremos assim que o modelo ficar disponível em janeiro.",
+    "variant": "Configuração selecionada"
   },
   "tradePage": {
     "heroBadge": "Engenharia europeia e parcerias comerciais",
