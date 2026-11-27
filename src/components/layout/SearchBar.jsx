@@ -15,7 +15,12 @@ import { formatSizeLabel } from "@/lib/i18n";
 const normalizeStr = (s) =>
   s ? String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 
-export function SearchBar({ className = "", onSelect = null, compact = false }) {
+export function SearchBar({
+  className = "",
+  onSelect = null,
+  compact = false,
+  dropdown = false,
+}) {
   const router = useRouter();
   const { t, localizedHref, formatPrice, locale } = useLocale();
   const { rawCatalog } = useProductCatalog();
@@ -29,6 +34,16 @@ export function SearchBar({ className = "", onSelect = null, compact = false }) 
   useEffect(() => {
     setIsSearchOpen?.(isOpen);
   }, [isOpen, setIsSearchOpen]);
+
+  // Auto-focus input when opening dropdown mode
+  useEffect(() => {
+    if (dropdown && isOpen) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  }, [dropdown, isOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -88,6 +103,9 @@ export function SearchBar({ className = "", onSelect = null, compact = false }) 
           sofas: "kanape kanapek sofa",
           mattresses: "matrac matracok mattress",
           cabinets: "szekreny szekrenyek cabinet",
+          tables: "asztal asztalok szek szekek table chair smart",
+          "acoustic-booths": "pod pods booth acoustic soundproof kabin hangszigetelt sileopod",
+          moonchair: "moonchair moon chair fotel hangszoro bluetooth speaker lounge",
         }[item.parent_category] || "";
 
       const searchable = normalizeStr(
@@ -161,6 +179,181 @@ export function SearchBar({ className = "", onSelect = null, compact = false }) 
       inputRef.current?.blur();
     }
   };
+
+  const renderResultsList = () =>
+    results.length > 0 ? (
+      <div>
+        <div className="px-4 py-2 bg-[#F4F2F0] text-[10px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center justify-between">
+          <span>Product Suggestions</span>
+          <span>{results.length} found</span>
+        </div>
+        {results.map((item) => {
+          const effectivePrice = item.sale_price_gbp || item.price_gbp;
+          const isComingSoon = Boolean(item.is_coming_soon) && !effectivePrice;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => handleSelect(item)}
+              className="w-full flex items-center gap-3 p-3 hover:bg-[#F8F7F5] transition-colors text-left group cursor-pointer"
+            >
+              <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/80 rounded-lg p-1 flex items-center justify-center">
+                <Image
+                  src={
+                    item.image ||
+                    "/product-images/morphy-integrated/160x200.jpg"
+                  }
+                  alt={item.name}
+                  width={44}
+                  height={44}
+                  className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-200"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-wbk-black truncate group-hover:text-wbk-green transition-colors">
+                  {locale === "us" && item.name_us
+                    ? item.name_us
+                    : item[`name_${locale}`] || item.name}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] uppercase tracking-wider text-wbk-brown">
+                    {item.parent_category}
+                  </span>
+                  {item.width && item.length && (
+                    <>
+                      <span className="text-[10px] text-wbk-brown/50">•</span>
+                      <span className="text-[10px] font-medium text-wbk-brown">
+                        {locale === "us"
+                          ? item.size_us ||
+                            formatSizeLabel(
+                              `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`,
+                              "us",
+                              item
+                            )
+                          : item.size_eu ||
+                            `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`}
+                      </span>
+                    </>
+                  )}
+                  <span className="text-[10px] text-wbk-brown/50">•</span>
+                  <span className="text-[11px] font-semibold text-wbk-black">
+                    {isComingSoon
+                      ? t("product.comingSoonPriceLabel", "Coming in January")
+                      : formatPrice(effectivePrice)}
+                  </span>
+                </div>
+              </div>
+              <IconArrowRight
+                size={14}
+                className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-1 transition-all shrink-0"
+              />
+            </button>
+          );
+        })}
+        <Link
+          href={localizedHref(`/products?search=${encodeURIComponent(query)}`)}
+          onClick={() => {
+            setIsOpen(false);
+            onSelect?.();
+          }}
+          className="block px-4 py-3 text-center text-xs font-semibold text-wbk-black hover:text-white hover:bg-wbk-green bg-[#F4F2F0] transition-colors tracking-wider uppercase"
+        >
+          View all results for &ldquo;{query}&rdquo;
+        </Link>
+      </div>
+    ) : (
+      <div className="p-6 text-center text-xs text-wbk-brown">
+        No matching products found for &ldquo;{query}&rdquo;.
+      </div>
+    );
+
+  if (dropdown) {
+    return (
+      <div ref={containerRef} className={`relative font-poppins ${className}`}>
+        <button
+          type="button"
+          onClick={() => {
+            setSubMenu?.(null);
+            setIsOpen((prev) => !prev);
+          }}
+          aria-label={t("search.title", "Search")}
+          aria-expanded={isOpen}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs active:scale-[0.96] ${
+            isOpen
+              ? "bg-wbk-green text-wbk-black"
+              : "bg-wbk-black text-white hover:bg-wbk-green hover:text-wbk-black"
+          }`}
+        >
+          {isOpen ? (
+            <IconX size={15} strokeWidth={2} />
+          ) : (
+            <IconSearch size={15} strokeWidth={2} />
+          )}
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-0 top-full mt-3 w-[380px] 2xl:w-[430px] bg-wbk-white border border-wbk-lightgrey/90 shadow-2xl z-50 rounded-none overflow-hidden"
+            >
+              <form
+                onSubmit={handleSubmitSearch}
+                className="flex items-center gap-2 px-3.5 py-2.5 bg-[#FBF9F8] border-b border-wbk-lightgrey/70"
+              >
+                <IconSearch
+                  size={16}
+                  strokeWidth={1.8}
+                  className="text-wbk-brown shrink-0"
+                />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t(
+                    "header.searchPlaceholder",
+                    "Search beds, sofas, mattresses..."
+                  )}
+                  className="w-full h-8 bg-transparent text-xs text-wbk-black placeholder:text-wbk-brown/70 focus:outline-none min-w-0 font-normal"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    className="p-1 text-wbk-brown hover:text-wbk-black cursor-pointer transition-colors shrink-0"
+                    aria-label="Clear search"
+                  >
+                    <IconX size={14} />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  aria-label={t("search.title", "Search")}
+                  className="px-3.5 h-7.5 bg-wbk-black hover:bg-wbk-green hover:text-wbk-black text-white text-[10.5px] font-semibold uppercase tracking-wider rounded-full transition-colors cursor-pointer shrink-0 active:scale-[0.97]"
+                >
+                  {t("search.title", "Search")}
+                </button>
+              </form>
+
+              {query.trim().length >= 2 && (
+                <div className="max-h-[65vh] overflow-y-auto divide-y divide-wbk-lightgrey/60">
+                  {renderResultsList()}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -249,77 +442,7 @@ export function SearchBar({ className = "", onSelect = null, compact = false }) 
                 : "left-0 right-0"
             }`}
           >
-            {results.length > 0 ? (
-              <div>
-                <div className="px-4 py-2 bg-[#F4F2F0] text-[10px] uppercase font-semibold tracking-wider text-wbk-brown flex items-center justify-between">
-                  <span>Product Suggestions</span>
-                  <span>{results.length} found</span>
-                </div>
-                {results.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-[#F8F7F5] transition-colors text-left group cursor-pointer"
-                  >
-                    <div className="w-12 h-12 shrink-0 bg-white border border-wbk-lightgrey/80 rounded-lg p-1 flex items-center justify-center">
-                      <Image
-                        src={
-                          item.image ||
-                          "/product-images/morphy-integrated/160x200.jpg"
-                        }
-                        alt={item.name}
-                        width={44}
-                        height={44}
-                        className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-wbk-black truncate group-hover:text-wbk-green transition-colors">
-                        {(locale === "us" && item.name_us) ? item.name_us : (item[`name_${locale}`] || item.name)}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] uppercase tracking-wider text-wbk-brown">
-                          {item.parent_category}
-                        </span>
-                        {item.width && item.length && (
-                          <>
-                            <span className="text-[10px] text-wbk-brown/50">•</span>
-                            <span className="text-[10px] font-medium text-wbk-brown">
-                              {locale === "us"
-                                ? (item.size_us || formatSizeLabel(`${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`, "us", item))
-                                : (item.size_eu || `${Math.round(item.width / 10)}x${Math.round(item.length / 10)} cm`)}
-                            </span>
-                          </>
-                        )}
-                        <span className="text-[10px] text-wbk-brown/50">•</span>
-                        <span className="text-[11px] font-semibold text-wbk-black">
-                          {formatPrice(item.sale_price_gbp || item.price_gbp)}
-                        </span>
-                      </div>
-                    </div>
-                    <IconArrowRight
-                      size={14}
-                      className="text-wbk-brown group-hover:text-wbk-green group-hover:translate-x-1 transition-all shrink-0"
-                    />
-                  </button>
-                ))}
-                <Link
-                  href={localizedHref(`/products?search=${encodeURIComponent(query)}`)}
-                  onClick={() => {
-                    setIsOpen(false);
-                    onSelect?.();
-                  }}
-                  className="block px-4 py-3 text-center text-xs font-semibold text-wbk-black hover:text-white hover:bg-wbk-green bg-[#F4F2F0] transition-colors tracking-wider uppercase"
-                >
-                  View all results for &ldquo;{query}&rdquo;
-                </Link>
-              </div>
-            ) : (
-              <div className="p-6 text-center text-xs text-wbk-brown">
-                No matching products found for &ldquo;{query}&rdquo;.
-              </div>
-            )}
+            {renderResultsList()}
           </motion.div>
         )}
       </AnimatePresence>

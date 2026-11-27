@@ -62,10 +62,10 @@ export function Hero3DLoader({ onLoaded }) {
         >
           <div className="flex flex-col items-center space-y-4 px-6">
             {/* ── Logo Container (10% Opacity Base with 100% Opacity Fill) ── */}
-            <div className="relative w-[190px] sm:w-[230px] md:w-[260px] aspect-[3219/543] flex items-center justify-center">
+            <div className="relative w-[150px] sm:w-[180px] md:w-[210px] aspect-[983/399] flex items-center justify-center">
               {/* 1. Base Logo: exactly 10% opacity */}
               <img
-                src="/logos/WBK-Logo-Gold-White.svg"
+                src="/logos/WBK-Logo-New-Gold-White.webp"
                 alt="WallBedKing"
                 className="absolute inset-0 w-full h-full object-contain opacity-10 select-none pointer-events-none"
               />
@@ -78,7 +78,7 @@ export function Hero3DLoader({ onLoaded }) {
                 }}
               >
                 <img
-                  src="/logos/WBK-Logo-Gold-White.svg"
+                  src="/logos/WBK-Logo-New-Gold-White.webp"
                   alt="WallBedKing Filled"
                   className="w-full h-full object-contain opacity-100"
                 />

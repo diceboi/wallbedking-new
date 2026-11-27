@@ -52,6 +52,9 @@ export function SubmenuItem({
   }, [dynamicFlagship, locale, campaigns]);
 
   const formattedPrice = useMemo(() => {
+    if (dynamicFlagship?.is_coming_soon) {
+      return t("product.comingSoonPriceLabel", "Coming in January");
+    }
     if (pricing && pricing.display) {
       return `${t("common.from", "from")} ${pricing.display}`;
     }
@@ -59,7 +62,7 @@ export function SubmenuItem({
       return `${t("common.from", "from")} ${formatPrice(Number(price.replace(/[^0-9]/g, "")))}`;
     }
     return price;
-  }, [pricing, price, t, formatPrice]);
+  }, [dynamicFlagship?.is_coming_soon, pricing, price, t, formatPrice]);
 
   const isMorphyImage = typeof image === "string" && image.includes("MORPHY");
   const isIntegratedImage =

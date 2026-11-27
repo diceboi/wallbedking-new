@@ -497,6 +497,8 @@ function ProductsSearchContent() {
       { key: "tables", label: t("categories.tables", "Smart Tables") },
       { key: "mattresses", label: t("categories.mattresses", "Mattresses") },
       { key: "cabinets", label: t("categories.cabinets", "Cabinets") },
+      { key: "acoustic-booths", label: t("categories.acousticBooths", "Acoustic Pods") },
+      { key: "moonchair", label: t("categories.moonchair", "Moonchair") },
       { key: "extras", label: t("categories.extras", "Accessories") },
     ];
 
@@ -526,7 +528,7 @@ function ProductsSearchContent() {
       (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999),
     );
     const featured = sorted.filter((c) => c.is_featured !== false);
-    return (featured.length >= 4 ? featured : sorted).slice(0, 4);
+    return featured.length >= 4 ? featured : sorted;
   }, [allDbCategories]);
 
   const orientationOptions = [

@@ -50,11 +50,11 @@ export function Footer() {
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-1">
             <Image
-              src="/logos/WBK-Logo-Gold-White.svg"
+              src="/logos/WBK-Logo-New-Gold-White.webp"
               alt="WallBedKing"
-              width={130}
-              height={30}
-              className="h-7 w-auto"
+              width={138}
+              height={56}
+              className="h-11 sm:h-12 w-auto object-contain"
             />
             <p className="mt-4 text-sm leading-relaxed text-wbk-lightgrey/70 max-w-xs font-poppins">
               {t("footer.tagline", "Premium modular murphy beds and space-saving furniture for modern living.")}

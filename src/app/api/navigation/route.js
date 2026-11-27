@@ -74,6 +74,32 @@ export async function GET() {
           };
         });
 
+      // Merge any visible local navigation items not yet in Supabase (e.g. Acoustic Pods & Moonchair)
+      if (Array.isArray(localList)) {
+        const existingIds = new Set(items.map((it) => it.id));
+        const existingSlugs = new Set(items.map((it) => it.slug));
+        for (const localItem of localList) {
+          if (
+            localItem.is_visible !== false &&
+            !existingIds.has(localItem.id) &&
+            !existingSlugs.has(localItem.slug)
+          ) {
+            items.push({
+              ...localItem,
+              is_visible: true,
+              hasSubmenu: Boolean(localItem.hasSubmenu ?? localItem.has_submenu),
+              has_submenu: Boolean(localItem.hasSubmenu ?? localItem.has_submenu),
+            });
+          }
+        }
+        // Preserve local order_index ordering when local items are merged
+        items.sort((a, b) => {
+          const ordA = localMap.get(a.id)?.order ?? a.order ?? 999;
+          const ordB = localMap.get(b.id)?.order ?? b.order ?? 999;
+          return ordA - ordB;
+        });
+      }
+
       return NextResponse.json(
         { success: true, items, fromSupabase: true },
         {

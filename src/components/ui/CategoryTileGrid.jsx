@@ -30,6 +30,8 @@ export function getCategoryTileImage(cat) {
     mattresses: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/CategoryImages/mattresses.webp",
     tables: "/product-images/tables/b2473m-transformer-storage-shelf-to-dining-table/transformer-storage-shelf-to-dining-table070015e9-9b6d-43bb-bb5d-3c35b18ed648.webp",
     beds: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/CategoryImages/morphy-beds.webp",
+    "acoustic-booths": "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-s.webp",
+    moonchair: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/moonchair/1K/moonchair-1.webp",
   };
 
   return defaults[catId] || `/category-images/${cat.id}.webp`;

@@ -166,6 +166,45 @@ const SUPABASE_STORAGE_URL =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
 const SUPABASE_MATTRESSES_STORAGE_URL =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/mattresses";
+const SUPABASE_PODS_STORAGE_URL =
+  "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths";
+
+const acousticBoothsSubmenu = {
+  parent: {
+    title: "All Acoustic Pods",
+    titleKey: "categories.allAcousticBooths",
+    image: `${SUPABASE_PODS_STORAGE_URL}/1K/sileopod-v5-s.webp`,
+    hoverImage: `${SUPABASE_PODS_STORAGE_URL}/1K/sileopod-v5-m.webp`,
+    href: "/products/acoustic-booths",
+    tagline: "Soundproof acoustic pods for offices & public spaces",
+  },
+  items: [
+    {
+      title: "Sileopod V5 Acoustic Booth",
+      image: `${SUPABASE_PODS_STORAGE_URL}/1K/sileopod-v5-s.webp`,
+      href: "/products/acoustic-booths/sileopod-v5-acoustic-booth",
+      price: "Coming in January",
+      isComingSoon: true,
+      tagline: "S · M · L • 9 RAL Colours",
+    },
+    {
+      title: "Sileopod V4 Acoustic Booth",
+      image: `${SUPABASE_PODS_STORAGE_URL}/1K/sileopod-v4-s.webp`,
+      href: "/products/acoustic-booths/sileopod-v4-acoustic-booth",
+      price: "Coming in January",
+      isComingSoon: true,
+      tagline: "S · M · L • 9 RAL Colours",
+    },
+    {
+      title: "Sileopod UI1 Acoustic Booth",
+      image: `${SUPABASE_PODS_STORAGE_URL}/1K/sileopod-ui1-s.webp`,
+      href: "/products/acoustic-booths/sileopod-ui1-acoustic-booth",
+      price: "Coming in January",
+      isComingSoon: true,
+      tagline: "S · M · L • 9 RAL Colours",
+    },
+  ],
+};
 
 const morphySubmenu = {
   parent: {
@@ -515,6 +554,8 @@ export const SUBMENU_DATA = {
       },
     ],
   },
+  "acoustic-booths": acousticBoothsSubmenu,
+  acousticBooths: acousticBoothsSubmenu,
   more: {
     layout: "vertical-links",
     items: MORE_MENU_LINKS,

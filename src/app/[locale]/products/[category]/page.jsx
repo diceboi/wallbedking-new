@@ -1357,7 +1357,7 @@ export default function CategoryArchivePage() {
             </div>
 
             <CategoryTileGrid
-              categories={otherCategoriesToDisplay.slice(0, 4)}
+              categories={otherCategoriesToDisplay}
               columns={4}
             />
           </div>

@@ -60,10 +60,16 @@ export function MobileMenuDrawer() {
     );
 
     if (flagship) {
+      if (flagship.is_coming_soon) {
+        return t("product.comingSoonPriceLabel", "Coming in January");
+      }
       const pricing = getProductPrice(flagship, locale, campaigns);
       if (pricing?.display) {
         return `${t("common.from", "from")} ${pricing.display}`;
       }
+    }
+    if (item.isComingSoon) {
+      return t("product.comingSoonPriceLabel", "Coming in January");
     }
 
     if (item.price && item.price.includes("£")) {

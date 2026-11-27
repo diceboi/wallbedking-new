@@ -10,7 +10,7 @@ export const SPECIALTY_CATALOG_VARIANTS = specialtyCatalogData?.variants || [];
 export const SPECIALTY_FLAGSHIP_LIST = specialtyCatalogData?.flagships || [];
 export const SPECIALTY_COLOR_PALETTES = specialtyCatalogData?.colorPalettes || {};
 
-export const RAW_CATALOG = [...catalog, ...TABLES_CATALOG_VARIANTS];
+export const RAW_CATALOG = [...catalog, ...TABLES_CATALOG_VARIANTS, ...SPECIALTY_CATALOG_VARIANTS];
 
 export const SUPABASE_PRODUCT_IMAGES_BASE =
   "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds";
@@ -278,6 +278,23 @@ export const OTHER_CATEGORIES_LIST = [
     label: "Mattresses",
     titleKey: "nav.mattresses",
     image: `${SUPABASE_MATTRESS_IMAGES_BASE}/comfort.webp`,
+  },
+  {
+    id: "acoustic-booths",
+    slug: "acoustic-booths",
+    categoryKey: "acoustic-booths",
+    label: "Acoustic Pods",
+    titleKey: "categories.acousticBooths",
+    image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-s.webp",
+  },
+  {
+    id: "moonchair",
+    slug: "moonchair",
+    href: "/products/moonchair/moonchair-bluetooth-lounge-chair",
+    categoryKey: "moonchair",
+    label: "Moonchair",
+    titleKey: "categories.moonchair",
+    image: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/moonchair/1K/moonchair-1.webp",
   },
 ];
 
@@ -1728,6 +1745,8 @@ export const ALL_FLAGSHIP_PRODUCTS = [
   ...DYNAMIC_FLAGSHIP_CABINETS,
   ...DYNAMIC_FLAGSHIP_EXTRAS,
   ...DYNAMIC_FLAGSHIP_BUNDLES,
+  ...DYNAMIC_FLAGSHIP_ACOUSTIC_BOOTHS,
+  ...DYNAMIC_FLAGSHIP_MOONCHAIR,
 ];
 
 // All bed variants for internal lookups and configurator sizing
@@ -1827,6 +1846,19 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
     }
   }
 
+  for (const sv of SPECIALTY_CATALOG_VARIANTS) {
+    const svIdStr = String(sv.id);
+    const isAlreadyPresent =
+      existingSlugs.has(sv.slug) ||
+      existingIds.has(sv.id) ||
+      existingIds.has(svIdStr) ||
+      (sv.sku && existingSkus.has(sv.sku));
+
+    if (!isAlreadyPresent) {
+      combinedItems.push(sv);
+    }
+  }
+
   const visibleItems = combinedItems.filter(isProductVisible);
 
   const dynamicFlagshipBeds = getDynamicFlagshipBeds(visibleItems);
@@ -1859,6 +1891,8 @@ export function buildCatalog(rawItems = RAW_CATALOG, rawBundles = null) {
     ...dynamicFlagshipCabinets,
     ...dynamicFlagshipExtras,
     ...dynamicBundles,
+    ...DYNAMIC_FLAGSHIP_ACOUSTIC_BOOTHS,
+    ...DYNAMIC_FLAGSHIP_MOONCHAIR,
   ];
 
   const dynamicFlagshipMorphyBeds = dynamicFlagshipBeds.filter((b) => b.isMorphy);

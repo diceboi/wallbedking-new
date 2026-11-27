@@ -22,6 +22,7 @@ import {
   IconLayoutNavbar,
   IconTruck,
   IconLayersLinked,
+  IconBell,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -109,6 +110,13 @@ export const ADMIN_NAV_ITEMS = [
     hasCount: true,
   },
   {
+    id: "waitlist",
+    label: "Waitlist & Alerts",
+    href: "/admin/waitlist",
+    icon: IconBell,
+    hasCount: true,
+  },
+  {
     id: "translations",
     label: "Translations",
     href: "/admin/translations",
@@ -138,6 +146,7 @@ export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
   const pathname = usePathname() || "";
   const [productCount, setProductCount] = useState(234);
   const [userCount, setUserCount] = useState(null);
+  const [waitlistCount, setWaitlistCount] = useState(null);
 
   // Fetch counts once on mount
   useEffect(() => {
@@ -155,6 +164,15 @@ export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
       .then((data) => {
         if (data.success && typeof data.count === "number") {
           setUserCount(data.count);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/admin/waitlist")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && typeof data.stats?.waiting === "number") {
+          setWaitlistCount(data.stats.waiting);
         }
       })
       .catch(() => {});
@@ -218,7 +236,11 @@ export function AdminSidebar({ isMobileOpen, onCloseMobile }) {
 
               {item.hasCount && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-wbk-gold text-wbk-black leading-none">
-                  {item.id === "users" ? (userCount ?? "…") : productCount}
+                  {item.id === "users"
+                    ? (userCount ?? "…")
+                    : item.id === "waitlist"
+                    ? (waitlistCount ?? "…")
+                    : productCount}
                 </span>
               )}
 

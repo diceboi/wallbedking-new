@@ -201,6 +201,10 @@ export function WaitlistModal({
             manufacturer_sku: selectedVariant?.manufacturer_sku || "",
             comingSoon: isComingSoon,
             format: product?.format || "",
+            parent_category:
+              product?.parent_category ||
+              selectedVariant?.parent_category ||
+              "",
           },
           locale: locale || "en",
           ...security.getSecurityPayload(),

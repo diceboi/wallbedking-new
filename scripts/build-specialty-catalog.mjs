@@ -371,10 +371,10 @@ for (const row of pods) {
     meta.sizeCode === "S"
       ? `S (1 Person – ${Math.round(Number(row.width) / 10)}×${Math.round(Number(row.length) / 10)} cm)`
       : meta.sizeCode === "M"
-      ? `M (2 People – ${Math.round(Number(row.width) / 10)}×${Math.round(Number(row.length) / 10)} cm)`
-      : meta.sizeCode === "L"
-      ? `L (4 People – ${Math.round(Number(row.width) / 10)}×${Math.round(Number(row.length) / 10)} cm)`
-      : "XL (Large Format)";
+        ? `M (2 People – ${Math.round(Number(row.width) / 10)}×${Math.round(Number(row.length) / 10)} cm)`
+        : meta.sizeCode === "L"
+          ? `L (4 People – ${Math.round(Number(row.width) / 10)}×${Math.round(Number(row.length) / 10)} cm)`
+          : "XL (Large Format)";
 
   const localized = buildPodLocalizedFields(row, model, series, colorInfo);
 
@@ -413,7 +413,7 @@ for (const row of pods) {
     price_usd: 0,
     visibility: isXL ? "Hidden" : "Visible",
     is_visible: !isXL,
-    is_unlisted: true,
+    is_unlisted: false,
     is_coming_soon: true,
     coming_soon_month: "January",
     tags: ["coming-in-january"],
@@ -481,7 +481,7 @@ for (const row of moons) {
     price_usd: 0,
     visibility: "Visible",
     is_visible: true,
-    is_unlisted: true,
+    is_unlisted: false,
     is_coming_soon: true,
     coming_soon_month: "January",
     tags: ["coming-in-january"],
@@ -600,7 +600,7 @@ const flagships = podSeriesFlagshipDefs.map((def) => {
     stock: 0,
     visibility: "Visible",
     is_visible: true,
-    is_unlisted: true,
+    is_unlisted: false,
     is_coming_soon: true,
     coming_soon_month: "January",
     tags: ["coming-in-january"],
@@ -709,7 +709,6 @@ const output = {
 
 fs.writeFileSync(OUT_PATH, JSON.stringify(output, null, 2) + "\n", "utf8");
 console.log(
-  `Wrote ${OUT_PATH}: ${flagships.length} flagships, ${variants.length} variants (${
-    variants.filter((v) => !v.is_visible).length
+  `Wrote ${OUT_PATH}: ${flagships.length} flagships, ${variants.length} variants (${variants.filter((v) => !v.is_visible).length
   } hidden UI1-XL variants)`
 );

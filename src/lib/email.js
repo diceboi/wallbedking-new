@@ -1749,85 +1749,137 @@ export async function sendAdminNewReviewAlert(review) {
 }
 
 // ==========================================
-// 7. MULTILINGUAL RESTOCK / BACK IN STOCK EMAIL
+// 7. MULTILINGUAL RESTOCK / LAUNCH EMAIL
 // ==========================================
 export const RESTOCK_I18N = {
   en: {
     subject: (name) => `Good news! ${name} is back in stock at Wall Bed King`,
+    launchSubject: (name) => `${name} is now available at Wall Bed King!`,
     badge: "Back in Stock",
+    launchBadge: "Now Available",
     headline: "Your requested item is available again!",
+    launchHeadline: "The wait is over — it's now live!",
     greeting: (name) => `Hello ${name || "Customer"},`,
-    intro: "You previously requested to be notified when this item was restocked. It is now back in inventory and ready to order.",
+    intro: "You previously requested to be notified when this product was restocked. It is now back in inventory and ready to order.",
+    launchIntro: "You signed up to be notified when this model launched. Pricing and online ordering are now officially live.",
     btnText: "Order Now While Stock Lasts",
-    urgency: "Please note that stock is limited and allocated on a first-come, first-served basis.",
-    warrantyBadge: "Lifetime Mechanism Guarantee • Free UK Mainland Delivery",
+    launchBtnText: "View & Order Now",
+    urgency: "Please note that initial availability is limited and orders are allocated on a first-come, first-served basis.",
+    warrantyBadge: "Wall Bed King Official Store • Free UK Mainland Delivery",
+    bedWarrantyBadge: "Lifetime Mechanism Guarantee • Free UK Mainland Delivery",
   },
   us: {
     subject: (name) => `Good news! ${name} is back in stock at Wall Bed King`,
+    launchSubject: (name) => `${name} is now available at Wall Bed King!`,
     badge: "Back in Stock",
+    launchBadge: "Now Available",
     headline: "Your requested item is available again!",
+    launchHeadline: "The wait is over — it's now live!",
     greeting: (name) => `Hello ${name || "Customer"},`,
-    intro: "You asked us to let you know when this Murphy bed returns to inventory. It is now available and ready to order.",
+    intro: "You asked us to let you know when this item returns to inventory. It is now available and ready to order.",
+    launchIntro: "You signed up to be notified as soon as this model launched. Pricing and ordering are now live.",
     btnText: "Order Now While Supplies Last",
+    launchBtnText: "View & Order Now",
     urgency: "Inventory is limited and orders are processed on a first-come, first-served basis.",
-    warrantyBadge: "Lifetime Mechanism Warranty • Free Shipping",
+    warrantyBadge: "Wall Bed King Official Store • Free Shipping",
+    bedWarrantyBadge: "Lifetime Mechanism Warranty • Free Shipping",
   },
   de: {
     subject: (name) => `Gute Neuigkeiten! ${name} ist wieder bei Wall Bed King verfügbar`,
+    launchSubject: (name) => `${name} ist jetzt bei Wall Bed King verfügbar!`,
     badge: "Wieder Verfügbar",
+    launchBadge: "Jetzt Verfügbar",
     headline: "Ihr Wunschartikel ist wieder auf Lager!",
+    launchHeadline: "Das Warten hat ein Ende — jetzt bestellbar!",
     greeting: (name) => `Hallo ${name || "Kunde"},`,
-    intro: "Sie haben sich auf die Warteliste für dieses Schrankbett gesetzt. Das Produkt ist nun wieder vorrätig und kann ab sofort bestellt werden.",
+    intro: "Sie haben sich auf die Warteliste für dieses Produkt gesetzt. Der Artikel ist nun wieder vorrätig und kann ab sofort bestellt werden.",
+    launchIntro: "Sie haben sich für die Benachrichtigung zum Verkaufsstart angemeldet. Preise und Online-Bestellung sind ab sofort verfügbar.",
     btnText: "Jetzt Bestellen, Solange Vorrat Reicht",
+    launchBtnText: "Jetzt Ansehen & Bestellen",
     urgency: "Bitte beachten Sie, dass die Stückzahlen begrenzt sind und nach Bestelleingang zugeteilt werden.",
-    warrantyBadge: "Lebenslange Mechanik-Garantie • Kostenlose Lieferung",
+    warrantyBadge: "Wall Bed King Offizieller Shop • Kostenlose Lieferung",
+    bedWarrantyBadge: "Lebenslange Mechanik-Garantie • Kostenlose Lieferung",
   },
   fr: {
     subject: (name) => `Bonne nouvelle ! ${name} est de retour en stock chez Wall Bed King`,
+    launchSubject: (name) => `${name} est maintenant disponible chez Wall Bed King !`,
     badge: "De Retour en Stock",
+    launchBadge: "Maintenant Disponible",
     headline: "Votre article demandé est à nouveau disponible !",
+    launchHeadline: "L'attente est terminée — disponible dès maintenant !",
     greeting: (name) => `Bonjour ${name || "Client"},`,
     intro: "Vous aviez demandé à être prévenu(e) du retour de cet article. Il est désormais disponible à la commande.",
+    launchIntro: "Vous vous êtes inscrit(e) pour être prévenu(e) du lancement de ce modèle. Les tarifs et la commande en ligne sont désormais ouverts.",
     btnText: "Commander Maintenant",
+    launchBtnText: "Découvrir & Commander",
     urgency: "Attention : les quantités sont limitées et allouées selon l'ordre d'arrivée des commandes.",
-    warrantyBadge: "Garantie Mécanisme à Vie • Livraison Gratuite",
+    warrantyBadge: "Boutique Officielle Wall Bed King • Livraison Gratuite",
+    bedWarrantyBadge: "Garantie Mécanisme à Vie • Livraison Gratuite",
   },
   es: {
     subject: (name) => `¡Buenas noticias! ${name} vuelve a estar disponible en Wall Bed King`,
+    launchSubject: (name) => `¡${name} ya está disponible en Wall Bed King!`,
     badge: "De Nuevo en Stock",
+    launchBadge: "Ya Disponible",
     headline: "¡El producto que esperabas ya está disponible!",
+    launchHeadline: "¡La espera terminó — ya puedes pedirlo!",
     greeting: (name) => `Hola ${name || "Cliente"},`,
     intro: "Te registraste en nuestra lista de espera para este modelo. ¡Nos complace informarte de que ya está disponible para ordenar!",
+    launchIntro: "Te inscribiste para recibir un aviso en el lanzamiento de este modelo. Los precios y pedidos online ya están activos.",
     btnText: "Comprar Ahora",
+    launchBtnText: "Ver y Pedir Ahora",
     urgency: "Ten en cuenta que el stock es limitado y se asigna por orden de llegada.",
-    warrantyBadge: "Garantía de Mecanismo de por Vida • Envío Gratuito",
+    warrantyBadge: "Tienda Oficial Wall Bed King • Envío Gratuito",
+    bedWarrantyBadge: "Garantía de Mecanismo de por Vida • Envío Gratuito",
   },
   it: {
     subject: (name) => `Buone notizie! ${name} è di nuovo disponibile su Wall Bed King`,
+    launchSubject: (name) => `${name} è ora disponibile su Wall Bed King!`,
     badge: "Di Nuovo Disponibile",
+    launchBadge: "Ora Disponibile",
     headline: "Il prodotto che desideravi è tornato in stock!",
+    launchHeadline: "L'attesa è finita — ora disponibile!",
     greeting: (name) => `Gentile ${name || "Cliente"},`,
-    intro: "Hai richiesto di essere informato al ritorno di questo letto a scomparsa. È ora nuovamente disponibile per l'ordine.",
+    intro: "Hai richiesto di essere informato al ritorno di questo prodotto. È ora nuovamente disponibile per l'ordine.",
+    launchIntro: "Ti sei iscritto per ricevere una notifica al lancio di questo modello. Prezzi e ordini online sono ora attivi.",
     btnText: "Ordina Ora",
+    launchBtnText: "Scopri e Ordina Ora",
     urgency: "Nota: le scorte sono limitate e assegnate in ordine di ricezione degli ordini.",
-    warrantyBadge: "Garanzia a Vita sul Meccanismo • Spedizione Gratuita",
+    warrantyBadge: "Store Ufficiale Wall Bed King • Spedizione Gratuita",
+    bedWarrantyBadge: "Garanzia a Vita sul Meccanismo • Spedizione Gratuita",
   },
   pt: {
     subject: (name) => `Boas notícias! ${name} está novamente disponível na Wall Bed King`,
+    launchSubject: (name) => `${name} já está disponível na Wall Bed King!`,
     badge: "Novamente em Stock",
+    launchBadge: "Já Disponível",
     headline: "O artigo que aguardava já está disponível!",
+    launchHeadline: "A espera terminou — já disponível!",
     greeting: (name) => `Olá ${name || "Cliente"},`,
     intro: "Pediu para ser avisado quando este modelo estivesse disponível. Já pode fazer a sua encomenda online.",
+    launchIntro: "Inscreveu-se para ser notificado no lançamento deste modelo. Os preços e as encomendas online já estão disponíveis.",
     btnText: "Encomendar Agora",
+    launchBtnText: "Ver e Encomendar",
     urgency: "Atenção: as unidades são limitadas e atribuídas por ordem de chegada.",
-    warrantyBadge: "Garantia Vitalícia do Mecanismo • Envio Gratuito",
+    warrantyBadge: "Loja Oficial Wall Bed King • Envio Gratuito",
+    bedWarrantyBadge: "Garantia Vitalícia do Mecanismo • Envio Gratuito",
   },
 };
 
+function resolveRestockLocale(rawLocale) {
+  const clean = String(rawLocale || "en").toLowerCase().trim();
+  const i18nKey = clean === "por" ? "pt" : clean;
+  const urlLocale = clean === "pt" ? "por" : clean;
+  return {
+    i18n: RESTOCK_I18N[i18nKey] || RESTOCK_I18N.en,
+    urlLocale: ["en", "us", "de", "fr", "es", "it", "por"].includes(urlLocale) ? urlLocale : "en",
+  };
+}
+
 export function getRestockNotificationHtml(waitlistItem, product = null, locale = "en") {
-  const loc = (locale || waitlistItem?.locale || "en").toLowerCase();
-  const t = RESTOCK_I18N[loc] || RESTOCK_I18N.en;
-  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Murphy Bed";
+  const { i18n: t, urlLocale } = resolveRestockLocale(locale || waitlistItem?.locale || "en");
+  const isComingSoonLaunch = Boolean(waitlistItem?.options?.comingSoon);
+  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Product";
   const pSlug = waitlistItem.product_slug || product?.slug || "";
   let pImage = waitlistItem.product_image || product?.image || "https://wallbedking.co.uk/product-images/MORPHY-Bed-Vertical-Classic-200x200-6.webp";
   if (pImage && pImage.startsWith("/")) {
@@ -1835,18 +1887,26 @@ export function getRestockNotificationHtml(waitlistItem, product = null, locale 
   }
   const variantText = waitlistItem.variant_name || (waitlistItem.options?.size ? `${waitlistItem.options.size}` : "");
   const customerName = waitlistItem.customer_name || waitlistItem.options?.customer_name || "";
-  
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wallbedking.co.uk";
-  const localePrefix = loc && loc !== "en" ? `/${loc}` : "";
-  const cat = product?.parent_category || "beds";
-  const productUrl = `${siteUrl}${localePrefix}/products/${cat}/${pSlug}`;
+  const localePrefix = urlLocale && urlLocale !== "en" ? `/${urlLocale}` : "";
+  const cat = product?.parent_category || waitlistItem?.options?.parent_category || "beds";
+  const productUrl = pSlug
+    ? `${siteUrl}${localePrefix}/products/${cat}/${pSlug}`
+    : `${siteUrl}${localePrefix}/products/${cat}`;
+
+  const badgeText = isComingSoonLaunch ? t.launchBadge : t.badge;
+  const headlineText = isComingSoonLaunch ? t.launchHeadline : t.headline;
+  const introText = isComingSoonLaunch ? t.launchIntro : t.intro;
+  const ctaText = isComingSoonLaunch ? t.launchBtnText : t.btnText;
+  const footerBadge = cat === "beds" ? t.bedWarrantyBadge : t.warrantyBadge;
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>${t.badge} - ${pName}</title>
+        <title>${badgeText} - ${pName}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f5f3; margin: 0; padding: 24px; color: #222; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e7e5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -1863,15 +1923,15 @@ export function getRestockNotificationHtml(waitlistItem, product = null, locale 
         <div class="container">
           <div class="header">
             <h1>Wall Bed King</h1>
-            <p>${t.badge}</p>
+            <p>${badgeText}</p>
           </div>
           <div class="content">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #2e7d32; background: #e8f5e9; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
-              ✓ ${t.badge}
+              ✓ ${badgeText}
             </span>
-            <h2 style="color: #111; font-size: 22px; margin-top: 0; font-weight: 600;">${t.headline}</h2>
+            <h2 style="color: #111; font-size: 22px; margin-top: 0; font-weight: 600;">${headlineText}</h2>
             <p style="color: #555; font-size: 14px; line-height: 1.6; max-width: 480px; margin: 0 auto 20px;">
-              ${t.greeting(customerName)} ${t.intro}
+              ${t.greeting(customerName)} ${introText}
             </p>
 
             <div class="product-card">
@@ -1881,7 +1941,7 @@ export function getRestockNotificationHtml(waitlistItem, product = null, locale 
 
               <div style="margin-top: 20px;">
                 <a href="${productUrl}" class="cta-btn" target="_blank" rel="noopener noreferrer">
-                  ${t.btnText} →
+                  ${ctaText} →
                 </a>
               </div>
             </div>
@@ -1891,7 +1951,7 @@ export function getRestockNotificationHtml(waitlistItem, product = null, locale 
             </p>
           </div>
           <div class="footer">
-            <p style="margin: 0 0 6px;">${t.warrantyBadge}</p>
+            <p style="margin: 0 0 6px;">${footerBadge}</p>
             <p style="margin: 0 0 6px;">Freephone: <strong>${STORE_PHONE}</strong> • Email: <a href="mailto:support@wallbedking.com" style="color: #9f7d3d;">support@wallbedking.com</a></p>
           </div>
         </div>
@@ -1901,7 +1961,7 @@ export function getRestockNotificationHtml(waitlistItem, product = null, locale 
 }
 
 /**
- * Send Back in Stock Notification Email via Resend
+ * Send Back in Stock / Launch Notification Email via Resend
  */
 export async function sendRestockNotificationEmail(waitlistItem, product = null) {
   if (!waitlistItem || !waitlistItem.customer_email) {
@@ -1909,16 +1969,18 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const loc = (waitlistItem.locale || "en").toLowerCase();
-  const t = RESTOCK_I18N[loc] || RESTOCK_I18N.en;
-  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Murphy Bed";
+  const rawLoc = (waitlistItem.locale || "en").toLowerCase();
+  const { i18n: t } = resolveRestockLocale(rawLoc);
+  const isComingSoonLaunch = Boolean(waitlistItem?.options?.comingSoon);
+  const pName = waitlistItem.product_name || product?.name || "Wall Bed King Product";
+  const subject = isComingSoonLaunch ? t.launchSubject(pName) : t.subject(pName);
 
   if (!apiKey) {
-    console.log(`[Email Service: Mock] Restock Alert for ${pName} sent to ${waitlistItem.customer_email} (${loc})`);
+    console.log(`[Email Service: Mock] Restock/Launch Alert for ${pName} sent to ${waitlistItem.customer_email} (${rawLoc})`);
     return {
       success: true,
       mode: "mock",
-      message: "Restock alert logged in dev mode.",
+      message: "Notification logged in dev mode (RESEND_API_KEY not set).",
     };
   }
 
@@ -1930,8 +1992,8 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
       from: DEFAULT_FROM,
       to: [waitlistItem.customer_email],
       replyTo: SUPPORT_EMAIL,
-      subject: t.subject(pName),
-      html: getRestockNotificationHtml(waitlistItem, product, loc),
+      subject,
+      html: getRestockNotificationHtml(waitlistItem, product, rawLoc),
     });
 
     if (res?.error) {
@@ -1939,7 +2001,7 @@ export async function sendRestockNotificationEmail(waitlistItem, product = null)
       return { success: false, error: res.error.message || "Email delivery rejected by Resend." };
     }
 
-    return { success: true, data: res?.data || res };
+    return { success: true, mode: "live", data: res?.data || res };
   } catch (error) {
     console.error("[Restock Email Error]", error);
     return { success: false, error: error.message };

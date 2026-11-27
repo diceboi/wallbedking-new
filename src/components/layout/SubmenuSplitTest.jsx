@@ -100,6 +100,48 @@ const BED_EXTRA_GALLERY = {
       src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/wallbeds/1K/150x200-SH-TRADITIONAL_1.webp",
     },
   ],
+  "/products/acoustic-booths/sileopod-v5-acoustic-booth": [
+    {
+      label: "V5-S (1 Person)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-s.webp",
+    },
+    {
+      label: "V5-M (2 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-m.webp",
+    },
+    {
+      label: "V5-L (4 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v5-l.webp",
+    },
+  ],
+  "/products/acoustic-booths/sileopod-v4-acoustic-booth": [
+    {
+      label: "V4-S (1 Person)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v4-s.webp",
+    },
+    {
+      label: "V4-M (2 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v4-m.webp",
+    },
+    {
+      label: "V4-L (4 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-v4-l.webp",
+    },
+  ],
+  "/products/acoustic-booths/sileopod-ui1-acoustic-booth": [
+    {
+      label: "UI1-S (1 Person)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-ui1-s.webp",
+    },
+    {
+      label: "UI1-M (2 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-ui1-m.webp",
+    },
+    {
+      label: "UI1-L (4 People)",
+      src: "https://unrqbejocbteebsworuq.supabase.co/storage/v1/object/public/ProductImages/acoustic-booths/1K/sileopod-ui1-l.webp",
+    },
+  ],
 };
 
 // Multilingual feature highlights per product href
@@ -672,6 +714,50 @@ function getProductFeatures(item, locale = "en") {
     return ["Multi-functional transforming mechanisms", "Compact space-saving fold-away engineering", "Heavy-duty solid board & metal hardware"];
   }
 
+  if (item.href?.includes("acoustic-booths")) {
+    if (langKey === "de")
+      return [
+        "Bis zu 32 dB Sprachpegelreduzierung (ISO 23351-1, Klasse A)",
+        "Vollständiger Luftaustausch alle 60 Sekunden",
+        "Größen S (1 Person), M (2 Personen) & L (4 Personen)",
+        "9 RAL-Außenfarben – modulares Design von Morpha Mailand",
+      ];
+    if (langKey === "fr")
+      return [
+        "Réduction vocale jusqu'à 32 dB (ISO 23351-1, Classe A)",
+        "Renouvellement d'air complet toutes les 60 secondes",
+        "Tailles S (1 pers.), M (2 pers.) & L (4 pers.)",
+        "9 coloris RAL extérieurs – design italien Morpha Milan",
+      ];
+    if (langKey === "es")
+      return [
+        "Reducción de voz de hasta 32 dB (ISO 23351-1, Clase A)",
+        "Renovación completa del aire cada 60 segundos",
+        "Tamaños S (1 pers.), M (2 pers.) y L (4 pers.)",
+        "9 colores RAL exteriores – diseño italiano Morpha Milán",
+      ];
+    if (langKey === "it")
+      return [
+        "Riduzione vocale fino a 32 dB (ISO 23351-1, Classe A)",
+        "Ricambio d'aria completo ogni 60 secondi",
+        "Formati S (1 pers.), M (2 pers.) e L (4 pers.)",
+        "9 colori RAL esterni – design italiano Morpha Milano",
+      ];
+    if (langKey === "por")
+      return [
+        "Redução de voz até 32 dB (ISO 23351-1, Classe A)",
+        "Renovação completa do ar a cada 60 segundos",
+        "Tamanhos S (1 pessoa), M (2 pessoas) e L (4 pessoas)",
+        "9 cores RAL exteriores – design italiano Morpha Milão",
+      ];
+    return [
+      "Up to 32 dB speech-level reduction (ISO 23351-1 Class A)",
+      "Fresh air renewal every 60 seconds with low-noise fans",
+      "Available in S (1 person), M (2 people) & L (4 people)",
+      "9 RAL exterior finishes – Milan design team Morpha",
+    ];
+  }
+
   return [
     "Premium quality space-saving furniture",
     "Engineered for everyday durability & ease of use",
@@ -690,10 +776,16 @@ function getSubmenuItemPricing(item, locale, allFlagships, t, formatPrice) {
       f.link?.split("?")[0].replace(/\/+$/, "") === cleanHref
   );
   if (dynamicFlagship) {
+    if (dynamicFlagship.is_coming_soon) {
+      return t("product.comingSoonPriceLabel", "Coming in January");
+    }
     const pricing = getProductPrice(dynamicFlagship, locale);
     if (pricing && pricing.display) {
       return `${t("common.from", "from")} ${pricing.display}`;
     }
+  }
+  if (item.isComingSoon) {
+    return t("product.comingSoonPriceLabel", "Coming in January");
   }
   if (item.price && typeof item.price === "string" && item.price.includes("£")) {
     const num = Number(item.price.replace(/[^0-9]/g, ""));
@@ -1109,9 +1201,11 @@ export function SubmenuSplitTest() {
                             <span className="text-2xl xl:text-3xl font-semibold text-wbk-black">
                               {activeItemPricing}
                             </span>
-                            <span className="text-xs text-wbk-grey font-normal">
-                              {vatLabel}
-                            </span>
+                            {!activeItem?.isComingSoon && (
+                              <span className="text-xs text-wbk-grey font-normal">
+                                {vatLabel}
+                              </span>
+                            )}
                           </div>
 
                           {/* Key Feature Highlights */}

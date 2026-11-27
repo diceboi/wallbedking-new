@@ -310,7 +310,7 @@ export function Header() {
         <TopAnnouncementBar />
 
         {/* Single-row primary header bar */}
-        <div className="w-full mx-auto px-4 sm:px-6 xl:px-6 2xl:px-8 h-14 sm:h-16 xl:h-[64px] flex items-center justify-between gap-3 xl:gap-4 2xl:gap-6 relative z-30 bg-wbk-white border-b border-wbk-lightgrey">
+        <div className="w-full mx-auto px-4 sm:px-6 xl:px-5 2xl:px-8 h-14 sm:h-16 xl:h-[64px] flex items-center justify-between gap-3 xl:gap-3 2xl:gap-5 relative z-30 bg-wbk-white border-b border-wbk-lightgrey">
           {/* Left section: Logo + optional Contact Info */}
           <div className="flex items-center gap-4 shrink-0">
             <Link
@@ -319,21 +319,21 @@ export function Header() {
               aria-label="WallBedKing home"
             >
               <Image
-                src="/logos/WBK-Logo-Gold-Black.svg"
+                src="/logos/WBK-Logo-New-Gold-Black.webp"
                 alt="WallBedKing"
-                width={150}
-                height={34}
+                width={118}
+                height={48}
                 priority
-                className="h-6 sm:h-7 w-auto"
+                className="h-8 sm:h-9 xl:h-10 w-auto object-contain"
               />
             </Link>
             <ContactInfo />
           </div>
 
-          {/* Desktop Main Menu (between Logo and SearchBar) */}
+          {/* Desktop Main Menu (centered between Logo and Utility Icons) */}
           <nav
             aria-label="Main navigation"
-            className="hidden xl:flex items-stretch h-full shrink-0"
+            className="hidden xl:flex items-stretch justify-center h-full min-w-0"
             onMouseEnter={cancelCloseSubmenu}
             onMouseLeave={() => scheduleCloseSubmenu(160)}
           >
@@ -345,15 +345,12 @@ export function Header() {
             <SearchBar compact />
           </div>
 
-          {/* Desktop Full-Height Borderless SearchBar (xl+) */}
-          <div className="hidden xl:flex flex-1 items-stretch justify-end h-full min-w-[150px]">
-            <div className="w-full max-w-[235px] 2xl:max-w-[300px] h-full">
-              <SearchBar compact />
+          {/* Right section: Desktop Search Icon Dropdown, Language, Account, Cart, MobileToggle */}
+          <div className="flex items-center gap-2.5 sm:gap-3 xl:gap-3 shrink-0">
+            {/* Desktop Compact Search Icon with Dropdown (xl+) */}
+            <div className="hidden xl:flex items-center">
+              <SearchBar dropdown />
             </div>
-          </div>
-
-          {/* Right section: Language, Account, Cart, MobileToggle */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
             {/* Language Selector Dropdown */}
             <div
               className="relative hidden sm:block"

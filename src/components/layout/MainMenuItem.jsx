@@ -24,7 +24,7 @@ export function MainMenuItem({ item }) {
       : t(`nav.${item.id}`, item.title);
 
   const tabBaseClasses =
-    "relative flex items-center gap-1.5 h-full px-2.5 2xl:px-3.5 text-[11.5px] 2xl:text-xs font-medium uppercase tracking-[0.09em] 2xl:tracking-[0.13em] whitespace-nowrap transition-colors select-none after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-wbk-gold after:transition-all after:duration-200";
+    "relative flex items-center gap-1 h-full px-2 2xl:px-3 text-[11px] 2xl:text-[11.5px] font-medium uppercase tracking-[0.04em] 2xl:tracking-[0.07em] whitespace-nowrap transition-colors select-none after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-wbk-gold after:transition-all after:duration-200";
 
   if (!hasSubmenu) {
     return (

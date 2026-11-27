@@ -10,18 +10,27 @@ import { getLocalizedCategoryTitle } from "@/lib/categories-utils";
 import { getCategoryTileImage } from "@/components/ui/CategoryTileGrid";
 
 const getGridBorderClass = (idx, total) => {
-  const isLeft = idx % 2 === 0;
-  const isLastRowDesktop = idx >= total - 2;
-  const isLastMobile = idx === total - 1;
+  const isOddTotal = total % 2 === 1 && total >= 5;
+  const inLastThreeRow = isOddTotal && idx >= total - 3;
 
-  let classes = "col-span-6 md:col-span-3 border-wbk-lightgrey/40";
+  const colSpanClass = inLastThreeRow
+    ? "col-span-6 md:col-span-2"
+    : "col-span-6 md:col-span-3";
+
+  const isLastMobile = idx === total - 1;
+  const isLastRowDesktop = inLastThreeRow ? true : idx >= total - 2;
+  const needsRightBorder = inLastThreeRow
+    ? idx < total - 1
+    : idx % 2 === 0;
+
+  let classes = `${colSpanClass} border-wbk-lightgrey/40`;
   if (!isLastMobile) {
     classes += " border-b";
   }
   if (isLastRowDesktop) {
     classes += " md:border-b-0";
   }
-  if (isLeft) {
+  if (needsRightBorder) {
     classes += " md:border-r";
   }
   return classes;
@@ -52,7 +61,7 @@ export function CategoryGrid() {
       (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
     );
     const featured = sorted.filter((c) => c.is_featured !== false);
-    return (featured.length >= 4 ? featured : sorted).slice(0, 4);
+    return featured.length >= 4 ? featured : sorted;
   }, [categories, featuredCategories, allProducts, locale]);
 
   const total = displayCategories.length;

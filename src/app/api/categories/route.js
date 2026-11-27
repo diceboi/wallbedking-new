@@ -92,15 +92,14 @@ export async function GET() {
         if (res.ok) {
           const data = await res.json();
             let formatted = data.map(formatCategory).filter((c) => c.is_visible !== false);
-            if (process.env.NODE_ENV === "development") {
-              const hasTables = formatted.some((c) => c.id === "tables" || c.slug === "tables");
-              if (!hasTables) {
-                const localTables = getLocalCategories().find((c) => c.id === "tables" || c.slug === "tables");
-                if (localTables) {
-                  formatted.push(formatCategory(localTables, formatted.length));
-                }
+            // Merge any visible local categories not yet in Supabase (e.g. Acoustic Pods, Moonchair)
+            const existingIds = new Set(formatted.map((c) => c.id));
+            for (const localCat of getLocalCategories()) {
+              if (localCat.is_visible !== false && !existingIds.has(localCat.id)) {
+                formatted.push(formatCategory(localCat, formatted.length));
               }
             }
+            formatted.sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
             return NextResponse.json(
               {
                 success: true,

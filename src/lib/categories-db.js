@@ -116,6 +116,15 @@ export const getStorefrontCategories = unstable_cache(
       }
 
       let result = rows.map(normalizeCategory).filter(isStorefrontVisible);
+      // Merge any visible local categories not yet in Supabase (e.g. Acoustic Pods, Moonchair)
+      const existingIds = new Set(result.map((c) => c.id));
+      for (const localCat of getLocalCategories()) {
+        const normLocal = normalizeCategory(localCat, result.length);
+        if (isStorefrontVisible(normLocal) && !existingIds.has(normLocal.id)) {
+          result.push(normLocal);
+        }
+      }
+      result.sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
       return result;
     } catch (err) {
       console.error("[categories-db] Exception fetching categories:", err.message);
