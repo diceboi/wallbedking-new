@@ -16,6 +16,7 @@ export async function POST(request) {
       billingAddress,
       deliveryOption,
       promoCode,
+      affiliateCode = "",
       paymentMethod = "card",
       userId = null,
       notes = "",
@@ -50,7 +51,14 @@ export async function POST(request) {
     const targetEntity = companyEntity || paymentConfig.entity;
 
     // 1. Server-side validation of prices and totals strictly matching market currency
-    const calculation = await validateOrderTotals(items, deliveryOption, promoCode, targetCurrency, locale);
+    const calculation = await validateOrderTotals(
+      items,
+      deliveryOption,
+      promoCode,
+      targetCurrency,
+      locale,
+      customer?.email || ""
+    );
 
     if (calculation?.hasOutOfStockItems) {
       const outNames = calculation.outOfStockItems.map((i) => i.title).join(", ");
@@ -73,6 +81,15 @@ export async function POST(request) {
 
     const orderId = await generateOrderNumber();
 
+    const resolvedAffiliateCode = String(
+      affiliateCode ||
+        (calculation.couponResult?.valid && calculation.couponResult?.coupon?.is_influencer
+          ? calculation.couponResult.coupon.code
+          : "")
+    )
+      .trim()
+      .toUpperCase();
+
     const orderRecord = {
       id: orderId,
       user_id: userId || null,
@@ -86,6 +103,7 @@ export async function POST(request) {
         ...(typeof shippingAddress === "object" ? shippingAddress : {}),
         locale: locale || "en",
         company_entity: targetEntity,
+        ...(resolvedAffiliateCode ? { affiliate_code: resolvedAffiliateCode } : {}),
       },
       billing_address: billingAddress || shippingAddress,
       items: calculation.items,
@@ -100,7 +118,13 @@ export async function POST(request) {
       delivery_label: calculation.delivery.label,
       delivery_message: calculation.delivery.message,
       customer_notes: notes || "",
-      admin_notes: `[Entity: ${targetEntity}] [Locale: ${locale || "en"}]`,
+      admin_notes: [
+        `[Entity: ${targetEntity}]`,
+        `[Locale: ${locale || "en"}]`,
+        resolvedAffiliateCode ? `[Affiliate: ${resolvedAffiliateCode}]` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

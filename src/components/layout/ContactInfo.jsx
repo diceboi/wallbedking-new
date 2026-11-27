@@ -16,7 +16,7 @@ export function ContactInfo() {
 
   return (
     <div
-      className="hidden xl:flex items-center gap-3 py-1 px-2 text-wbk-black"
+      className="hidden min-[1440px]:flex items-center gap-3 py-1 px-2 text-wbk-black"
       title={t("header.callSpecialists", "Call our product specialists")}
     >
       <div className="w-8 h-8 flex items-center justify-center bg-[#F4F2F0] border border-wbk-lightgrey/60 text-wbk-black">

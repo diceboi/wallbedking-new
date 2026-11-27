@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { WholesaleCartDrawer } from "@/components/wholesale/WholesaleCartDrawer";
+import { InfluencerOfferBanner } from "@/components/affiliate/InfluencerOfferBanner";
 import { UserDrawer } from "@/components/auth/UserDrawer";
 import { PasswordResetModal } from "@/components/auth/PasswordResetModal";
 import { CookieConsent } from "@/components/ui/CookieConsent";
@@ -150,6 +151,7 @@ export default async function RootLayout({ children }) {
                       <WholesaleProvider>
                         <MenuContextProvider>
                           <Header />
+                          <InfluencerOfferBanner />
                           <main className="flex-1">{children}</main>
                           <Footer />
                           <CartDrawer />

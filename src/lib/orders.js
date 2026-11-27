@@ -168,6 +168,7 @@ export async function validateOrderTotals(
   promoCode = "",
   targetCurrency = "GBP",
   targetLocale = "en",
+  customerEmail = "",
 ) {
   let subtotal = 0;
   const validatedItems = [];
@@ -210,7 +211,7 @@ export async function validateOrderTotals(
         const { data } = await supabaseAdmin
           .from("products")
           .select(
-            "id, sku, slug, name, width, length, orientation, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility",
+            "id, sku, slug, name, category, parent_category, width, length, orientation, price_gbp, price_euro, price_usd, sale_price_gbp, sale_price_euro, sale_price_usd, sale_percent, sale_fix_gbp, sale_fix_euro, sale_fix_usd, stock, visibility",
           )
           .or(orClauses.join(","))
           .maybeSingle();
@@ -234,6 +235,7 @@ export async function validateOrderTotals(
       );
 
     let unitPrice = 0;
+    let itemHasActiveSale = false;
     const normalizedOptions =
       item.options && typeof item.options === "object"
         ? { ...item.options }
@@ -377,6 +379,9 @@ export async function validateOrderTotals(
       }
 
       unitPrice = finalPrice + sofaSurcharge + cabinetSurcharge;
+      itemHasActiveSale = Boolean(
+        regularPrice > 0 && finalPrice > 0 && finalPrice < regularPrice,
+      );
     } else {
       // Check if item is a product bundle
       let bundleSource = null;
@@ -515,6 +520,9 @@ export async function validateOrderTotals(
       rawId: numericId || item.rawId || item.id,
       sku: resolvedSku,
       slug: slug || item.slug || "",
+      parent_category: prodSource?.parent_category || item.parent_category || "",
+      category: prodSource?.category || item.category || "",
+      hasActiveSale: itemHasActiveSale,
       title: item.title || prodSource?.name || "Wall Bed King Item",
       image: item.image || prodSource?.image || "",
       price: unitPrice,
@@ -558,15 +566,28 @@ export async function validateOrderTotals(
 
   const shippingAmount = Number(selectedDelivery.cost) || 0;
 
-  // Calculate discount (promo code + discount delivery option)
-  let discountAmount = 0;
+  // Calculate discount (dynamic server-side coupon + optional delivery discount with per-coupon stacking control)
+  let couponDiscountAmount = 0;
+  let deliveryDiscountAmount = 0;
+  let couponResult = { valid: false, coupon: null, discountAmount: 0, error: null, publicInfo: null };
   const normalizedPromo = (promoCode || "").toUpperCase().trim();
-  const promo = PROMO_CODES[normalizedPromo];
-  if (promo) {
-    if (promo.type === "percent") {
-      discountAmount += Math.round(subtotal * (promo.value / 100) * 100) / 100;
-    } else if (promo.type === "fixed") {
-      discountAmount += Math.min(subtotal, promo.value);
+
+  if (normalizedPromo) {
+    try {
+      const { evaluateCouponServer } = await import("@/lib/coupons-server");
+      couponResult = await evaluateCouponServer({
+        rawCode: normalizedPromo,
+        items: validatedItems,
+        subtotal,
+        currency: curr,
+        locale: targetLocale,
+        customerEmail,
+      });
+      if (couponResult.valid) {
+        couponDiscountAmount = Number(couponResult.discountAmount) || 0;
+      }
+    } catch (cpnErr) {
+      console.warn("[validateOrderTotals] Coupon evaluation notice:", cpnErr?.message);
     }
   }
 
@@ -576,18 +597,22 @@ export async function validateOrderTotals(
         (selectedDelivery.id === "delivery_option_discount" ? 5 : 0),
     ) || 0;
 
-  if (deliveryDiscountPct > 0 && subtotal > 0) {
-    const deliveryDiscount =
+  const canStackDeliveryDiscount =
+    !couponResult.valid || Boolean(couponResult.coupon?.allow_stack_with_delivery_discount);
+
+  if (deliveryDiscountPct > 0 && subtotal > 0 && canStackDeliveryDiscount) {
+    deliveryDiscountAmount =
       Math.round(subtotal * (deliveryDiscountPct / 100) * 100) / 100;
-    discountAmount = Math.min(
-      subtotal,
-      Math.round((discountAmount + deliveryDiscount) * 100) / 100,
-    );
   }
 
-  const effectivePromoLabel = promo
-    ? normalizedPromo
-    : deliveryDiscountPct > 0
+  const discountAmount = Math.min(
+    subtotal,
+    Math.round((couponDiscountAmount + deliveryDiscountAmount) * 100) / 100,
+  );
+
+  const effectivePromoLabel = couponResult.valid
+    ? couponResult.coupon.code
+    : deliveryDiscountAmount > 0
       ? `DELIVERY-${deliveryDiscountPct}%`
       : null;
 
@@ -605,8 +630,11 @@ export async function validateOrderTotals(
     hasOutOfStockItems,
     outOfStockItems,
     subtotal,
+    couponDiscountAmount,
+    deliveryDiscountAmount,
     discountAmount,
     promoCode: effectivePromoLabel,
+    couponResult,
     delivery: selectedDelivery,
     shippingAmount,
     vatAmount,

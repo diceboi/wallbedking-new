@@ -28,6 +28,11 @@ export function CartDrawer() {
     removeItem,
     totalItems,
     subtotal,
+    discount,
+    total,
+    promoCode,
+    appliedCoupon,
+    removePromoCode,
     isMounted,
   } = useCart();
   const { t, formatPrice, localizedHref, locale } = useLocale();
@@ -261,14 +266,55 @@ export function CartDrawer() {
             {/* Drawer Footer / Checkout Actions */}
             {items.length > 0 && (
               <div className="p-4 sm:p-6 border-t border-wbk-lightgrey/70 bg-[#FBF9F8] space-y-4">
+                {/* Active Influencer / Promo Banner inside Drawer */}
+                {promoCode && (
+                  <div className="flex items-center justify-between gap-2 p-2.5 bg-wbk-green/10 border border-wbk-green/30 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {appliedCoupon?.influencer_avatar && (
+                        <img
+                          src={appliedCoupon.influencer_avatar}
+                          alt={appliedCoupon.influencer_name || promoCode}
+                          className="w-7 h-7 rounded-full object-cover border border-wbk-gold shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-wbk-black truncate">
+                          {appliedCoupon?.influencer_name
+                            ? `${appliedCoupon.influencer_name} (${promoCode})`
+                            : promoCode}
+                        </div>
+                        {discount > 0 && (
+                          <div className="text-[11px] text-wbk-green font-semibold">
+                            -{formatPrice(discount)} applied
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removePromoCode}
+                      className="text-[11px] text-red-600 hover:underline shrink-0 cursor-pointer"
+                    >
+                      {t("cart.removeItem", "Remove")}
+                    </button>
+                  </div>
+                )}
+
                 {/* Subtotal summary */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-wbk-brown font-medium">
-                    {t("cart.subtotal", "Subtotal")}
+                    {discount > 0 ? t("cart.total", "Total") : t("cart.subtotal", "Subtotal")}
                   </span>
-                  <span className="text-lg font-bold text-wbk-black font-poppins">
-                    {formatPrice(subtotal)}
-                  </span>
+                  <div className="text-right">
+                    {discount > 0 && (
+                      <span className="text-xs text-wbk-brown line-through mr-2">
+                        {formatPrice(subtotal)}
+                      </span>
+                    )}
+                    <span className="text-lg font-bold text-wbk-black font-poppins">
+                      {formatPrice(discount > 0 ? total : subtotal)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-xs text-wbk-brown pb-1">
                   <span>{t("cart.shipping", "Shipping")}</span>

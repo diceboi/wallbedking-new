@@ -295,7 +295,7 @@ export function Header() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setSubMenu(null)}
-            className="fixed inset-0 z-40 bg-wbk-black/20 backdrop-blur-[1px] hidden xl:block"
+            className="fixed inset-0 z-40 bg-wbk-black/20 backdrop-blur-[1px] hidden min-[1440px]:block"
           />
         )}
       </AnimatePresence>
@@ -318,37 +318,47 @@ export function Header() {
               className="shrink-0 flex items-center"
               aria-label="WallBedKing home"
             >
+              {/* Mobile compact logo */}
               <Image
                 src="/logos/WBK-Logo-New-Gold-Black.webp"
                 alt="WallBedKing"
                 width={118}
                 height={48}
                 priority
-                className="h-8 sm:h-9 xl:h-10 w-auto object-contain"
+                className="h-8 sm:h-9 w-auto object-contain md:hidden"
+              />
+              {/* Desktop horizontal logo */}
+              <Image
+                src="/logos/WBK-Logo-Desktop-Gold-Black.webp"
+                alt="WallBedKing"
+                width={422}
+                height={60}
+                priority
+                className="hidden md:block h-[24px] lg:h-[26px] 2xl:h-[30px] w-auto object-contain"
               />
             </Link>
             <ContactInfo />
           </div>
 
-          {/* Desktop Main Menu (centered between Logo and Utility Icons) */}
+          {/* Desktop Main Menu (centered between Logo and Utility Icons, >= 1440px) */}
           <nav
             aria-label="Main navigation"
-            className="hidden xl:flex items-stretch justify-center h-full min-w-0"
+            className="hidden min-[1440px]:flex items-stretch justify-center h-full min-w-0"
             onMouseEnter={cancelCloseSubmenu}
             onMouseLeave={() => scheduleCloseSubmenu(160)}
           >
             <MainMenu />
           </nav>
 
-          {/* Tablet Full-Height Borderless SearchBar (md to < xl) */}
-          <div className="hidden md:flex xl:hidden flex-1 items-stretch h-full max-w-md mx-2 min-w-0">
+          {/* Tablet/Compact Full-Height Borderless SearchBar (md to < 1440px) */}
+          <div className="hidden md:flex min-[1440px]:hidden flex-1 items-stretch h-full max-w-md mx-2 min-w-0">
             <SearchBar compact />
           </div>
 
           {/* Right section: Desktop Search Icon Dropdown, Language, Account, Cart, MobileToggle */}
           <div className="flex items-center gap-2.5 sm:gap-3 xl:gap-3 shrink-0">
-            {/* Desktop Compact Search Icon with Dropdown (xl+) */}
-            <div className="hidden xl:flex items-center">
+            {/* Desktop Compact Search Icon with Dropdown (>= 1440px) */}
+            <div className="hidden min-[1440px]:flex items-center">
               <SearchBar dropdown />
             </div>
             {/* Language Selector Dropdown */}
@@ -575,7 +585,7 @@ export function Header() {
 
         {/* Desktop Mega Submenu (Anchored to bottom of single-row header; PostHog A/B test untouched) */}
         <div
-          className="hidden xl:block relative z-20 bg-wbk-white"
+          className="hidden min-[1440px]:block relative z-20 bg-wbk-white"
           onMouseEnter={cancelCloseSubmenu}
           onMouseLeave={() => setSubMenu(null)}
         >

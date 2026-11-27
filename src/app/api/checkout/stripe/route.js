@@ -52,7 +52,8 @@ export async function POST(request) {
           body.deliveryOption || "delivery_option_economy",
           body.promoCode || "",
           targetCurrencyLower.toUpperCase(),
-          locale
+          locale,
+          clientEmail
         );
 
         if (valCalc?.hasOutOfStockItems) {

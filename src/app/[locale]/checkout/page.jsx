@@ -59,7 +59,13 @@ export default function CheckoutPage() {
     deliveryOptions,
     selectedDeliveryDetails,
     promoCode,
+    appliedCoupon,
+    affiliateCode,
+    promoLoading,
+    promoError,
     activePromoDetails,
+    applyPromoCode,
+    removePromoCode,
     clearCart,
     isMounted,
     isStripeEnabled,
@@ -69,6 +75,7 @@ export default function CheckoutPage() {
     refreshCheckoutSettings,
   } = useCart();
 
+  const [checkoutPromoInput, setCheckoutPromoInput] = useState("");
   const finalTotal = total;
   const isStripeAvailable = isStripeEnabled;
   const isPayPalAvailable = isPayPalEnabled;
@@ -516,6 +523,7 @@ export default function CheckoutPage() {
           shippingAddress: formData,
           deliveryOption,
           promoCode,
+          affiliateCode,
           paymentMethod: formData.paymentMethod || "bank",
           userId: user?.id || null,
           locale: locale || "en",
@@ -1999,6 +2007,78 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Promo / Influencer Discount Code Control right inside Checkout */}
+                <div className="pt-4 border-t border-wbk-lightgrey space-y-2 font-poppins">
+                  {promoCode ? (
+                    <div className="flex items-center justify-between gap-2 p-2.5 bg-wbk-green/10 border border-wbk-green/30 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {appliedCoupon?.influencer_avatar && (
+                          <img
+                            src={appliedCoupon.influencer_avatar}
+                            alt={appliedCoupon.influencer_name || promoCode}
+                            className="w-8 h-8 rounded-full object-cover border border-wbk-gold shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-wbk-black truncate">
+                            {promoCode}
+                            {appliedCoupon?.influencer_name
+                              ? ` • ${appliedCoupon.influencer_name}`
+                              : ""}
+                          </div>
+                          <div className="text-[11px] text-wbk-green font-medium">
+                            {discount > 0
+                              ? `-${formatPrice(discount)}`
+                              : appliedCoupon?.discountLabel || "Active"}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removePromoCode}
+                        className="text-xs text-red-600 hover:underline shrink-0 cursor-pointer"
+                      >
+                        {t("cart.removeItem", "Remove")}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={checkoutPromoInput}
+                          onChange={(e) => setCheckoutPromoInput(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (!checkoutPromoInput.trim()) return;
+                              const ok = await applyPromoCode(checkoutPromoInput, formData.email);
+                              if (ok) setCheckoutPromoInput("");
+                            }
+                          }}
+                          placeholder={t("cart.promoCode", "Discount Code")}
+                          className="flex-1 px-3 py-2 text-xs border border-wbk-lightgrey bg-white focus:outline-none focus:border-wbk-black uppercase"
+                        />
+                        <button
+                          type="button"
+                          disabled={promoLoading}
+                          onClick={async () => {
+                            if (!checkoutPromoInput.trim()) return;
+                            const ok = await applyPromoCode(checkoutPromoInput, formData.email);
+                            if (ok) setCheckoutPromoInput("");
+                          }}
+                          className="px-4 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-full cursor-pointer disabled:opacity-60"
+                        >
+                          {promoLoading ? "..." : t("cart.apply", "Apply")}
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="text-[11px] text-red-600">{promoError}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Breakdown */}

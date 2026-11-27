@@ -13,6 +13,7 @@ export async function POST(request) {
       promoCode = "",
       currency = null,
       locale = "en",
+      customerEmail = "",
     } = body || {};
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -31,7 +32,8 @@ export async function POST(request) {
       deliveryOption,
       promoCode,
       targetCurrency,
-      locale
+      locale,
+      customerEmail
     );
 
     return NextResponse.json({

@@ -130,7 +130,7 @@ export function MobileMenuDrawer() {
   return (
     <AnimatePresence>
       {isMobileOpen && (
-        <div className="fixed inset-0 z-[999] xl:hidden flex">
+        <div className="fixed inset-0 z-[999] min-[1440px]:hidden flex">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

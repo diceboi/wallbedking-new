@@ -9,7 +9,42 @@ const CartContext = createContext(null);
 
 const STORAGE_KEY = "wbk_cart_v1";
 const PROMO_STORAGE_KEY = "wbk_promo_v1";
+const APPLIED_COUPON_STORAGE_KEY = "wbk_applied_coupon_v1";
+const AFFILIATE_STORAGE_KEY = "wbk_affiliate_ref_v1";
 const DELIVERY_STORAGE_KEY = "wbk_delivery_v1";
+
+function readAffiliateFromStorage() {
+  try {
+    const raw = localStorage.getItem(AFFILIATE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.code && (!parsed.expiresAt || Date.now() < parsed.expiresAt)) {
+        return String(parsed.code).toUpperCase();
+      }
+      localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function saveAffiliateToStorage(code, cookieDays = 30) {
+  try {
+    if (!code) {
+      localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+      document.cookie = "wbk_affiliate_ref=; path=/; max-age=0; SameSite=Lax";
+      return;
+    }
+    const clean = String(code).trim().toUpperCase();
+    const maxAgeSec = Math.max(1, Number(cookieDays || 30)) * 24 * 60 * 60;
+    const expiresAt = Date.now() + maxAgeSec * 1000;
+    localStorage.setItem(AFFILIATE_STORAGE_KEY, JSON.stringify({ code: clean, expiresAt }));
+    document.cookie = `wbk_affiliate_ref=${encodeURIComponent(clean)}; path=/; max-age=${maxAgeSec}; SameSite=Lax`;
+  } catch {
+    // ignore
+  }
+}
 
 // Delivery options matching Wall Bed King standard
 export const DELIVERY_OPTIONS = {
@@ -66,13 +101,16 @@ export const DELIVERY_OPTIONS = {
   },
 };
 
-// Active promo codes (empty by default)
-const PROMO_CODES = {};
-
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [promoCode, setPromoCode] = useState(null);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [affiliateCode, setAffiliateCode] = useState(null);
+  const [serverCouponDiscount, setServerCouponDiscount] = useState(null);
+  const [serverDeliveryDiscount, setServerDeliveryDiscount] = useState(null);
+  const [serverPromoValid, setServerPromoValid] = useState(true);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [deliveryOption, setDeliveryOption] = useState("delivery_option_economy");
   const [isMounted, setIsMounted] = useState(false);
@@ -234,10 +272,19 @@ export function CartProvider({ children }) {
         if (Array.isArray(parsed)) setItems(parsed);
       }
       const savedPromo = localStorage.getItem(PROMO_STORAGE_KEY);
-      if (savedPromo && PROMO_CODES[savedPromo]) {
-        setPromoCode(savedPromo);
-      } else if (savedPromo) {
-        localStorage.removeItem(PROMO_STORAGE_KEY);
+      if (savedPromo) {
+        setPromoCode(String(savedPromo).trim().toUpperCase());
+      }
+      const savedCouponRaw = localStorage.getItem(APPLIED_COUPON_STORAGE_KEY);
+      if (savedCouponRaw) {
+        try {
+          const parsedCoupon = JSON.parse(savedCouponRaw);
+          if (parsedCoupon?.code) setAppliedCoupon(parsedCoupon);
+        } catch {}
+      }
+      const savedAff = readAffiliateFromStorage();
+      if (savedAff) {
+        setAffiliateCode(savedAff);
       }
       const savedDelivery = localStorage.getItem(DELIVERY_STORAGE_KEY);
       if (savedDelivery && DELIVERY_OPTIONS[savedDelivery]) {
@@ -258,7 +305,7 @@ export function CartProvider({ children }) {
     }
   }, [items, isMounted]);
 
-  // Save promo to localStorage on changes
+  // Save promo & applied coupon to localStorage on changes
   useEffect(() => {
     if (!isMounted) return;
     try {
@@ -267,10 +314,15 @@ export function CartProvider({ children }) {
       } else {
         localStorage.removeItem(PROMO_STORAGE_KEY);
       }
+      if (appliedCoupon) {
+        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, JSON.stringify(appliedCoupon));
+      } else {
+        localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+      }
     } catch (e) {
       console.warn("Could not save promo to localStorage", e);
     }
-  }, [promoCode, isMounted]);
+  }, [promoCode, appliedCoupon, isMounted]);
 
   // Save delivery option to localStorage on changes
   useEffect(() => {
@@ -281,6 +333,54 @@ export function CartProvider({ children }) {
       console.warn("Could not save delivery option to localStorage", e);
     }
   }, [deliveryOption, isMounted]);
+
+  // Revalidate active promo code against server whenever locale/market changes (even if cart is empty!)
+  useEffect(() => {
+    if (!isMounted || !promoCode) return;
+    let cancelled = false;
+    const targetCurrency = (
+      localeCtx?.market?.currency ||
+      (activeLocale === "us" ? "USD" : activeLocale === "en" ? "GBP" : "EUR")
+    ).toUpperCase();
+
+    async function revalidatePromoForMarket() {
+      try {
+        const res = await fetch("/api/coupons/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: promoCode,
+            items,
+            currency: targetCurrency,
+            locale: activeLocale,
+            deliveryOption,
+          }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (data?.valid && data?.coupon) {
+          setServerPromoValid(true);
+          setAppliedCoupon(data.coupon);
+          setServerCouponDiscount(Number(data.couponDiscountAmount) || 0);
+          if (data.deliveryDiscountAmount !== undefined) {
+            setServerDeliveryDiscount(Number(data.deliveryDiscountAmount) || 0);
+          }
+          setPromoError("");
+        } else {
+          // Coupon is not valid in this market/state — suppress discount & badge for this storefront
+          setServerPromoValid(false);
+          setServerCouponDiscount(0);
+        }
+      } catch {
+        // ignore network hiccup
+      }
+    }
+
+    revalidatePromoForMarket();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLocale, localeCtx?.market?.currency, isMounted, promoCode]);
 
   // Revalidate cart item prices against database when activeLocale or currency changes
   useEffect(() => {
@@ -328,6 +428,27 @@ export function CartProvider({ children }) {
           if (hasDiff) {
             setItems(updatedItems);
           }
+
+          // Sync authoritative server-side coupon & delivery discount calculations
+          if (promoCode) {
+            if (data.couponResult?.valid) {
+              setServerCouponDiscount(Number(data.couponDiscountAmount) || 0);
+              setServerDeliveryDiscount(Number(data.deliveryDiscountAmount) || 0);
+              if (data.couponResult.publicInfo) {
+                setAppliedCoupon(data.couponResult.publicInfo);
+              }
+              setPromoError("");
+            } else {
+              setServerCouponDiscount(0);
+              setServerDeliveryDiscount(Number(data.deliveryDiscountAmount) || 0);
+              if (data.couponResult?.error) {
+                setPromoError(data.couponResult.error);
+              }
+            }
+          } else {
+            setServerCouponDiscount(0);
+            setServerDeliveryDiscount(Number(data.deliveryDiscountAmount) || 0);
+          }
         }
       } catch (err) {
         console.warn("[CartContext] Price revalidation notice:", err);
@@ -339,7 +460,7 @@ export function CartProvider({ children }) {
     return () => {
       isSubscribed = false;
     };
-  }, [activeLocale, localeCtx?.market?.currency, isMounted, deliveryOption, promoCode]);
+  }, [activeLocale, localeCtx?.market?.currency, isMounted, deliveryOption, promoCode, items.length]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -455,38 +576,102 @@ export function CartProvider({ children }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setPromoCode(null);
+    setAppliedCoupon(null);
+    setServerCouponDiscount(null);
+    setServerDeliveryDiscount(null);
     setPromoError("");
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(PROMO_STORAGE_KEY);
+      localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
     } catch (e) {
       // ignore
     }
   }, []);
 
   /**
-   * Apply promotional discount code
+   * Activate an affiliate / influencer offer from a ?ref=CODE link
    */
-  const applyPromoCode = useCallback((rawCode) => {
-    setPromoError("");
-    const cleaned = String(rawCode || "").trim().toUpperCase();
-    if (!cleaned) {
-      setPromoError("Please enter a discount code.");
-      return false;
-    }
-    if (PROMO_CODES[cleaned]) {
-      setPromoCode(cleaned);
+  const activateAffiliateOffer = useCallback((offer) => {
+    if (!offer?.code) return;
+    const clean = String(offer.code).trim().toUpperCase();
+    setAffiliateCode(clean);
+    saveAffiliateToStorage(clean, offer.cookie_days || 30);
+    if (offer.auto_apply_on_ref !== false) {
+      setServerPromoValid(true);
+      setPromoCode(clean);
+      setAppliedCoupon(offer);
       setPromoError("");
-      return true;
-    } else {
-      setPromoError("Invalid or expired discount code.");
-      return false;
     }
   }, []);
 
+  /**
+   * Apply promotional / influencer discount code (validated strictly on server)
+   */
+  const applyPromoCode = useCallback(
+    async (rawCode, customerEmail = "") => {
+      setPromoError("");
+      const cleaned = String(rawCode || "").trim().toUpperCase();
+      if (!cleaned) {
+        setPromoError("Please enter a discount code.");
+        return false;
+      }
+      setPromoLoading(true);
+      try {
+        const targetCurrency = (
+          localeCtx?.market?.currency ||
+          (activeLocale === "us" ? "USD" : activeLocale === "en" ? "GBP" : "EUR")
+        ).toUpperCase();
+        const res = await fetch("/api/coupons/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: cleaned,
+            items,
+            currency: targetCurrency,
+            locale: activeLocale,
+            deliveryOption,
+            customerEmail,
+          }),
+        });
+        const data = await res.json();
+        if (data?.valid && data?.coupon) {
+          setServerPromoValid(true);
+          setPromoCode(data.coupon.code);
+          setAppliedCoupon(data.coupon);
+          setServerCouponDiscount(Number(data.couponDiscountAmount) || 0);
+          if (data.deliveryDiscountAmount !== undefined) {
+            setServerDeliveryDiscount(Number(data.deliveryDiscountAmount) || 0);
+          }
+          if (data.coupon.is_influencer) {
+            setAffiliateCode(data.coupon.code);
+            saveAffiliateToStorage(data.coupon.code, data.coupon.cookie_days || 30);
+          }
+          setPromoError("");
+          return true;
+        }
+        setPromoError(data?.error || "Invalid or expired discount code.");
+        return false;
+      } catch (err) {
+        setPromoError("Could not verify discount code. Please try again.");
+        return false;
+      } finally {
+        setPromoLoading(false);
+      }
+    },
+    [items, activeLocale, localeCtx?.market?.currency, deliveryOption]
+  );
+
   const removePromoCode = useCallback(() => {
     setPromoCode(null);
+    setAppliedCoupon(null);
+    setServerCouponDiscount(0);
+    setServerDeliveryDiscount(null);
     setPromoError("");
+    try {
+      localStorage.removeItem(PROMO_STORAGE_KEY);
+      localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+    } catch {}
   }, []);
 
   // ── Calculated properties ──
@@ -517,16 +702,38 @@ export function CartProvider({ children }) {
   const isQuickPayEnabled = Boolean(checkoutSettings?.payments?.quickPayInCart?.enabled);
   const isBankTransferEnabled = Boolean(checkoutSettings?.payments?.bankTransfer?.enabled);
 
-  // Calculate discount based on active promo code and/or discount delivery option
-  const discount = useMemo(() => {
-    let totalDisc = 0;
-    if (promoCode && PROMO_CODES[promoCode]) {
-      const promo = PROMO_CODES[promoCode];
-      if (promo.type === "percent") {
-        totalDisc += Math.round((subtotal * (promo.value / 100)) * 100) / 100;
-      } else if (promo.type === "fixed") {
-        totalDisc += Math.min(subtotal, promo.value);
-      }
+  // Strict market/country eligibility check for active coupon
+  const isCouponEligibleForLocale = useMemo(() => {
+    if (!promoCode || !appliedCoupon || !serverPromoValid) return false;
+    const markets = appliedCoupon.target_markets;
+    if (!Array.isArray(markets) || markets.length === 0) return true;
+    return markets.map((m) => String(m).toLowerCase()).includes(activeLocale);
+  }, [promoCode, appliedCoupon, serverPromoValid, activeLocale]);
+
+  const effectivePromoCode = isCouponEligibleForLocale ? promoCode : null;
+  const effectiveAppliedCoupon = isCouponEligibleForLocale ? appliedCoupon : null;
+
+  // Calculate discount based on active server-validated coupon and/or delivery discount (respecting stacking flag & market eligibility)
+  const couponDiscount = useMemo(() => {
+    if (!effectivePromoCode || !effectiveAppliedCoupon) return 0;
+    if (serverCouponDiscount !== null && items.length > 0) {
+      return Math.min(subtotal, Math.max(0, Number(serverCouponDiscount) || 0));
+    }
+    if (effectiveAppliedCoupon.discount_type === "fixed") {
+      return Math.min(subtotal, Math.max(0, Number(effectiveAppliedCoupon.discount_value) || 0));
+    }
+    const pct = Number(effectiveAppliedCoupon.discount_value) || 0;
+    return Math.min(subtotal, Math.round(subtotal * (pct / 100) * 100) / 100);
+  }, [effectivePromoCode, effectiveAppliedCoupon, serverCouponDiscount, items.length, subtotal]);
+
+  const deliveryDiscount = useMemo(() => {
+    const canStack =
+      !effectivePromoCode ||
+      !effectiveAppliedCoupon ||
+      Boolean(effectiveAppliedCoupon.allow_stack_with_delivery_discount);
+    if (!canStack) return 0;
+    if (serverDeliveryDiscount !== null && items.length > 0) {
+      return Math.max(0, Number(serverDeliveryDiscount) || 0);
     }
     const deliveryDiscountPct =
       Number(
@@ -534,10 +741,14 @@ export function CartProvider({ children }) {
           (deliveryOption === "delivery_option_discount" ? 5 : 0)
       ) || 0;
     if (deliveryDiscountPct > 0 && subtotal > 0) {
-      totalDisc += Math.round((subtotal * (deliveryDiscountPct / 100)) * 100) / 100;
+      return Math.round(subtotal * (deliveryDiscountPct / 100) * 100) / 100;
     }
-    return Math.min(subtotal, Math.round(totalDisc * 100) / 100);
-  }, [promoCode, subtotal, selectedDeliveryDetails, deliveryOption]);
+    return 0;
+  }, [effectivePromoCode, effectiveAppliedCoupon, serverDeliveryDiscount, items.length, selectedDeliveryDetails, deliveryOption, subtotal]);
+
+  const discount = useMemo(() => {
+    return Math.min(subtotal, Math.round((couponDiscount + deliveryDiscount) * 100) / 100);
+  }, [subtotal, couponDiscount, deliveryDiscount]);
 
   // 20% UK VAT included in price
   const vatIncluded = useMemo(() => {
@@ -562,18 +773,23 @@ export function CartProvider({ children }) {
   }, [items, deliveryOption]);
 
   const activePromoDetails = useMemo(() => {
-    if (promoCode && PROMO_CODES[promoCode]) {
+    if (effectivePromoCode && effectiveAppliedCoupon) {
       return {
-        code: promoCode,
-        ...PROMO_CODES[promoCode],
+        code: effectiveAppliedCoupon.code || effectivePromoCode,
+        type: effectiveAppliedCoupon.discount_type || "percent",
+        value: effectiveAppliedCoupon.discount_value || 0,
+        label: effectiveAppliedCoupon.influencer_name
+          ? `${effectiveAppliedCoupon.code} (${effectiveAppliedCoupon.influencer_name})`
+          : effectiveAppliedCoupon.code,
+        ...effectiveAppliedCoupon,
       };
     }
-    const deliveryDiscountPct =
-      Number(
-        selectedDeliveryDetails?.discountPercent ??
-          (deliveryOption === "delivery_option_discount" ? 5 : 0)
-      ) || 0;
-    if (deliveryDiscountPct > 0) {
+    if (deliveryDiscount > 0) {
+      const deliveryDiscountPct =
+        Number(
+          selectedDeliveryDetails?.discountPercent ??
+            (deliveryOption === "delivery_option_discount" ? 5 : 0)
+        ) || 0;
       return {
         code: `-${deliveryDiscountPct}%`,
         type: "percent",
@@ -582,7 +798,7 @@ export function CartProvider({ children }) {
       };
     }
     return null;
-  }, [promoCode, selectedDeliveryDetails, deliveryOption]);
+  }, [effectivePromoCode, effectiveAppliedCoupon, deliveryDiscount, selectedDeliveryDetails, deliveryOption]);
 
   const value = {
     items,
@@ -607,13 +823,19 @@ export function CartProvider({ children }) {
     isBankTransferEnabled,
     customCartId,
     discount,
+    couponDiscount,
+    deliveryDiscount,
     vatIncluded,
     total,
-    promoCode,
+    promoCode: effectivePromoCode,
+    appliedCoupon: effectiveAppliedCoupon,
+    affiliateCode: isCouponEligibleForLocale ? affiliateCode : null,
+    promoLoading,
     promoError,
     activePromoDetails,
     applyPromoCode,
     removePromoCode,
+    activateAffiliateOffer,
     isMounted,
     refreshCheckoutSettings: loadFreshSettings,
   };

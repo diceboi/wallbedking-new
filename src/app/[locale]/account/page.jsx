@@ -31,8 +31,10 @@ import {
   IconStar,
   IconBell,
   IconClock,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { Container } from "@/components/ui/Container";
+import { InfluencerPortalTab } from "@/components/account/InfluencerPortalTab";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { formatSizeLabel } from "@/lib/i18n";
@@ -41,6 +43,7 @@ export default function AccountPage() {
   const { locale, t, localizedHref } = useLocale();
   const {
     user,
+    session,
     loading,
     signOut,
     openUserDrawer,
@@ -61,6 +64,33 @@ export default function AccountPage() {
   const [waitlistItems, setWaitlistItems] = useState([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [removingWaitlistId, setRemovingWaitlistId] = useState(null);
+
+  // Influencer Partner Portal state (only shown if user's email has linked influencer campaign(s))
+  const [influencerCampaigns, setInfluencerCampaigns] = useState([]);
+
+  useEffect(() => {
+    async function fetchInfluencerData() {
+      if (!session?.access_token) {
+        setInfluencerCampaigns([]);
+        return;
+      }
+      try {
+        const res = await fetch("/api/account/influencer", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (data?.success && data?.isInfluencer && Array.isArray(data.campaigns)) {
+          setInfluencerCampaigns(data.campaigns);
+        } else {
+          setInfluencerCampaigns([]);
+        }
+      } catch {
+        setInfluencerCampaigns([]);
+      }
+    }
+    fetchInfluencerData();
+  }, [session?.access_token]);
 
   // Fetch real customer orders from Supabase
   useEffect(() => {
@@ -131,7 +161,7 @@ export default function AccountPage() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash || "";
       const tabParam = params.get("tab");
-      if (tabParam && ["orders", "waitlist", "wishlist", "configs", "addresses", "profile"].includes(tabParam)) {
+      if (tabParam && ["orders", "waitlist", "wishlist", "configs", "addresses", "profile", "influencer"].includes(tabParam)) {
         setActiveTab(tabParam === "wishlist" ? "waitlist" : tabParam);
       }
       if (params.get("mode") === "recovery" || hash.includes("type=recovery")) {
@@ -640,6 +670,36 @@ export default function AccountPage() {
                 <IconUser size={17} strokeWidth={1.5} />
                 <span>Account & Security</span>
               </button>
+
+              {influencerCampaigns.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("influencer")}
+                  className={`w-full flex items-center justify-between p-3.5 text-xs font-semibold uppercase tracking-wider text-left transition-colors cursor-pointer ${
+                    activeTab === "influencer"
+                      ? "bg-wbk-black text-white"
+                      : "text-wbk-black hover:bg-[#FBF9F8]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <IconSparkles
+                      size={17}
+                      strokeWidth={1.5}
+                      className={activeTab === "influencer" ? "text-wbk-gold" : "text-wbk-gold"}
+                    />
+                    <span>Influencer Portal</span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                      activeTab === "influencer"
+                        ? "bg-wbk-gold text-wbk-black"
+                        : "bg-wbk-black text-wbk-gold"
+                    }`}
+                  >
+                    {influencerCampaigns.length}
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Specialist Help Card */}
@@ -1430,6 +1490,11 @@ export default function AccountPage() {
                   </form>
                 </div>
               </div>
+            )}
+
+            {/* ── TAB 6: INFLUENCER PARTNER PORTAL ── */}
+            {activeTab === "influencer" && influencerCampaigns.length > 0 && (
+              <InfluencerPortalTab campaigns={influencerCampaigns} />
             )}
           </div>
         </div>

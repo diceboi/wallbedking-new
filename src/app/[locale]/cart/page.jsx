@@ -68,6 +68,8 @@ export default function CartPage() {
     deliveryOptions,
     selectedDeliveryDetails,
     promoCode,
+    appliedCoupon,
+    promoLoading,
     promoError,
     activePromoDetails,
     applyPromoCode,
@@ -95,10 +97,10 @@ export default function CartPage() {
     );
   }
 
-  const handleApplyCode = (e) => {
+  const handleApplyCode = async (e) => {
     e.preventDefault();
     if (!inputCode.trim()) return;
-    const ok = applyPromoCode(inputCode);
+    const ok = await applyPromoCode(inputCode);
     if (ok) setInputCode("");
   };
 
@@ -474,20 +476,31 @@ export default function CartPage() {
                 {/* Promo Code Form */}
                 <div className="pt-2 border-t border-wbk-lightgrey/60">
                   {promoCode ? (
-                    <div className="flex items-center justify-between p-2.5 bg-wbk-green/15 border border-wbk-green/30 text-xs">
-                      <div className="flex items-center gap-2">
-                        <IconTag size={15} className="text-wbk-green" />
-                        <span className="font-semibold text-wbk-black">
-                          {promoCode}
-                        </span>
-                        <span className="text-[11px] text-wbk-brown">
-                          (-{formatPrice(discount)})
-                        </span>
+                    <div className="flex items-center justify-between gap-2 p-2.5 bg-wbk-green/15 border border-wbk-green/30 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {appliedCoupon?.influencer_avatar ? (
+                          <img
+                            src={appliedCoupon.influencer_avatar}
+                            alt={appliedCoupon.influencer_name || promoCode}
+                            className="w-8 h-8 rounded-full object-cover border border-wbk-gold shrink-0"
+                          />
+                        ) : (
+                          <IconTag size={15} className="text-wbk-green shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-wbk-black truncate">
+                            {promoCode}
+                            {appliedCoupon?.influencer_name ? ` • ${appliedCoupon.influencer_name}` : ""}
+                          </div>
+                          <div className="text-[11px] text-wbk-brown">
+                            {discount > 0 ? `-${formatPrice(discount)}` : appliedCoupon?.discountLabel || "Applied"}
+                          </div>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={removePromoCode}
-                        className="text-xs text-red-600 hover:underline cursor-pointer"
+                        className="text-xs text-red-600 hover:underline shrink-0 cursor-pointer"
                       >
                         {t("cart.removeItem", "Remove")}
                       </button>
@@ -511,9 +524,10 @@ export default function CartPage() {
                         />
                         <button
                           type="submit"
-                          className="px-4 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-full cursor-pointer"
+                          disabled={promoLoading}
+                          className="px-4 py-2 bg-wbk-black text-white text-xs font-semibold uppercase tracking-wider hover:bg-wbk-green hover:text-wbk-black transition-colors rounded-full cursor-pointer disabled:opacity-60"
                         >
-                          {t("cart.apply", "Apply")}
+                          {promoLoading ? "..." : t("cart.apply", "Apply")}
                         </button>
                       </div>
                       {promoError && (

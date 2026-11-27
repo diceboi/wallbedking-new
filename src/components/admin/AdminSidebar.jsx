@@ -23,6 +23,7 @@ import {
   IconTruck,
   IconLayersLinked,
   IconBell,
+  IconTicket,
 } from "@tabler/icons-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -70,6 +71,13 @@ export const ADMIN_NAV_ITEMS = [
     label: "Pricing & Discounts",
     href: "/admin/pricing",
     icon: IconTag,
+  },
+  {
+    id: "coupons",
+    label: "Coupons & Affiliates",
+    href: "/admin/coupons",
+    icon: IconTicket,
+    badge: "New",
   },
   {
     id: "wholesale",

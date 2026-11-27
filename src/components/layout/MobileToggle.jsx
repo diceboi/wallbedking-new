@@ -21,7 +21,7 @@ export function MobileToggle() {
       onClick={handleClick}
       aria-label={isMobileOpen ? "Close menu" : "Open navigation menu"}
       aria-expanded={isMobileOpen}
-      className="xl:hidden w-9 h-9 flex items-center justify-center text-wbk-black hover:text-wbk-green transition-colors cursor-pointer"
+      className="min-[1440px]:hidden w-9 h-9 flex items-center justify-center text-wbk-black hover:text-wbk-green transition-colors cursor-pointer"
     >
       {isMobileOpen ? <IconX size={21} /> : <IconMenu2 size={21} />}
     </button>
